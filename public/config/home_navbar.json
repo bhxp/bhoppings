@@ -1,0 +1,104 @@
+[
+    {
+        "multiple": true,
+        "text": "bio",
+        "pages": [
+            {
+                "text": "bhop",
+                "url": "/"
+            },
+            {
+                "text": "chezlinkz",
+                "url": "/chezlinkz"
+            }
+        ]
+    },
+    {
+        "multiple": true,
+        "text": "simulations",
+        "pages": [
+            {
+                "text": "poop",
+                "url": "/poop"
+            }
+        ]
+    },
+    {
+        "multiple": true,
+        "text": "generators",
+        "pages": [
+            {
+                "text": "autism",
+                "url": "/testing"
+            },
+            {
+                "text": "qr code",
+                "url": "/qrcode"
+            },
+            {
+                "text": "pdf",
+                "url": "/free-pdf-creator-WORKING-2024-free-vbucks-and-robux-generator-download-today-no-virus-safe-working-2023-2024-2025-2026-amazon-giftcard-generator"
+            }
+        ]
+    },
+    {
+        "multiple": true,
+        "text": "movies",
+        "pages": [
+            {
+                "text": "500 Days of Summer",
+                "url": "/movies/500daysofsummer"
+            },
+            {
+                "text": "Deadpool and Wolverine",
+                "url": "/movies/deadpoolandwolverine"
+            },
+            {
+                "text": "Despicable Me 4",
+                "url": "/movies/despicableme4"
+            },
+            {
+                "text": "Godfather",
+                "url": "/movies/godfather"
+            },
+            {
+                "text": "Mario",
+                "url": "/movies/mario"
+            },
+            {
+                "text": "Quiet Place",
+                "url": "/movies/quietplace"
+            },
+            {
+                "text": "Trans People Won",
+                "url": "/movies/trans-people-won"
+            },
+            {
+                "text": "All",
+                "url": "/movies/list-movies"
+            }
+        ]
+    },
+    {
+        "text": "tango",
+        "url": "/tango"
+    },
+    {
+        "text": "about",
+        "url": "/about"
+    },
+    {
+        "multiple": true,
+        "text": "downloads",
+        "pages": [
+            {
+                "text": "tango clicker",
+                "url": "/tangoclicker"
+            },
+            {
+                "text": "modrinth",
+                "url": "downloads/Modrinth App_0.8.5_x64-setup.exe"
+            }
+        ]
+    }
+]

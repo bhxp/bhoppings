@@ -1,0 +1,38 @@
+[
+    {
+        "name": "Tango Stare",
+        "price": 156.99,
+        "discount": null,
+        "image": "tango_stare.png"
+    },
+    {
+        "name": "Tango Diamond",
+        "price": 2599.99,
+        "discount": null,
+        "image": "tango_diamond.png"
+    },
+    {
+        "name": "Tango Silly Lick",
+        "price": 3999.99,
+        "discount": null,
+        "image": "tango_silly.png"
+    },
+    {
+        "name": "Tango Serious Stare",
+        "price": 699.99,
+        "discount": null,
+        "image": "tango_serious.png"
+    },
+    {
+        "name": "Tango Super Silly Lick",
+        "price": 4999.99,
+        "discount": null,
+        "image": "tango_super_silly.png"
+    },
+    {
+        "name": "Evil Tango",
+        "price": 99999.99,
+        "discount": 0,
+        "image": "tango_evil.png"
+    }
+]
