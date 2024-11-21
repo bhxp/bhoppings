@@ -6,5 +6,4 @@
       "build": "echo 'No build step needed for static site'"
     },
     "dependencies": {}
-  }
-  
+}
