@@ -1,1 +1,78 @@
-butthole
+---
+title: Bio
+---
+
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width">
+  <link rel="icon" type="image/x-icon" href="/images/favicon.ico">
+  <title>bhop</title>
+  <link rel="stylesheet" href="style/style.css" />
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+</head>
+
+<body>
+
+  <!-- <video src="https://r2.guns.lol/3df88f90-0bc2-42bd-b0f8-c02a5569b9b3.mp4" autoplay id="background"></video> -->
+
+  <canvas id="effect"></canvas>
+
+  <div id="container">
+    <div id="name-container">
+      <img src="images/pfp.png" id="pfp" />
+      <img id="sparkles" src="images/sparkle_white.gif" />
+      <h1 id="name">Bhop</h1>
+      <div id="bio">professional skid</div>
+    </div>
+  </div>
+
+  <div id="links">
+    <a class="link-button" onclick="javascript: window.open('https://discordapp.com/users/1237591310278463502', '_blank');">
+      <img class="link-img" src="images/discord.png" />
+    </a>
+    <a class="link-button" onclick="javascript: window.open('https://www.tiktok.com/@bhoppingz', '_blank');">
+      <img class="link-img" src="images/tiktok.png" />
+    </a>
+    <a class="link-button" onclick="javascript: window.open('https://github.com/bhxp', '_blank');">
+      <img class="link-img" src="images/github.png" />
+    </a>
+    <a class="link-button" onclick="javascript: window.open('https://open.spotify.com/user/31zvux3kw6otgrc6czgj5544ddkm?si=70e7ce28ac034cc2', '_blank');">
+      <img class="link-img" src="images/spotify.png" />
+    </a>
+  </div>
+
+  <div id="views"><img src="images/eye.png" /><span id="view-count">0</span></div>
+
+  <a id="home-button" onclick="javascript: window.open('/home', '_blank');" class="link-button">
+    <img src="images/home.svg" />
+  </a>
+
+  <div id="cover">
+    <div id="cover-title">
+      <div id="animatedText">Click to enter...</div>
+    </div>
+  </div>
+
+</body>
+<script src="script/script.js"></script>
+
+
+    <script>
+        // Create an audio element and set its source
+        var audio = new Audio('/images/xtac.mp3');
+
+        // Add an event listener to the document body to play the audio on click
+        document.body.onclick = function() {
+            console.log('Body clicked'); // Debug log
+            audio.play().catch(function(error) {
+                console.error('Error playing audio:', error); // Log any playback errors
+            });
+        };
+    </script>
+
+    <script type="text/javascript" src="/script/cursor.js"></script>
+<!-- bio created by ChatGPT -->
+</html>
