@@ -1,9 +1,10 @@
 {
-  "name": "bhoppings",
-  "version": "1.0.0",
-  "scripts": {
-    "dev": "vercel dev",
-    "build": "echo 'No build step needed for static site'"
-  },
-  "dependencies": {}
-}
+    "name": "my-static-site",
+    "version": "1.0.0",
+    "scripts": {
+      "dev": "vercel dev",
+      "build": "echo 'No build step needed for static site'"
+    },
+    "dependencies": {}
+  }
+  

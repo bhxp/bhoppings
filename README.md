@@ -1,2 +1,0 @@
-# bhoppings
-vercel
