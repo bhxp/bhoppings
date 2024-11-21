@@ -1,9 +1,12 @@
 {
-    "name": "my-static-site",
-    "version": "1.0.0",
-    "scripts": {
-      "dev": "vercel dev",
-      "build": "echo 'No build step needed for static site'"
-    },
-    "dependencies": {}
+  "name": "client-side-node",
+  "version": "1.0.0",
+  "description": "A basic client-side app served by Node.js",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2"
+  }
 }
