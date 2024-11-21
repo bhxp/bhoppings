@@ -1,0 +1,9 @@
+{
+  "name": "bhoppings",
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "vercel dev",  // Optional: To test locally with Vercel
+    "build": "echo 'No build step needed for static site'"
+  },
+  "dependencies": {}
+}
