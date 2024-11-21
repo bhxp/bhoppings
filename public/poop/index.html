@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width">
+  <title>Simulation - Poop Game</title>
+  <link href="poop.css" rel="stylesheet" type="text/css" />
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+</head>
+
+<body>
+
+  <div id="ui">
+    <div class="item">
+      <img class="icon" src="/images/gem.svg" alt="gem" />
+      <canvas id="waterSurface" height="36" width="36"></canvas>
+      <span></span>
+    </div>
+    <div class="item">
+      <img class="icon" src="/images/coin.svg" />
+      <span></span>
+    </div>
+  </div>
+  <canvas id="world"></canvas>
+
+</body>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
+<script src="poop.js"></script>
+
+
+</html>

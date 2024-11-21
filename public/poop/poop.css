@@ -1,0 +1,107 @@
+@import url('https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@0,400..700;1,400..700&display=swap');
+
+@font-face {
+  src: url("/fonts/goldman.ttf");
+  font-family: "Goldman";
+}
+
+body,
+html {
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  background: rgb(36, 44, 50);
+  background: linear-gradient(0deg, #151a1e 0%, #313c44 100%);
+}
+
+canvas {
+  display: block;
+}
+
+
+
+#ui {
+  display: flex;
+  flex-direction: column;
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  user-select: none;
+  cursor: pointer;
+}
+
+#ui .item {
+  display: flex;
+  flex-direction: row;
+  height: 36px;
+  margin-bottom: 6px;
+  font-size: 18px;
+  color: white;
+  font-weight: 600;
+  -webkit-text-stroke: 0.5px #000;
+  font-family: "Goldman", sans-serif;
+  position: relative;
+}
+
+#ui .item:hover .icon {
+  transform: scale(1.1);
+}
+
+#ui .item {
+  position: relative;
+}
+
+#ui .item .icon {
+  height: 100%;
+  transition: transform 0.2s ease-in-out;
+  transform: scale(1);
+}
+
+#ui .item canvas {
+  position: absolute;
+  left: 0px;
+  top: -8px;
+  height: 100%;
+  aspect-ratio: 1;
+  transform: rotate(180deg);
+  opacity: 0.2;
+  mask-image: url(/images/gem.svg);
+  /* Apply the SVG image as the mask */
+  -webkit-mask-image: url(/images/gem.svg);
+  /* Safari compatibility */
+  background-color: transparent;
+  /* Ensure background is transparent */
+}
+
+#ui .item {
+  position: relative;
+  width: 36px;
+  height: 36px;
+}
+
+#ui .item .icon {
+  height: 100%;
+  width: 100%;
+  transition: transform 0.2s ease-in-out;
+  transform: scale(1);
+}
+
+#ui .item canvas {
+  position: absolute;
+  left: 18px;
+  top: 0px;
+  width: 100%;
+  height: 100%;
+  opacity: 0.6;
+  transform: TranslateX(-50%);
+  background-color: transparent;
+  mask-image: url(/images/gem.svg);
+  mask-size: cover;
+  -webkit-mask-size: cover;
+}
+
+#ui .item span {
+  position: relative;
+  top: 16px;
+  right: 8px;
+}
