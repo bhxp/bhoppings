@@ -305,7 +305,7 @@ body {
 .item:hover .item-price,
 .item:hover .add-to-cart,
 .item:hover .add-to-cart-container {
-  animation: gradientMove 0.2s ease infinite;
+  animation: gradientMove 8s ease infinite;
 }
 
 
