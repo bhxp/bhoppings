@@ -32,9 +32,32 @@ async function updateCounter() {
     console.error('Error updating counter:', error);
   }
 }
-app.use((req, res, next) => {
+app.use(async (req, res, next) => {
   if (req.path === '/') {
-    updateCounter();
+    try {
+      // Fetch the current count from JSONBin
+      const response = await fetch(`https://api.jsonbin.io/v3/b/${binId}/latest`, {
+        headers: {
+          'X-Master-Key': apiKey,
+        },
+      });
+      const data = await response.json();
+      const count = data.record.visitCount;
+
+      // Intercept the response for `/`
+      const originalSend = res.send;
+
+      // Override `res.send`
+      res.send = function (body) {
+        if (typeof body === 'string') {
+          body += `\n<script>const count = ${count};</script>`;
+        }
+        originalSend.call(this, body);
+      };
+    } catch (error) {
+      console.error('Error fetching visit count:', error);
+      res.status(500).send('Internal Server Error');
+    }
   }
   next();
 });

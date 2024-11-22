@@ -164,31 +164,10 @@ document.addEventListener("keydown", (e) => {
   }
 });
 
-// JSONBin Bin ID and API Key
-    const binId = '67359ccaad19ca34f8c9de30'; // Replace with your actual bin ID
-    const apiKey = '$2a$10$PdE8DlpdPuENmEfETNioOOROSZ8bMS7wVMiNa7YN415QGW907Fwwm'; // Replace with your JSONBin API key
 
-    async function updateCounter() {
-      try {
-        // Fetch current count from JSONBin
-        const response = await fetch(`https://api.jsonbin.io/v3/b/${binId}/latest`, {
-          headers: {
-            'X-Master-Key': apiKey,
-          }
-        });
-        const data = await response.json();
-        let count = data.record.visitCount;
-
-
-        // Increment the counter
-        count += 1;
-        // Display current count
-        $("#view-count").text(count);
-
-      } catch (error) {
-        console.error('Error updating counter:', error);
-        document.getElementById('count').innerText = 'Error';
-      }
-    }
-
-    updateCounter();
+async function updateCounter() {
+  $("#view-count").text(count);
+    console.error('Error updating counter:', error);
+    document.getElementById('count').innerText = 'Error';
+}
+updateCounter();
