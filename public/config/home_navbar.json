@@ -16,5 +16,47 @@
     {
         "text": "poop game",
         "url": "/poop"
+    },
+    {
+        "multiple": true,
+        "text": "movies",
+        "pages": [
+            {
+                "text": "500 days of summer",
+                "url": "/movies/500daysofsummer"
+            },
+            {
+                "text": "deadpool and wolverine",
+                "url": "/movies/deadpoolandwolverine"
+            },
+            {
+                "text": "despicable me 4",
+                "url": "/movies/despicableme4"
+            },
+            {
+                "text": "godfather",
+                "url": "/movies/godfather"
+            },
+            {
+                "text": "mario",
+                "url": "/movies/mario"
+            },
+            {
+                "text": "quiet place",
+                "url": "/movies/quietplace"
+            },
+            {
+                "text": "the pornman 😍",
+                "url": "/movies/the-pornman"
+            },
+            {
+                "text": "the batman",
+                "url": "/movies/thebatman"
+            },
+            {
+                "text": "trans people won",
+                "url": "/movies/trans-people-won"
+            }
+        ]
     }
 ]
