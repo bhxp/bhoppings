@@ -4,8 +4,7 @@ cursor.classList.add("custom-cursor");
 cursor.setAttribute("src", "/images/cursor.png")
 
 const styleElem = document.createElement("style");
-styleElem.innerHTML = `
-* {
+styleElem.innerHTML = `* {
   cursor: none !important;
 }
 .custom-cursor {
@@ -17,6 +16,13 @@ styleElem.innerHTML = `
   transform: translate(-50%, -50%);
   z-index: 9999;
   display: block;
+}
+  
+
+@media (orientation: portrait) {
+  .custom-cursor {
+    display: none !important;
+  }
 }`
 
 document.getElementsByTagName("head")[0].appendChild(styleElem);
