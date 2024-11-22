@@ -100,7 +100,7 @@ function addToCart(name) {
 
 function addToCartHandler(name) {
     addToCart(name);
-    window.open("/cart", "_self");
+    window.open("/tangini/cart", "_self");
 }
 
 $("#search-input").on("input", () => {
