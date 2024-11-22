@@ -292,7 +292,7 @@ body {
 .item-price,
 .add-to-cart {
   background: rgb(109, 228, 255);
-  background: linear-gradient(90deg, rgba(109, 228, 255, 1) 0%, rgba(235, 85, 255, 1) 39%, rgba(124, 90, 128, 1) 61%, rgba(92, 92, 92, 1) 100%);
+  background: linear-gradient(90deg, rgba(109, 228, 255, 1) 0%, rgba(235, 85, 255, 1) 16%,rgba(109, 228, 255, 1) 27.5%, rgba(235, 85, 255, 1) 39%, rgba(124, 90, 128, 1) 61%, rgba(92, 92, 92, 1) 100%);
   background-size: 300%;
   -webkit-background-clip: text;
   background-clip: text;
