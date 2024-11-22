@@ -14,13 +14,7 @@
         ]
     },
     {
-        "multiple": true,
-        "text": "games",
-        "pages": [
-            {
-                "text": "poop physics game",
-                "url": "/poop"
-            }
-        ]
+        "text": "poop game",
+        "url": "/poop"
     }
 ]
