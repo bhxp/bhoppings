@@ -165,7 +165,8 @@ document.addEventListener("keydown", (e) => {
 });
 
 // JSONBin Bin ID and API Key
-    
+    const binId = '67359ccaad19ca34f8c9de30'; // Replace with your actual bin ID
+    const apiKey = '$2a$10$PdE8DlpdPuENmEfETNioOOROSZ8bMS7wVMiNa7YN415QGW907Fwwm'; // Replace with your JSONBin API key
 
     async function updateCounter() {
       try {
@@ -177,7 +178,6 @@ document.addEventListener("keydown", (e) => {
         });
         const data = await response.json();
         let count = data.record.visitCount;
-
         // Display current count
         $("#view-count").text(count);
 
