@@ -94,5 +94,11 @@
         "price": 59.99,
         "discount": null,
         "image": "asian.png"
+    },
+    {
+        "name": "Stoop Tango",
+        "price": 849.99,
+        "discount": null,
+        "image": "stoop.png"
     }
 ]
