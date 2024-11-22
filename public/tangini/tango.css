@@ -37,13 +37,13 @@ body {
 
 @keyframes gradientMove {
   0% {
-    background-position: 30% 50%;
-  }
-  99% {
     background-position: 0% 50%;
   }
-  100% {
+  99% {
     background-position: 30% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
   }
 }
 
@@ -292,8 +292,8 @@ body {
 .item-price,
 .add-to-cart {
   background: rgb(109, 228, 255);
-  background: linear-gradient(90deg, rgba(109, 228, 255, 1) 0%, rgba(235, 85, 255, 1) 20,rgba(109, 228, 255, 1) 40%, rgba(124, 90, 128, 1) 61%, rgba(92, 92, 92, 1) 100%);
-  background-size: 400%;
+  background: linear-gradient(90deg, rgba(109, 228, 255, 1) 0%, rgba(235, 85, 255, 1) 39%, rgba(124, 90, 128, 1) 61%, rgba(92, 92, 92, 1) 100%);
+  background-size: 300%;
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
@@ -305,7 +305,7 @@ body {
 .item:hover .item-price,
 .item:hover .add-to-cart,
 .item:hover .add-to-cart-container {
-  animation: gradientMove 3s ease infinite;
+  animation: gradientMove 8s ease infinite;
 }
 
 
@@ -327,8 +327,8 @@ body {
   border-radius: 9999px;
   padding: 2px;
   background: rgb(109, 228, 255);
-  background: linear-gradient(90deg, rgba(109, 228, 255, 1) 0%, rgba(235, 85, 255, 1) 20,rgba(109, 228, 255, 1) 40%, rgba(124, 90, 128, 1) 61%, rgba(92, 92, 92, 1) 100%);
-  background-size: 400%;
+  background: linear-gradient(90deg, rgba(109, 228, 255, 1) 0%, rgba(235, 85, 255, 1) 39%, rgba(124, 90, 128, 1) 61%, rgba(92, 92, 92, 1) 100%);
+  background-size: 300%;
   transition: background 0.2s ease-in-out, transform 0.2s ease-in-out;
   background-position: 100% 50%;
   transform: scale(1);
