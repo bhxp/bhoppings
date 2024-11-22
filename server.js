@@ -7,9 +7,14 @@ const PORT = process.env.PORT || 3000;
 // Serve static files from the public directory
 app.use(express.static(path.join(__dirname, 'public')));
 
+// Redirect /tango to /tangini
+app.get('/tango', (req, res) => {
+  res.redirect('/tangini');
+});
+
 // 404 handler
 app.use((req, res) => {
-  express.static(__dirname.join("/public/404"))
+  res.status(404).sendFile(path.join(__dirname, 'public', '/404'));
 });
 
 app.listen(PORT, () => {
