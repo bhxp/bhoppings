@@ -4,7 +4,7 @@ function createItemElem(item) {
         price += ".00";
     }
     return `<div class="item">
-      <img src="images/tango/${item.image}" class="item-img" />
+      <img src="/images/tango/${item.image}" class="item-img" />
       <div class="item-name">${item.name}</div>
       <div class="item-price">$${price}</div>
       <div class="add-to-cart-container">

@@ -40,7 +40,7 @@ function displayCartItems() {
     var itemNameElement = $("<div class='item-name'></div>");
     var itemQuantityElement = $("<div class='item-quantity'></div>");
     var itemPriceElement = $("<div class='item-price'></div>");
-    itemImgElement.attr("src", cartItemList[item].image);
+    itemImgElement.attr("src", "/images/tango/".join(cartItemList[item].image));
     itemNameElement.text(cartItemList[item].name);
   }
 }
