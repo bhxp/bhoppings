@@ -9,7 +9,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // 404 handler
 app.use((req, res) => {
-  res.status(404).send('404: Page Not Found');
+  express.static(__dirname.join("/public/404"))
 });
 
 app.listen(PORT, () => {
