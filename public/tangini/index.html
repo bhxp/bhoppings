@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width">
+  <link rel="icon" type="image/x-icon" href="/images/tango.ico">
+  <title>Tango Shop - Bhoppings</title>
+  <link rel="stylesheet" href="tango.css" />
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+</head>
+
+<body>
+  <div id="top-section">
+    <h1 id="title">Tangini</h1>
+    <div id="search-container">
+      <button id="search-button"><img src="/images/tango-search.svg" /></button>
+      <input type="text" id="search-input" placeholder="Search items, collections, and accounts">
+    </div>
+    <div id="view-container">
+      <div id="view-switch">
+        <div class="view-switch-item" id="active-view-switch-item">
+          <object data="/images/grid-icon.svg" type="image/svg+xml">
+            Your browser does not support SVG files.
+          </object>
+          <div class="view-switch-click-hitbox"></div>
+        </div>
+        <div class="view-switch-item">
+          <object data="/images/list-icon.svg" type="image/svg+xml">
+            Your browser does not support SVG files.
+          </object>
+          <div class="view-switch-click-hitbox"></div>
+        </div>
+      </div>
+      <div id="sort-by"><img src="/images/arrow-up.svg" /><span>Sort By</span></div>
+    </div>
+    <div id="categories">
+      <button class="category" id="active-category"><span>All</span></button>
+      <button class="category"><span>Items</span></button>
+      <button class="category"><span>Collection</span></button>
+      <button class="category"><span>Users</span></button>
+    </div>
+  </div>
+  <div id="items"></div>
+
+  <script src="tango.js"></script>
+
+  <script type="text/javascript" src="/script/cursor.js"></script>
+
+</body>
+
+</html>
