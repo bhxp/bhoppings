@@ -101,7 +101,7 @@ function createItem(index, name) {
         itemElement.addClass("locked");
         itemElement.addClass("new-unlocked");
         unlocked = index + 1;
-        itemElement.on("click", function(e) {
+        itemElement.on("click", "*", function(e) {
             console.log("Clicked!");
             //$(this).find("object.chest").attr("data", "/images/chest-animation.svg");
 
@@ -113,23 +113,6 @@ function createItem(index, name) {
             //setTimeout(removeClasses, 600); // Call `removeClasses` after 600ms
 
             const i = $(this).index(); // Get the index of the parent itemElement
-            localStorage.setItem("unlocked", Math.max(localStorage.unlocked, i + 1));
-        });
-
-        itemElement.find(".chest").on("click", function(e) {
-            console.log("Clicked!");
-            $(this).attr("data", "/images/chest-animation.svg");
-
-            const removeClasses = () => {
-                $(this).closest('.itemElement').removeClass("new-unlocked"); // Use .closest() to find the nearest parent with .itemElement
-                $(this).closest('.itemElement').removeClass("locked");
-            };
-
-            setTimeout(removeClasses, 600); // Call `removeClasses` after 600ms
-
-            // Use .closest() to find the parent itemElement and get its index within the parent container
-            const i = $(this).closest('.itemElement').index();
-
             localStorage.setItem("unlocked", Math.max(localStorage.unlocked, i + 1));
         });
     }
@@ -175,7 +158,7 @@ $(document).ready(function() {
             $("#container").removeClass("hidden");
 
             // Add click event to items (attach this after items are appended)
-            $(".item").on("click", (e) => {
+            $(".item:not(.locked)").on("click", (e) => {
                 const clickedItem = $(e.currentTarget);  // `e.currentTarget` is the element that triggered the event
 
                 const index = clickedItem.index();  // Get the index of the clicked item
