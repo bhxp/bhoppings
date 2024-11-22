@@ -37,13 +37,13 @@ body {
 
 @keyframes gradientMove {
   0% {
-    background-position: 0% 50%;
-  }
-  99% {
     background-position: 30% 50%;
   }
-  100% {
+  99.9% {
     background-position: 0% 50%;
+  }
+  100% {
+    background-position: 30% 50%;
   }
 }
 
@@ -305,7 +305,7 @@ body {
 .item:hover .item-price,
 .item:hover .add-to-cart,
 .item:hover .add-to-cart-container {
-  animation: gradientMove 8s ease infinite;
+  animation: gradientMove 3s ease infinite;
 }
 
 
