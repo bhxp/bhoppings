@@ -103,14 +103,14 @@ function createItem(index, name) {
         unlocked = index + 1;
         itemElement.on("click", function(e) {
             console.log("Clicked!");
-            $(this).find("object.chest").attr("data", "/images/chest-animation.svg");
+            //$(this).find("object.chest").attr("data", "/images/chest-animation.svg");
 
             const removeClasses = () => {
                 $(this).removeClass("new-unlocked");
                 $(this).removeClass("locked");
             };
-
-            setTimeout(removeClasses, 600); // Call `removeClasses` after 600ms
+            removeClasses();
+            //setTimeout(removeClasses, 600); // Call `removeClasses` after 600ms
 
             const i = $(this).index(); // Get the index of the parent itemElement
             localStorage.setItem("unlocked", Math.max(localStorage.unlocked, i + 1));
