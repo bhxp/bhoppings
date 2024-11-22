@@ -92,6 +92,7 @@ html, body {
 	border: solid 1px #2F2F2F;
 	width: max-content;
 	min-width: 120px;
+    z-index: 9999;
 }
 
 .navbar-item {
