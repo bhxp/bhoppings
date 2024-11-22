@@ -185,16 +185,6 @@ document.addEventListener("keydown", (e) => {
         // Display current count
         $("#view-count").text(count);
 
-        // Update the count in JSONBin
-        await fetch(`https://api.jsonbin.io/v3/b/${binId}`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-Master-Key': apiKey,
-          },
-          body: JSON.stringify({ visitCount: count })
-        });
-
       } catch (error) {
         console.error('Error updating counter:', error);
         document.getElementById('count').innerText = 'Error';
