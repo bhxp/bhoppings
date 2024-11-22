@@ -3,36 +3,96 @@
         "name": "Tango Stare",
         "price": 156.99,
         "discount": null,
-        "image": "tango_stare.png"
+        "image": "stare.png"
     },
     {
         "name": "Tango Diamond",
         "price": 2599.99,
         "discount": null,
-        "image": "tango_diamond.png"
+        "image": "diamond.png"
     },
     {
         "name": "Tango Silly Lick",
         "price": 3999.99,
         "discount": null,
-        "image": "tango_silly.png"
+        "image": "silly.png"
     },
     {
         "name": "Tango Serious Stare",
         "price": 699.99,
         "discount": null,
-        "image": "tango_serious.png"
+        "image": "serious.png"
     },
     {
         "name": "Tango Super Silly Lick",
         "price": 4999.99,
         "discount": null,
-        "image": "tango_super_silly.png"
+        "image": "super_silly.png"
     },
     {
         "name": "Evil Tango",
-        "price": 99999.99,
-        "discount": 0,
-        "image": "tango_evil.png"
+        "price": 9999.99,
+        "discount": null,
+        "image": "evil.png"
+    },
+    {
+        "name": "Kitty Cup Tango",
+        "price": 125000.00,
+        "discount": null,
+        "image": "kitty_cup.png"
+    },
+    {
+        "name": "Cutie Patootie Tango",
+        "price": 19999.99,
+        "discount": null,
+        "image": "cutie_patootie.png"
+    },
+    {
+        "name": "Niggo Tango",
+        "price": 808.00,
+        "discount": null,
+        "image": "niggo.png"
+    },
+    {
+        "name": "King Tango 👑",
+        "price": 265000,
+        "discount": null,
+        "image": "king.png"
+    },
+    {
+        "name": "Burrito Tango",
+        "price": 2000.00,
+        "discount": null,
+        "image": "burrito.png"
+    },
+    {
+        "name": "Crazy Tango",
+        "price": 999.99,
+        "discount": null,
+        "image": "crazy.png"
+    },
+    {
+        "name": "Sexy Tango",
+        "price": 69500.99,
+        "discount": null,
+        "image": "sexy.png"
+    },
+    {
+        "name": "Evil Tango #2",
+        "price": 49999.99,
+        "discount": null,
+        "image": "evil_2.png"
+    },
+    {
+        "name": "Sideways Tango",
+        "price": 765000.00,
+        "discount": null,
+        "image": "sideways.png"
+    },
+    {
+        "name": "Asian Tango",
+        "price": 59.99,
+        "discount": null,
+        "image": "asian.png"
     }
 ]
