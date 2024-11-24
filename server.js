@@ -49,7 +49,11 @@ app.get('/tango', (req, res) => {
 
 app.get('/', (req, res) => {
   updateCounter();
-})
+});
+
+app.get('/pussy', (req, res) => {
+  res.redirect('/images/pussy.jpg');
+});
 
 // 404 handler
 app.use((req, res) => {
