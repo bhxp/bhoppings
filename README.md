@@ -16,10 +16,10 @@ A super cool amazing website that is made without any flaws 100%
 
 ## Features
 
-- retarded
-- tango!
-- cool
-- and other things
+- [Poop Shooter 3D](https://bhoppings.de/poopshooter3d/)
+- [Poop Game](https://bhoppings.de/poop/)
+- [Tangini](https://bhoppings.de/tangini/)
+- [Home](https://bhoppings.de/home/)
 
 
 ## FAQ
