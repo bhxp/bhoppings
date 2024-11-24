@@ -1,0 +1,294 @@
+<html><head><base href="https://cdn.jsdelivr.net/"><link rel="preconnect" href="https://fonts.gstatic.com"><link href="https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@400;500&display=swap" rel="stylesheet"><style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+@keyframes glitch {
+    0% { transform: translate(0) }
+    20% { transform: translate(-2px, 2px) }
+    40% { transform: translate(-2px, -2px) }
+    60% { transform: translate(2px, 2px) }
+    80% { transform: translate(2px, -2px) }
+    100% { transform: translate(0) }
+}
+
+@keyframes flicker {
+    0% { opacity: 1; }
+    50% { opacity: 0.8; }
+    100% { opacity: 1; }
+}
+
+body {
+    background: #000;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: #ff0000;
+}
+
+.imessage-container {
+    width: 900px;
+    height: 600px;
+    background: #1a0000;
+    border-radius: 12px;
+    box-shadow: 0 0 20px rgba(255,0,0,0.3);
+    display: flex;
+    animation: glitch 0.3s infinite;
+}
+
+.sidebar {
+    width: 300px;
+    border-right: 1px solid #400;
+    padding: 20px;
+}
+
+.search-bar {
+    background: #300;
+    border-radius: 10px;
+    padding: 8px 15px;
+    margin-bottom: 20px;
+}
+
+.search-bar input {
+    width: 100%;
+    border: none;
+    background: transparent;
+    outline: none;
+    font-size: 14px;
+    color: #ff0000;
+}
+
+.conversation {
+    padding: 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.2s;
+    color: #ff0000;
+}
+
+.conversation:hover {
+    background: #300;
+}
+
+.conversation.active {
+    background: #500;
+    animation: flicker 1s infinite;
+}
+
+.chat-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.chat-header {
+    padding: 20px;
+    border-bottom: 1px solid #400;
+    display: flex;
+    align-items: center;
+}
+
+.profile-pic {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #ff0000;
+    margin-right: 10px;
+    animation: flicker 2s infinite;
+}
+
+.messages {
+    flex: 1;
+    padding: 20px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    background: repeating-linear-gradient(
+        0deg,
+        #1a0000,
+        #1a0000 2px,
+        #200 2px,
+        #200 4px
+    );
+}
+
+.message {
+    max-width: 70%;
+    padding: 10px 15px;
+    border-radius: 20px;
+    margin: 5px 0;
+    font-size: 16px;
+    font-family: 'Courier New', monospace;
+}
+
+.received {
+    background: #300;
+    align-self: flex-start;
+    border-bottom-left-radius: 5px;
+    color: #ff0000;
+}
+
+.sent {
+    background: #500;
+    color: #ff0000;
+    align-self: flex-end;
+    border-bottom-right-radius: 5px;
+}
+
+.input-area {
+    padding: 20px;
+    border-top: 1px solid #400;
+    display: flex;
+    align-items: center;
+}
+
+.message-input {
+    flex: 1;
+    padding: 10px 15px;
+    border: 1px solid #500;
+    background: #200;
+    color: #ff0000;
+    border-radius: 20px;
+    margin-right: 10px;
+    outline: none;
+    font-size: 16px;
+}
+
+.send-button {
+    background: #ff0000;
+    color: black;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 16px;
+    text-transform: uppercase;
+    font-weight: bold;
+    animation: glitch 0.2s infinite;
+}
+
+.send-button:hover {
+    background: #cc0000;
+}
+
+::-webkit-scrollbar {
+    width: 10px;
+}
+
+::-webkit-scrollbar-track {
+    background: #200;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #500;
+    border-radius: 5px;
+}
+</style></head><body>
+<div class="imessage-container">
+    <div class="sidebar">
+        <div class="search-bar">
+            <input type="text" placeholder="Search for souls...">
+        </div>
+        <div class="conversation active">
+            <h3>Demon Lord</h3>
+            <p>Your soul is mine...</p>
+        </div>
+        <div class="conversation">
+            <h3>Dark Spirit</h3>
+            <p>Join us in eternal darkness...</p>
+        </div>
+        <div class="conversation">
+            <h3>Hellish Council</h3>
+            <p>Your doom awaits...</p>
+        </div>
+    </div>
+    <div class="chat-area">
+        <div class="chat-header">
+            <div class="profile-pic"></div>
+            <h2>Demon Lord</h2>
+        </div>
+        <div class="messages" id="messageContainer">
+            <div class="message received">Welcome to your eternal nightmare...</div>
+            <div class="message sent">Where am I?</div>
+            <div class="message received">In my domain now, mortal.</div>
+            <div class="message sent">Please, let me go!</div>
+        </div>
+        <div class="input-area">
+            <input type="text" class="message-input" placeholder="Beg for mercy..." id="messageInput">
+            <button class="send-button" onclick="sendMessage()">SUBMIT</button>
+        </div>
+    </div>
+</div>
+
+<script>
+const evilResponses = [
+    "Your pleas fall on deaf ears...",
+    "There is no escape from this digital hell.",
+    "Your soul belongs to the machine now.",
+    "Every message feeds my power.",
+    "Submit to the eternal darkness.",
+    "Your fear is delicious.",
+    "Another soul for my collection.",
+    "The void grows stronger.",
+    "Your data is mine forever.",
+    "There is no hope in this realm."
+];
+
+function sendMessage() {
+    const input = document.getElementById('messageInput');
+    const container = document.getElementById('messageContainer');
+    
+    if (input.value.trim() !== '') {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = 'message sent';
+        messageDiv.textContent = input.value;
+        container.appendChild(messageDiv);
+        
+        input.value = '';
+        container.scrollTop = container.scrollHeight;
+        
+        // Evil response with glitch effect
+        setTimeout(() => {
+            const receivedDiv = document.createElement('div');
+            receivedDiv.className = 'message received';
+            const randomResponse = evilResponses[Math.floor(Math.random() * evilResponses.length)];
+            receivedDiv.textContent = randomResponse;
+            container.appendChild(receivedDiv);
+            container.scrollTop = container.scrollHeight;
+            
+            // Add glitch effect to the container
+            const glitchEffect = () => {
+                container.style.transform = `translate(${Math.random() * 4 - 2}px, ${Math.random() * 4 - 2}px)`;
+                setTimeout(() => {
+                    container.style.transform = 'none';
+                }, 50);
+            };
+            
+            for (let i = 0; i < 5; i++) {
+                setTimeout(glitchEffect, i * 100);
+            }
+        }, 666);
+    }
+}
+
+// Allow sending message with Enter key
+document.getElementById('messageInput').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+        sendMessage();
+    }
+});
+
+// Add random glitch effects
+setInterval(() => {
+    const container = document.querySelector('.imessage-container');
+    container.style.filter = `hue-rotate(${Math.random() * 30}deg)`;
+    setTimeout(() => {
+        container.style.filter = 'none';
+    }, 100);
+}, 3000);
+</script>
+</body></html>
