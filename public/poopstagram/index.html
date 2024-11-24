@@ -1,0 +1,360 @@
+<html><head><base href="https://poopstagram.com"/>
+<title>Poopstagram - Share Your Special Moments</title>
+<style>
+:root {
+  --brown-primary: #8B4513;
+  --brown-secondary: #654321;
+  --accent: #FFD700;
+}
+
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #fafafa;
+}
+
+nav {
+  background: var(--brown-primary);
+  padding: 1rem;
+  position: fixed;
+  width: 100%;
+  top: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+  z-index: 1000;
+}
+
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+  background: white;
+  display: flex;
+  justify-content: space-around;
+  padding: 10px 0;
+  border-top: 1px solid #ddd;
+}
+
+.nav-item {
+  font-size: 24px;
+  color: var(--brown-secondary);
+  text-decoration: none;
+  padding: 8px;
+}
+
+.nav-item.active {
+  color: var(--accent);
+}
+
+.logo {
+  font-size: 24px;
+  color: white;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.feed {
+  margin: 80px auto;
+  max-width: 600px;
+  padding-bottom: 70px;
+}
+
+.stories {
+  display: flex;
+  gap: 15px;
+  overflow-x: auto;
+  padding: 15px;
+  background: white;
+  margin-bottom: 20px;
+  border-radius: 8px;
+}
+
+.story {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+}
+
+.story-avatar {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  border: 3px solid var(--accent);
+  padding: 3px;
+}
+
+.story-username {
+  font-size: 12px;
+  margin-top: 5px;
+}
+
+.post {
+  background: white;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.post-header {
+  padding: 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  justify-content: space-between;
+}
+
+.post-header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.post-content {
+  width: 100%;
+  height: 400px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #f5f5f5;
+}
+
+.post-actions {
+  padding: 12px;
+  border-top: 1px solid #eee;
+  display: flex;
+  justify-content: space-between;
+}
+
+.action-group-left {
+  display: flex;
+  gap: 10px;
+}
+
+.likes {
+  padding: 0 12px;
+  color: var(--brown-secondary);
+  font-weight: bold;
+}
+
+.comments {
+  padding: 12px;
+  border-top: 1px solid #eee;
+}
+
+.comment-input {
+  display: flex;
+  padding: 12px;
+  border-top: 1px solid #eee;
+}
+
+.comment-input input {
+  flex: 1;
+  border: none;
+  padding: 8px;
+  margin-right: 10px;
+}
+
+.comment-input button {
+  color: var(--accent);
+  font-size: 14px;
+}
+
+button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 24px;
+  padding: 4px;
+}
+
+button:hover {
+  color: var(--accent);
+}
+
+.poop-avatar {
+  width: 40px;
+  height: 40px;
+}
+
+.search-bar {
+  background: white;
+  padding: 10px;
+  margin: 10px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+}
+
+.search-bar input {
+  width: 100%;
+  padding: 8px;
+  border: none;
+  background: #f0f0f0;
+  border-radius: 4px;
+}
+
+.explore-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2px;
+  margin: 0 2px;
+}
+
+.explore-item {
+  aspect-ratio: 1;
+  overflow: hidden;
+  position: relative;
+}
+
+.explore-item svg {
+  width: 100%;
+  height: 100%;
+}
+
+/* Views */
+.view {
+  display: none;
+  margin-top: 60px;
+}
+
+.view.active {
+  display: block;
+}
+
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">
+    <svg width="32" height="32" viewBox="0 0 100 100">
+      <path d="M50 10 C20 10 10 35 10 50 C10 80 30 90 50 90 C70 90 90 80 90 50 C90 35 80 10 50 10" fill="var(--accent)"/>
+      <circle cx="35" cy="40" r="5" fill="black"/>
+      <circle cx="65" cy="40" r="5" fill="black"/>
+      <path d="M30 60 Q50 70 70 60" fill="none" stroke="black" stroke-width="3"/>
+    </svg>
+    Poopstagram
+  </div>
+  <div>
+    <button>❤️</button>
+    <button>💬</button>
+  </div>
+</nav>
+
+<div id="home-view" class="view active">
+  <div class="feed">
+    <div class="stories">
+      <div class="story">
+        <svg class="story-avatar" viewBox="0 0 100 100">
+          <path d="M50 10 C20 10 10 35 10 50 C10 80 30 90 50 90 C70 90 90 80 90 50 C90 35 80 10 50 10" fill="#8B4513"/>
+          <circle cx="35" cy="40" r="5" fill="white"/>
+          <circle cx="65" cy="40" r="5" fill="white"/>
+        </svg>
+        <span class="story-username">Your Story</span>
+      </div>
+      <!-- More stories here -->
+    </div>
+
+    <article class="post">
+      <div class="post-header">
+        <div class="post-header-left">
+          <svg class="poop-avatar" viewBox="0 0 100 100">
+            <path d="M50 10 C20 10 10 35 10 50 C10 80 30 90 50 90 C70 90 90 80 90 50 C90 35 80 10 50 10" fill="#654321"/>
+            <circle cx="35" cy="40" r="5" fill="white"/>
+            <circle cx="65" cy="40" r="5" fill="white"/>
+          </svg>
+          <strong>Mr_Poopy</strong>
+        </div>
+        <button>⋮</button>
+      </div>
+      <div class="post-content">
+        <svg width="300" height="300" viewBox="0 0 100 100">
+          <path d="M50 10 C20 10 10 35 10 50 C10 80 30 90 50 90 C70 90 90 80 90 50 C90 35 80 10 50 10" fill="#8B4513">
+            <animate attributeName="d" 
+              dur="2s"
+              repeatCount="indefinite"
+              values="M50 10 C20 10 10 35 10 50 C10 80 30 90 50 90 C70 90 90 80 90 50 C90 35 80 10 50 10;
+                      M50 15 C25 15 15 40 15 55 C15 85 35 85 50 85 C65 85 85 85 85 55 C85 40 75 15 50 15;
+                      M50 10 C20 10 10 35 10 50 C10 80 30 90 50 90 C70 90 90 80 90 50 C90 35 80 10 50 10"/>
+          </path>
+          <circle cx="35" cy="40" r="5" fill="white"/>
+          <circle cx="65" cy="40" r="5" fill="white"/>
+          <path d="M30 60 Q50 70 70 60" fill="none" stroke="white" stroke-width="3"/>
+        </svg>
+      </div>
+      <div class="post-actions">
+        <div class="action-group-left">
+          <button onclick="like(this)">❤️</button>
+          <button>💭</button>
+          <button>↪️</button>
+        </div>
+        <button>🔖</button>
+      </div>
+      <div class="likes">
+        1,337 likes
+      </div>
+      <div class="comments">
+        <strong>Mr_Poopy</strong> Feeling cute today! #blessed #pooplife
+      </div>
+      <div class="comment-input">
+        <input type="text" placeholder="Add a comment...">
+        <button>Post</button>
+      </div>
+    </article>
+  </div>
+</div>
+
+<div id="search-view" class="view">
+  <div class="search-bar">
+    <input type="text" placeholder="Search">
+  </div>
+  <div class="explore-grid">
+    <!-- Explore grid items -->
+  </div>
+</div>
+
+<div id="profile-view" class="view">
+  <!-- Profile content -->
+</div>
+
+<div class="bottom-nav">
+  <a href="#" class="nav-item active" onclick="switchView('home')">🏠</a>
+  <a href="#" class="nav-item" onclick="switchView('search')">🔍</a>
+  <a href="#" class="nav-item">➕</a>
+  <a href="#" class="nav-item">🎬</a>
+  <a href="#" class="nav-item" onclick="switchView('profile')">👤</a>
+</div>
+
+<script>
+let likes = false;
+
+function like(button) {
+  likes = !likes;
+  button.style.color = likes ? 'red' : 'black';
+  const likesDiv = button.closest('.post-actions').nextElementSibling;
+  const currentLikes = parseInt(likesDiv.textContent);
+  likesDiv.textContent = `${likes ? currentLikes + 1 : currentLikes - 1} likes`;
+}
+
+function switchView(viewName) {
+  document.querySelectorAll('.view').forEach(view => {
+    view.classList.remove('active');
+  });
+  document.getElementById(`${viewName}-view`).classList.add('active');
+  
+  document.querySelectorAll('.nav-item').forEach(item => {
+    item.classList.remove('active');
+  });
+  event.target.classList.add('active');
+}
+
+// Animation for new posts appearing
+document.querySelectorAll('.post').forEach(post => {
+  post.style.animation = 'fadeIn 0.5s ease-in';
+});
+</script>
+</body></html>
