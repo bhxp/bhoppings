@@ -70,5 +70,19 @@
     {
         "text": "😂",
         "url": "/pussy"
+    },
+    {
+        "multiple": true,
+        "text": "misc",
+        "pages": [
+            {
+                "text": "autism buttons",
+                "url": "/autismbuttons"
+            },
+            {
+                "text": "happy imessage",
+                "url": "/happyimessage"
+            }
+        ]
     }
 ]

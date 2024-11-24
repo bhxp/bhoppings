@@ -1,0 +1,111 @@
+---
+title: Autism (Testing)
+---
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Feature Testing Page</title>
+    <link rel="stylesheet" href="autismbuttons.css">
+</head>
+<body>
+    <header>
+        <h1>kellen chezlinkz avocado autism page</h1>
+    </header>
+
+    <main>
+        <section id="buttons">
+            <h2>Buttons</h2>
+            <button id="alertButton">Show Alert</button>
+            <button id="changeColorButton">Change Color</button>
+            <button id="hideButton">Hide this Button</button>
+            <button id="fadeButton">Fade Out</button>
+            <button id="slideButton">Slide Toggle</button>
+        </section>
+
+        <section id="switches">
+            <h2>Switches</h2>
+            <label for="toggleSwitch">Toggle Switch:</label>
+            <input type="checkbox" id="toggleSwitch">
+            <label for="toggleSwitch2">Another Switch:</label>
+            <input type="checkbox" id="toggleSwitch2">
+        </section>
+
+        <section id="textBoxes">
+            <h2>Text Boxes</h2>
+            <textarea id="textBox" rows="4" cols="50">Edit me...</textarea>
+            <button id="textBoxButton">Alert Text</button>
+            <input type="text" id="inputBox" placeholder="Type something...">
+            <button id="inputBoxButton">Alert Input Text</button>
+        </section>
+
+        <section id="customization">
+            <h2>Customization</h2>
+            <label for="bgColor">Background Color:</label>
+            <input type="color" id="bgColor">
+            <button id="applyBgColor">Apply Background Color</button>
+            <label for="textColor">Text Color:</label>
+            <input type="color" id="textColor">
+            <button id="applyTextColor">Apply Text Color</button>
+            <label for="fontSize">Font Size:</label>
+            <input type="range" id="fontSize" min="10" max="36">
+            <button id="applyFontSize">Apply Font Size</button>
+        </section>
+
+        <section id="images">
+            <h2>Images</h2>
+            <img id="image1" src="https://via.placeholder.com/150" alt="Placeholder Image 1">
+            <img id="image2" src="https://via.placeholder.com/150" alt="Placeholder Image 2">
+            <button id="swapImageButton">Swap Images</button>
+        </section>
+
+        <section id="tables">
+            <h2>Tables</h2>
+            <table id="sampleTable">
+                <tr>
+                    <th>Name</th>
+                    <th>Age</th>
+                </tr>
+                <tr>
+                    <td>Alice</td>
+                    <td>25</td>
+                </tr>
+                <tr>
+                    <td>Bob</td>
+                    <td>30</td>
+                </tr>
+            </table>
+            <button id="addRowButton">Add Row</button>
+            <button id="deleteRowButton">Delete Row</button>
+        </section>
+
+        <section id="forms">
+            <h2>Forms</h2>
+            <form id="sampleForm">
+                <label for="name">Name:</label>
+                <input type="text" id="name" name="name">
+                <label for="age">Age:</label>
+                <input type="number" id="age" name="age">
+                <input type="submit" value="Submit">
+            </form>
+            <div id="formOutput"></div>
+        </section>
+
+        <section id="lists">
+            <h2>Lists</h2>
+            <ul id="sampleList">
+                <li>Item 1</li>
+                <li>Item 2</li>
+                <li>Item 3</li>
+            </ul>
+            <button id="addItemButton">Add Item</button>
+            <button id="removeItemButton">Remove Item</button>
+        </section>
+    </main>
+
+
+    <script src="autismbuttons.js"></script>
+</body>
+</html>
