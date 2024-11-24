@@ -110,11 +110,57 @@
     .hack-toggle.active::after {
       transform: translateX(30px);
     }
+    #startMenu {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.8);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+    }
+    #startMenu h1 {
+        color: #4a3525;
+        font-size: 64px;
+        font-family: 'Arial Black', sans-serif;
+        margin-bottom: 40px;
+        text-shadow: 
+            0 0 10px rgba(255,255,255,0.8),
+            0 0 20px rgba(255,255,255,0.5),
+            0 0 30px rgba(255,255,255,0.3);
+        animation: float 3s ease-in-out infinite;
+    }
+    #startMenu button {
+        background: #33ff33;
+        border: none;
+        padding: 20px 40px;
+        border-radius: 10px;
+        color: black;
+        font-size: 24px;
+        cursor: pointer;
+        transition: transform 0.2s, background 0.2s;
+    }
+    #startMenu button:hover {
+        background: #2ae02a;
+        transform: scale(1.1);
+    }
+    @keyframes float {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-20px); }
+    }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/cannon@0.6.2/build/cannon.min.js"></script>
     </head>
     <body>
+    <div id="startMenu">
+        <h1>Poop Shooter 3D</h1>
+        <button onclick="startGame()">Start Game</button>
+    </div>
     <div id="hud">
       <div>Wave: <span id="waveCount">1</span></div>
       <div>Poops: <span id="poopCount">0</span>/<span id="totalPoops">0</span></div>
@@ -174,46 +220,30 @@
     
     function init() {
         scene = new THREE.Scene();
-        const skyGeometry = new THREE.BoxGeometry(1000, 1000, 1000);
-        const skyMaterial = new THREE.ShaderMaterial({
-            uniforms: {
-                topColor: { value: new THREE.Color(0x87CEEB) },
-                bottomColor: { value: new THREE.Color(0x7AB6D1) }
-            },
-            vertexShader: `
-                varying vec3 vWorldPosition;
-                void main() {
-                    vec4 worldPosition = modelMatrix * vec4(position, 1.0);
-                    vWorldPosition = worldPosition.xyz;
-                    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-                }
-            `,
-            fragmentShader: `
-                uniform vec3 topColor;
-                uniform vec3 bottomColor;
-                varying vec3 vWorldPosition;
-                void main() {
-                    float h = normalize(vWorldPosition).y;
-                    float t = max(0.0, min(1.0, (h + 0.5) * 0.5));
-                    gl_FragColor = vec4(mix(bottomColor, topColor, t), 1.0);
-                }
-            `,
-            side: THREE.BackSide
-        });
-    
-        const sky = new THREE.Mesh(skyGeometry, skyMaterial);
-        scene.add(sky);
-    
+        scene.background = new THREE.Color(0x87CEEB); // Add this line to set sky blue color
+        
+        // Create a subtle gradient using fog
+        scene.fog = new THREE.Fog(0x87CEEB, 50, 150);
+        
         camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
         renderer = new THREE.WebGLRenderer();
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.shadowMap.enabled = true;
         renderer.shadowMap.type = THREE.PCFSoftShadowMap;
         document.body.appendChild(renderer.domElement);
+        
+        // Only start rendering the scene
+        animate();
+    }
     
+    function startGame() {
+        const startMenu = document.getElementById('startMenu');
+        startMenu.style.display = 'none';
+        
+        // Initialize the rest of the game
         world = new CANNON.World();
         world.gravity.set(0, -9.82, 0);
-    
+        
         const light = new THREE.DirectionalLight(0xffffff, 1);
         light.position.set(10, 10, 10);
         light.castShadow = true;
@@ -253,7 +283,42 @@
         spawnEnemies();
         setupHackMenu();
         
-        animate();
+        // Request pointer lock to start playing
+        document.body.requestPointerLock().catch(err => {
+            console.log("Pointer lock request failed:", err);
+        });
+    }
+    
+    // Modify the animate function to only update game logic after start
+    function animate() {
+        requestAnimationFrame(animate);
+        
+        if(!gameIsOver && document.getElementById('startMenu').style.display === 'none') {
+            world.step(1/60);
+            movePlayer();
+            updateEnemies();
+            
+            clouds.forEach(cloud => {
+                cloud.userData.angle += cloud.userData.rotationSpeed;
+                cloud.position.x = Math.cos(cloud.userData.angle) * cloud.userData.radius;
+                cloud.position.z = Math.sin(cloud.userData.angle) * cloud.userData.radius;
+                cloud.rotation.y += 0.001;
+            });
+            
+            for(let i = projectiles.length - 1; i >= 0; i--) {
+                const projectile = projectiles[i];
+                projectile.mesh.position.copy(projectile.body.position);
+                projectile.mesh.quaternion.copy(projectile.body.quaternion);
+                
+                if(projectile.mesh.position.y < -10 || Date.now() - projectile.timestamp > 5000) {
+                    scene.remove(projectile.mesh);
+                    world.remove(projectile.body);
+                    projectiles.splice(i, 1);
+                }
+            }
+        }
+        
+        renderer.render(scene, camera);
     }
     
     function restartGame() {
@@ -952,7 +1017,7 @@
     function animate() {
         requestAnimationFrame(animate);
         
-        if(!gameIsOver) {
+        if(!gameIsOver && document.getElementById('startMenu').style.display === 'none') {
             world.step(1/60);
             movePlayer();
             updateEnemies();
