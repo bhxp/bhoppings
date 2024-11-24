@@ -1,0 +1,72 @@
+body {
+    margin: 0;
+    font-family: 'Samsung Sharp Sans', sans-serif;
+    overflow: hidden; /* Hide scroll bars */
+    color: white; /* Set default text color to white */
+    height: 100vh; /* Ensure body height matches viewport height */
+}
+
+.background {
+    background-image: url('https://i.imgur.com/qeLjlch.png');
+    background-attachment: fixed;
+    background-size: fill;
+    background-position: center;
+    position: fixed;
+    width: 200%; /* Make background 10% wider than the viewport */
+    height: 200%; /* Make background 10% taller than the viewport */
+    top: -5%; /* Offset the background */
+    left: -5%; /* Offset the background */
+    z-index: -1; /* Ensure background is behind other content */
+}
+
+.content {
+    text-align: center;
+    backdrop-filter: blur(10px);
+    border-radius: 20px;
+    padding: 20px;
+    width: 80%;
+    max-width: 1000px; /* Adjust max-width for better image sizing */
+    margin: 0 auto; /* Center content horizontally */
+    position: relative; /* Ensure it is positioned relative to the viewport */
+    top: 15%; /* Adjust vertical position */
+}
+
+header {
+    margin-bottom: 50px; /* Add spacing between title and image */
+}
+
+header h1 {
+    font-size: 3rem; /* Adjust font size if needed */
+    margin: 0;
+}
+
+header img {
+    width: 40%; /* Make image smaller */
+    max-width: 400px; /* Set maximum width */
+    border-radius: 20px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.features {
+    margin: 40px 0;
+    font-size: 1.2rem;
+}
+
+footer {
+    margin-top: 60px; /* Move the button further down */
+}
+
+.download-btn {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 15px 30px;
+    font-size: 1.2rem;
+    border-radius: 10px;
+    cursor: pointer;
+    margin: 10px;
+}
+
+.download-btn:hover {
+    background-color: #0056b3;
+}
