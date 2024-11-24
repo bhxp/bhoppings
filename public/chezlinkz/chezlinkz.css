@@ -1,0 +1,133 @@
+@import url('https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@0,400..700;1,400..700&family=Mulish:ital,wght@0,200..1000;1,200..1000&display=swap');
+
+html,
+body {
+  background-image: url("/images/chezlinkz-background.jpg");
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+  background-size: cover;
+  margin: 0px;
+  font-family: "Instrument Sans";
+  font-size: 36px;
+  font-weight: 500;
+  text-shadow: 0px 4px 6px rgba(0, 0, 0, 0.5);
+  user-select: none;
+}
+
+#background-blur {
+  backdrop-filter: blur(256px);
+  width: 100vw;
+  height: 100vh;
+  position: fixed;
+  left: 0px;
+  top: 0px;
+}
+
+#background {
+  width: 100vw;
+  height: 100vh;
+  position: fixed;
+  left: 0px;
+  top: 0px;
+}
+
+.glass {
+  color: #ADBBED;
+  background-color: rgba(200, 200, 200, 0.1);
+  border: solid 1px rgba(255, 255, 255, 0.5);
+  border-radius: 48px;
+  box-shadow: 4px 4px 16px rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(64px);
+}
+
+#center {
+  height: 33vh;
+  width: 33vw;
+  position: fixed;
+  top: 50vh;
+  left: 50vw;
+  transform: TranslateX(-50%) TranslateY(-50%);
+  display: flex;
+  flex-direction: column;
+}
+
+#center * {
+  flex: 1;
+  text-align: center;
+}
+
+#center h1 {
+  display: flex;
+  color: #fff;
+  font-weight: 500;
+  margin: 0px;
+  justify-content: center;
+  align-items: center;
+  transform: TranslateY(+25%);
+}
+
+#button-container {
+  position: fixed;
+  left: 50vw;
+  bottom: 16.75vh;
+  transform: TranslateY(+50%) TranslateX(-50%);
+  display: flex;
+  flex-direction: row;
+  width: 824px;
+}
+
+
+#button-container>div {
+  height: 96px;
+  flex: 1;
+  margin-right: 12px;
+  margin-left: 12px;
+  position: relative;
+  transition: all 0.2s ease-in-out;
+}
+
+#button-container>div:hover {
+  background-color: rgba(255, 255, 255, 0.15);
+  transform: TranslateY(-6px);
+}
+
+#button-container>div>span {
+  position: absolute;
+  right: 56px;
+  top: 50%;
+  transform: TranslateY(-50%) TranslateX(+32%);
+  width: calc(100% - 128px);
+  text-align: center;
+  font-size: 32px;
+}
+
+#button-container>div>img {
+  height: 64px;
+  aspect-ratio: 1;
+  position: absolute;
+  left: 16px;
+  top: 16px;
+}
+
+#button-container>div>div {
+  height: 64px;
+  width: 3px;
+  border-radius: 9999px;
+  position: absolute;
+  top: 50%;
+  left: 96px;
+  background-color: rgba(255, 255, 255, 0.5);
+  transform: TranslateY(-50%);
+}
+
+#pfp {
+  height: 16vh;
+  aspect-ratio: 1;
+  position: fixed;
+  left: 50vw;
+  top: 16.5vh;
+  transform: TranslateX(-50%) TranslateY(-50%);
+  border-radius: 9999px;
+  box-shadow: 4px 4px 16px rgba(0, 0, 0, 0.5);
+}
