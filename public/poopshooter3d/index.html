@@ -152,6 +152,7 @@
     </div>
     
     <script>
+    let clouds = [];
     let camera, scene, renderer, world;
     let player = { health: 100 };
     let enemies = [];
@@ -172,7 +173,7 @@
     
     function init() {
         scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x87CEEB); // Light blue sky color
+        scene.background = new THREE.Color(0x87CEEB);
         camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
         renderer = new THREE.WebGLRenderer();
         renderer.setSize(window.innerWidth, window.innerHeight);
@@ -241,6 +242,13 @@
         
         updateHUD();
         
+        // Reset cloud positions
+        clouds.forEach(cloud => {
+            cloud.userData.angle = Math.random() * Math.PI * 2;
+            cloud.position.x = Math.cos(cloud.userData.angle) * cloud.userData.radius;
+            cloud.position.z = Math.sin(cloud.userData.angle) * cloud.userData.radius;
+        });
+        
         spawnEnemies();
     }
     
@@ -266,65 +274,101 @@
         const mountainGeometry = new THREE.ConeGeometry(20, 30, 4);
         const mountainMaterial = new THREE.MeshStandardMaterial({ color: 0x666666 });
         
-        // Create mountains in a circle around the play area
         const mountainCount = 20;
-        const radius = 80; // Distance from center
+        const radius = 80;
         
         for(let i = 0; i < mountainCount; i++) {
             const angle = (i / mountainCount) * Math.PI * 2;
             const mountain = new THREE.Mesh(mountainGeometry, mountainMaterial);
-            
-            // Position mountains in a circle
             mountain.position.x = Math.cos(angle) * radius;
             mountain.position.z = Math.sin(angle) * radius;
             mountain.position.y = 15;
-            
-            // Random rotation for variety
             mountain.rotation.y = Math.random() * Math.PI;
-            
-            // Random scale for variety
             const scale = 0.5 + Math.random() * 1.5;
             mountain.scale.set(scale, scale, scale);
-            
             scene.add(mountain);
         }
         
-        // Add some random mountains in a second row
         const secondRowCount = 15;
-        const secondRadius = 120; // Further out
+        const secondRadius = 120;
         
         for(let i = 0; i < secondRowCount; i++) {
-            const angle = ((i / secondRowCount) * Math.PI * 2) + (Math.PI / secondRowCount); // Offset angle
+            const angle = ((i / secondRowCount) * Math.PI * 2) + (Math.PI / secondRowCount);
             const mountain = new THREE.Mesh(mountainGeometry, mountainMaterial);
-            
             mountain.position.x = Math.cos(angle) * secondRadius;
             mountain.position.z = Math.sin(angle) * secondRadius;
             mountain.position.y = 15;
-            
             mountain.rotation.y = Math.random() * Math.PI;
-            
-            const scale = 0.7 + Math.random() * 1.8; // Slightly larger scale
+            const scale = 0.7 + Math.random() * 1.8;
             mountain.scale.set(scale, scale, scale);
-            
             scene.add(mountain);
+        }
+    
+        // Create clouds
+        const cloudGeometry = new THREE.SphereGeometry(3, 16, 16);
+        const cloudMaterial = new THREE.MeshStandardMaterial({
+            color: 0xffffff,
+            roughness: 1,
+            metalness: 0
+        });
+    
+        // Create cloud groups
+        for(let i = 0; i < 12; i++) {
+            const cloudGroup = new THREE.Group();
+            
+            // Create a random cluster of spheres for each cloud
+            const sphereCount = 5 + Math.floor(Math.random() * 5);
+            for(let j = 0; j < sphereCount; j++) {
+                const cloudPuff = new THREE.Mesh(cloudGeometry, cloudMaterial);
+                
+                // Random position within the cloud group
+                cloudPuff.position.set(
+                    (Math.random() - 0.5) * 4,
+                    (Math.random() - 0.5) * 2,
+                    (Math.random() - 0.5) * 4
+                );
+                
+                // Random scale for variety
+                const scale = 0.5 + Math.random() * 0.5;
+                cloudPuff.scale.set(scale, scale * 0.6, scale);
+                
+                cloudGroup.add(cloudPuff);
+            }
+            
+            // Position the cloud group in a circle around the scene
+            const angle = (i / 12) * Math.PI * 2;
+            const radius = 60 + Math.random() * 20;
+            cloudGroup.position.set(
+                Math.cos(angle) * radius,
+                30 + Math.random() * 10,
+                Math.sin(angle) * radius
+            );
+            
+            // Store the original position for rotation
+            cloudGroup.userData.angle = angle;
+            cloudGroup.userData.radius = radius;
+            cloudGroup.userData.rotationSpeed = 0.0001 + Math.random() * 0.0001;
+            
+            scene.add(cloudGroup);
+            
+            // Add to a new array to track clouds
+            clouds.push(cloudGroup);
         }
     }
     
     function shootPoop() {
         if(gameIsOver) return;
         
-        // Create main poop body
         const poopGeometry = new THREE.SphereGeometry(0.2, 32, 32);
         const poopMaterial = new THREE.MeshStandardMaterial({ 
             color: 0x4a3525,
             roughness: 0.7,
             metalness: 0.1
         });
-        const poop = new THREE.Group(); // Create a group to hold all poop parts
+        const poop = new THREE.Group();
         const poopBody = new THREE.Mesh(poopGeometry, poopMaterial);
         poop.add(poopBody);
     
-        // Add eyes (white part)
         const eyeGeometry = new THREE.SphereGeometry(0.05, 16, 16);
         const eyeWhiteMaterial = new THREE.MeshStandardMaterial({ color: 0xffffff });
         
@@ -336,7 +380,6 @@
         rightEye.position.set(0.08, 0.05, 0.15);
         poop.add(rightEye);
     
-        // Add pupils
         const pupilGeometry = new THREE.SphereGeometry(0.02, 8, 8);
         const pupilMaterial = new THREE.MeshStandardMaterial({ color: 0x000000 });
         
@@ -348,7 +391,6 @@
         rightPupil.position.set(0.08, 0.05, 0.18);
         poop.add(rightPupil);
     
-        // Add smile
         const smileGeometry = new THREE.TorusGeometry(0.08, 0.02, 8, 16, Math.PI);
         const smileMaterial = new THREE.MeshStandardMaterial({ color: 0x000000 });
         const smile = new THREE.Mesh(smileGeometry, smileMaterial);
@@ -361,8 +403,6 @@
         
         const spawnDistance = 2;
         poop.position.copy(camera.position).add(direction.multiplyScalar(spawnDistance));
-        
-        // Make poop always face the camera
         poop.lookAt(camera.position);
         
         scene.add(poop);
@@ -379,13 +419,16 @@
         );
         world.addBody(body);
         
-        projectiles.push({ mesh: poop, body: body });
+        projectiles.push({ 
+            mesh: poop, 
+            body: body,
+            timestamp: Date.now() 
+        });
     }
     
     function spawnEnemies() {
         const enemyCount = Math.min(5 + wave * 2, 20);
         for(let i = 0; i < enemyCount; i++) {
-            // Create main poop body
             const poopGroup = new THREE.Group();
             const bodyGeometry = new THREE.SphereGeometry(0.5, 32, 32);
             const poopMaterial = new THREE.MeshStandardMaterial({ 
@@ -396,7 +439,6 @@
             const poopBody = new THREE.Mesh(bodyGeometry, poopMaterial);
             poopGroup.add(poopBody);
     
-            // Add eyes (white part)
             const eyeGeometry = new THREE.SphereGeometry(0.12, 16, 16);
             const eyeWhiteMaterial = new THREE.MeshStandardMaterial({ color: 0xffffff });
             
@@ -408,7 +450,6 @@
             rightEye.position.set(0.2, 0.15, 0.35);
             poopGroup.add(rightEye);
     
-            // Add pupils
             const pupilGeometry = new THREE.SphereGeometry(0.06, 8, 8);
             const pupilMaterial = new THREE.MeshStandardMaterial({ color: 0x000000 });
             
@@ -420,7 +461,6 @@
             rightPupil.position.set(0.2, 0.15, 0.42);
             poopGroup.add(rightPupil);
     
-            // Add smile
             const smileGeometry = new THREE.TorusGeometry(0.2, 0.05, 8, 16, Math.PI);
             const smileMaterial = new THREE.MeshStandardMaterial({ color: 0x000000 });
             const smile = new THREE.Mesh(smileGeometry, smileMaterial);
@@ -455,7 +495,6 @@
             direction.subVectors(camera.position, enemy.mesh.position).normalize();
             enemy.mesh.position.add(direction.multiplyScalar(enemy.speed));
             
-            // Make enemy face the player
             enemy.mesh.lookAt(camera.position);
             
             for(let j = projectiles.length - 1; j >= 0; j--) {
@@ -624,7 +663,7 @@
     function movePlayer() {
         if(gameIsOver) return;
         
-        const speed = 0.45 * hacks.speedMultiplier;
+        const speed = 0.9 * hacks.speedMultiplier;
         const direction = new THREE.Vector3();
         const playerVelocity = new CANNON.Vec3();
         
@@ -704,12 +743,22 @@
             movePlayer();
             updateEnemies();
             
+            // Update cloud positions
+            clouds.forEach(cloud => {
+                cloud.userData.angle += cloud.userData.rotationSpeed;
+                cloud.position.x = Math.cos(cloud.userData.angle) * cloud.userData.radius;
+                cloud.position.z = Math.sin(cloud.userData.angle) * cloud.userData.radius;
+                
+                // Slowly rotate each cloud around its own axis
+                cloud.rotation.y += 0.001;
+            });
+            
             for(let i = projectiles.length - 1; i >= 0; i--) {
                 const projectile = projectiles[i];
                 projectile.mesh.position.copy(projectile.body.position);
                 projectile.mesh.quaternion.copy(projectile.body.quaternion);
                 
-                if(projectile.mesh.position.y < -10) {
+                if(projectile.mesh.position.y < -10 || Date.now() - projectile.timestamp > 5000) {
                     scene.remove(projectile.mesh);
                     world.remove(projectile.body);
                     projectiles.splice(i, 1);
