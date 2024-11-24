@@ -117,6 +117,7 @@
     <body>
     <div id="hud">
       <div>Wave: <span id="waveCount">1</span></div>
+      <div>Poops: <span id="poopCount">0</span>/<span id="totalPoops">0</span></div>
       <div>Health:</div>
       <div class="bar"><div id="healthBar"></div></div>
     </div>
@@ -172,11 +173,45 @@
     };
     
     function init() {
+        // Initialize scene
         scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x87CEEB);
+    
+        // Create sky gradient
+        const skyGeometry = new THREE.BoxGeometry(1000, 1000, 1000);
+        const skyMaterial = new THREE.ShaderMaterial({
+            uniforms: {
+                topColor: { value: new THREE.Color(0x87CEEB) },
+                bottomColor: { value: new THREE.Color(0x7AB6D1) }
+            },
+            vertexShader: `
+                varying vec3 vWorldPosition;
+                void main() {
+                    vec4 worldPosition = modelMatrix * vec4(position, 1.0);
+                    vWorldPosition = worldPosition.xyz;
+                    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+                }
+            `,
+            fragmentShader: `
+                uniform vec3 topColor;
+                uniform vec3 bottomColor;
+                varying vec3 vWorldPosition;
+                void main() {
+                    float h = normalize(vWorldPosition).y;
+                    float t = max(0.0, min(1.0, (h + 0.5) * 0.5));
+                    gl_FragColor = vec4(mix(bottomColor, topColor, t), 1.0);
+                }
+            `,
+            side: THREE.BackSide
+        });
+    
+        const sky = new THREE.Mesh(skyGeometry, skyMaterial);
+        scene.add(sky);
+    
         camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
         renderer = new THREE.WebGLRenderer();
         renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
         document.body.appendChild(renderer.domElement);
     
         world = new CANNON.World();
@@ -184,6 +219,15 @@
     
         const light = new THREE.DirectionalLight(0xffffff, 1);
         light.position.set(10, 10, 10);
+        light.castShadow = true;
+        light.shadow.mapSize.width = 1024;
+        light.shadow.mapSize.height = 1024;
+        light.shadow.camera.near = 1;
+        light.shadow.camera.far = 50;
+        light.shadow.camera.left = -20;
+        light.shadow.camera.right = 20;
+        light.shadow.camera.top = 20;
+        light.shadow.camera.bottom = -20;
         scene.add(light);
         scene.add(new THREE.AmbientLight(0x404040));
     
@@ -242,7 +286,10 @@
         
         updateHUD();
         
-        // Reset cloud positions
+        const initialEnemyCount = 5 + wave * 2;
+        document.getElementById('poopCount').textContent = initialEnemyCount;
+        document.getElementById('totalPoops').textContent = initialEnemyCount;
+        
         clouds.forEach(cloud => {
             cloud.userData.angle = Math.random() * Math.PI * 2;
             cloud.position.x = Math.cos(cloud.userData.angle) * cloud.userData.radius;
@@ -261,6 +308,7 @@
         });
         const ground = new THREE.Mesh(geometry, material);
         ground.rotation.x = -Math.PI / 2;
+        ground.receiveShadow = true;
         scene.add(ground);
     
         const groundShape = new CANNON.Plane();
@@ -276,6 +324,26 @@
         
         const mountainCount = 20;
         const radius = 80;
+        
+        const sunGeometry = new THREE.SphereGeometry(5, 32, 32);
+        const sunMaterial = new THREE.MeshBasicMaterial({
+            color: 0xffff00,
+            transparent: true,
+            opacity: 0.8
+        });
+        const sun = new THREE.Mesh(sunGeometry, sunMaterial);
+        sun.position.set(50, 100, -50);
+    
+        const sunGlowGeometry = new THREE.SphereGeometry(7, 32, 32);
+        const sunGlowMaterial = new THREE.MeshBasicMaterial({
+            color: 0xffff66,
+            transparent: true,
+            opacity: 0.2
+        });
+        const sunGlow = new THREE.Mesh(sunGlowGeometry, sunGlowMaterial);
+        sun.add(sunGlow);
+    
+        scene.add(sun);
         
         for(let i = 0; i < mountainCount; i++) {
             const angle = (i / mountainCount) * Math.PI * 2;
@@ -304,7 +372,6 @@
             scene.add(mountain);
         }
     
-        // Create clouds
         const cloudGeometry = new THREE.SphereGeometry(3, 16, 16);
         const cloudMaterial = new THREE.MeshStandardMaterial({
             color: 0xffffff,
@@ -312,30 +379,22 @@
             metalness: 0
         });
     
-        // Create cloud groups
         for(let i = 0; i < 12; i++) {
             const cloudGroup = new THREE.Group();
             
-            // Create a random cluster of spheres for each cloud
             const sphereCount = 5 + Math.floor(Math.random() * 5);
             for(let j = 0; j < sphereCount; j++) {
                 const cloudPuff = new THREE.Mesh(cloudGeometry, cloudMaterial);
-                
-                // Random position within the cloud group
                 cloudPuff.position.set(
                     (Math.random() - 0.5) * 4,
                     (Math.random() - 0.5) * 2,
                     (Math.random() - 0.5) * 4
                 );
-                
-                // Random scale for variety
                 const scale = 0.5 + Math.random() * 0.5;
                 cloudPuff.scale.set(scale, scale * 0.6, scale);
-                
                 cloudGroup.add(cloudPuff);
             }
             
-            // Position the cloud group in a circle around the scene
             const angle = (i / 12) * Math.PI * 2;
             const radius = 60 + Math.random() * 20;
             cloudGroup.position.set(
@@ -344,15 +403,86 @@
                 Math.sin(angle) * radius
             );
             
-            // Store the original position for rotation
             cloudGroup.userData.angle = angle;
             cloudGroup.userData.radius = radius;
             cloudGroup.userData.rotationSpeed = 0.0001 + Math.random() * 0.0001;
             
             scene.add(cloudGroup);
-            
-            // Add to a new array to track clouds
             clouds.push(cloudGroup);
+        }
+    
+        const treeCount = 50;
+        const treeGeometry = new THREE.CylinderGeometry(0.3, 0.5, 4, 8);
+        const treeMaterial = new THREE.MeshStandardMaterial({ 
+            color: 0x4b3621,
+            roughness: 0.8,
+            metalness: 0.1
+        });
+    
+        const foliageGeometry = new THREE.IcosahedronGeometry(2, 1);
+        const foliageMaterial = new THREE.MeshStandardMaterial({
+            color: 0x2d5a27,
+            roughness: 0.8,
+            metalness: 0.1
+        });
+    
+        const treePositions = [];
+        const minTreeDistance = 5;
+    
+        for(let attempts = 0; attempts < 200 && treePositions.length < treeCount; attempts++) {
+            const angle = Math.random() * Math.PI * 2;
+            const minRadius = 15;
+            const maxRadius = 45;
+            const radius = minRadius + Math.random() * (maxRadius - minRadius);
+            
+            const position = {
+                x: Math.cos(angle) * radius,
+                z: Math.sin(angle) * radius
+            };
+    
+            let tooClose = false;
+            for(const existingPos of treePositions) {
+                const dx = position.x - existingPos.x;
+                const dz = position.z - existingPos.z;
+                const distance = Math.sqrt(dx * dx + dz * dz);
+                if(distance < minTreeDistance) {
+                    tooClose = true;
+                    break;
+                }
+            }
+    
+            if(!tooClose) {
+                treePositions.push(position);
+    
+                const treeGroup = new THREE.Group();
+                const trunk = new THREE.Mesh(treeGeometry, treeMaterial);
+                trunk.position.y = 2;
+                treeGroup.add(trunk);
+                
+                const leafClusters = 2 + Math.floor(Math.random());
+                for(let j = 0; j < leafClusters; j++) {
+                    const foliage = new THREE.Mesh(foliageGeometry, foliageMaterial);
+                    foliage.position.y = 4 + j * 1.5;
+                    foliage.position.x = (Math.random() - 0.5) * 0.5;
+                    foliage.position.z = (Math.random() - 0.5) * 0.5;
+                    const scale = 0.6 + Math.random() * 0.4;
+                    foliage.scale.set(scale, scale, scale);
+                    treeGroup.add(foliage);
+                }
+                
+                treeGroup.position.set(
+                    position.x,
+                    0,
+                    position.z
+                );
+                
+                treeGroup.rotation.y = Math.random() * Math.PI * 2;
+                
+                const treeScale = 0.8 + Math.random() * 0.4;
+                treeGroup.scale.set(treeScale, treeScale, treeScale);
+                
+                scene.add(treeGroup);
+            }
         }
     }
     
@@ -363,10 +493,13 @@
         const poopMaterial = new THREE.MeshStandardMaterial({ 
             color: 0x4a3525,
             roughness: 0.7,
-            metalness: 0.1
+            metalness: 0.1,
+            emissive: 0x4a3525,
+            emissiveIntensity: 0.2
         });
         const poop = new THREE.Group();
         const poopBody = new THREE.Mesh(poopGeometry, poopMaterial);
+        poopBody.castShadow = true;
         poop.add(poopBody);
     
         const eyeGeometry = new THREE.SphereGeometry(0.05, 16, 16);
@@ -427,16 +560,29 @@
     }
     
     function spawnEnemies() {
-        const enemyCount = Math.min(5 + wave * 2, 20);
+        const baseEnemyCount = 5;
+        const enemyCount = baseEnemyCount + wave * 2; // Removed the Math.min cap
+        
+        // Update the poop counter UI
+        document.getElementById('poopCount').textContent = enemyCount;
+        document.getElementById('totalPoops').textContent = enemyCount;
+        
         for(let i = 0; i < enemyCount; i++) {
             const poopGroup = new THREE.Group();
+            
+            // Add random scale variation between 0.8 and 1.4
+            const scale = 0.8 + Math.random() * 0.6;
+            
             const bodyGeometry = new THREE.SphereGeometry(0.5, 32, 32);
             const poopMaterial = new THREE.MeshStandardMaterial({ 
                 color: 0x4a3525,
                 roughness: 0.7,
-                metalness: 0.1
+                metalness: 0.1,
+                emissive: 0x4a3525,
+                emissiveIntensity: 0.2
             });
             const poopBody = new THREE.Mesh(bodyGeometry, poopMaterial);
+            poopBody.castShadow = true;
             poopGroup.add(poopBody);
     
             const eyeGeometry = new THREE.SphereGeometry(0.12, 16, 16);
@@ -477,17 +623,24 @@
                 Math.sin(angle) * distance
             );
             
+            // Apply the random scale to the entire group
+            poopGroup.scale.set(scale, scale, scale);
+            
             scene.add(poopGroup);
             enemies.push({
                 mesh: poopGroup,
                 health: 100,
-                speed: 0.05 + wave * 0.01
+                speed: 0.05 + wave * 0.01,
+                scale: scale
             });
         }
     }
     
     function updateEnemies() {
         if(gameIsOver) return;
+        
+        // Update the current poop count
+        document.getElementById('poopCount').textContent = enemies.length;
         
         for(let i = enemies.length - 1; i >= 0; i--) {
             const enemy = enemies[i];
@@ -733,6 +886,8 @@
     function updateHUD() {
         document.getElementById('waveCount').textContent = wave;
         document.getElementById('healthBar').style.width = player.health + '%';
+        document.getElementById('poopCount').textContent = enemies.length;
+        document.getElementById('totalPoops').textContent = enemies.length > 0 ? enemies.length : 0;
     }
     
     function animate() {
@@ -743,13 +898,10 @@
             movePlayer();
             updateEnemies();
             
-            // Update cloud positions
             clouds.forEach(cloud => {
                 cloud.userData.angle += cloud.userData.rotationSpeed;
                 cloud.position.x = Math.cos(cloud.userData.angle) * cloud.userData.radius;
                 cloud.position.z = Math.sin(cloud.userData.angle) * cloud.userData.radius;
-                
-                // Slowly rotate each cloud around its own axis
                 cloud.rotation.y += 0.001;
             });
             
