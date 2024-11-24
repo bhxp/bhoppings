@@ -173,10 +173,7 @@
     };
     
     function init() {
-        // Initialize scene
         scene = new THREE.Scene();
-    
-        // Create sky gradient
         const skyGeometry = new THREE.BoxGeometry(1000, 1000, 1000);
         const skyMaterial = new THREE.ShaderMaterial({
             uniforms: {
@@ -490,12 +487,45 @@
         if(gameIsOver) return;
         
         const poopGeometry = new THREE.SphereGeometry(0.2, 32, 32);
-        const poopMaterial = new THREE.MeshStandardMaterial({ 
-            color: 0x4a3525,
-            roughness: 0.7,
-            metalness: 0.1,
-            emissive: 0x4a3525,
-            emissiveIntensity: 0.2
+        const poopMaterial = new THREE.ShaderMaterial({
+            uniforms: {
+                color: { value: new THREE.Color(0x4a3525) },
+                lightDirection: { value: new THREE.Vector3(1, 1, 1).normalize() }
+            },
+            vertexShader: `
+                varying vec3 vNormal;
+                varying vec3 vViewPosition;
+                
+                void main() {
+                    vNormal = normalize(normalMatrix * normal);
+                    vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+                    vViewPosition = -mvPosition.xyz;
+                    gl_Position = projectionMatrix * mvPosition;
+                }
+            `,
+            fragmentShader: `
+                uniform vec3 color;
+                uniform vec3 lightDirection;
+                varying vec3 vNormal;
+                varying vec3 vViewPosition;
+                
+                void main() {
+                    vec3 normal = normalize(vNormal);
+                    vec3 viewDir = normalize(vViewPosition);
+                    
+                    float diffuse = max(0.0, dot(normal, lightDirection));
+                    
+                    float outline = 1.0 - dot(normal, viewDir);
+                    float outlineStrength = smoothstep(0.6, 0.9, outline);
+                    
+                    vec3 finalColor = color;
+                    finalColor = mix(finalColor, vec3(1.0), outlineStrength * 0.8);
+                    finalColor = mix(color * 0.5, finalColor, diffuse);
+                    
+                    gl_FragColor = vec4(finalColor, 1.0);
+                    gl_FragColor.rgb += color * 0.2;
+                }
+            `
         });
         const poop = new THREE.Group();
         const poopBody = new THREE.Mesh(poopGeometry, poopMaterial);
@@ -561,25 +591,56 @@
     
     function spawnEnemies() {
         const baseEnemyCount = 5;
-        const enemyCount = baseEnemyCount + wave * 2; // Removed the Math.min cap
+        const enemyCount = baseEnemyCount + wave * 2; 
         
-        // Update the poop counter UI
         document.getElementById('poopCount').textContent = enemyCount;
         document.getElementById('totalPoops').textContent = enemyCount;
         
         for(let i = 0; i < enemyCount; i++) {
             const poopGroup = new THREE.Group();
             
-            // Add random scale variation between 0.8 and 1.4
             const scale = 0.8 + Math.random() * 0.6;
             
             const bodyGeometry = new THREE.SphereGeometry(0.5, 32, 32);
-            const poopMaterial = new THREE.MeshStandardMaterial({ 
-                color: 0x4a3525,
-                roughness: 0.7,
-                metalness: 0.1,
-                emissive: 0x4a3525,
-                emissiveIntensity: 0.2
+            const poopMaterial = new THREE.ShaderMaterial({
+                uniforms: {
+                    color: { value: new THREE.Color(0x4a3525) },
+                    lightDirection: { value: new THREE.Vector3(1, 1, 1).normalize() }
+                },
+                vertexShader: `
+                    varying vec3 vNormal;
+                    varying vec3 vViewPosition;
+                    
+                    void main() {
+                        vNormal = normalize(normalMatrix * normal);
+                        vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+                        vViewPosition = -mvPosition.xyz;
+                        gl_Position = projectionMatrix * mvPosition;
+                    }
+                `,
+                fragmentShader: `
+                    uniform vec3 color;
+                    uniform vec3 lightDirection;
+                    varying vec3 vNormal;
+                    varying vec3 vViewPosition;
+                    
+                    void main() {
+                        vec3 normal = normalize(vNormal);
+                        vec3 viewDir = normalize(vViewPosition);
+                        
+                        float diffuse = max(0.0, dot(normal, lightDirection));
+                        
+                        float outline = 1.0 - dot(normal, viewDir);
+                        float outlineStrength = smoothstep(0.6, 0.9, outline);
+                        
+                        vec3 finalColor = color;
+                        finalColor = mix(finalColor, vec3(1.0), outlineStrength * 0.8);
+                        finalColor = mix(color * 0.5, finalColor, diffuse);
+                        
+                        gl_FragColor = vec4(finalColor, 1.0);
+                        gl_FragColor.rgb += color * 0.2;
+                    }
+                `
             });
             const poopBody = new THREE.Mesh(bodyGeometry, poopMaterial);
             poopBody.castShadow = true;
@@ -623,7 +684,6 @@
                 Math.sin(angle) * distance
             );
             
-            // Apply the random scale to the entire group
             poopGroup.scale.set(scale, scale, scale);
             
             scene.add(poopGroup);
@@ -639,7 +699,6 @@
     function updateEnemies() {
         if(gameIsOver) return;
         
-        // Update the current poop count
         document.getElementById('poopCount').textContent = enemies.length;
         
         for(let i = enemies.length - 1; i >= 0; i--) {
