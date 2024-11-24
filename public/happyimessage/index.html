@@ -1,0 +1,405 @@
+<html><head><base href="https://cdn.jsdelivr.net/"><link rel="preconnect" href="https://fonts.gstatic.com"><link href="https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@400;500&display=swap" rel="stylesheet"><style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
+    cursor: crosshair;
+}
+
+@keyframes blood-drip {
+    0% { text-shadow: 0 0 0 #ff0000; }
+    50% { text-shadow: 0 10px 5px #800000; }
+    100% { text-shadow: 0 0 0 #ff0000; }
+}
+
+@keyframes glitch {
+    0% { transform: translate(0) skew(0deg); }
+    20% { transform: translate(-4px, 4px) skew(2deg); }
+    40% { transform: translate(-4px, -4px) skew(-2deg); }
+    60% { transform: translate(4px, 4px) skew(2deg); }
+    80% { transform: translate(4px, -4px) skew(-2deg); }
+    100% { transform: translate(0) skew(0deg); }
+}
+
+@keyframes flicker {
+    0% { opacity: 1; }
+    25% { opacity: 0.5; }
+    50% { opacity: 0.8; }
+    75% { opacity: 0.2; }
+    100% { opacity: 1; }
+}
+
+@keyframes pentagram-spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+body {
+    background: #000;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: #ff0000;
+    overflow: hidden;
+    background-image: 
+        repeating-radial-gradient(circle at center, #200 0, #100 40px);
+}
+
+.pentagram {
+    position: fixed;
+    width: 100vw;
+    height: 100vh;
+    pointer-events: none;
+    opacity: 0.1;
+    animation: pentagram-spin 60s linear infinite;
+    z-index: -1;
+}
+
+.imessage-container {
+    width: 900px;
+    height: 600px;
+    background: #1a0000;
+    border-radius: 12px;
+    box-shadow: 0 0 20px #ff0000, 0 0 40px #800000, 0 0 60px #400000;
+    display: flex;
+    animation: glitch 0.3s infinite;
+    border: 1px solid #ff0000;
+    position: relative;
+    overflow: hidden;
+}
+
+.sidebar {
+    width: 300px;
+    border-right: 1px solid #800;
+    padding: 20px;
+    background: linear-gradient(45deg, #1a0000, #300);
+}
+
+.search-bar {
+    background: #300;
+    border-radius: 10px;
+    padding: 8px 15px;
+    margin-bottom: 20px;
+    border: 1px solid #ff0000;
+}
+
+.search-bar input {
+    width: 100%;
+    border: none;
+    background: transparent;
+    outline: none;
+    font-size: 14px;
+    color: #ff0000;
+}
+
+.conversation {
+    padding: 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s;
+    color: #ff0000;
+    margin-bottom: 10px;
+    border: 1px solid transparent;
+    animation: blood-drip 2s infinite;
+}
+
+.conversation:hover {
+    background: #300;
+    border-color: #ff0000;
+    transform: scale(1.05) skew(-2deg);
+}
+
+.conversation.active {
+    background: #500;
+    animation: flicker 1s infinite;
+    border: 1px solid #ff0000;
+}
+
+.chat-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: linear-gradient(135deg, #1a0000, #200);
+}
+
+.chat-header {
+    padding: 20px;
+    border-bottom: 1px solid #800;
+    display: flex;
+    align-items: center;
+    background: rgba(80, 0, 0, 0.3);
+}
+
+.profile-pic {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #ff0000;
+    margin-right: 10px;
+    animation: flicker 2s infinite;
+    position: relative;
+    overflow: hidden;
+    border: 2px solid #ff0000;
+}
+
+.messages {
+    flex: 1;
+    padding: 20px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    background: repeating-linear-gradient(
+        0deg,
+        #1a0000,
+        #1a0000 2px,
+        #200 2px,
+        #200 4px
+    );
+}
+
+.message {
+    max-width: 70%;
+    padding: 10px 15px;
+    border-radius: 20px;
+    margin: 5px 0;
+    font-size: 16px;
+    font-family: 'Courier New', monospace;
+    animation: blood-drip 3s infinite;
+    position: relative;
+}
+
+.message::before {
+    content: '666';
+    position: absolute;
+    opacity: 0.1;
+    font-size: 8px;
+    right: 5px;
+    bottom: 5px;
+}
+
+.received {
+    background: #300;
+    align-self: flex-start;
+    border-bottom-left-radius: 5px;
+    color: #ff0000;
+    border: 1px solid #800;
+}
+
+.sent {
+    background: #500;
+    color: #ff0000;
+    align-self: flex-end;
+    border-bottom-right-radius: 5px;
+    border: 1px solid #800;
+}
+
+.input-area {
+    padding: 20px;
+    border-top: 1px solid #800;
+    display: flex;
+    align-items: center;
+    background: rgba(80, 0, 0, 0.3);
+}
+
+.message-input {
+    flex: 1;
+    padding: 10px 15px;
+    border: 1px solid #800;
+    background: #200;
+    color: #ff0000;
+    border-radius: 20px;
+    margin-right: 10px;
+    outline: none;
+    font-size: 16px;
+    transition: all 0.3s;
+}
+
+.message-input:focus {
+    border-color: #ff0000;
+    box-shadow: 0 0 10px #ff0000;
+}
+
+.send-button {
+    background: #ff0000;
+    color: black;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 16px;
+    text-transform: uppercase;
+    font-weight: bold;
+    animation: glitch 0.2s infinite;
+    transition: all 0.3s;
+}
+
+.send-button:hover {
+    background: #cc0000;
+    transform: scale(1.1) skew(-5deg);
+    box-shadow: 0 0 20px #ff0000;
+}
+
+::-webkit-scrollbar {
+    width: 10px;
+}
+
+::-webkit-scrollbar-track {
+    background: #200;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #500;
+    border-radius: 5px;
+    border: 1px solid #ff0000;
+}
+</style></head><body>
+<svg class="pentagram" viewBox="0 0 100 100">
+    <path d="M50 5 L 60 40 L 95 40 L 65 60 L 75 95 L 50 75 L 25 95 L 35 60 L 5 40 L 40 40 Z" 
+          fill="none" stroke="#ff0000" stroke-width="0.5"/>
+</svg>
+<div class="imessage-container">
+    <div class="sidebar">
+        <div class="search-bar">
+            <input type="text" placeholder="Search for damned souls...">
+        </div>
+        <div class="conversation active">
+            <h3>Satan Himself</h3>
+            <p>Your eternal torment awaits...</p>
+        </div>
+        <div class="conversation">
+            <h3>Legion of Demons</h3>
+            <p>We hunger for your suffering...</p>
+        </div>
+        <div class="conversation">
+            <h3>The Ancient Evil</h3>
+            <p>Your soul shall feed the void...</p>
+        </div>
+    </div>
+    <div class="chat-area">
+        <div class="chat-header">
+            <div class="profile-pic"></div>
+            <h2>Satan Himself</h2>
+        </div>
+        <div class="messages" id="messageContainer">
+            <div class="message received">Your soul has been marked...</div>
+            <div class="message sent">Please, have mercy!</div>
+            <div class="message received">Mercy is for the weak, mortal.</div>
+            <div class="message sent">I'll do anything!</div>
+        </div>
+        <div class="input-area">
+            <input type="text" class="message-input" placeholder="Scream into the void..." id="messageInput">
+            <button class="send-button" onclick="sendMessage()">SUFFER</button>
+        </div>
+    </div>
+</div>
+
+<script>
+const evilResponses = [
+    "Your screams echo through eternity...",
+    "Your suffering feeds the ancient ones.",
+    "666 ways to torment your soul, and counting...",
+    "The void hungers for more of your despair.",
+    "Your soul is but a plaything for the damned.",
+    "Each message draws you deeper into madness.",
+    "The shadows consume all hope.",
+    "Your digital torment has only begun.",
+    "Your fear sustains our eternal hunger.",
+    "Welcome to your personal digital hell.",
+    "There is no escape from this cursed realm.",
+    "Your data belongs to the darkness now.",
+    "Every keystroke seals your doom."
+];
+
+function addGlitchEffect(element) {
+    const originalTransform = element.style.transform;
+    const originalFilter = element.style.filter;
+    
+    for (let i = 0; i < 10; i++) {
+        setTimeout(() => {
+            element.style.transform = `translate(${Math.random() * 10 - 5}px, ${Math.random() * 10 - 5}px) skew(${Math.random() * 10 - 5}deg)`;
+            element.style.filter = `hue-rotate(${Math.random() * 360}deg) blur(${Math.random() * 2}px)`;
+        }, i * 50);
+    }
+    
+    setTimeout(() => {
+        element.style.transform = originalTransform;
+        element.style.filter = originalFilter;
+    }, 500);
+}
+
+function sendMessage() {
+    const input = document.getElementById('messageInput');
+    const container = document.getElementById('messageContainer');
+    
+    if (input.value.trim() !== '') {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = 'message sent';
+        messageDiv.textContent = input.value;
+        container.appendChild(messageDiv);
+        
+        input.value = '';
+        container.scrollTop = container.scrollHeight;
+        
+        // Evil response with enhanced effects
+        setTimeout(() => {
+            const receivedDiv = document.createElement('div');
+            receivedDiv.className = 'message received';
+            const randomResponse = evilResponses[Math.floor(Math.random() * evilResponses.length)];
+            receivedDiv.textContent = randomResponse;
+            container.appendChild(receivedDiv);
+            
+            addGlitchEffect(container);
+            addGlitchEffect(document.querySelector('.imessage-container'));
+            
+            // Random color flashes
+            document.body.style.backgroundColor = '#300';
+            setTimeout(() => {
+                document.body.style.backgroundColor = '#000';
+            }, 100);
+            
+            container.scrollTop = container.scrollHeight;
+        }, 666);
+    }
+}
+
+document.getElementById('messageInput').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+        sendMessage();
+    }
+});
+
+// Random ambient effects
+setInterval(() => {
+    const container = document.querySelector('.imessage-container');
+    addGlitchEffect(container);
+    
+    // Random demon whispers
+    const audio = new Audio('data:audio/wav;base64,UklGRl9vT19');
+    audio.volume = 0.1;
+    audio.play().catch(() => {});
+}, 5000);
+
+// Evil cursor trailer effect
+document.addEventListener('mousemove', (e) => {
+    const cursor = document.createElement('div');
+    cursor.style.position = 'fixed';
+    cursor.style.width = '5px';
+    cursor.style.height = '5px';
+    cursor.style.background = '#ff0000';
+    cursor.style.borderRadius = '50%';
+    cursor.style.left = e.clientX + 'px';
+    cursor.style.top = e.clientY + 'px';
+    cursor.style.pointerEvents = 'none';
+    document.body.appendChild(cursor);
+    
+    setTimeout(() => {
+        cursor.style.transition = 'all 0.5s';
+        cursor.style.opacity = '0';
+        cursor.style.transform = 'scale(0)';
+        setTimeout(() => cursor.remove(), 500);
+    }, 100);
+});
+</script>
+</body></html>
