@@ -1,0 +1,142 @@
+<html><head><base href="." />
+<style>
+body {
+    background-color: #000000;
+    color: #9b8f8f;
+    font-family: "Courier New", monospace;
+    margin: 0;
+    padding: 20px;
+    line-height: 1.6;
+    cursor: crosshair;
+}
+
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+    opacity: 0.9;
+}
+
+img {
+    max-width: 100%;
+    height: auto;
+    filter: sepia(30%) contrast(120%) brightness(70%);
+    margin: 20px 0;
+    transition: filter 3s ease;
+}
+
+img:hover {
+    filter: invert(10%) sepia(50%) contrast(150%) brightness(60%);
+}
+
+p {
+    font-size: 14px;
+    letter-spacing: 1.5px;
+    text-align: justify;
+    margin: 25px 0;
+    animation: flicker 5s infinite;
+    word-spacing: 3px;
+}
+
+@keyframes flicker {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.95; }
+    25%, 75% { opacity: 0.8; }
+}
+
+.glitch-text {
+    position: relative;
+    animation: glitch 3s infinite;
+}
+
+@keyframes glitch {
+    0% { transform: translate(0) }
+    20% { transform: translate(-2px, 2px) }
+    40% { transform: translate(-2px, -2px) }
+    60% { transform: translate(2px, 2px) }
+    80% { transform: translate(2px, -2px) }
+    100% { transform: translate(0) }
+}
+
+h1 {
+    font-size: 24px;
+    color: #615858;
+    text-transform: uppercase;
+    letter-spacing: 5px;
+    text-align: center;
+    margin: 40px 0;
+}
+
+.static {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    opacity: 0.05;
+    z-index: 9999;
+    background: url('data:image/svg+xml,<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"><filter id="noise"><feTurbulence type="fractalNoise" baseFrequency="0.65" numOctaves="3" stitchTiles="stitch"/></filter><rect width="100%" height="100%" filter="url(%23noise)"/></svg>');
+}
+</style>
+</head>
+<body>
+<div class="static"></div>
+<div class="container">
+    <h1 class="glitch-text">[PROTOCOL_533][STATUS:INACTIVE][BREACH:DETECTED]</h1>
+    
+    <p>observation_log.entry_1: entities manifest in periphery frequencies. visual corruption spreading through [REDACTED] spectrum. they whisper in mathematics we cannot solve.</p>
+    
+    <img src="https://i.imgur.com/8bQnXuf.png" alt="abstract disturbing colors, degraded photograph quality suggesting something beyond comprehension" width="800" height="600">
+    
+    <p>emergency_protocol.447: reality cohesion at 13%. [DATA EXPUNGED] materialized in sector 7. those who witnessed the angle-that-should-not-be have ceased to [ERROR:OVERFLOW].</p>
+    
+    <img src="https://i.imgur.com/0Vx2x84.png" alt="degraded photograph of ambulance in darkness, suggesting emergency and isolation" width="800" height="600">
+    
+    <p>commercial_zone.analysis: consumer vessels drift through non-euclidean spaces. the empty carries weight now. counting backwards from infinity. regression coefficient: [UNDEFINED].</p>
+    
+    <img src="https://i.imgur.com/jihNwGI.png" alt="abandoned shopping cart in thick fog, suggesting consumer apocalypse" width="800" height="600">
+    
+    <p>spatial_anomaly.report: cartographic systems report recursive errors. paths lead to themselves. topology has begun to [SYSTEM ERROR: RECURSIVE LOOP DETECTED]. avoid triangulation.</p>
+    
+    <img src="https://i.imgur.com/0ZHyssr.png" alt="distant street sign obscured by fog, suggesting lost direction and confusion" width="800" height="600">
+    
+    <p>biosphere_breach.log: chlorophyll entities exhibit non-standard growth patterns. fog density exceeds possible values. breathing the numbers. geometric progression of organic matter defies [DATA CORRUPTED].</p>
+    
+    <img src="https://i.imgur.com/Zq7c9qA.png" alt="foggy park at night, suggesting supernatural presence in nature" width="800" height="600">
+    
+    <p class="glitch-text">URGENT: memetic hazard detected. information quarantine in effect. if these coordinates resolve, you are already [TRANSMISSION LOST]. protocol 533 remains inactive. consciousness integrity: [CALCULATION ERROR: DIVIDE BY ZERO]</p>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Random text distortion
+    setInterval(() => {
+        const texts = document.querySelectorAll('p');
+        texts.forEach(text => {
+            if (Math.random() < 0.1) {
+                const originalText = text.textContent;
+                text.textContent = originalText.split('').map(char => 
+                    Math.random() < 0.15 ? String.fromCharCode(char.charCodeAt(0) + Math.floor(Math.random() * 5)) : char
+                ).join('');
+                
+                setTimeout(() => {
+                    text.textContent = originalText;
+                }, 150);
+            }
+        });
+    }, 2000);
+    
+    // Subtle image distortion on scroll
+    window.addEventListener('scroll', () => {
+        const images = document.querySelectorAll('img');
+        images.forEach(img => {
+            const rect = img.getBoundingClientRect();
+            if (rect.top < window.innerHeight && rect.bottom > 0) {
+                const distortion = (window.innerHeight - rect.top) / window.innerHeight;
+                img.style.filter = `sepia(${30 + distortion * 10}%) contrast(${120 + distortion * 20}%) brightness(${70 - distortion * 10}%)`;
+            }
+        });
+    });
+});
+</script>
+</body></html>
