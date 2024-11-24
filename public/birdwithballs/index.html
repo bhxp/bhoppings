@@ -1,0 +1,244 @@
+<html><head><base href="." target="_blank">
+<style>
+body {
+    background-color: #000;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    font-family: 'Creepster', cursive;
+    overflow: hidden;
+    color: #f00;
+    perspective: 1000px;
+}
+
+.shrine-container {
+    position: relative;
+    text-align: center;
+}
+
+.pentagram {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 600px;
+    height: 600px;
+    animation: rotate 20s linear infinite;
+    opacity: 0.3;
+    z-index: 1;
+    filter: drop-shadow(0 0 10px #f00);
+}
+
+.bird-shrine {
+    position: relative;
+    z-index: 2;
+    animation: pulse 2s ease-in-out infinite;
+    filter: drop-shadow(0 0 50px #f00);
+    background: transparent;
+}
+
+.flames {
+    position: absolute;
+    bottom: -50px;
+    width: 100%;
+    height: 100px;
+}
+
+.title {
+    font-size: 4em;
+    text-shadow: 0 0 10px #f00;
+    margin-bottom: 20px;
+    animation: flicker 0.5s infinite;
+}
+
+.sell-soul-btn {
+    background: #500;
+    color: #f00;
+    border: 2px solid #f00;
+    padding: 15px 30px;
+    font-family: 'Creepster', cursive;
+    font-size: 1.5em;
+    cursor: pointer;
+    transition: all 0.3s;
+    margin-top: 20px;
+    position: relative;
+    z-index: 3;
+}
+
+.sell-soul-btn:hover {
+    background: #f00;
+    color: #000;
+    transform: scale(1.1);
+    box-shadow: 0 0 20px #f00;
+}
+
+.occult-symbol {
+    position: absolute;
+    opacity: 0.2;
+    pointer-events: none;
+}
+
+.modal {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(0, 0, 0, 0.9);
+    padding: 30px;
+    border: 2px solid #f00;
+    z-index: 1000;
+    text-align: center;
+    box-shadow: 0 0 50px #f00;
+}
+
+.contract-text {
+    font-family: 'Times New Roman', serif;
+    color: #f00;
+    margin: 20px 0;
+}
+
+@keyframes rotate {
+    from { transform: translate(-50%, -50%) rotate(0deg); }
+    to { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); filter: drop-shadow(0 0 50px #f00); }
+    50% { transform: scale(1.05); filter: drop-shadow(0 0 70px #f00); }
+    100% { transform: scale(1); filter: drop-shadow(0 0 50px #f00); }
+}
+
+@keyframes flicker {
+    0% { opacity: 1; }
+    50% { opacity: 0.7; }
+    100% { opacity: 1; }
+}
+
+.blood {
+    position: absolute;
+    background: #f00;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    animation: drip 3s linear infinite;
+    filter: blur(2px);
+}
+
+@keyframes drip {
+    0% { transform: translateY(-100px); opacity: 1; }
+    100% { transform: translateY(500px); opacity: 0; }
+}
+
+.demonic-symbols {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
+</style>
+<link href="https://fonts.googleapis.com/css2?family=Creepster&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<div class="shrine-container">
+    <h1 class="title">SHRINE OF THE UNHOLY BIRD</h1>
+    
+    <svg class="pentagram" viewBox="0 0 100 100">
+        <path fill="none" stroke="#f00" stroke-width="2"
+            d="M50 5 L90 90 L5 35 L95 35 L10 90 Z">
+            <animate attributeName="stroke-width" values="2;4;2" dur="2s" repeatCount="indefinite"/>
+        </path>
+    </svg>
+
+    <img class="bird-shrine" 
+         src="https://i.imgur.com/eHc19pc.png" 
+         alt="Sacred image of the bird with testicles, digital art"
+         width="400" 
+         height="400">
+
+    <svg class="flames" viewBox="0 0 100 50">
+        <path fill="#f00" d="M10,50 Q25,0 40,50 Q55,0 70,50 Q85,0 100,50 L100,50 L0,50 Z">
+            <animate attributeName="d" 
+                     dur="1s" 
+                     repeatCount="indefinite"
+                     values="M10,50 Q25,0 40,50 Q55,0 70,50 Q85,0 100,50 L100,50 L0,50 Z;
+                             M10,50 Q25,10 40,50 Q55,10 70,50 Q85,10 100,50 L100,50 L0,50 Z;
+                             M10,50 Q25,0 40,50 Q55,0 70,50 Q85,0 100,50 L100,50 L0,50 Z"/>
+        </path>
+    </svg>
+
+    <button class="sell-soul-btn">SELL YOUR SOUL TO THE BIRD</button>
+</div>
+
+<div id="soulModal" class="modal">
+    <h2>UNHOLY CONTRACT</h2>
+    <p class="contract-text">By clicking 'Accept', you hereby forfeit your mortal soul to the All-Mighty Bird With Balls for all eternity.</p>
+    <button class="sell-soul-btn" onclick="acceptContract()">ACCEPT</button>
+</div>
+
+<script>
+// Create blood drips
+function createBloodDrip() {
+    const drip = document.createElement('div');
+    drip.className = 'blood';
+    drip.style.left = Math.random() * window.innerWidth + 'px';
+    document.body.appendChild(drip);
+    
+    setTimeout(() => {
+        drip.remove();
+    }, 3000);
+}
+
+setInterval(createBloodDrip, 200);
+
+// Create floating occult symbols
+function createOccultSymbol() {
+    const symbols = ['☠', '⛧', '⛥', '⛤', '☫', '⚰'];
+    const symbol = document.createElement('div');
+    symbol.className = 'occult-symbol';
+    symbol.textContent = symbols[Math.floor(Math.random() * symbols.length)];
+    symbol.style.left = Math.random() * window.innerWidth + 'px';
+    symbol.style.top = Math.random() * window.innerHeight + 'px';
+    symbol.style.fontSize = (Math.random() * 30 + 20) + 'px';
+    document.body.appendChild(symbol);
+
+    setTimeout(() => {
+        symbol.remove();
+    }, 5000);
+}
+
+setInterval(createOccultSymbol, 1000);
+
+// Modal handling
+const modal = document.getElementById('soulModal');
+document.querySelector('.sell-soul-btn').addEventListener('click', () => {
+    modal.style.display = 'block';
+    const audio = new Audio('https://freesound.org/data/previews/476/476740_7615996-lq.mp3');
+    audio.volume = 0.2;
+    audio.play().catch(e => console.log('Audio play failed:', e));
+});
+
+function acceptContract() {
+    modal.innerHTML = '<h2>YOUR SOUL IS MINE!</h2>';
+    document.body.style.animation = 'shake 0.5s linear';
+    const audio = new Audio('https://freesound.org/data/previews/169/169256_1735491-lq.mp3');
+    audio.volume = 0.3;
+    audio.play().catch(e => console.log('Audio play failed:', e));
+    
+    setTimeout(() => {
+        modal.style.display = 'none';
+    }, 3000);
+}
+
+// Add evil hover sound effects
+document.querySelector('.bird-shrine').addEventListener('mouseover', () => {
+    const audio = new Audio('https://freesound.org/data/previews/416/416710_5121236-lq.mp3');
+    audio.volume = 0.1;
+    audio.play().catch(e => console.log('Audio play failed:', e));
+});
+</script>
+
+</body></html>
