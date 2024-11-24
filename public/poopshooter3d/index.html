@@ -1,728 +1,731 @@
 <html><head><base href="https://poop-shooter.com">
-<title>Poop Shooter 3D</title>
-<style>
-body { margin: 0; overflow: hidden; }
-#hud {
-  position: fixed;
-  top: 20px;
-  left: 20px;
-  color: white;
-  font-family: Arial, sans-serif;
-  text-shadow: 2px 2px 2px rgba(0,0,0,0.5);
-}
-.bar {
-  width: 200px;
-  height: 20px;
-  background: rgba(0,0,0,0.5);
-  border-radius: 10px;
-  margin: 10px 0;
-}
-#healthBar {
-  width: 100%;
-  height: 100%;
-  background: #ff3333;
-  border-radius: 10px;
-  transition: width 0.3s;
-}
-#crosshair {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  color: white;
-  font-size: 24px;
-}
-#gameOver {
-  display: none;
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  background: rgba(0,0,0,0.8);
-  color: white;
-  padding: 20px;
-  border-radius: 10px;
-  text-align: center;
-  font-family: Arial, sans-serif;
-}
-#gameOver button {
-  background: #33ff33;
-  border: none;
-  padding: 10px 20px;
-  border-radius: 5px;
-  color: black;
-  margin-top: 10px;
-  cursor: pointer;
-}
-#gameOver button:hover {
-  background: #2ae02a;
-}
-#hackMenu {
-  display: none;
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  background: rgba(0,0,0,0.9);
-  color: lime;
-  padding: 20px;
-  border-radius: 10px;
-  font-family: 'Courier New', monospace;
-  min-width: 300px;
-  z-index: 1000;
-}
-#hackMenu h2 {
-  color: red;
-  text-align: center;
-  margin-top: 0;
-}
-.hack-option {
-  margin: 10px 0;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-.hack-slider {
-  width: 150px;
-}
-.hack-toggle {
-  width: 60px;
-  height: 30px;
-  background: #333;
-  border-radius: 15px;
-  position: relative;
-  cursor: pointer;
-}
-.hack-toggle.active {
-  background: lime;
-}
-.hack-toggle::after {
-  content: '';
-  position: absolute;
-  width: 26px;
-  height: 26px;
-  background: white;
-  border-radius: 13px;
-  top: 2px;
-  left: 2px;
-  transition: transform 0.3s;
-}
-.hack-toggle.active::after {
-  transform: translateX(30px);
-}
-</style>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/cannon@0.6.2/build/cannon.min.js"></script>
-</head>
-<body>
-<div id="hud">
-  <div>Wave: <span id="waveCount">1</span></div>
-  <div>Health:</div>
-  <div class="bar"><div id="healthBar"></div></div>
-</div>
-<div id="crosshair">+</div>
-<div id="gameOver">
-  <h2>Game Over!</h2>
-  <p>You reached wave <span id="finalWave">1</span></p>
-  <button onclick="restartGame()">Play Again</button>
-</div>
-<div id="hackMenu">
-  <h2>H4CK M3NU</h2>
-  <div class="hack-option">
-    <label>Speed Multiplier:</label>
-    <input type="range" id="speedHack" class="hack-slider" min="1" max="10" value="1">
-    <span id="speedValue">1x</span>
-  </div>
-  <div class="hack-option">
-    <label>Aimbot:</label>
-    <div id="aimbotToggle" class="hack-toggle"></div>
-  </div>
-  <div class="hack-option">
-    <label>Auto Shoot:</label>
-    <div id="autoShootToggle" class="hack-toggle"></div>
-  </div>
-  <div class="hack-option">
-    <label>Fly Mode:</label>
-    <div id="flyToggle" class="hack-toggle"></div>
-  </div>
-</div>
-
-<script>
-let camera, scene, renderer, world;
-let player = { health: 100 };
-let enemies = [];
-let projectiles = [];
-let wave = 1;
-let gameIsOver = false;
-let controls = { forward: false, back: false, left: false, right: false, jump: false };
-let playerBody;
-let canJump = true;
-let hacks = {
-  speedMultiplier: 1,
-  aimbot: false,
-  autoShoot: false,
-  fly: false,
-  autoShootInterval: null
-};
-
-function init() {
-    scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x87CEEB); // Light blue sky color
-    camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
-    renderer = new THREE.WebGLRenderer();
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    document.body.appendChild(renderer.domElement);
-
-    world = new CANNON.World();
-    world.gravity.set(0, -9.82, 0);
-
-    const light = new THREE.DirectionalLight(0xffffff, 1);
-    light.position.set(10, 10, 10);
-    scene.add(light);
-    scene.add(new THREE.AmbientLight(0x404040));
-
-    createGround();
-    camera.position.set(0, 2, 0);
-
-    const playerShape = new CANNON.Sphere(1);
-    playerBody = new CANNON.Body({
-        mass: 5,
-        shape: playerShape,
-        position: new CANNON.Vec3(0, 2, 0),
-        fixedRotation: true
-    });
-    world.addBody(playerBody);
-
-    playerBody.addEventListener('collide', function(e) {
-        const contact = e.contact;
-        const normal = contact.ni;
-        if (Math.abs(normal.y) > 0.7) {
-            canJump = true;
+    <title>Poop Shooter 3D</title>
+    <style>
+    body { margin: 0; overflow: hidden; }
+    #hud {
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      color: white;
+      font-family: Arial, sans-serif;
+      text-shadow: 2px 2px 2px rgba(0,0,0,0.5);
+    }
+    .bar {
+      width: 200px;
+      height: 20px;
+      background: rgba(0,0,0,0.5);
+      border-radius: 10px;
+      margin: 10px 0;
+    }
+    #healthBar {
+      width: 100%;
+      height: 100%;
+      background: #ff3333;
+      border-radius: 10px;
+      transition: width 0.3s;
+    }
+    #crosshair {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: white;
+      font-size: 24px;
+    }
+    #gameOver {
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(0,0,0,0.8);
+      color: white;
+      padding: 20px;
+      border-radius: 10px;
+      text-align: center;
+      font-family: Arial, sans-serif;
+    }
+    #gameOver button {
+      background: #33ff33;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 5px;
+      color: black;
+      margin-top: 10px;
+      cursor: pointer;
+    }
+    #gameOver button:hover {
+      background: #2ae02a;
+    }
+    #hackMenu {
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(0,0,0,0.9);
+      color: lime;
+      padding: 20px;
+      border-radius: 10px;
+      font-family: 'Courier New', monospace;
+      min-width: 300px;
+      z-index: 1000;
+    }
+    #hackMenu h2 {
+      color: red;
+      text-align: center;
+      margin-top: 0;
+    }
+    .hack-option {
+      margin: 10px 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .hack-slider {
+      width: 150px;
+    }
+    .hack-toggle {
+      width: 60px;
+      height: 30px;
+      background: #333;
+      border-radius: 15px;
+      position: relative;
+      cursor: pointer;
+    }
+    .hack-toggle.active {
+      background: lime;
+    }
+    .hack-toggle::after {
+      content: '';
+      position: absolute;
+      width: 26px;
+      height: 26px;
+      background: white;
+      border-radius: 13px;
+      top: 2px;
+      left: 2px;
+      transition: transform 0.3s;
+    }
+    .hack-toggle.active::after {
+      transform: translateX(30px);
+    }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/cannon@0.6.2/build/cannon.min.js"></script>
+    </head>
+    <body>
+    <div id="hud">
+      <div>Wave: <span id="waveCount">1</span></div>
+      <div>Health:</div>
+      <div class="bar"><div id="healthBar"></div></div>
+    </div>
+    <div id="crosshair">+</div>
+    <div id="gameOver">
+      <h2>Game Over!</h2>
+      <p>You reached wave <span id="finalWave">1</span></p>
+      <button onclick="restartGame()">Play Again</button>
+    </div>
+    <div id="hackMenu">
+      <h2>H4CK M3NU</h2>
+      <div class="hack-option">
+        <label>Speed Multiplier:</label>
+        <input type="range" id="speedHack" class="hack-slider" min="1" max="10" value="1">
+        <span id="speedValue">1x</span>
+      </div>
+      <div class="hack-option">
+        <label>Aimbot:</label>
+        <div id="aimbotToggle" class="hack-toggle"></div>
+      </div>
+      <div class="hack-option">
+        <label>Auto Shoot:</label>
+        <div id="autoShootToggle" class="hack-toggle"></div>
+      </div>
+      <div class="hack-option">
+        <label>Fly Mode:</label>
+        <div id="flyToggle" class="hack-toggle"></div>
+      </div>
+      <div class="hack-option">
+        <label>Invincibility:</label>
+        <div id="invincibilityToggle" class="hack-toggle"></div>
+      </div>
+    </div>
+    
+    <script>
+    let camera, scene, renderer, world;
+    let player = { health: 100 };
+    let enemies = [];
+    let projectiles = [];
+    let wave = 1;
+    let gameIsOver = false;
+    let controls = { forward: false, back: false, left: false, right: false, jump: false };
+    let playerBody;
+    let canJump = true;
+    let hacks = {
+      speedMultiplier: 1,
+      aimbot: false,
+      autoShoot: false,
+      fly: false,
+      invincibility: false,
+      autoShootInterval: null
+    };
+    
+    function init() {
+        scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x87CEEB); // Light blue sky color
+        camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+        renderer = new THREE.WebGLRenderer();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+    
+        world = new CANNON.World();
+        world.gravity.set(0, -9.82, 0);
+    
+        const light = new THREE.DirectionalLight(0xffffff, 1);
+        light.position.set(10, 10, 10);
+        scene.add(light);
+        scene.add(new THREE.AmbientLight(0x404040));
+    
+        createGround();
+        camera.position.set(0, 2, 0);
+    
+        const playerShape = new CANNON.Sphere(1);
+        playerBody = new CANNON.Body({
+            mass: 5,
+            shape: playerShape,
+            position: new CANNON.Vec3(0, 2, 0),
+            fixedRotation: true
+        });
+        world.addBody(playerBody);
+    
+        playerBody.addEventListener('collide', function(e) {
+            const contact = e.contact;
+            const normal = contact.ni;
+            if (Math.abs(normal.y) > 0.7) {
+                canJump = true;
+            }
+        });
+    
+        setupControls();
+        createEnvironment();
+        spawnEnemies();
+        setupHackMenu();
+        
+        animate();
+    }
+    
+    function restartGame() {
+        while(enemies.length > 0) {
+            const enemy = enemies.pop();
+            scene.remove(enemy.mesh);
         }
-    });
-
-    setupControls();
-    createEnvironment();
-    spawnEnemies();
-    setupHackMenu();
-    
-    animate();
-}
-
-function restartGame() {
-    while(enemies.length > 0) {
-        const enemy = enemies.pop();
-        scene.remove(enemy.mesh);
+        
+        while(projectiles.length > 0) {
+            const projectile = projectiles.pop();
+            scene.remove(projectile.mesh);
+            world.remove(projectile.body);
+        }
+        
+        gameIsOver = false;
+        player.health = 100;
+        wave = 1;
+        
+        camera.position.set(0, 2, 0);
+        camera.rotation.set(0, 0, 0);
+        
+        document.body.requestPointerLock().catch(err => {
+            console.log("Pointer lock request failed:", err);
+        });
+        
+        document.getElementById('gameOver').style.display = 'none';
+        
+        updateHUD();
+        
+        spawnEnemies();
     }
     
-    while(projectiles.length > 0) {
-        const projectile = projectiles.pop();
-        scene.remove(projectile.mesh);
-        world.remove(projectile.body);
+    function createGround() {
+        const geometry = new THREE.PlaneGeometry(100, 100, 50, 50);
+        const material = new THREE.MeshStandardMaterial({
+            color: 0x33aa33,
+            metalness: 0.1,
+            roughness: 0.8
+        });
+        const ground = new THREE.Mesh(geometry, material);
+        ground.rotation.x = -Math.PI / 2;
+        scene.add(ground);
+    
+        const groundShape = new CANNON.Plane();
+        const groundBody = new CANNON.Body({ mass: 0 });
+        groundBody.addShape(groundShape);
+        groundBody.quaternion.setFromAxisAngle(new CANNON.Vec3(1,0,0), -Math.PI/2);
+        world.addBody(groundBody);
     }
     
-    gameIsOver = false;
-    player.health = 100;
-    wave = 1;
-    
-    camera.position.set(0, 2, 0);
-    camera.rotation.set(0, 0, 0);
-    
-    document.body.requestPointerLock().catch(err => {
-        console.log("Pointer lock request failed:", err);
-    });
-    
-    document.getElementById('gameOver').style.display = 'none';
-    
-    updateHUD();
-    
-    spawnEnemies();
-}
-
-function createGround() {
-    const geometry = new THREE.PlaneGeometry(100, 100, 50, 50);
-    const material = new THREE.MeshStandardMaterial({
-        color: 0x33aa33,
-        metalness: 0.1,
-        roughness: 0.8
-    });
-    const ground = new THREE.Mesh(geometry, material);
-    ground.rotation.x = -Math.PI / 2;
-    scene.add(ground);
-
-    const groundShape = new CANNON.Plane();
-    const groundBody = new CANNON.Body({ mass: 0 });
-    groundBody.addShape(groundShape);
-    groundBody.quaternion.setFromAxisAngle(new CANNON.Vec3(1,0,0), -Math.PI/2);
-    world.addBody(groundBody);
-}
-
-function createEnvironment() {
-    const mountainGeometry = new THREE.ConeGeometry(20, 30, 4);
-    const mountainMaterial = new THREE.MeshStandardMaterial({ color: 0x666666 });
-    for(let i = 0; i < 5; i++) {
-        const mountain = new THREE.Mesh(mountainGeometry, mountainMaterial);
-        mountain.position.set(
-            Math.random() * 200 - 100,
-            15,
-            -100 - Math.random() * 50
-        );
-        scene.add(mountain);
+    function createEnvironment() {
+        const mountainGeometry = new THREE.ConeGeometry(20, 30, 4);
+        const mountainMaterial = new THREE.MeshStandardMaterial({ color: 0x666666 });
+        
+        // Create mountains in a circle around the play area
+        const mountainCount = 20;
+        const radius = 80; // Distance from center
+        
+        for(let i = 0; i < mountainCount; i++) {
+            const angle = (i / mountainCount) * Math.PI * 2;
+            const mountain = new THREE.Mesh(mountainGeometry, mountainMaterial);
+            
+            // Position mountains in a circle
+            mountain.position.x = Math.cos(angle) * radius;
+            mountain.position.z = Math.sin(angle) * radius;
+            mountain.position.y = 15;
+            
+            // Random rotation for variety
+            mountain.rotation.y = Math.random() * Math.PI;
+            
+            // Random scale for variety
+            const scale = 0.5 + Math.random() * 1.5;
+            mountain.scale.set(scale, scale, scale);
+            
+            scene.add(mountain);
+        }
+        
+        // Add some random mountains in a second row
+        const secondRowCount = 15;
+        const secondRadius = 120; // Further out
+        
+        for(let i = 0; i < secondRowCount; i++) {
+            const angle = ((i / secondRowCount) * Math.PI * 2) + (Math.PI / secondRowCount); // Offset angle
+            const mountain = new THREE.Mesh(mountainGeometry, mountainMaterial);
+            
+            mountain.position.x = Math.cos(angle) * secondRadius;
+            mountain.position.z = Math.sin(angle) * secondRadius;
+            mountain.position.y = 15;
+            
+            mountain.rotation.y = Math.random() * Math.PI;
+            
+            const scale = 0.7 + Math.random() * 1.8; // Slightly larger scale
+            mountain.scale.set(scale, scale, scale);
+            
+            scene.add(mountain);
+        }
     }
-}
-
-function shootPoop() {
-    if(gameIsOver) return;
     
-    // Create main poop body
-    const poopGeometry = new THREE.SphereGeometry(0.2, 32, 32);
-    const poopMaterial = new THREE.MeshStandardMaterial({ 
-        color: 0x4a3525,
-        roughness: 0.7,
-        metalness: 0.1
-    });
-    const poop = new THREE.Group(); // Create a group to hold all poop parts
-    const poopBody = new THREE.Mesh(poopGeometry, poopMaterial);
-    poop.add(poopBody);
-
-    // Add eyes (white part)
-    const eyeGeometry = new THREE.SphereGeometry(0.05, 16, 16);
-    const eyeWhiteMaterial = new THREE.MeshStandardMaterial({ color: 0xffffff });
-    
-    const leftEye = new THREE.Mesh(eyeGeometry, eyeWhiteMaterial);
-    leftEye.position.set(-0.08, 0.05, 0.15);
-    poop.add(leftEye);
-    
-    const rightEye = new THREE.Mesh(eyeGeometry, eyeWhiteMaterial);
-    rightEye.position.set(0.08, 0.05, 0.15);
-    poop.add(rightEye);
-
-    // Add pupils
-    const pupilGeometry = new THREE.SphereGeometry(0.02, 8, 8);
-    const pupilMaterial = new THREE.MeshStandardMaterial({ color: 0x000000 });
-    
-    const leftPupil = new THREE.Mesh(pupilGeometry, pupilMaterial);
-    leftPupil.position.set(-0.08, 0.05, 0.18);
-    poop.add(leftPupil);
-    
-    const rightPupil = new THREE.Mesh(pupilGeometry, pupilMaterial);
-    rightPupil.position.set(0.08, 0.05, 0.18);
-    poop.add(rightPupil);
-
-    // Add smile
-    const smileGeometry = new THREE.TorusGeometry(0.08, 0.02, 8, 16, Math.PI);
-    const smileMaterial = new THREE.MeshStandardMaterial({ color: 0x000000 });
-    const smile = new THREE.Mesh(smileGeometry, smileMaterial);
-    smile.position.set(0, -0.05, 0.15);
-    smile.rotation.x = Math.PI / 2;
-    poop.add(smile);
-    
-    const direction = new THREE.Vector3();
-    camera.getWorldDirection(direction);
-    
-    const spawnDistance = 2;
-    poop.position.copy(camera.position).add(direction.multiplyScalar(spawnDistance));
-    
-    // Make poop always face the camera
-    poop.lookAt(camera.position);
-    
-    scene.add(poop);
-    
-    const body = new CANNON.Body({
-        mass: 1,
-        shape: new CANNON.Sphere(0.2)
-    });
-    body.position.copy(poop.position);
-    body.velocity.set(
-        direction.x * 20,
-        direction.y * 20,
-        direction.z * 20
-    );
-    world.addBody(body);
-    
-    projectiles.push({ mesh: poop, body: body });
-}
-
-function spawnEnemies() {
-    const enemyCount = Math.min(5 + wave * 2, 20);
-    for(let i = 0; i < enemyCount; i++) {
+    function shootPoop() {
+        if(gameIsOver) return;
+        
         // Create main poop body
-        const poopGroup = new THREE.Group();
-        const bodyGeometry = new THREE.SphereGeometry(0.5, 32, 32);
+        const poopGeometry = new THREE.SphereGeometry(0.2, 32, 32);
         const poopMaterial = new THREE.MeshStandardMaterial({ 
             color: 0x4a3525,
             roughness: 0.7,
             metalness: 0.1
         });
-        const poopBody = new THREE.Mesh(bodyGeometry, poopMaterial);
-        poopGroup.add(poopBody);
-
+        const poop = new THREE.Group(); // Create a group to hold all poop parts
+        const poopBody = new THREE.Mesh(poopGeometry, poopMaterial);
+        poop.add(poopBody);
+    
         // Add eyes (white part)
-        const eyeGeometry = new THREE.SphereGeometry(0.12, 16, 16);
+        const eyeGeometry = new THREE.SphereGeometry(0.05, 16, 16);
         const eyeWhiteMaterial = new THREE.MeshStandardMaterial({ color: 0xffffff });
         
         const leftEye = new THREE.Mesh(eyeGeometry, eyeWhiteMaterial);
-        leftEye.position.set(-0.2, 0.15, 0.35);
-        poopGroup.add(leftEye);
+        leftEye.position.set(-0.08, 0.05, 0.15);
+        poop.add(leftEye);
         
         const rightEye = new THREE.Mesh(eyeGeometry, eyeWhiteMaterial);
-        rightEye.position.set(0.2, 0.15, 0.35);
-        poopGroup.add(rightEye);
-
+        rightEye.position.set(0.08, 0.05, 0.15);
+        poop.add(rightEye);
+    
         // Add pupils
-        const pupilGeometry = new THREE.SphereGeometry(0.06, 8, 8);
+        const pupilGeometry = new THREE.SphereGeometry(0.02, 8, 8);
         const pupilMaterial = new THREE.MeshStandardMaterial({ color: 0x000000 });
         
         const leftPupil = new THREE.Mesh(pupilGeometry, pupilMaterial);
-        leftPupil.position.set(-0.2, 0.15, 0.42);
-        poopGroup.add(leftPupil);
+        leftPupil.position.set(-0.08, 0.05, 0.18);
+        poop.add(leftPupil);
         
         const rightPupil = new THREE.Mesh(pupilGeometry, pupilMaterial);
-        rightPupil.position.set(0.2, 0.15, 0.42);
-        poopGroup.add(rightPupil);
-
+        rightPupil.position.set(0.08, 0.05, 0.18);
+        poop.add(rightPupil);
+    
         // Add smile
-        const smileGeometry = new THREE.TorusGeometry(0.2, 0.05, 8, 16, Math.PI);
+        const smileGeometry = new THREE.TorusGeometry(0.08, 0.02, 8, 16, Math.PI);
         const smileMaterial = new THREE.MeshStandardMaterial({ color: 0x000000 });
         const smile = new THREE.Mesh(smileGeometry, smileMaterial);
-        smile.position.set(0, -0.1, 0.35);
+        smile.position.set(0, -0.05, 0.15);
         smile.rotation.x = Math.PI / 2;
-        poopGroup.add(smile);
+        poop.add(smile);
         
-        const angle = Math.random() * Math.PI * 2;
-        const distance = 30 + Math.random() * 20;
-        
-        poopGroup.position.set(
-            Math.cos(angle) * distance,
-            1,
-            Math.sin(angle) * distance
-        );
-        
-        scene.add(poopGroup);
-        enemies.push({
-            mesh: poopGroup,
-            health: 100,
-            speed: 0.05 + wave * 0.01
-        });
-    }
-}
-
-function updateEnemies() {
-    if(gameIsOver) return;
-    
-    for(let i = enemies.length - 1; i >= 0; i--) {
-        const enemy = enemies[i];
         const direction = new THREE.Vector3();
-        direction.subVectors(camera.position, enemy.mesh.position).normalize();
-        enemy.mesh.position.add(direction.multiplyScalar(enemy.speed));
+        camera.getWorldDirection(direction);
         
-        // Make enemy face the player
-        enemy.mesh.lookAt(camera.position);
+        const spawnDistance = 2;
+        poop.position.copy(camera.position).add(direction.multiplyScalar(spawnDistance));
         
-        for(let j = projectiles.length - 1; j >= 0; j--) {
-            const projectile = projectiles[j];
-            if(enemy.mesh.position.distanceTo(projectile.mesh.position) < 1) {
-                enemy.health -= 50;
-                scene.remove(projectile.mesh);
-                world.remove(projectile.body);
-                projectiles.splice(j, 1);
-                
-                if(enemy.health <= 0) {
-                    scene.remove(enemy.mesh);
-                    enemies.splice(i, 1);
-                    break;
-                }
-            }
-        }
+        // Make poop always face the camera
+        poop.lookAt(camera.position);
         
-        if(enemy.mesh.position.distanceTo(camera.position) < 2) {
-            player.health -= 1;
-            updateHUD();
-            if(player.health <= 0) {
-                gameOver();
-            }
-        }
+        scene.add(poop);
+        
+        const body = new CANNON.Body({
+            mass: 1,
+            shape: new CANNON.Sphere(0.2)
+        });
+        body.position.copy(poop.position);
+        body.velocity.set(
+            direction.x * 20,
+            direction.y * 20,
+            direction.z * 20
+        );
+        world.addBody(body);
+        
+        projectiles.push({ mesh: poop, body: body });
     }
     
-    if(enemies.length === 0) {
-        wave++;
-        spawnEnemies();
-        updateHUD();
-    }
-}
-
-function setupControls() {
-    document.addEventListener('click', (e) => {
-        if (document.pointerLockElement === document.body && !gameIsOver) {
-            shootPoop();
-        } else if (!document.pointerLockElement && !gameIsOver) {
-            document.body.requestPointerLock().catch(err => {
-                console.log("Pointer lock request failed:", err);
+    function spawnEnemies() {
+        const enemyCount = Math.min(5 + wave * 2, 20);
+        for(let i = 0; i < enemyCount; i++) {
+            // Create main poop body
+            const poopGroup = new THREE.Group();
+            const bodyGeometry = new THREE.SphereGeometry(0.5, 32, 32);
+            const poopMaterial = new THREE.MeshStandardMaterial({ 
+                color: 0x4a3525,
+                roughness: 0.7,
+                metalness: 0.1
+            });
+            const poopBody = new THREE.Mesh(bodyGeometry, poopMaterial);
+            poopGroup.add(poopBody);
+    
+            // Add eyes (white part)
+            const eyeGeometry = new THREE.SphereGeometry(0.12, 16, 16);
+            const eyeWhiteMaterial = new THREE.MeshStandardMaterial({ color: 0xffffff });
+            
+            const leftEye = new THREE.Mesh(eyeGeometry, eyeWhiteMaterial);
+            leftEye.position.set(-0.2, 0.15, 0.35);
+            poopGroup.add(leftEye);
+            
+            const rightEye = new THREE.Mesh(eyeGeometry, eyeWhiteMaterial);
+            rightEye.position.set(0.2, 0.15, 0.35);
+            poopGroup.add(rightEye);
+    
+            // Add pupils
+            const pupilGeometry = new THREE.SphereGeometry(0.06, 8, 8);
+            const pupilMaterial = new THREE.MeshStandardMaterial({ color: 0x000000 });
+            
+            const leftPupil = new THREE.Mesh(pupilGeometry, pupilMaterial);
+            leftPupil.position.set(-0.2, 0.15, 0.42);
+            poopGroup.add(leftPupil);
+            
+            const rightPupil = new THREE.Mesh(pupilGeometry, pupilMaterial);
+            rightPupil.position.set(0.2, 0.15, 0.42);
+            poopGroup.add(rightPupil);
+    
+            // Add smile
+            const smileGeometry = new THREE.TorusGeometry(0.2, 0.05, 8, 16, Math.PI);
+            const smileMaterial = new THREE.MeshStandardMaterial({ color: 0x000000 });
+            const smile = new THREE.Mesh(smileGeometry, smileMaterial);
+            smile.position.set(0, -0.1, 0.35);
+            smile.rotation.x = Math.PI / 2;
+            poopGroup.add(smile);
+            
+            const angle = Math.random() * Math.PI * 2;
+            const distance = 30 + Math.random() * 20;
+            
+            poopGroup.position.set(
+                Math.cos(angle) * distance,
+                1,
+                Math.sin(angle) * distance
+            );
+            
+            scene.add(poopGroup);
+            enemies.push({
+                mesh: poopGroup,
+                health: 100,
+                speed: 0.05 + wave * 0.01
             });
         }
-    });
-
-    document.addEventListener('pointerlockchange', () => {
-        if (document.pointerLockElement === document.body) {
-            document.addEventListener('keydown', handleKeyDown);
-            document.addEventListener('keyup', handleKeyUp);
-            document.addEventListener('mousemove', handleMouseMove);
-        } else if (!gameIsOver) {
-            document.removeEventListener('keydown', handleKeyDown);
-            document.removeEventListener('keyup', handleKeyUp);
-            document.removeEventListener('mousemove', handleMouseMove);
-        }
-    });
-
-    document.addEventListener('keydown', (e) => {
-        if(e.code === 'F8') {
-            e.preventDefault();
-            const hackMenu = document.getElementById('hackMenu');
-            hackMenu.style.display = hackMenu.style.display === 'none' ? 'block' : 'none';
-        }
-    });
-}
-
-function handleKeyDown(e) {
-    switch(e.code) {
-        case 'KeyW':
-            controls.forward = true;
-            break;
-        case 'KeyS':
-            controls.back = true;
-            break;
-        case 'KeyA':
-            controls.left = true;
-            break;
-        case 'KeyD':
-            controls.right = true;
-            break;
-        case 'Space':
-            if (canJump && !hacks.fly) {
-                controls.jump = true;
-                playerBody.velocity.y = 10;
-                canJump = false;
+    }
+    
+    function updateEnemies() {
+        if(gameIsOver) return;
+        
+        for(let i = enemies.length - 1; i >= 0; i--) {
+            const enemy = enemies[i];
+            const direction = new THREE.Vector3();
+            direction.subVectors(camera.position, enemy.mesh.position).normalize();
+            enemy.mesh.position.add(direction.multiplyScalar(enemy.speed));
+            
+            // Make enemy face the player
+            enemy.mesh.lookAt(camera.position);
+            
+            for(let j = projectiles.length - 1; j >= 0; j--) {
+                const projectile = projectiles[j];
+                if(enemy.mesh.position.distanceTo(projectile.mesh.position) < 1) {
+                    enemy.health -= 50;
+                    scene.remove(projectile.mesh);
+                    world.remove(projectile.body);
+                    projectiles.splice(j, 1);
+                    
+                    if(enemy.health <= 0) {
+                        scene.remove(enemy.mesh);
+                        enemies.splice(i, 1);
+                        break;
+                    }
+                }
             }
-            break;
-    }
-}
-
-function handleKeyUp(e) {
-    switch(e.code) {
-        case 'KeyW':
-            controls.forward = false;
-            break;
-        case 'KeyS':
-            controls.back = false;
-            break;
-        case 'KeyA':
-            controls.left = false;
-            break;
-        case 'KeyD':
-            controls.right = false;
-            break;
-        case 'Space':
-            controls.jump = false;
-            break;
-    }
-}
-
-function handleMouseMove(e) {
-    if(gameIsOver) return;
-
-    const sensitivity = 0.002;
-
-    const rotation = new THREE.Euler(camera.rotation.x, camera.rotation.y, 0, 'YXZ');
-
-    rotation.y -= e.movementX * sensitivity;  // Yaw (left-right)
-    rotation.x -= e.movementY * sensitivity;  // Pitch (up-down)
-    rotation.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, rotation.x));
-
-    camera.rotation.set(rotation.x, rotation.y, 0, 'YXZ');  // Set the new rotation
-}
-
-function setupHackMenu() {
-    const speedHack = document.getElementById('speedHack');
-    const speedValue = document.getElementById('speedValue');
-    const aimbotToggle = document.getElementById('aimbotToggle');
-    const autoShootToggle = document.getElementById('autoShootToggle');
-    const flyToggle = document.getElementById('flyToggle');
-
-    speedHack.addEventListener('input', (e) => {
-        hacks.speedMultiplier = e.target.value;
-        speedValue.textContent = e.target.value + 'x';
-    });
-
-    aimbotToggle.addEventListener('click', () => {
-        aimbotToggle.classList.toggle('active');
-        hacks.aimbot = aimbotToggle.classList.contains('active');
-    });
-
-    autoShootToggle.addEventListener('click', () => {
-        autoShootToggle.classList.toggle('active');
-        hacks.autoShoot = autoShootToggle.classList.contains('active');
-        if(hacks.autoShoot) {
-            hacks.autoShootInterval = setInterval(shootPoop, 100);
-        } else {
-            clearInterval(hacks.autoShootInterval);
-        }
-    });
-
-    flyToggle.addEventListener('click', () => {
-        flyToggle.classList.toggle('active');
-        hacks.fly = flyToggle.classList.contains('active');
-    });
-}
-
-function movePlayer() {
-    if(gameIsOver) return;
-    
-    const speed = 0.45 * hacks.speedMultiplier;
-    const direction = new THREE.Vector3();
-    const playerVelocity = new CANNON.Vec3();
-    
-    if(controls.forward) {
-        camera.getWorldDirection(direction);
-        playerVelocity.x += direction.x * speed;
-        playerVelocity.z += direction.z * speed;
-    }
-    if(controls.back) {
-        camera.getWorldDirection(direction);
-        playerVelocity.x -= direction.x * speed;
-        playerVelocity.z -= direction.z * speed;
-    }
-    if(controls.left) {
-        camera.getWorldDirection(direction);
-        direction.cross(camera.up);
-        playerVelocity.x -= direction.x * speed;
-        playerVelocity.z -= direction.z * speed;
-    }
-    if(controls.right) {
-        camera.getWorldDirection(direction);
-        direction.cross(camera.up);
-        playerVelocity.x += direction.x * speed;
-        playerVelocity.z += direction.z * speed;
-    }
-    
-    if(hacks.fly) {
-        if(controls.jump) {
-            playerVelocity.y = 5;
-        }
-        canJump = true;
-    }
-
-    playerBody.velocity.x = playerVelocity.x * 10;
-    playerBody.velocity.z = playerVelocity.z * 10;
-    if(hacks.fly && playerVelocity.y) {
-        playerBody.velocity.y = playerVelocity.y * 2;
-    }
-
-    camera.position.copy(playerBody.position);
-    
-    if(hacks.aimbot && enemies.length > 0) {
-        let closest = enemies.reduce((prev, curr) => 
-            prev.mesh.position.distanceTo(camera.position) < curr.mesh.position.distanceTo(camera.position) ? prev : curr
-        );
-        
-        const targetDir = new THREE.Vector3()
-            .subVectors(closest.mesh.position, camera.position)
-            .normalize();
-        
-        camera.rotation.y = Math.atan2(-targetDir.x, -targetDir.z);
-        camera.rotation.x = Math.asin(targetDir.y);
-    }
-
-    camera.rotation.z = 0;
-}
-
-function gameOver() {
-    if(gameIsOver) return;
-    
-    gameIsOver = true;
-    document.exitPointerLock();
-    document.getElementById('gameOver').style.display = 'block';
-    document.getElementById('finalWave').textContent = wave;
-}
-
-function updateEnemies() {
-    if(gameIsOver) return;
-    
-    for(let i = enemies.length - 1; i >= 0; i--) {
-        const enemy = enemies[i];
-        const direction = new THREE.Vector3();
-        direction.subVectors(camera.position, enemy.mesh.position).normalize();
-        enemy.mesh.position.add(direction.multiplyScalar(enemy.speed));
-        
-        // Make enemy face the player
-        enemy.mesh.lookAt(camera.position);
-        
-        for(let j = projectiles.length - 1; j >= 0; j--) {
-            const projectile = projectiles[j];
-            if(enemy.mesh.position.distanceTo(projectile.mesh.position) < 1) {
-                enemy.health -= 50;
-                scene.remove(projectile.mesh);
-                world.remove(projectile.body);
-                projectiles.splice(j, 1);
-                
-                if(enemy.health <= 0) {
-                    scene.remove(enemy.mesh);
-                    enemies.splice(i, 1);
-                    break;
+            
+            if(enemy.mesh.position.distanceTo(camera.position) < 2) {
+                if(!hacks.invincibility) {
+                    player.health -= 1;
+                    updateHUD();
+                    if(player.health <= 0) {
+                        gameOver();
+                    }
                 }
             }
         }
         
-        if(enemy.mesh.position.distanceTo(camera.position) < 2) {
-            player.health -= 1;
+        if(enemies.length === 0) {
+            wave++;
+            spawnEnemies();
             updateHUD();
-            if(player.health <= 0) {
-                gameOver();
-            }
         }
     }
     
-    if(enemies.length === 0) {
-        wave++;
-        spawnEnemies();
-        updateHUD();
-    }
-}
-
-function updateHUD() {
-    document.getElementById('waveCount').textContent = wave;
-    document.getElementById('healthBar').style.width = player.health + '%';
-}
-
-function animate() {
-    requestAnimationFrame(animate);
+    function setupControls() {
+        document.addEventListener('click', (e) => {
+            if (document.pointerLockElement === document.body && !gameIsOver) {
+                shootPoop();
+            } else if (!document.pointerLockElement && !gameIsOver) {
+                document.body.requestPointerLock().catch(err => {
+                    console.log("Pointer lock request failed:", err);
+                });
+            }
+        });
     
-    if(!gameIsOver) {
-        world.step(1/60);
-        movePlayer();
-        updateEnemies();
+        document.addEventListener('pointerlockchange', () => {
+            if (document.pointerLockElement === document.body) {
+                document.addEventListener('keydown', handleKeyDown);
+                document.addEventListener('keyup', handleKeyUp);
+                document.addEventListener('mousemove', handleMouseMove);
+            } else if (!gameIsOver) {
+                document.removeEventListener('keydown', handleKeyDown);
+                document.removeEventListener('keyup', handleKeyUp);
+                document.removeEventListener('mousemove', handleMouseMove);
+            }
+        });
+    
+        document.addEventListener('keydown', (e) => {
+            if(e.code === 'F8') {
+                e.preventDefault();
+                const hackMenu = document.getElementById('hackMenu');
+                hackMenu.style.display = hackMenu.style.display === 'none' ? 'block' : 'none';
+            }
+        });
+    }
+    
+    function handleKeyDown(e) {
+        switch(e.code) {
+            case 'KeyW':
+                controls.forward = true;
+                break;
+            case 'KeyS':
+                controls.back = true;
+                break;
+            case 'KeyA':
+                controls.left = true;
+                break;
+            case 'KeyD':
+                controls.right = true;
+                break;
+            case 'Space':
+                if (canJump && !hacks.fly) {
+                    controls.jump = true;
+                    playerBody.velocity.y = 10;
+                    canJump = false;
+                }
+                break;
+        }
+    }
+    
+    function handleKeyUp(e) {
+        switch(e.code) {
+            case 'KeyW':
+                controls.forward = false;
+                break;
+            case 'KeyS':
+                controls.back = false;
+                break;
+            case 'KeyA':
+                controls.left = false;
+                break;
+            case 'KeyD':
+                controls.right = false;
+                break;
+            case 'Space':
+                controls.jump = false;
+                break;
+        }
+    }
+    
+    function handleMouseMove(e) {
+        if(gameIsOver) return;
+    
+        const sensitivity = 0.002;
+    
+        const rotation = new THREE.Euler(camera.rotation.x, camera.rotation.y, 0, 'YXZ');
+    
+        rotation.y -= e.movementX * sensitivity;  // Yaw (left-right)
+        rotation.x -= e.movementY * sensitivity;  // Pitch (up-down)
+        rotation.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, rotation.x));
+    
+        camera.rotation.set(rotation.x, rotation.y, 0, 'YXZ');  // Set the new rotation
+    }
+    
+    function setupHackMenu() {
+        const speedHack = document.getElementById('speedHack');
+        const speedValue = document.getElementById('speedValue');
+        const aimbotToggle = document.getElementById('aimbotToggle');
+        const autoShootToggle = document.getElementById('autoShootToggle');
+        const flyToggle = document.getElementById('flyToggle');
+        const invincibilityToggle = document.getElementById('invincibilityToggle');
+    
+        speedHack.addEventListener('input', (e) => {
+            hacks.speedMultiplier = e.target.value;
+            speedValue.textContent = e.target.value + 'x';
+        });
+    
+        aimbotToggle.addEventListener('click', () => {
+            aimbotToggle.classList.toggle('active');
+            hacks.aimbot = aimbotToggle.classList.contains('active');
+        });
+    
+        autoShootToggle.addEventListener('click', () => {
+            autoShootToggle.classList.toggle('active');
+            hacks.autoShoot = autoShootToggle.classList.contains('active');
+            if(hacks.autoShoot) {
+                hacks.autoShootInterval = setInterval(shootPoop, 100);
+            } else {
+                clearInterval(hacks.autoShootInterval);
+            }
+        });
+    
+        flyToggle.addEventListener('click', () => {
+            flyToggle.classList.toggle('active');
+            hacks.fly = flyToggle.classList.contains('active');
+        });
+    
+        invincibilityToggle.addEventListener('click', () => {
+            invincibilityToggle.classList.toggle('active');
+            hacks.invincibility = invincibilityToggle.classList.contains('active');
+        });
+    }
+    
+    function movePlayer() {
+        if(gameIsOver) return;
         
-        for(let i = projectiles.length - 1; i >= 0; i--) {
-            const projectile = projectiles[i];
-            projectile.mesh.position.copy(projectile.body.position);
-            projectile.mesh.quaternion.copy(projectile.body.quaternion);
-            
-            if(projectile.mesh.position.y < -10) {
-                scene.remove(projectile.mesh);
-                world.remove(projectile.body);
-                projectiles.splice(i, 1);
-            }
+        const speed = 0.45 * hacks.speedMultiplier;
+        const direction = new THREE.Vector3();
+        const playerVelocity = new CANNON.Vec3();
+        
+        if(controls.forward) {
+            camera.getWorldDirection(direction);
+            playerVelocity.x += direction.x * speed;
+            playerVelocity.z += direction.z * speed;
         }
+        if(controls.back) {
+            camera.getWorldDirection(direction);
+            playerVelocity.x -= direction.x * speed;
+            playerVelocity.z -= direction.z * speed;
+        }
+        if(controls.left) {
+            camera.getWorldDirection(direction);
+            direction.cross(camera.up);
+            playerVelocity.x -= direction.x * speed;
+            playerVelocity.z -= direction.z * speed;
+        }
+        if(controls.right) {
+            camera.getWorldDirection(direction);
+            direction.cross(camera.up);
+            playerVelocity.x += direction.x * speed;
+            playerVelocity.z += direction.z * speed;
+        }
+        
+        if(hacks.fly) {
+            if(controls.jump) {
+                playerVelocity.y = 5;
+            }
+            canJump = true;
+        }
+    
+        playerBody.velocity.x = playerVelocity.x * 10;
+        playerBody.velocity.z = playerVelocity.z * 10;
+        if(hacks.fly && playerVelocity.y) {
+            playerBody.velocity.y = playerVelocity.y * 2;
+        }
+    
+        camera.position.copy(playerBody.position);
+        
+        if(hacks.aimbot && enemies.length > 0) {
+            let closest = enemies.reduce((prev, curr) => 
+                prev.mesh.position.distanceTo(camera.position) < curr.mesh.position.distanceTo(camera.position) ? prev : curr
+            );
+            
+            const targetDir = new THREE.Vector3()
+                .subVectors(closest.mesh.position, camera.position)
+                .normalize();
+            
+            camera.rotation.y = Math.atan2(-targetDir.x, -targetDir.z);
+            camera.rotation.x = Math.asin(targetDir.y);
+        }
+    
+        camera.rotation.z = 0;
     }
     
-    renderer.render(scene, camera);
-}
-
-window.addEventListener('resize', () => {
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
-    renderer.setSize(window.innerWidth, window.innerHeight);
-});
-
-init();
-</script>
-</body></html>
+    function gameOver() {
+        if(gameIsOver) return;
+        
+        gameIsOver = true;
+        document.exitPointerLock();
+        document.getElementById('gameOver').style.display = 'block';
+        document.getElementById('finalWave').textContent = wave;
+    }
+    
+    function updateHUD() {
+        document.getElementById('waveCount').textContent = wave;
+        document.getElementById('healthBar').style.width = player.health + '%';
+    }
+    
+    function animate() {
+        requestAnimationFrame(animate);
+        
+        if(!gameIsOver) {
+            world.step(1/60);
+            movePlayer();
+            updateEnemies();
+            
+            for(let i = projectiles.length - 1; i >= 0; i--) {
+                const projectile = projectiles[i];
+                projectile.mesh.position.copy(projectile.body.position);
+                projectile.mesh.quaternion.copy(projectile.body.quaternion);
+                
+                if(projectile.mesh.position.y < -10) {
+                    scene.remove(projectile.mesh);
+                    world.remove(projectile.body);
+                    projectiles.splice(i, 1);
+                }
+            }
+        }
+        
+        renderer.render(scene, camera);
+    }
+    
+    window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+    
+    init();
+    </script>
+    </body></html>
