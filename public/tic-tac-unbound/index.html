@@ -1,0 +1,405 @@
+<html><head><base href="." /><title>Customizable Tic Tac Toe</title>
+<style>
+:root {
+  --bg-color: #222;
+  --text-color: #fff;
+  --board-color: #333;
+  --hover-color: #444;
+  --border-color: #666;
+  --accent-color: #4CAF50;
+}
+
+[data-theme="light"] {
+  --bg-color: #ffffff;
+  --text-color: #000000;
+  --board-color: #eee;
+  --hover-color: #f5f5f5;
+  --border-color: #333;
+}
+
+* {
+  box-sizing: border-box;
+  transition: all 0.3s ease;
+}
+
+body {
+  font-family: Arial, sans-serif;
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px;
+  min-height: 100vh;
+  margin: 0;
+}
+
+.settings {
+  background: var(--board-color);
+  padding: 20px;
+  border-radius: 10px;
+  margin: 20px;
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+  justify-content: center;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+.settings div {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.settings .input-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+}
+
+.settings input[type="range"] {
+  width: 200px;
+  height: 8px;
+  background: var(--bg-color);
+  border-radius: 4px;
+  outline: none;
+  -webkit-appearance: none;
+}
+
+.settings input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 20px;
+  height: 20px;
+  background: var(--accent-color);
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.settings input[type="range"]::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+}
+
+.settings input[type="number"] {
+  width: 60px;
+  padding: 4px 8px;
+  border-radius: 5px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-color);
+  color: var(--text-color);
+  font-size: 14px;
+}
+
+.game-board {
+  display: grid;
+  gap: 5px;
+  margin: 20px;
+  padding: 10px;
+  background: var(--board-color);
+  border-radius: 10px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+.cell {
+  width: 50px;
+  height: 50px;
+  background: var(--bg-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  cursor: pointer;
+  border-radius: 5px;
+  transform: scale(1);
+}
+
+.cell:hover {
+  background: var(--hover-color);
+  transform: scale(1.05);
+}
+
+.cell.winner {
+  animation: winPulse 1s infinite;
+  background: var(--accent-color);
+  color: white;
+}
+
+.current-turn {
+  font-size: 24px;
+  margin: 20px;
+  padding: 15px 30px;
+  background: var(--accent-color);
+  border-radius: 10px;
+  animation: turnPulse 2s infinite;
+}
+
+@keyframes turnPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+@keyframes winPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1); }
+}
+
+.theme-toggle, .reset-button {
+  padding: 12px 24px;
+  border-radius: 5px;
+  border: none;
+  background: var(--board-color);
+  color: var(--text-color);
+  cursor: pointer;
+  font-size: 16px;
+  margin: 10px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+.theme-toggle:hover, .reset-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+}
+
+.winner-message {
+  font-size: 28px;
+  margin: 20px;
+  text-align: center;
+  font-weight: bold;
+  min-height: 40px;
+}
+
+.controls {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.confetti {
+  position: fixed;
+  pointer-events: none;
+}
+</style>
+</head>
+<body data-theme="dark">
+<div class="settings">
+  <div class="input-group">
+    <label>Board Size: <span id="boardSizeValue">3</span></label>
+    <input type="range" id="boardSize" min="3" max="100" value="3">
+    <input type="number" id="boardSizeNumber" min="3" max="100" value="3">
+  </div>
+  <div class="input-group">
+    <label>Players: <span id="playerCountValue">2</span></label>
+    <input type="range" id="playerCount" min="2" max="4" value="2">
+    <input type="number" id="playerCountNumber" min="2" max="4" value="2">
+  </div>
+  <div class="input-group">
+    <label>Win Length: <span id="winLengthValue">3</span></label>
+    <input type="range" id="winLength" min="3" max="100" value="3">
+    <input type="number" id="winLengthNumber" min="3" max="100" value="3">
+  </div>
+  <button onclick="initializeGame()" class="reset-button">New Game</button>
+</div>
+
+<div id="currentTurn" class="current-turn">Player X's Turn</div>
+<div id="gameBoard" class="game-board"></div>
+<div id="winnerMessage" class="winner-message"></div>
+<div class="controls">
+  <button onclick="resetGame()" class="reset-button">Reset Current Game</button>
+  <button class="theme-toggle" onclick="toggleTheme()">Toggle Theme</button>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
+<script>
+let currentPlayer = 0;
+let gameState = [];
+let gameActive = true;
+let boardSize = 3;
+let playerCount = 2;
+let winLength = 3;
+const playerSymbols = ['X', 'O', 'Z', 'Y'];
+let winningCells = [];
+
+// Sync slider and number inputs
+function syncInputs() {
+  const inputs = [
+    {range: 'boardSize', number: 'boardSizeNumber', value: 'boardSizeValue'},
+    {range: 'playerCount', number: 'playerCountNumber', value: 'playerCountValue'},
+    {range: 'winLength', number: 'winLengthNumber', value: 'winLengthValue'}
+  ];
+  
+  inputs.forEach(input => {
+    const rangeElement = document.getElementById(input.range);
+    const numberElement = document.getElementById(input.number);
+    const valueElement = document.getElementById(input.value);
+    
+    rangeElement.addEventListener('input', () => {
+      numberElement.value = rangeElement.value;
+      valueElement.textContent = rangeElement.value;
+    });
+    
+    numberElement.addEventListener('input', () => {
+      rangeElement.value = numberElement.value;
+      valueElement.textContent = numberElement.value;
+    });
+  });
+}
+
+function createConfetti() {
+  confetti({
+    particleCount: 100,
+    spread: 70,
+    origin: { y: 0.6 }
+  });
+}
+
+function toggleTheme() {
+  document.body.setAttribute('data-theme', 
+    document.body.getAttribute('data-theme') === 'dark' ? 'light' : 'dark'
+  );
+}
+
+function updateTurnIndicator() {
+  document.getElementById('currentTurn').textContent = 
+    `Player ${playerSymbols[currentPlayer]}'s Turn`;
+}
+
+function initializeGame() {
+  boardSize = Math.min(Math.max(3, parseInt(document.getElementById('boardSize').value)), 100);
+  playerCount = Math.min(Math.max(2, parseInt(document.getElementById('playerCount').value)), 4);
+  
+  // Update win length max values and ensure valid win length
+  document.getElementById('winLength').max = 100;
+  document.getElementById('winLengthNumber').max = 100;
+  winLength = Math.min(
+    Math.max(3, parseInt(document.getElementById('winLength').value)), 
+    boardSize
+  );
+  
+  gameState = Array(boardSize).fill().map(() => Array(boardSize).fill(''));
+  currentPlayer = 0;
+  gameActive = true;
+  winningCells = [];
+  
+  const board = document.getElementById('gameBoard');
+  board.style.gridTemplateColumns = `repeat(${boardSize}, 50px)`;
+  board.innerHTML = '';
+  
+  for(let i = 0; i < boardSize; i++) {
+    for(let j = 0; j < boardSize; j++) {
+      const cell = document.createElement('div');
+      cell.className = 'cell';
+      cell.style.animation = `fadeIn 0.3s ${(i + j) * 0.05}s both`;
+      cell.addEventListener('click', () => makeMove(i, j));
+      board.appendChild(cell);
+    }
+  }
+  
+  document.getElementById('winnerMessage').textContent = '';
+  updateTurnIndicator();
+}
+
+function makeMove(row, col) {
+  if(!gameActive || gameState[row][col] !== '') return;
+  
+  gameState[row][col] = playerSymbols[currentPlayer];
+  updateBoard();
+  
+  if(checkWin(row, col)) {
+    document.getElementById('winnerMessage').textContent = 
+      `Player ${playerSymbols[currentPlayer]} wins!`;
+    gameActive = false;
+    highlightWinningCells();
+    createConfetti();
+    return;
+  }
+  
+  if(checkDraw()) {
+    document.getElementById('winnerMessage').textContent = "It's a draw!";
+    gameActive = false;
+    return;
+  }
+  
+  currentPlayer = (currentPlayer + 1) % playerCount;
+  updateTurnIndicator();
+}
+
+function updateBoard() {
+  const cells = document.getElementsByClassName('cell');
+  for(let i = 0; i < boardSize; i++) {
+    for(let j = 0; j < boardSize; j++) {
+      cells[i * boardSize + j].textContent = gameState[i][j];
+    }
+  }
+}
+
+function checkWin(row, col) {
+  const directions = [
+    [0, 1],  // horizontal
+    [1, 0],  // vertical
+    [1, 1],  // diagonal
+    [1, -1]  // anti-diagonal
+  ];
+  
+  for(const [dx, dy] of directions) {
+    let count = 1;
+    let cells = [[row, col]];
+    
+    // Check forward
+    for(let i = 1; i < winLength; i++) {
+      const newRow = row + dx * i;
+      const newCol = col + dy * i;
+      if(newRow < 0 || newRow >= boardSize || newCol < 0 || newCol >= boardSize) break;
+      if(gameState[newRow][newCol] !== gameState[row][col]) break;
+      count++;
+      cells.push([newRow, newCol]);
+    }
+    // Check backward
+    for(let i = 1; i < winLength; i++) {
+      const newRow = row - dx * i;
+      const newCol = col - dy * i;
+      if(newRow < 0 || newRow >= boardSize || newCol < 0 || newCol >= boardSize) break;
+      if(gameState[newRow][newCol] !== gameState[row][col]) break;
+      count++;
+      cells.push([newRow, newCol]);
+    }
+    if(count >= winLength) {
+      winningCells = cells;
+      return true;
+    }
+  }
+  return false;
+}
+
+function highlightWinningCells() {
+  const cells = document.getElementsByClassName('cell');
+  winningCells.forEach(([row, col]) => {
+    cells[row * boardSize + col].classList.add('winner');
+  });
+}
+
+function checkDraw() {
+  return gameState.every(row => row.every(cell => cell !== ''));
+}
+
+function resetGame() {
+  gameState = gameState.map(row => row.map(() => ''));
+  currentPlayer = 0;
+  gameActive = true;
+  winningCells = [];
+  updateBoard();
+  document.getElementById('winnerMessage').textContent = '';
+  const cells = document.getElementsByClassName('cell');
+  Array.from(cells).forEach(cell => cell.classList.remove('winner'));
+  updateTurnIndicator();
+}
+
+// Initialize the game and sync inputs when the page loads
+syncInputs();
+initializeGame();
+</script>
+</body></html>
