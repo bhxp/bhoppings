@@ -14,8 +14,18 @@
         ]
     },
     {
-        "text": "poop game",
-        "url": "/poop"
+        "multiple": true,
+        "text": "games",
+        "pages": [
+            {
+                "text": "poop game",
+                "url": "/poop"
+            },
+            {
+                "text": "poop shooter 3d",
+                "url": "/poopshooter3d"
+            }
+        ]
     },
     {
         "multiple": true,
