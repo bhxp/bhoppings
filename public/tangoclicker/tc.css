@@ -11,6 +11,7 @@ body {
     background-attachment: fixed;
     background-size: fill;
     background-position: center;
+    background-repeat: no-repeat;
     position: fixed;
     width: 200%; /* Make background 10% wider than the viewport */
     height: 200%; /* Make background 10% taller than the viewport */
