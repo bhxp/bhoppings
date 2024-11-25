@@ -1,0 +1,199 @@
+<html><head><base href="https://example.com"> <title>🖤 The Dark Communion</title>
+<style>
+  body {
+    background-color: #000;
+    color: #999;
+    font-family: 'UnifrakturMaguntia', cursive;
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    overflow-x: hidden;
+  }
+
+  @keyframes flicker {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+  }
+
+  @keyframes float {
+    0% { transform: translateY(0px) rotate(0deg); }
+    50% { transform: translateY(-20px) rotate(3deg); }
+    100% { transform: translateY(0px) rotate(0deg); }
+  }
+
+  .pentagram {
+    width: 300px;
+    height: 300px;
+    margin: 2rem;
+    animation: float 6s ease-in-out infinite;
+  }
+
+  .pentagram path {
+    stroke: #600;
+    stroke-width: 2;
+    fill: none;
+    filter: drop-shadow(0 0 10px #f005);
+  }
+
+  #ritual-text {
+    font-size: 1.5rem;
+    max-width: 800px;
+    text-align: center;
+    margin: 2rem;
+    line-height: 1.6;
+    text-shadow: 0 0 10px #600;
+  }
+
+  .candle {
+    width: 20px;
+    height: 100px;
+    background: linear-gradient(#222, #111);
+    position: relative;
+    margin: 20px;
+    animation: flicker 3s infinite;
+  }
+
+  .flame {
+    width: 20px;
+    height: 40px;
+    background: #600;
+    position: absolute;
+    top: -30px;
+    border-radius: 50%;
+    filter: blur(5px);
+  }
+
+  .candle-container {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+  }
+
+  button {
+    background: #200;
+    color: #666;
+    border: 2px solid #600;
+    padding: 1rem 2rem;
+    font-family: inherit;
+    font-size: 1.2rem;
+    cursor: pointer;
+    transition: all 0.3s;
+    margin: 1rem;
+  }
+
+  button:hover {
+    background: #600;
+    color: #000;
+    transform: scale(1.1);
+  }
+
+  #sacrifice-input {
+    background: #111;
+    border: 1px solid #600;
+    color: #666;
+    padding: 1rem;
+    font-family: inherit;
+    width: 300px;
+    margin: 1rem;
+  }
+
+  .blood-drip {
+    position: fixed;
+    width: 2px;
+    height: 20px;
+    background: #600;
+    animation: drip 2s linear infinite;
+    opacity: 0;
+  }
+
+  @keyframes drip {
+    0% { transform: translateY(-100vh); opacity: 0; }
+    50% { opacity: 0.7; }
+    100% { transform: translateY(100vh); opacity: 0; }
+  }
+</style>
+</head>
+<body>
+
+<svg class="pentagram" viewBox="0 0 100 100">
+  <path d="M50 10 L90 80 L20 35 L80 35 L10 80 Z" />
+</svg>
+
+<div class="candle-container">
+  <div class="candle"><div class="flame"></div></div>
+  <div class="candle"><div class="flame"></div></div>
+  <div class="candle"><div class="flame"></div></div>
+</div>
+
+<div id="ritual-text">
+  Ave Satanas, you damned souls. Welcome to this unholy communion.
+</div>
+
+<input type="text" id="sacrifice-input" placeholder="Name your sacrifice, mortal...">
+<button onclick="performRitual()">Begin the Fucking Ritual</button>
+
+<script>
+const bloodDrips = 20;
+
+function createBloodDrips() {
+    for(let i = 0; i < bloodDrips; i++) {
+        const drip = document.createElement('div');
+        drip.className = 'blood-drip';
+        drip.style.left = `${Math.random() * 100}vw`;
+        drip.style.animationDelay = `${Math.random() * 2}s`;
+        document.body.appendChild(drip);
+    }
+}
+
+createBloodDrips();
+
+function performRitual() {
+    const sacrifice = document.getElementById('sacrifice-input').value;
+    if(!sacrifice) {
+        alert('You must name your fucking sacrifice!');
+        return;
+    }
+
+    const ritualTexts = [
+        `${sacrifice} has been offered to the Dark Lord. Their soul shall burn eternal.`,
+        `The blood of ${sacrifice} flows into the void. Satan is pleased.`,
+        `${sacrifice}'s essence feeds the flames of Hell. There is no redemption.`,
+        `Through ${sacrifice}'s damnation, we honor the Prince of Darkness.`
+    ];
+
+    document.getElementById('ritual-text').innerHTML = ritualTexts[Math.floor(Math.random() * ritualTexts.length)];
+    
+    // Intensify the animation
+    document.querySelectorAll('.flame').forEach(flame => {
+        flame.style.filter = 'blur(8px)';
+        setTimeout(() => flame.style.filter = 'blur(5px)', 2000);
+    });
+
+    document.querySelector('.pentagram').style.animation = 'float 2s ease-in-out infinite';
+    setTimeout(() => {
+        document.querySelector('.pentagram').style.animation = 'float 6s ease-in-out infinite';
+    }, 2000);
+
+    // Add more blood drips temporarily
+    const extraDrips = 10;
+    for(let i = 0; i < extraDrips; i++) {
+        const drip = document.createElement('div');
+        drip.className = 'blood-drip';
+        drip.style.left = `${Math.random() * 100}vw`;
+        drip.style.animationDelay = `${Math.random() * 2}s`;
+        document.body.appendChild(drip);
+        setTimeout(() => drip.remove(), 2000);
+    }
+}
+
+// Add subtle pentagram rotation
+setInterval(() => {
+    const pentagram = document.querySelector('.pentagram');
+    const currentRotation = getComputedStyle(pentagram).transform;
+    pentagram.style.transform = `${currentRotation} rotate(${Math.sin(Date.now() / 1000) * 2}deg)`;
+}, 50);
+</script>
+
+</body></html>
