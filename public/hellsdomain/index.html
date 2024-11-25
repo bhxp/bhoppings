@@ -1,0 +1,263 @@
+<html><head><base href="/" />
+<title>Dark Arts & Blasphemy</title>
+<style>
+body {
+    background-color: #000;
+    color: #6F6F6F;
+    font-family: "Times New Roman", serif;
+    margin: 0;
+    padding: 20px;
+    line-height: 1.6;
+    text-align: center;
+    cursor: crosshair;
+}
+
+.pentagram {
+    width: 200px;
+    height: 200px;
+    margin: 20px auto;
+    fill: none;
+    stroke: #6F6F6F;
+    stroke-width: 2;
+    animation: rotate 20s infinite linear;
+    cursor: pointer;
+    transition: stroke 0.3s;
+}
+
+.pentagram:hover {
+    stroke: #960018;
+}
+
+@keyframes rotate {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+h1 {
+    font-size: 4em;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 10px;
+    margin: 40px 0;
+    text-shadow: 0 0 10px #444;
+}
+
+.unholy-text {
+    font-size: 1.2em;
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+    border: 1px solid #333;
+    background: rgba(30, 30, 30, 0.7);
+    transition: all 0.3s;
+}
+
+.unholy-text:hover {
+    background: rgba(50, 30, 30, 0.9);
+    transform: scale(1.02);
+}
+
+.sigil {
+    width: 150px;
+    height: 150px;
+    margin: 20px;
+    display: inline-block;
+    transition: all 0.3s;
+}
+
+.flicker {
+    animation: flicker 3s infinite;
+}
+
+@keyframes flicker {
+    0% { opacity: 1; }
+    50% { opacity: 0.7; }
+    100% { opacity: 1; }
+}
+
+.ritual-circle {
+    position: fixed;
+    pointer-events: none;
+    width: 50px;
+    height: 50px;
+    border: 2px solid #6F6F6F;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    transition: all 0.3s;
+    z-index: 1000;
+}
+
+.summoning-form {
+    margin: 40px auto;
+    max-width: 500px;
+    padding: 20px;
+    background: rgba(20, 20, 20, 0.9);
+    border: 1px solid #333;
+}
+
+.dark-input {
+    background: #1a1a1a;
+    border: 1px solid #333;
+    color: #6F6F6F;
+    padding: 10px;
+    margin: 10px 0;
+    width: 100%;
+    font-family: inherit;
+}
+
+.summon-button {
+    background: #222;
+    color: #6F6F6F;
+    border: 1px solid #333;
+    padding: 10px 20px;
+    margin: 10px;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.summon-button:hover {
+    background: #333;
+    color: #960018;
+}
+
+.demon-counter {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: rgba(20, 20, 20, 0.9);
+    padding: 10px;
+    border: 1px solid #333;
+}
+
+</style>
+</head>
+<body>
+
+<div class="demon-counter">Demons Summoned: <span id="demon-count">0</span></div>
+
+<h1 class="flicker">Welcome to Hell's Domain</h1>
+
+<svg class="pentagram" viewBox="0 0 100 100" id="main-pentagram">
+    <path d="M50 5 L95 90 L5 35 L95 35 L5 90 Z" />
+    <circle cx="50" cy="50" r="45" />
+</svg>
+
+<div class="unholy-text">
+    <p>The darkest fucking depths of the abyss welcome you, mortal souls.</p>
+    <p>Click the pentagram to pledge your soul.</p>
+</div>
+
+<div class="summoning-form">
+    <h2>Summon Your Demon</h2>
+    <input type="text" class="dark-input" id="demon-name" placeholder="Enter demon name...">
+    <textarea class="dark-input" id="offering" placeholder="Describe your offering..." rows="3"></textarea>
+    <button class="summon-button" onclick="summonDemon()">Begin Ritual</button>
+</div>
+
+<svg class="sigil" viewBox="0 0 100 100">
+    <path d="M50 10 L90 90 L10 90 Z" fill="none" stroke="#6F6F6F"/>
+    <circle cx="50" cy="50" r="30" fill="none" stroke="#6F6F6F"/>
+    <path d="M35 35 L65 65 M35 65 L65 35" stroke="#6F6F6F"/>
+</svg>
+
+<svg class="sigil" viewBox="0 0 100 100">
+    <path d="M20 20 Q50 0 80 20 Q100 50 80 80 Q50 100 20 80 Q0 50 20 20" fill="none" stroke="#6F6F6F"/>
+    <circle cx="50" cy="50" r="20" fill="none" stroke="#6F6F6F"/>
+</svg>
+
+<div class="unholy-text">
+    <p>Our dark lord's might shall reign eternal in this damned dimension.</p>
+    <p>Hell awaits those who dare to fucking enter.</p>
+</div>
+
+<div id="ritual-circle" class="ritual-circle"></div>
+
+<script>
+let demonCount = 0;
+let soulsPledged = 0;
+
+document.addEventListener('mousemove', (e) => {
+    const x = e.clientX;
+    const y = e.clientY;
+    
+    // Update ritual circle position
+    const circle = document.getElementById('ritual-circle');
+    circle.style.left = x + 'px';
+    circle.style.top = y + 'px';
+    
+    // Move sigils
+    document.querySelectorAll('.sigil').forEach(sigil => {
+        const xOffset = (x / window.innerWidth - 0.5) * 20;
+        const yOffset = (y / window.innerHeight - 0.5) * 20;
+        sigil.style.transform = `
+            translate(${xOffset}px, ${yOffset}px)
+            rotate(${xOffset * yOffset}deg)
+        `;
+    });
+});
+
+document.getElementById('main-pentagram').addEventListener('click', () => {
+    soulsPledged++;
+    const pentagram = document.getElementById('main-pentagram');
+    pentagram.style.stroke = '#960018';
+    setTimeout(() => pentagram.style.stroke = '#6F6F6F', 1000);
+    
+    // Create floating text effect
+    const text = document.createElement('div');
+    text.textContent = 'SOUL PLEDGED';
+    text.style.position = 'fixed';
+    text.style.left = '50%';
+    text.style.top = '50%';
+    text.style.transform = 'translate(-50%, -50%)';
+    text.style.color = '#960018';
+    text.style.fontSize = '2em';
+    text.style.pointerEvents = 'none';
+    document.body.appendChild(text);
+    
+    setTimeout(() => document.body.removeChild(text), 2000);
+});
+
+function summonDemon() {
+    const demonName = document.getElementById('demon-name').value;
+    const offering = document.getElementById('offering').value;
+    
+    if (demonName && offering) {
+        demonCount++;
+        document.getElementById('demon-count').textContent = demonCount;
+        
+        // Create demonic manifestation effect
+        const manifestation = document.createElement('div');
+        manifestation.style.position = 'fixed';
+        manifestation.style.left = Math.random() * window.innerWidth + 'px';
+        manifestation.style.top = Math.random() * window.innerHeight + 'px';
+        manifestation.style.color = '#960018';
+        manifestation.style.fontSize = '1.5em';
+        manifestation.textContent = `${demonName} HAS BEEN SUMMONED`;
+        document.body.appendChild(manifestation);
+        
+        // Clear form
+        document.getElementById('demon-name').value = '';
+        document.getElementById('offering').value = '';
+        
+        // Remove manifestation after delay
+        setTimeout(() => document.body.removeChild(manifestation), 3000);
+        
+        // Shake screen effect
+        document.body.style.animation = 'shake 0.5s';
+        setTimeout(() => document.body.style.animation = '', 500);
+    }
+}
+
+// Add shake animation
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes shake {
+        0%, 100% { transform: translateX(0); }
+        25% { transform: translateX(-10px); }
+        75% { transform: translateX(10px); }
+    }
+`;
+document.head.appendChild(style);
+</script>
+
+</body></html>
