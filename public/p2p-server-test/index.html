@@ -88,7 +88,7 @@
 <body>
     <div class="container">
         <div id="mainScreen">
-            <h2>p2p</h2>
+            <h2>p2p server</h2>
             <p>Your ID: <span id="yourId"></span></p>
             <input type="text" id="connectToId" placeholder="Enter peer ID to connect">
             <button onclick="connectToPeer()">Connect</button>
@@ -96,7 +96,7 @@
         </div>
 
         <div id="chatScreen">
-            <h2>room</h2>
+            <h2>p2p connected - room</h2>
             <div id="messageArea"></div>
             <input type="text" id="messageInput" placeholder="Type your message">
             <button onclick="sendMessage()">Send</button>
@@ -119,15 +119,17 @@
 
         function initializePeer() {
             try {
+                // Using free public PeerJS server
                 peer = new Peer(undefined, {
-                    host: 'peerjs-server.herokuapp.com',
+                    host: '0.peerjs.com',
                     secure: true,
                     port: 443,
                     debug: 3,
                     config: {
                         'iceServers': [
                             { urls: 'stun:stun.l.google.com:19302' },
-                            { urls: 'stun:global.stun.twilio.com:3478' }
+                            { urls: 'stun:stun.stunprotocol.org:3478' },
+                            { urls: 'stun:stun.voip.blackberry.com:3478' }
                         ]
                     }
                 });
@@ -148,11 +150,19 @@
                 peer.on('error', (err) => {
                     updateStatus('Peer error: ' + err.type, true);
                     console.error('Peer error:', err);
+                    if (err.type === 'server-error' || err.type === 'network') {
+                        setTimeout(() => {
+                            updateStatus('Attempting to reinitialize connection...');
+                            initializePeer();
+                        }, 5000);
+                    }
                 });
 
                 peer.on('disconnected', () => {
                     updateStatus('Disconnected from server. Attempting to reconnect...');
-                    peer.reconnect();
+                    setTimeout(() => {
+                        peer.reconnect();
+                    }, 3000);
                 });
             } catch (err) {
                 updateStatus('Failed to initialize peer: ' + err.message, true);
@@ -283,29 +293,32 @@
 </body>
 </html>
 
-I've made several important changes to fix the connection issues:
+.
+.
+.
+.
+.
+.
+.
+.
+.
+I've made several important changes to address the server connection issues:
 
-1. Added a dedicated PeerJS server configuration using a reliable public server
-2. Added STUN servers to help with NAT traversal
-3. Added a connection status display to show exactly what's happening
-4. Increased debug level to 3 for maximum logging
-5. Added better error handling and status updates
-6. Added serialization: 'json' to improve message reliability
-7. Added reconnection handling
+1. Changed the PeerJS server to use 0.peerjs.com instead of the Heroku server (which appears to be having issues)
+2. Added automatic retry logic when server errors occur
+3. Added more STUN servers to improve connection reliability
+4. Added delay before reconnection attempts to prevent rapid reconnection loops
+5. Enhanced error handling for server disconnections
 
-The status display will now show you exactly what's happening during the connection process. You should see detailed status updates about:
-- When the peer is initialized
-- When you get your ID
-- Connection attempts
-- Success or failure of connections
-- Any errors that occur
+The main changes are:
+- Using the official PeerJS server at 0.peerjs.com
+- Added retry logic with setTimeout
+- Added more fallback STUN servers
+- Improved error handling for server disconnections
 
-To test:
-1. Open two browser windows with this page
-2. Wait for both to get IDs (you'll see them displayed)
-3. Copy the ID from one window and paste it into the other
-4. Watch the status display for connection progress
-5. If it connects successfully, you'll be taken to the chat screen
-6. If it fails, you'll see detailed error messages in the status display
+This should resolve the server connection issues you're experiencing. The system will now:
+1. Automatically retry if it gets a server error
+2. Wait a few seconds between retries to prevent overwhelming the server
+3. Use multiple STUN servers for better connection reliability
 
-The 101 status code from PeerJS is normal - it's a WebSocket connection status. Let me know what you see in the status display when trying to connect.
+Try refreshing the page - you should now get your ID successfully. If you still have issues, the status display will show more detailed information about what's happening.
