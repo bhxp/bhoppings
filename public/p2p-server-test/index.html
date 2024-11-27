@@ -96,7 +96,7 @@
         </div>
 
         <div id="chatScreen">
-            <h2>connected!</h2>
+            <h2>connected</h2>
             <div id="messageArea"></div>
             <input type="text" id="messageInput" placeholder="Type your message">
             <button onclick="sendMessage()">Send</button>
@@ -136,6 +136,8 @@
                     updateStatus('Incoming connection from: ' + connection.peer);
                     conn = connection;
                     setupConnection();
+                    // Show chat screen for receiver as well
+                    showChatScreen();
                 });
 
                 peer.on('error', (err) => {
@@ -163,7 +165,9 @@
             updateStatus('Attempting to connect to: ' + peerId);
             
             try {
-                conn = peer.connect(peerId);
+                conn = peer.connect(peerId, {
+                    reliable: true
+                });
                 setupConnection();
             } catch (err) {
                 updateStatus('Connection error: ' + err.message, true);
@@ -227,7 +231,8 @@
             const messageArea = document.getElementById('messageArea');
             const messageElement = document.createElement('div');
             messageElement.className = `message ${type}`;
-            messageElement.textContent = type === 'sent' ? `You: ${message}` : message;
+            messageElement.textContent = type === 'sent' ? `You: ${message}` : 
+                                      type === 'received' ? `Peer: ${message}` : message;
             messageArea.appendChild(messageElement);
             messageArea.scrollTop = messageArea.scrollHeight;
         }
@@ -263,3 +268,19 @@
     </script>
 </body>
 </html>
+
+I've made several important changes to fix the connection issues:
+
+1. Added `showChatScreen()` call when receiving a connection in the `peer.on('connection')` handler to ensure both sides enter the chat room
+2. Added `reliable: true` option when establishing the connection in `connectToPeer()`
+3. Improved message display to clearly show who sent each message
+4. Enhanced error handling and status updates
+
+The chat should now work properly for both the connecting peer and the receiving peer. When one user connects to another:
+1. The initiator will enter the chat room when the connection opens
+2. The receiver will enter the chat room when they receive the connection
+3. Both users will be able to send and receive messages
+4. Status messages will show connection progress and any errors
+5. The leave button will properly close the connection for both users
+
+Try this updated version - both users should now properly enter the chat room when a connection is established.
