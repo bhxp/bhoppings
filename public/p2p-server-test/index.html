@@ -1,0 +1,194 @@
+<html><head><base href="." /><!DOCTYPE html>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>p2p server</title>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+        background: #f0f0f0;
+    }
+
+    .container {
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    #mainScreen, #chatScreen {
+        transition: all 0.3s ease;
+    }
+
+    #chatScreen {
+        display: none;
+    }
+
+    .message {
+        padding: 10px;
+        margin: 5px 0;
+        border-radius: 4px;
+        background: #e9ecef;
+    }
+
+    input[type="text"] {
+        width: 100%;
+        padding: 8px;
+        margin: 5px 0;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+    }
+
+    button {
+        background: #007bff;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: background 0.3s ease;
+    }
+
+    button:hover {
+        background: #0056b3;
+    }
+
+    #messageArea {
+        height: 300px;
+        overflow-y: auto;
+        border: 1px solid #ddd;
+        padding: 10px;
+        margin: 10px 0;
+        border-radius: 4px;
+    }
+
+    .status {
+        color: #666;
+        font-style: italic;
+    }
+</style>
+</head>
+<body>
+    <div class="container">
+        <div id="mainScreen">
+            <h2>P2P Server Chat</h2>
+            <p>Your ID: <span id="yourId"></span></p>
+            <input type="text" id="connectToId" placeholder="Enter peer ID to connect">
+            <button onclick="connectToPeer()">Connect</button>
+        </div>
+
+        <div id="chatScreen">
+            <h2>Chat Room</h2>
+            <div id="messageArea"></div>
+            <input type="text" id="messageInput" placeholder="Type your message">
+            <button onclick="sendMessage()">Send</button>
+            <button onclick="leaveChat()">Leave Chat</button>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/peerjs@1.4.7/dist/peerjs.min.js"></script>
+    <script>
+        let peer = null;
+        let conn = null;
+        let isConnected = false;
+
+        function initializePeer() {
+            // Create a new peer with a random ID
+            peer = new Peer();
+            
+            peer.on('open', (id) => {
+                document.getElementById('yourId').textContent = id;
+            });
+
+            peer.on('connection', (connection) => {
+                conn = connection;
+                setupConnection();
+            });
+
+            peer.on('error', (err) => {
+                console.error(err);
+                alert('An error occurred: ' + err);
+            });
+        }
+
+        function connectToPeer() {
+            const peerId = document.getElementById('connectToId').value;
+            if (!peerId) {
+                alert('Please enter a peer ID');
+                return;
+            }
+
+            conn = peer.connect(peerId);
+            setupConnection();
+        }
+
+        function setupConnection() {
+            conn.on('open', () => {
+                isConnected = true;
+                showChatScreen();
+                addMessage('Connected to peer!', 'status');
+            });
+
+            conn.on('data', (data) => {
+                addMessage(data, 'received');
+            });
+
+            conn.on('close', () => {
+                isConnected = false;
+                showMainScreen();
+                addMessage('Connection closed', 'status');
+            });
+        }
+
+        function sendMessage() {
+            const messageInput = document.getElementById('messageInput');
+            const message = messageInput.value;
+
+            if (!message || !isConnected) return;
+
+            conn.send(message);
+            addMessage(`You: ${message}`, 'sent');
+            messageInput.value = '';
+        }
+
+        function addMessage(message, type) {
+            const messageArea = document.getElementById('messageArea');
+            const messageElement = document.createElement('div');
+            messageElement.className = `message ${type}`;
+            messageElement.textContent = message;
+            messageArea.appendChild(messageElement);
+            messageArea.scrollTop = messageArea.scrollHeight;
+        }
+
+        function showChatScreen() {
+            document.getElementById('mainScreen').style.display = 'none';
+            document.getElementById('chatScreen').style.display = 'block';
+        }
+
+        function showMainScreen() {
+            document.getElementById('mainScreen').style.display = 'block';
+            document.getElementById('chatScreen').style.display = 'none';
+        }
+
+        function leaveChat() {
+            if (conn) {
+                conn.close();
+            }
+            isConnected = false;
+            showMainScreen();
+            document.getElementById('messageArea').innerHTML = '';
+        }
+
+        // Handle enter key in message input
+        document.getElementById('messageInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+
+        // Initialize on page load
+        window.onload = initializePeer;
+    </script>
+</body>
+</html>
