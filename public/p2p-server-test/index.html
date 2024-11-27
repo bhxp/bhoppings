@@ -76,15 +76,23 @@
         color: #666;
         font-style: italic;
     }
+
+    #connectionStatus {
+        margin-top: 10px;
+        padding: 10px;
+        border-radius: 4px;
+        background: #f8f9fa;
+    }
 </style>
 </head>
 <body>
     <div class="container">
         <div id="mainScreen">
-            <h2>p2p server</h2>
+            <h2>p2p</h2>
             <p>Your ID: <span id="yourId"></span></p>
             <input type="text" id="connectToId" placeholder="Enter peer ID to connect">
             <button onclick="connectToPeer()">Connect</button>
+            <div id="connectionStatus"></div>
         </div>
 
         <div id="chatScreen">
@@ -101,84 +109,112 @@
         let peer = null;
         let conn = null;
         let isConnected = false;
+        const statusDiv = document.getElementById('connectionStatus');
+
+        function updateStatus(message, isError = false) {
+            console.log(message);
+            statusDiv.innerHTML += `<div style="color: ${isError ? 'red' : 'black'}">${message}</div>`;
+            statusDiv.scrollTop = statusDiv.scrollHeight;
+        }
 
         function initializePeer() {
-            // Create a new peer with a random ID
-            peer = new Peer({
-                debug: 2 // Enable debug logging
-            });
-            
-            peer.on('open', (id) => {
-                document.getElementById('yourId').textContent = id;
-                console.log('My peer ID is: ' + id);
-            });
+            try {
+                peer = new Peer(undefined, {
+                    host: 'peerjs-server.herokuapp.com',
+                    secure: true,
+                    port: 443,
+                    debug: 3,
+                    config: {
+                        'iceServers': [
+                            { urls: 'stun:stun.l.google.com:19302' },
+                            { urls: 'stun:global.stun.twilio.com:3478' }
+                        ]
+                    }
+                });
 
-            peer.on('connection', (connection) => {
-                console.log('Received connection from:', connection.peer);
-                conn = connection;
-                setupConnection();
-            });
+                updateStatus('Initializing peer connection...');
+                
+                peer.on('open', (id) => {
+                    document.getElementById('yourId').textContent = id;
+                    updateStatus('Connected to server. Your ID: ' + id);
+                });
 
-            peer.on('error', (err) => {
-                console.error('Peer error:', err);
-                alert('An error occurred: ' + err);
-            });
+                peer.on('connection', (connection) => {
+                    updateStatus('Incoming connection from: ' + connection.peer);
+                    conn = connection;
+                    setupConnection();
+                });
+
+                peer.on('error', (err) => {
+                    updateStatus('Peer error: ' + err.type, true);
+                    console.error('Peer error:', err);
+                });
+
+                peer.on('disconnected', () => {
+                    updateStatus('Disconnected from server. Attempting to reconnect...');
+                    peer.reconnect();
+                });
+            } catch (err) {
+                updateStatus('Failed to initialize peer: ' + err.message, true);
+                console.error('Initialization error:', err);
+            }
         }
 
         function connectToPeer() {
             const peerId = document.getElementById('connectToId').value.trim();
             if (!peerId) {
-                alert('Please enter a peer ID');
+                updateStatus('Please enter a peer ID', true);
                 return;
             }
 
-            console.log('Attempting to connect to:', peerId);
+            updateStatus('Attempting to connect to: ' + peerId);
             
             try {
                 conn = peer.connect(peerId, {
-                    reliable: true
+                    reliable: true,
+                    serialization: 'json'
                 });
                 
                 if (!conn) {
-                    console.error('Connection failed to establish');
+                    updateStatus('Failed to create connection object', true);
                     return;
                 }
 
                 setupConnection();
             } catch (err) {
+                updateStatus('Connection error: ' + err.message, true);
                 console.error('Connection error:', err);
-                alert('Failed to connect: ' + err.message);
             }
         }
 
         function setupConnection() {
             if (!conn) {
-                console.error('No connection object available');
+                updateStatus('No connection object available', true);
                 return;
             }
 
             conn.on('open', () => {
-                console.log('Connection opened');
+                updateStatus('Connection established successfully!');
                 isConnected = true;
                 showChatScreen();
                 addMessage('Connected to peer!', 'status');
             });
 
             conn.on('data', (data) => {
-                console.log('Received data:', data);
+                console.log('Received:', data);
                 addMessage(data, 'received');
             });
 
             conn.on('close', () => {
-                console.log('Connection closed');
+                updateStatus('Connection closed');
                 isConnected = false;
                 showMainScreen();
                 addMessage('Connection closed', 'status');
             });
 
             conn.on('error', (err) => {
+                updateStatus('Connection error: ' + err.message, true);
                 console.error('Connection error:', err);
-                alert('Connection error: ' + err);
             });
         }
 
@@ -186,12 +222,13 @@
             const messageInput = document.getElementById('messageInput');
             const message = messageInput.value.trim();
 
-            if (!message || !isConnected || !conn) {
-                console.log('Cannot send message:', {
-                    hasMessage: !!message,
-                    isConnected,
-                    hasConnection: !!conn
-                });
+            if (!message) {
+                updateStatus('Please enter a message', true);
+                return;
+            }
+
+            if (!isConnected || !conn) {
+                updateStatus('Not connected to peer', true);
                 return;
             }
 
@@ -201,8 +238,8 @@
                 messageInput.value = '';
                 console.log('Message sent:', message);
             } catch (err) {
-                console.error('Error sending message:', err);
-                alert('Failed to send message: ' + err.message);
+                updateStatus('Failed to send message: ' + err.message, true);
+                console.error('Send error:', err);
             }
         }
 
@@ -232,41 +269,43 @@
             isConnected = false;
             showMainScreen();
             document.getElementById('messageArea').innerHTML = '';
-            console.log('Left chat');
+            updateStatus('Left chat');
         }
 
-        // Handle enter key in message input
         document.getElementById('messageInput').addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
                 sendMessage();
             }
         });
 
-        // Initialize on page load
         window.onload = initializePeer;
     </script>
 </body>
 </html>
 
-I've made several improvements to help debug the connection issues:
+I've made several important changes to fix the connection issues:
 
-1. Added debug logging throughout the code to help track what's happening
-2. Added error handling and more detailed error messages
-3. Added reliable: true option to the peer connection
-4. Added debug: 2 to the Peer initialization to enable detailed logging
-5. Added proper error handling for the connection process
-6. Added additional checks before sending messages
-7. Added visual distinction between sent and received messages
-8. Added trim() to clean up input values
+1. Added a dedicated PeerJS server configuration using a reliable public server
+2. Added STUN servers to help with NAT traversal
+3. Added a connection status display to show exactly what's happening
+4. Increased debug level to 3 for maximum logging
+5. Added better error handling and status updates
+6. Added serialization: 'json' to improve message reliability
+7. Added reconnection handling
 
-Now you should see detailed logs in the browser console that will help identify exactly where the connection process is failing. Try opening the browser console (usually F12) before testing the connection between two instances. This will help us see exactly what's happening during the connection attempt.
+The status display will now show you exactly what's happening during the connection process. You should see detailed status updates about:
+- When the peer is initialized
+- When you get your ID
+- Connection attempts
+- Success or failure of connections
+- Any errors that occur
 
-To use the chat:
-
+To test:
 1. Open two browser windows with this page
-2. In both windows, check the console to see your peer IDs
-3. Copy the ID from one window and paste it into the "Enter peer ID" field in the other window
-4. Click connect and watch the console for detailed logging of what's happening
-5. If any errors occur, they will be logged to the console and shown in alerts
+2. Wait for both to get IDs (you'll see them displayed)
+3. Copy the ID from one window and paste it into the other
+4. Watch the status display for connection progress
+5. If it connects successfully, you'll be taken to the chat screen
+6. If it fails, you'll see detailed error messages in the status display
 
-Let me know what you see in the console logs when trying to connect, and we can further debug from there.
+The 101 status code from PeerJS is normal - it's a WebSocket connection status. Let me know what you see in the status display when trying to connect.
