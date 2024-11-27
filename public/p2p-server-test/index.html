@@ -32,6 +32,15 @@
         background: #e9ecef;
     }
 
+    .message.received {
+        background: #d4edda;
+    }
+
+    .message.sent {
+        background: #cce5ff;
+        text-align: right;
+    }
+
     input[type="text"] {
         width: 100%;
         padding: 8px;
@@ -72,14 +81,14 @@
 <body>
     <div class="container">
         <div id="mainScreen">
-            <h2>P2P Server Chat</h2>
+            <h2>p2p server</h2>
             <p>Your ID: <span id="yourId"></span></p>
             <input type="text" id="connectToId" placeholder="Enter peer ID to connect">
             <button onclick="connectToPeer()">Connect</button>
         </div>
 
         <div id="chatScreen">
-            <h2>Chat Room</h2>
+            <h2>room</h2>
             <div id="messageArea"></div>
             <input type="text" id="messageInput" placeholder="Type your message">
             <button onclick="sendMessage()">Send</button>
@@ -95,61 +104,106 @@
 
         function initializePeer() {
             // Create a new peer with a random ID
-            peer = new Peer();
+            peer = new Peer({
+                debug: 2 // Enable debug logging
+            });
             
             peer.on('open', (id) => {
                 document.getElementById('yourId').textContent = id;
+                console.log('My peer ID is: ' + id);
             });
 
             peer.on('connection', (connection) => {
+                console.log('Received connection from:', connection.peer);
                 conn = connection;
                 setupConnection();
             });
 
             peer.on('error', (err) => {
-                console.error(err);
+                console.error('Peer error:', err);
                 alert('An error occurred: ' + err);
             });
         }
 
         function connectToPeer() {
-            const peerId = document.getElementById('connectToId').value;
+            const peerId = document.getElementById('connectToId').value.trim();
             if (!peerId) {
                 alert('Please enter a peer ID');
                 return;
             }
 
-            conn = peer.connect(peerId);
-            setupConnection();
+            console.log('Attempting to connect to:', peerId);
+            
+            try {
+                conn = peer.connect(peerId, {
+                    reliable: true
+                });
+                
+                if (!conn) {
+                    console.error('Connection failed to establish');
+                    return;
+                }
+
+                setupConnection();
+            } catch (err) {
+                console.error('Connection error:', err);
+                alert('Failed to connect: ' + err.message);
+            }
         }
 
         function setupConnection() {
+            if (!conn) {
+                console.error('No connection object available');
+                return;
+            }
+
             conn.on('open', () => {
+                console.log('Connection opened');
                 isConnected = true;
                 showChatScreen();
                 addMessage('Connected to peer!', 'status');
             });
 
             conn.on('data', (data) => {
+                console.log('Received data:', data);
                 addMessage(data, 'received');
             });
 
             conn.on('close', () => {
+                console.log('Connection closed');
                 isConnected = false;
                 showMainScreen();
                 addMessage('Connection closed', 'status');
+            });
+
+            conn.on('error', (err) => {
+                console.error('Connection error:', err);
+                alert('Connection error: ' + err);
             });
         }
 
         function sendMessage() {
             const messageInput = document.getElementById('messageInput');
-            const message = messageInput.value;
+            const message = messageInput.value.trim();
 
-            if (!message || !isConnected) return;
+            if (!message || !isConnected || !conn) {
+                console.log('Cannot send message:', {
+                    hasMessage: !!message,
+                    isConnected,
+                    hasConnection: !!conn
+                });
+                return;
+            }
 
-            conn.send(message);
-            addMessage(`You: ${message}`, 'sent');
-            messageInput.value = '';
+            try {
+                conn.send(message);
+                addMessage(`You: ${message}`, 'sent');
+                messageInput.value = '';
+                console.log('Message sent:', message);
+            } catch (err) {
+                console.error('Error sending message:', err);
+                alert('Failed to send message: ' + err.message);
+            }
         }
 
         function addMessage(message, type) {
@@ -178,6 +232,7 @@
             isConnected = false;
             showMainScreen();
             document.getElementById('messageArea').innerHTML = '';
+            console.log('Left chat');
         }
 
         // Handle enter key in message input
@@ -192,3 +247,26 @@
     </script>
 </body>
 </html>
+
+I've made several improvements to help debug the connection issues:
+
+1. Added debug logging throughout the code to help track what's happening
+2. Added error handling and more detailed error messages
+3. Added reliable: true option to the peer connection
+4. Added debug: 2 to the Peer initialization to enable detailed logging
+5. Added proper error handling for the connection process
+6. Added additional checks before sending messages
+7. Added visual distinction between sent and received messages
+8. Added trim() to clean up input values
+
+Now you should see detailed logs in the browser console that will help identify exactly where the connection process is failing. Try opening the browser console (usually F12) before testing the connection between two instances. This will help us see exactly what's happening during the connection attempt.
+
+To use the chat:
+
+1. Open two browser windows with this page
+2. In both windows, check the console to see your peer IDs
+3. Copy the ID from one window and paste it into the "Enter peer ID" field in the other window
+4. Click connect and watch the console for detailed logging of what's happening
+5. If any errors occur, they will be logged to the console and shown in alerts
+
+Let me know what you see in the console logs when trying to connect, and we can further debug from there.
