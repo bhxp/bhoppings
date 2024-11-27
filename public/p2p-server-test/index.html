@@ -123,14 +123,6 @@
                     host: '0.peerjs.com',
                     secure: true,
                     port: 443,
-                    debug: 3,
-                    config: {
-                        'iceServers': [
-                            { urls: 'stun:stun.l.google.com:19302' },
-                            { urls: 'stun:stun.stunprotocol.org:3478' },
-                            { urls: 'stun:stun.voip.blackberry.com:3478' }
-                        ]
-                    }
                 });
 
                 updateStatus('Initializing peer connection...');
@@ -144,26 +136,16 @@
                     updateStatus('Incoming connection from: ' + connection.peer);
                     conn = connection;
                     setupConnection();
-                    // Immediately show chat screen for receiving peer
-                    showChatScreen();
                 });
 
                 peer.on('error', (err) => {
                     updateStatus('Peer error: ' + err.type, true);
                     console.error('Peer error:', err);
-                    if (err.type === 'server-error' || err.type === 'network') {
-                        setTimeout(() => {
-                            updateStatus('Attempting to reinitialize connection...');
-                            initializePeer();
-                        }, 5000);
-                    }
                 });
 
                 peer.on('disconnected', () => {
                     updateStatus('Disconnected from server. Attempting to reconnect...');
-                    setTimeout(() => {
-                        peer.reconnect();
-                    }, 3000);
+                    peer.reconnect();
                 });
             } catch (err) {
                 updateStatus('Failed to initialize peer: ' + err.message, true);
@@ -182,12 +164,6 @@
             
             try {
                 conn = peer.connect(peerId);
-                
-                if (!conn) {
-                    updateStatus('Failed to create connection object', true);
-                    return;
-                }
-
                 setupConnection();
             } catch (err) {
                 updateStatus('Connection error: ' + err.message, true);
@@ -206,13 +182,6 @@
                 isConnected = true;
                 showChatScreen();
                 addMessage('Connected to peer!', 'status');
-
-                // Send initial greeting
-                try {
-                    conn.send("Hello! Connection established!");
-                } catch (err) {
-                    console.error('Failed to send initial greeting:', err);
-                }
             });
 
             conn.on('data', (data) => {
@@ -239,11 +208,7 @@
             const messageInput = document.getElementById('messageInput');
             const message = messageInput.value.trim();
 
-            if (!message) {
-                updateStatus('Please enter a message', true);
-                return;
-            }
-
+            if (!message) return;
             if (!isConnected || !conn) {
                 updateStatus('Not connected to peer', true);
                 return;
@@ -251,12 +216,10 @@
 
             try {
                 conn.send(message);
-                addMessage(`You: ${message}`, 'sent');
+                addMessage(message, 'sent');
                 messageInput.value = '';
-                console.log('Message sent:', message);
             } catch (err) {
                 updateStatus('Failed to send message: ' + err.message, true);
-                console.error('Send error:', err);
             }
         }
 
@@ -264,7 +227,7 @@
             const messageArea = document.getElementById('messageArea');
             const messageElement = document.createElement('div');
             messageElement.className = `message ${type}`;
-            messageElement.textContent = message;
+            messageElement.textContent = type === 'sent' ? `You: ${message}` : message;
             messageArea.appendChild(messageElement);
             messageArea.scrollTop = messageArea.scrollHeight;
         }
@@ -272,6 +235,7 @@
         function showChatScreen() {
             document.getElementById('mainScreen').style.display = 'none';
             document.getElementById('chatScreen').style.display = 'block';
+            document.getElementById('messageInput').focus();
         }
 
         function showMainScreen() {
@@ -299,20 +263,3 @@
     </script>
 </body>
 </html>
-
-I've made several key changes to fix the connection issues:
-
-1. Simplified the peer connection options - removed unnecessary options that might interfere with connection establishment
-2. Added immediate chat screen display for receiving peer when connection is detected
-3. Added an automatic greeting message when connection is established to verify the connection is working
-4. Improved error handling and logging for connection events
-5. Ensured both peers properly transition to chat screen when connection is established
-6. Added type checking for received messages to prevent errors
-
-The connection should now work properly. When you connect:
-1. The initiating peer will see "Connection established successfully!"
-2. Both peers will be moved to the chat screen
-3. An initial greeting message will be sent to confirm the connection
-4. Both peers can then send messages back and forth
-
-Try connecting again and you should see both peers enter the chat room successfully.
