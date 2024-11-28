@@ -1,0 +1,533 @@
+<html><head><base href="." /><title>Border Hop</title><style>
+  body {
+    margin: 0;
+    overflow: hidden;
+    background: linear-gradient(skyblue, wheat);
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  
+  #game {
+    width: 100vw;
+    height: 100vh;
+    position: relative;
+    background: linear-gradient(wheat, #c2b280);
+    overflow: hidden;
+  }
+
+  .border-wall {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    height: 120px;
+    background: 
+      repeating-linear-gradient(45deg, 
+        rgba(194, 178, 128, 0.5) 0px,
+        rgba(189, 173, 123, 0.8) 5px,
+        rgba(184, 168, 118, 0.5) 10px
+      ),
+      repeating-linear-gradient(-45deg,
+        rgba(194, 178, 128, 0.5) 0px,
+        rgba(189, 173, 123, 0.8) 5px,
+        rgba(184, 168, 118, 0.5) 10px
+      );
+    animation: moveGround 2s linear infinite;
+  }
+
+  @keyframes moveGround {
+    from {
+      background-position: 0 0, 0 0;
+    }
+    to {
+      background-position: -20px -20px, -20px -20px;
+    }
+  }
+
+  #player {
+    width: 60px;
+    height: 90px;
+    position: absolute;
+    bottom: 120px;
+    left: 50px;
+    transition: transform 0.1s;
+    z-index: 2;
+  }
+
+  .obstacle {
+    position: absolute;
+    bottom: 120px;
+    width: 30px;
+    height: 120px;
+    background: #444;
+  }
+
+  #score {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    font-family: Arial;
+    font-size: 32px;
+  }
+
+  #gameOver {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-family: Arial;
+    font-size: 52px;
+    color: red;
+    display: none;
+    text-align: center;
+    background: rgba(255,255,255,0.9);
+    padding: 20px;
+    border-radius: 10px;
+    z-index: 3;
+  }
+
+  #winScreen {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-family: Arial;
+    font-size: 52px;
+    color: green;
+    display: none;
+    text-align: center;
+    background: rgba(255,255,255,0.9);
+    padding: 20px;
+    border-radius: 10px;
+    z-index: 3;
+  }
+
+  .play-again {
+    margin-top: 20px;
+    padding: 10px 20px;
+    font-size: 24px;
+    background: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+
+  .play-again:hover {
+    background: #45a049;
+  }
+
+  .tacos {
+    font-size: 72px;
+    margin: 20px 0;
+  }
+
+  #border-patrol {
+    width: 85px;
+    height: 120px;
+    position: absolute;
+    bottom: 120px;
+    left: -20px;
+    z-index: 1;
+  }
+
+  .cactus {
+    position: absolute;
+    bottom: 120px;
+    width: 50px;
+    height: 80px;
+    fill: #2d5a27;
+  }
+
+  .mousetrap {
+    position: absolute;
+    bottom: 120px;
+    width: 80px;
+    height: 40px;
+    z-index: 1;
+  }
+
+  .rope-holder {
+    position: absolute;
+    bottom: 120px;
+    width: 60px;
+    height: 100px;
+    z-index: 1;
+  }
+
+  #startScreen {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-family: Arial;
+    font-size: 52px;
+    color: #333;
+    text-align: center;
+    background: rgba(255,255,255,0.9);
+    padding: 20px;
+    border-radius: 10px;
+    z-index: 4;
+  }
+
+  #startButton {
+    margin-top: 20px;
+    padding: 15px 30px;
+    font-size: 28px;
+    background: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background 0.3s;
+  }
+
+  #startButton:hover {
+    background: #45a049;
+  }
+
+  #cheatMenu {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(0, 0, 0, 0.9);
+    color: #0f0;
+    padding: 20px;
+    border-radius: 10px;
+    font-family: 'Courier New', monospace;
+    z-index: 5;
+    display: none;
+    min-width: 300px;
+  }
+
+  .cheat-option {
+    margin: 15px 0;
+  }
+
+  #gameSpeedSlider {
+    width: 100%;
+    margin: 10px 0;
+  }
+
+  .cheat-toggle {
+    appearance: none;
+    width: 50px;
+    height: 24px;
+    background: #333;
+    border-radius: 12px;
+    position: relative;
+    cursor: pointer;
+  }
+
+  .cheat-toggle:checked {
+    background: #0f0;
+  }
+
+  .cheat-toggle::before {
+    content: '';
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    background: white;
+    border-radius: 50%;
+    top: 2px;
+    left: 2px;
+    transition: 0.3s;
+  }
+
+  .cheat-toggle:checked::before {
+    left: 28px;
+  }
+</style></head>
+<body>
+  <div id="game">
+    <div id="startScreen">
+      <div>Damyan Run!</div>
+      <button id="startButton">Start Game</button>
+    </div>
+    
+    <div id="cheatMenu">
+      <h2 style="color: #0f0; margin-top: 0;">Cheat Menu</h2>
+      <div class="cheat-option">
+        <label>Phase Mode</label>
+        <input type="checkbox" id="phaseToggle" class="cheat-toggle">
+      </div>
+      <div class="cheat-option">
+        <label>Game Speed: <span id="speedValue">1x</span></label>
+        <input type="range" id="gameSpeedSlider" min="0.5" max="3" step="0.1" value="1">
+      </div>
+    </div>
+
+    <div class="border-wall"></div>
+    <div id="score">Tacos: 0 🌮</div>
+    <div id="gameOver">¡Got you Damyan!<br>Border Patrol wins!</div>
+    <div id="winScreen">
+      Freedom! You escaped Mexico!<br>
+      You win 3 tacos!<br>
+      <div class="tacos">🌮🌮🌮</div>
+      <button class="play-again" onclick="location.reload()">Play Again</button>
+    </div>
+    
+    <svg id="player" viewBox="0 0 100 150">
+      <path d="M50,20 Q60,20 60,30 Q60,40 50,40 Q40,40 40,30 Q40,20 50,20" fill="#8B4513"/>
+      <rect x="45" y="40" width="10" height="20" fill="#8B4513"/>
+      <rect x="30" y="60" width="40" height="60" fill="#F08080"/>
+      <rect x="35" y="120" width="10" height="20" fill="#8B4513"/>
+      <rect x="55" y="120" width="10" height="20" fill="#8B4513"/>
+      <text x="35" y="90" fill="white" font-size="12">Damyan</text>
+    </svg>
+
+    <svg id="border-patrol" viewBox="0 0 100 150">
+      <rect x="30" y="40" width="40" height="70" fill="green"/>
+      <circle cx="50" cy="25" r="15" fill="#FFD700"/>
+      <rect x="35" y="110" width="10" height="20" fill="black"/>
+      <rect x="55" y="110" width="10" height="20" fill="black"/>
+      <text x="25" y="65" fill="white" font-size="12">Border</text>
+      <text x="25" y="80" fill="white" font-size="12">Patrol</text>
+    </svg>
+  </div>
+
+<script>
+let gameStarted = false;
+let phaseMode = false;
+let gameSpeed = 1;
+let isCheatMenuOpen = false;
+
+const game = document.getElementById('game');
+const player = document.getElementById('player');
+const scoreElement = document.getElementById('score');
+const gameOverElement = document.getElementById('gameOver');
+const winScreenElement = document.getElementById('winScreen');
+const borderPatrol = document.getElementById('border-patrol');
+const startScreen = document.getElementById('startScreen');
+const startButton = document.getElementById('startButton');
+
+let isJumping = false;
+let gravity = 0.9;
+let position = 120;
+let upward = 0;
+let score = 0;
+let isGameOver = false;
+
+function toggleCheatMenu() {
+  const cheatMenu = document.getElementById('cheatMenu');
+  isCheatMenuOpen = !isCheatMenuOpen;
+  cheatMenu.style.display = isCheatMenuOpen ? 'block' : 'none';
+}
+
+function getRandomInt(min, max) {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+function addCactus() {
+  const cactus = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  cactus.setAttribute('class', 'cactus');
+  cactus.setAttribute('viewBox', '0 0 50 80');
+  cactus.style.left = `${window.innerWidth + getRandomInt(0, 300)}px`;
+  
+  cactus.innerHTML = `
+    <path d="M25,0 L25,80 M10,30 L40,30 M15,15 L35,15 M15,45 L35,45" 
+          stroke="#2d5a27" 
+          stroke-width="5"
+          fill="none"/>
+  `;
+  
+  game.appendChild(cactus);
+  
+  function moveCactus() {
+    const currentLeft = parseInt(cactus.style.left);
+    if (currentLeft < -50) {
+      cactus.style.left = `${window.innerWidth + getRandomInt(0, 300)}px`;
+    } else {
+      cactus.style.left = (currentLeft - 2 * gameSpeed) + 'px';
+    }
+    requestAnimationFrame(moveCactus);
+  }
+  
+  requestAnimationFrame(moveCactus);
+}
+
+function updateBorderPatrol() {
+  if (!isGameOver) {
+    const targetLeft = player.offsetLeft - 100;
+    const currentLeft = parseInt(borderPatrol.style.left) || -20;
+    const newLeft = currentLeft + ((targetLeft - currentLeft) * 0.1 * gameSpeed);
+    borderPatrol.style.left = newLeft + 'px';
+    borderPatrol.style.bottom = player.style.bottom;
+    requestAnimationFrame(updateBorderPatrol);
+  }
+}
+
+function jump() {
+  if (!isJumping && !isGameOver && gameStarted) {
+    upward = 15;
+    isJumping = true;
+    player.style.transform = 'rotate(-20deg)';
+    setTimeout(() => {
+      player.style.transform = 'rotate(0deg)';
+    }, 300);
+  }
+}
+
+function applyGravity() {
+  position += upward;
+  upward -= gravity;
+  
+  if (position <= 120) {
+    position = 120;
+    isJumping = false;
+    upward = 0;
+  }
+  
+  player.style.bottom = position + 'px';
+}
+
+function createObstacle() {
+  if (isGameOver) return;
+  
+  const obstacleTypes = ['wall'];
+  
+  if (score >= 5) obstacleTypes.push('patrol');
+  if (score >= 10) obstacleTypes.push('mousetrap');
+  if (score >= 15) obstacleTypes.push('rope-holder');
+  
+  const type = obstacleTypes[Math.floor(Math.random() * obstacleTypes.length)];
+  
+  let obstacle;
+  
+  switch(type) {
+    case 'wall':
+      obstacle = document.createElement('div');
+      obstacle.classList.add('obstacle');
+      break;
+      
+    case 'patrol':
+      obstacle = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+      obstacle.setAttribute('viewBox', '0 0 100 150');
+      obstacle.setAttribute('class', 'obstacle');
+      obstacle.innerHTML = `
+          <rect x="30" y="40" width="40" height="70" fill="green"/>
+          <circle cx="50" cy="25" r="15" fill="#FFD700"/>
+          <rect x="35" y="110" width="10" height="20" fill="black"/>
+          <rect x="55" y="110" width="10" height="20" fill="black"/>
+          <text x="25" y="65" fill="white" font-size="12">Border</text>
+          <text x="25" y="80" fill="white" font-size="12">Patrol</text>
+      `;
+      break;
+      
+    case 'mousetrap':
+      obstacle = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+      obstacle.setAttribute('viewBox', '0 0 100 50');
+      obstacle.setAttribute('class', 'mousetrap');
+      obstacle.innerHTML = `
+          <rect x="10" y="30" width="80" height="5" fill="brown"/>
+          <rect x="20" y="15" width="60" height="15" fill="silver"/>
+          <path d="M40,10 L60,10 L55,25 L45,25 Z" fill="#F4D03F"/>
+          <text x="25" y="22" font-size="24" fill="black">🌮</text>
+      `;
+      break;
+      
+    case 'rope-holder':
+      obstacle = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+      obstacle.setAttribute('viewBox', '0 0 100 150');
+      obstacle.setAttribute('class', 'rope-holder');
+      obstacle.innerHTML = `
+          <rect x="30" y="40" width="40" height="70" fill="#FFE4C4"/>
+          <circle cx="50" cy="25" r="15" fill="#FFE4C4"/>
+          <path d="M20,60 Q50,70 80,60" stroke="brown" fill="none" stroke-width="5"/>
+          <text x="30" y="90" fill="red" font-size="12">MAGA!</text>
+      `;
+      break;
+  }
+  
+  game.appendChild(obstacle);
+  
+  let obstaclePosition = window.innerWidth;
+  let speed = 5 + Math.floor(score / 10);
+  
+  function moveObstacle() {
+    obstaclePosition -= speed * gameSpeed;
+    obstacle.style.left = obstaclePosition + 'px';
+    
+    if (obstaclePosition > 30 && obstaclePosition < 90 && position < 160) {
+      if (!phaseMode) {
+        gameOver();
+      }
+    }
+    
+    if (obstaclePosition < -80) {
+      obstacle.remove();
+      score++;
+      scoreElement.textContent = `Tacos: ${score} 🌮`;
+      
+      if (score >= 100) {
+        win();
+      }
+    } else if (!isGameOver) {
+      requestAnimationFrame(moveObstacle);
+    }
+  }
+  
+  moveObstacle();
+  
+  const nextSpawnTime = Math.max(2000 - (score * 50), 1000);
+  setTimeout(createObstacle, nextSpawnTime);
+}
+
+function gameOver() {
+  isGameOver = true;
+  gameOverElement.style.display = 'block';
+  borderPatrol.style.left = player.offsetLeft + 'px';
+  borderPatrol.style.bottom = player.style.bottom;
+  setTimeout(() => {
+    location.reload();
+  }, 2000);
+}
+
+function win() {
+  isGameOver = true;
+  winScreenElement.style.display = 'block';
+}
+
+function startGame() {
+  gameStarted = true;
+  startScreen.style.display = 'none';
+  
+  for (let i = 0; i < 8; i++) {
+    setTimeout(() => addCactus(), getRandomInt(0, 2000));
+  }
+  
+  createObstacle();
+  updateBorderPatrol();
+}
+
+startButton.addEventListener('click', startGame);
+
+document.addEventListener('keydown', (event) => {
+  if (event.code === 'Space') {
+    jump();
+  }
+});
+
+document.addEventListener('touchstart', jump);
+
+document.addEventListener('keydown', (event) => {
+  if (event.key === 'F8') {
+    toggleCheatMenu();
+  }
+});
+
+document.getElementById('phaseToggle').addEventListener('change', (e) => {
+  phaseMode = e.target.checked;
+});
+
+document.getElementById('gameSpeedSlider').addEventListener('input', (e) => {
+  gameSpeed = parseFloat(e.target.value);
+  document.getElementById('speedValue').textContent = gameSpeed.toFixed(1) + 'x';
+});
+
+setInterval(applyGravity, 20);
+</script>
+</body></html>
