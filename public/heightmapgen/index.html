@@ -1,0 +1,300 @@
+<html><head><base href="." />
+    <title>Height Map Generator</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/simplex-noise/2.4.0/simplex-noise.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #1a1a1a;
+            color: #fff;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 10px;
+            margin-bottom: 20px;
+            background: #2a2a2a;
+            padding: 20px;
+            border-radius: 10px;
+        }
+        .canvas-container {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
+        canvas {
+            width: 100%;
+            background: #333;
+            border-radius: 5px;
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        input, select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #444;
+            border-radius: 4px;
+            background: #333;
+            color: white;
+        }
+        .checkbox-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .checkbox-container input {
+            width: auto;
+        }
+        .export-info {
+            background: #2a2a2a;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Height Map Generator | Unreal Engine | Island</h1>
+        <div class="controls">
+            <div>
+                <label for="mapSize">Map Size (in meters)</label>
+                <select id="mapSize">
+                    <option value="2048">2km x 2km</option>
+                    <option value="4096" selected>4km x 4km</option>
+                    <option value="8192">8km x 8km</option>
+                </select>
+            </div>
+            <div>
+                <label for="resolution">Resolution</label>
+                <select id="resolution">
+                    <option value="256">256x256</option>
+                    <option value="512" selected>512x512</option>
+                    <option value="1024">1024x1024</option>
+                </select>
+            </div>
+            <div>
+                <label for="mountaininess">Mountaininess</label>
+                <input type="range" id="mountaininess" min="0" max="100" value="60">
+            </div>
+            <div>
+                <label for="waterLevel">Water Level</label>
+                <input type="range" id="waterLevel" min="0" max="100" value="45">
+            </div>
+            <div>
+                <label for="foliageDensity">Foliage Density</label>
+                <input type="range" id="foliageDensity" min="0" max="100" value="70">
+            </div>
+            <div>
+                <label for="roadDensity">Road Network Density</label>
+                <input type="range" id="roadDensity" min="0" max="100" value="50">
+            </div>
+            <div class="checkbox-container">
+                <input type="checkbox" id="spawnIsland" checked>
+                <label for="spawnIsland">Add Spawn Island</label>
+            </div>
+            <div>
+                <button onclick="generateMap()">Generate Map</button>
+            </div>
+        </div>
+        
+        <div class="canvas-container">
+            <div>
+                <h3>Height Map</h3>
+                <canvas id="heightmapCanvas"></canvas>
+            </div>
+            <div>
+                <h3>Foliage Layer</h3>
+                <canvas id="foliageCanvas"></canvas>
+            </div>
+            <div>
+                <h3>Road Layer</h3>
+                <canvas id="roadCanvas"></canvas>
+            </div>
+        </div>
+
+        <div class="export-info" id="exportInfo" style="display: none">
+            <h3>Export Information</h3>
+            <pre id="exportDetails"></pre>
+        </div>
+    </div>
+
+    <script>
+        function generateIslandGradient(x, y, resolution, simplex) {
+            // Create base noise at different scales for the island shape
+            const scale1 = simplex.noise2D(x / (resolution * 0.5), y / (resolution * 0.5)) * 1.0;
+            const scale2 = simplex.noise2D(x / (resolution * 0.25), y / (resolution * 0.25)) * 0.5;
+            const scale3 = simplex.noise2D(x / (resolution * 0.125), y / (resolution * 0.125)) * 0.25;
+            
+            // Combine noise layers
+            let value = (scale1 + scale2 + scale3);
+            
+            // Normalize to 0-1 range
+            value = (value + 1.75) * 0.5;
+            
+            // Create soft edges that fade to water
+            const edgeFade = Math.max(0, Math.min(1, 
+                (1 - Math.pow(x / resolution * 2 - 1, 2)) *
+                (1 - Math.pow(y / resolution * 2 - 1, 2))
+            ));
+            
+            // Blend noise with edge fade
+            value *= edgeFade;
+            
+            // Sharpen the transition between land and water
+            value = Math.pow(value, 1.5);
+            
+            return Math.max(0, Math.min(1, value));
+        }
+
+        function generateMap() {
+            const mapSize = parseInt(document.getElementById('mapSize').value);
+            const resolution = parseInt(document.getElementById('resolution').value);
+            const mountaininess = document.getElementById('mountaininess').value / 100;
+            const waterLevel = document.getElementById('waterLevel').value / 100;
+            const foliageDensity = document.getElementById('foliageDensity').value / 100;
+            const roadDensity = document.getElementById('roadDensity').value / 100;
+            const addSpawnIsland = document.getElementById('spawnIsland').checked;
+
+            // Initialize canvases
+            const heightmapCanvas = document.getElementById('heightmapCanvas');
+            const foliageCanvas = document.getElementById('foliageCanvas');
+            const roadCanvas = document.getElementById('roadCanvas');
+            [heightmapCanvas, foliageCanvas, roadCanvas].forEach(canvas => {
+                canvas.width = resolution;
+                canvas.height = resolution;
+            });
+
+            const simplex = new SimplexNoise();
+            const contexts = {
+                height: heightmapCanvas.getContext('2d'),
+                foliage: foliageCanvas.getContext('2d'),
+                road: roadCanvas.getContext('2d')
+            };
+            const imageData = {
+                height: contexts.height.createImageData(resolution, resolution),
+                foliage: contexts.foliage.createImageData(resolution, resolution),
+                road: contexts.road.createImageData(resolution, resolution)
+            };
+
+            for(let y = 0; y < resolution; y++) {
+                for(let x = 0; x < resolution; x++) {
+                    const i = y * resolution + x;
+                    const px = x / resolution;
+                    const py = y / resolution;
+
+                    // Generate base terrain
+                    let value = 0;
+                    let amplitude = 1;
+                    let frequency = 1;
+                    const octaves = 6;
+                    
+                    for(let o = 0; o < octaves; o++) {
+                        // Use different frequencies for each octave without relying on center-based coordinates
+                        const nx = (x + resolution * 0.47) / resolution * frequency * 4;
+                        const ny = (y + resolution * 0.39) / resolution * frequency * 4;
+                        
+                        const noiseValue = simplex.noise2D(nx, ny);
+                        value += noiseValue * amplitude;
+                        amplitude *= 0.5;
+                        frequency *= 2;
+                    }
+
+                    // Normalize and apply island shape
+                    value = (value + 1) * 0.5;
+                    const islandGradient = generateIslandGradient(x, y, resolution, simplex);
+                    
+                    // Blend terrain with island shape
+                    value = value * 0.6 + 0.4;
+                    value *= islandGradient;
+                    
+                    // Add some variation to break up any remaining patterns
+                    const detailNoise = simplex.noise2D(x / (resolution * 0.1), y / (resolution * 0.1)) * 0.1;
+                    value += detailNoise;
+                    value = Math.max(0, Math.min(1, value));
+
+                    // Apply mountaininess
+                    value = Math.pow(value, 1.5 - mountaininess);
+
+                    // Ensure water level is respected
+                    if (value < waterLevel) {
+                        value = waterLevel * 0.8; // Flatten underwater areas
+                    }
+
+                    // Set heightmap visualization
+                    const idx = i * 4;
+                    const heightColor = Math.floor(value * 255);
+                    imageData.height.data[idx] = heightColor;
+                    imageData.height.data[idx + 1] = heightColor;
+                    imageData.height.data[idx + 2] = heightColor;
+                    imageData.height.data[idx + 3] = 255;
+
+                    // Generate foliage layer
+                    const foliageNoise = (simplex.noise2D(px * 12, py * 12) + 1) * 0.5;
+                    const foliageValue = value > waterLevel && foliageNoise < foliageDensity ? 255 : 0;
+                    imageData.foliage.data[idx] = 0;
+                    imageData.foliage.data[idx + 1] = foliageValue;
+                    imageData.foliage.data[idx + 2] = 0;
+                    imageData.foliage.data[idx + 3] = 255;
+
+                    // Generate road layer
+                    const roadValue = value > waterLevel && Math.abs(simplex.noise2D(px * 4, py * 4)) < roadDensity * 0.1 ? 255 : 0;
+                    imageData.road.data[idx] = roadValue;
+                    imageData.road.data[idx + 1] = roadValue;
+                    imageData.road.data[idx + 2] = roadValue;
+                    imageData.road.data[idx + 3] = 255;
+                }
+            }
+
+            // Draw all maps
+            contexts.height.putImageData(imageData.height, 0, 0);
+            contexts.foliage.putImageData(imageData.foliage, 0, 0);
+            contexts.road.putImageData(imageData.road, 0, 0);
+
+            // Show export information
+            document.getElementById('exportInfo').style.display = 'block';
+            document.getElementById('exportDetails').textContent = `
+Map Export Details:
+------------------
+Map Size: ${mapSize}x${mapSize} meters
+Resolution: ${resolution}x${resolution} pixels
+Heightmap Range: -256 to 7936 units (Unreal Engine scale)
+
+Layer Information:
+- Heightmap: Grayscale RAW heightmap for terrain
+- Foliage Layer: Green channel for vegetation placement
+- Road Layer: Grayscale mask for road network
+
+Import Instructions:
+1. Save heightmap as 16-bit RAW file
+2. Import into Unreal Engine Landscape tool
+3. Set landscape scale to ${mapSize}x${mapSize}
+4. Set height scale to 256
+5. Import layer maps as separate textures
+6. Use layer maps in landscape material blend nodes
+`;
+        }
+
+        // Generate initial map on load
+        window.onload = generateMap;
+    </script>
+</body></html>
