@@ -1,0 +1,1594 @@
+<html><head><base href="." />
+<title>Physics Sandbox</title>
+<style>
+  body {
+    margin: 0;
+    overflow: hidden;
+    background: #1a1a1a;
+    font-family: Arial, sans-serif;
+  }
+  
+  canvas {
+    width: 100vw;
+    height: 100vh;
+  }
+  
+  .controls {
+    max-height: 80vh;
+    overflow-y: auto;
+    width: 200px;
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    background: rgba(255,255,255,0.1);
+    padding: 10px;
+    border-radius: 5px;
+    color: white;
+    z-index: 1000;
+  }
+
+  .top-left-controls {
+    width: 200px;
+    position: fixed;
+    top: 10px;
+    left: 10px;
+    background: rgba(255,255,255,0.1);
+    padding: 10px;
+    border-radius: 5px;
+    color: white;
+    z-index: 1000;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    color: white;
+  }
+
+  td {
+    padding: 5px;
+  }
+
+  .control-cell {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+  }
+
+  .control-cell button,
+  .control-cell select {
+    width: 100%;
+  }
+
+  button {
+    background: #444;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    margin: 2px;
+    border-radius: 3px;
+    cursor: pointer;
+  }
+
+  button:hover {
+    background: #555;
+  }
+
+  .active {
+    background: #4CAF50;
+  }
+
+  select {
+    background: #444;
+    color: white;
+    border: none;
+    padding: 5px;
+    margin: 2px;
+    border-radius: 3px;
+  }
+
+  .selected {
+    outline: 2px solid #4CAF50;
+  }
+
+  .group-selected {
+    outline: 2px solid #2196F3;
+  }
+
+  input[type="color"] {
+    width: 100%;
+    height: 30px;
+    padding: 2px;
+    border: none;
+    border-radius: 3px;
+    background: #444;
+    cursor: pointer;
+  }
+
+  input[type="color"]::-webkit-color-swatch-wrapper {
+    padding: 0;
+  }
+
+  input[type="color"]::-webkit-color-swatch {
+    border: none;
+    border-radius: 2px;
+  }
+
+  .settings-menu {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(30,30,30,0.95);
+    padding: 20px;
+    border-radius: 8px;
+    color: white;
+    z-index: 2000;
+    min-width: 300px;
+  }
+
+  .settings-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+
+  .settings-header h3 {
+    margin: 0;
+  }
+
+  .close-btn {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 24px;
+    cursor: pointer;
+  }
+
+  .settings-section {
+    margin-bottom: 20px;
+  }
+
+  .settings-section h4 {
+    margin: 0 0 10px 0;
+  }
+
+  #gravitySlider {
+    width: 100%;
+    margin: 10px 0;
+  }
+
+  #customGravityContainer {
+    margin-top: 10px;
+  }
+
+  /* Add this CSS for the settings icon */
+  .settings-icon {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 40px;
+    height: 40px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+  }
+
+  .settings-icon svg {
+    width: 24px;
+    height: 24px;
+    fill: white;
+  }
+
+  .settings-icon:hover {
+    background: rgba(255,255,255,0.2);
+  }
+
+  /* Add these styles to handle the number inputs */
+  input[type="number"] {
+    width: 100%;
+    background: #444;
+    color: white;
+    border: none;
+    padding: 5px;
+    border-radius: 3px;
+    margin: 2px;
+  }
+
+  input[type="number"]::-webkit-inner-spin-button,
+  input[type="number"]::-webkit-outer-spin-button {
+    opacity: 1;
+    background: #555;
+  }
+</style>
+</head>
+<body>
+<div class="top-left-controls">
+  <table>
+    <tbody>
+      <tr>
+        <td>
+          <div class="control-cell">
+            <select id="presetSelect" onchange="createPreset()">
+              <option value="">-- Presets --</option>
+              <option value="car">Car</option>
+              <option value="house">House</option>
+              <option value="person">Person</option>
+              <option value="tree">Tree</option>
+              <option value="trashbin">Trash Bin</option>
+              <option value="waterbottle">Water Bottle</option>
+            </select>
+          </div>
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <div class="control-cell">
+          </div>
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <div class="control-cell">
+            <select id="mapSelect" onchange="changeMap()">
+              <option value="baseplate">Baseplate</option>
+              <option value="town">Niggaville</option>
+              <option value="grassfield">Grassfield</option>
+            </select>
+          </div>
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <div class="control-cell">
+            <select id="shapeSelect">
+              <option value="box">Box</option>
+              <option value="sphere">Sphere</option>
+              <option value="cylinder">Cylinder</option>
+            </select>
+          </div>
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <div class="control-cell">
+            <button onclick="runSimulation()" id="simulationBtn">Run Simulation</button>
+          </div>
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <div class="control-cell">
+            <button onclick="clearObjects()">Clear All</button>
+          </div>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="controls">
+  <table>
+    <tbody>
+      <tr>
+        <td>
+          <div class="control-cell">
+            <button onclick="setTool('select')" id="selectBtn" class="active">Select</button>
+          </div>
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <div class="control-cell">
+            <button onclick="setTool('move')" id="moveBtn">Move</button>
+          </div>
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <div class="control-cell">
+            <button onclick="groupSelected()" id="groupBtn">Move Multiple Objects</button>
+          </div>
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <div class="control-cell">
+            <button onclick="deleteSelected()" id="deleteBtn">Delete</button>
+          </div>
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <div class="control-cell">
+            <button onclick="setTool('create')" id="createBtn">Create</button>
+          </div>
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <div class="control-cell">
+            <button onclick="toggleAnchor()" id="anchorBtn">Anchor</button>
+          </div>
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <div class="control-cell">
+            <button onclick="cloneSelected()">Clone</button>
+          </div>
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <div class="control-cell">
+            <button onclick="setTool('rotate')" id="rotateBtn">Rotate</button>
+          </div>
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <div class="control-cell">
+            <button onclick="setTool('scale')" id="scaleBtn">Scale</button>
+          </div>
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <div class="control-cell">
+            <input type="color" id="colorPicker" onchange="changeColor()" value="#ffffff">
+          </div>
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <div class="control-cell">
+            <input type="number" id="forceX" placeholder="Force X (N)" step="1" value="0">
+          </div>
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <div class="control-cell">
+            <input type="number" id="forceY" placeholder="Force Y (N)" step="1" value="0">
+          </div>
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <div class="control-cell">
+            <input type="number" id="forceZ" placeholder="Force Z (N)" step="1" value="0">
+          </div>
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <div class="control-cell">
+            <button onclick="applyForce()">Apply Force</button>
+          </div>
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <div class="control-cell">
+          </div>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="settings-icon" onclick="toggleSettings()">
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+    <path d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.07-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.74,8.87 C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.07,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.44-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.47-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"/>
+  </svg>
+</div>
+
+<div id="settingsMenu" class="settings-menu" style="display: none;">
+  <div class="settings-header">
+    <h3>Settings</h3>
+    <button onclick="toggleSettings()" class="close-btn">×</button>
+  </div>
+  
+  <div class="settings-section">
+    <h4>Graphics</h4>
+    <button onclick="toggleShaders()" id="shaderBtn">Basic Graphics Mode</button>
+  </div>
+
+  <div class="settings-section">
+    <h4>Gravity</h4>
+    <select id="gravityPreset" onchange="updateGravity()">
+      <option value="earth">Earth Gravity (9.82 m/s²)</option>
+      <option value="moon">Moon Gravity (1.62 m/s²)</option>
+      <option value="mars">Mars Gravity (3.72 m/s²)</option>
+      <option value="jupiter">Jupiter Gravity (24.79 m/s²)</option>
+      <option value="custom">Custom Gravity</option>
+    </select>
+    <div id="customGravityContainer" style="display: none;">
+      <input type="range" id="gravitySlider" min="0" max="50" step="0.1" value="9.82">
+      <span id="gravityValue">9.82 m/s²</span>
+    </div>
+  </div>
+
+  <div class="settings-section">
+    <h4>Placement</h4>
+    <button onclick="toggleGridSnap()" id="gridSnapBtn">Enable Grid Snap</button>
+    <button onclick="toggleHeightPlacement()" id="heightPlacementBtn">Enable Height Placement</button>
+  </div>
+  
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cannon.js/0.6.2/cannon.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/TransformControls.js"></script>
+
+<script>
+// Scene setup
+const scene = new THREE.Scene();
+let gridHelper = new THREE.GridHelper(100, 100);
+scene.add(gridHelper);
+
+// Global variables
+let heightPlacement = false;
+
+// Physics world
+const world = new CANNON.World();
+world.gravity.set(0, -9.82, 0);
+world.broadphase = new CANNON.NaiveBroadphase();
+world.solver.iterations = 10;
+
+// Lights
+const ambientLight = new THREE.AmbientLight(0x404040);
+scene.add(ambientLight);
+
+const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
+directionalLight.position.set(10, 20, 10);
+directionalLight.castShadow = true;
+scene.add(directionalLight);
+
+// Camera setup
+const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+camera.position.set(10, 10, 10);
+camera.lookAt(0, 0, 0);
+
+// Controls
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.shadowMap.enabled = true;
+document.body.appendChild(renderer.domElement);
+const orbitControls = new THREE.OrbitControls(camera, renderer.domElement);
+const transformControls = new THREE.TransformControls(camera, renderer.domElement);
+scene.add(transformControls);
+
+// Global variables
+let objects = [];
+let selectedObject = null;
+let selectedObjects = new Set();
+let groups = [];
+let currentTool = 'create';
+let physicsEnabled = false;
+let gridSnap = false;
+const GRID_SIZE = 1; // Size of grid cells
+
+// Ground plane
+let groundGeometry = new THREE.PlaneGeometry(100, 100);
+const groundMaterial = new THREE.MeshPhongMaterial({ color: 0x808080, side: THREE.DoubleSide });
+const groundMesh = new THREE.Mesh(groundGeometry, groundMaterial);
+groundMesh.rotation.x = -Math.PI / 2;
+groundMesh.receiveShadow = true;
+scene.add(groundMesh);
+
+let groundBody = new CANNON.Body({
+  mass: 0,
+  shape: new CANNON.Plane()
+});
+groundBody.quaternion.setFromAxisAngle(new CANNON.Vec3(1, 0, 0), -Math.PI / 2);
+world.addBody(groundBody);
+
+function changeMap() {
+  // Clear ALL objects and scene elements
+  objects.forEach(obj => {
+    scene.remove(obj.mesh);
+    world.remove(obj.body);
+  });
+  groups.forEach(group => {
+    scene.remove(group.mesh);
+  });
+  
+  // Clear arrays and selections
+  objects = [];
+  groups = [];
+  selectedObjects.clear();
+  selectedObject = null;
+  transformControls.detach();
+  document.getElementById('anchorBtn').classList.remove('active');
+
+  // Remove ALL children from scene (including decorative elements)
+  while(scene.children.length > 0) { 
+    scene.remove(scene.children[0]);
+  }
+
+  // Re-add essential lights
+  scene.add(ambientLight);
+  scene.add(directionalLight);
+
+  const mapType = document.getElementById('mapSelect').value;
+
+  // Create new grid
+  gridHelper = new THREE.GridHelper(200, 200);
+  scene.add(gridHelper);
+
+  switch(mapType) {
+    case 'baseplate':
+      groundGeometry = new THREE.PlaneGeometry(200, 200);
+      groundMesh.material = new THREE.MeshPhongMaterial({ color: 0x808080, side: THREE.DoubleSide });
+      break;
+
+    case 'grassfield':
+      groundGeometry = new THREE.PlaneGeometry(200, 200);
+      groundMesh.material = new THREE.MeshPhongMaterial({ color: 0x228B22, side: THREE.DoubleSide });
+      
+      // Add random trees
+      for(let i = 0; i < 20; i++) {
+        const x = Math.random() * 160 - 80;
+        const z = Math.random() * 160 - 80;
+        createTree(new THREE.Vector3(x, 0.5, z));
+      }
+
+      // Add a lake
+      const lakeGeometry = new THREE.CircleGeometry(20, 32);
+      const lakeMaterial = new THREE.MeshPhongMaterial({ color: 0x4444FF, side: THREE.DoubleSide });
+      const lake = new THREE.Mesh(lakeGeometry, lakeMaterial);
+      lake.rotation.x = -Math.PI / 2;
+      lake.position.y = 0.1;
+      scene.add(lake);
+      break;
+
+    case 'town':
+      groundGeometry = new THREE.PlaneGeometry(200, 200);
+      groundMesh.material = new THREE.MeshPhongMaterial({ color: 0x808080, side: THREE.DoubleSide });
+      
+      // Add roads
+      const roadGeometry = new THREE.PlaneGeometry(200, 20);
+      const roadMaterial = new THREE.MeshPhongMaterial({ color: 0x333333, side: THREE.DoubleSide });
+      
+      // Main road
+      const mainRoad = new THREE.Mesh(roadGeometry, roadMaterial);
+      mainRoad.rotation.x = -Math.PI / 2;
+      mainRoad.position.y = 0.1;
+      scene.add(mainRoad);
+      
+      // Cross road
+      const crossRoad = new THREE.Mesh(roadGeometry, roadMaterial);
+      crossRoad.rotation.x = -Math.PI / 2;
+      crossRoad.rotation.z = Math.PI / 2;
+      crossRoad.position.y = 0.1;
+      scene.add(crossRoad);
+      
+      // Add grass patches
+      const grassGeometry = new THREE.PlaneGeometry(80, 80);
+      const grassMaterial = new THREE.MeshPhongMaterial({ color: 0x228B22, side: THREE.DoubleSide });
+      
+      // Four grass quadrants
+      const positions = [
+        [-50, 0.05, -50],
+        [50, 0.05, -50],
+        [-50, 0.05, 50],
+        [50, 0.05, 50]
+      ];
+      
+      positions.forEach(pos => {
+        const grass = new THREE.Mesh(grassGeometry, grassMaterial);
+        grass.rotation.x = -Math.PI / 2;
+        grass.position.set(...pos);
+        scene.add(grass);
+      });
+      
+      // Add some houses
+      [-40, 40].forEach(x => {
+        [-40, 40].forEach(z => {
+          createHouse(new THREE.Vector3(x, 0.5, z));
+        });
+      });
+
+      // Add some trees along the roads
+      [-30, -25, -20, 20, 25, 30].forEach(x => {
+        [-15, 15].forEach(z => {
+          createTree(new THREE.Vector3(x, 0.5, z));
+        });
+      });
+      
+      // Add people walking on sidewalks
+      [-18, 18].forEach(z => {
+        [-35, 35].forEach(x => {
+          createPerson(new THREE.Vector3(x, 0.5, z));
+        });
+      });
+
+      // Add parked cars
+      [-25, 25].forEach(x => {
+        [-12, 12].forEach(z => {
+          const car = createCar(new THREE.Vector3(x, 0.5, z));
+          // Rotate cars to face the road
+          car.mesh.rotation.y = z < 0 ? Math.PI / 2 : -Math.PI / 2;
+        });
+      });
+
+      // Add some trash bins near houses
+      [-45, 45].forEach(x => {
+        [-45, 45].forEach(z => {
+          createTrashBin(new THREE.Vector3(x + 3, 0.5, z + 3));
+        });
+      });
+      break;
+  }
+
+  // Update ground mesh and physics
+  groundMesh.geometry = groundGeometry;
+  scene.add(groundMesh);
+  
+  // Update ground physics
+  groundBody = new CANNON.Body({
+    mass: 0,
+    shape: new CANNON.Plane()
+  });
+  groundBody.quaternion.setFromAxisAngle(new CANNON.Vec3(1, 0, 0), -Math.PI / 2);
+  world.addBody(groundBody);
+}
+
+function createTree(position) {
+  const tree = new THREE.Group();
+  
+  // Trunk
+  const trunkGeometry = new THREE.CylinderGeometry(0.2, 0.3, 2, 8);
+  const trunkMaterial = new THREE.MeshPhongMaterial({ 
+    color: 0x8B4513,
+    emissive: 0x000000
+  });
+  const trunk = new THREE.Mesh(trunkGeometry, trunkMaterial);
+  trunk.castShadow = true;
+  trunk.receiveShadow = true;
+  
+  // Leaves (3 layers of cones)
+  const leafMaterial = new THREE.MeshPhongMaterial({ 
+    color: 0x228B22,
+    emissive: 0x000000
+  });
+  
+  const leaves1 = new THREE.Mesh(
+    new THREE.ConeGeometry(1.2, 1.5, 8),
+    leafMaterial
+  );
+  leaves1.position.y = 1.5;
+  leaves1.castShadow = true;
+  leaves1.receiveShadow = true;
+  
+  const leaves2 = new THREE.Mesh(
+    new THREE.ConeGeometry(1, 1.2, 8),
+    leafMaterial
+  );
+  leaves2.position.y = 2;
+  leaves2.castShadow = true;
+  leaves2.receiveShadow = true;
+  
+  const leaves3 = new THREE.Mesh(
+    new THREE.ConeGeometry(0.8, 1, 8),
+    leafMaterial
+  );
+  leaves3.position.y = 2.5;
+  leaves3.castShadow = true;
+  leaves3.receiveShadow = true;
+  
+  tree.add(trunk);
+  tree.add(leaves1);
+  tree.add(leaves2);
+  tree.add(leaves3);
+  
+  tree.position.copy(position);
+  scene.add(tree);
+  
+  // Physics body (simplified as cylinder)
+  const treeBody = new CANNON.Body({
+    mass: 1,
+    shape: new CANNON.Cylinder(0.3, 0.3, 2, 8)
+  });
+  treeBody.position.copy(position);
+  world.addBody(treeBody);
+  
+  const obj = { mesh: tree, body: treeBody, anchored: false };
+  objects.push(obj);
+  
+  // Clear previous selection
+  if (selectedObject && selectedObject.mesh.material) {
+    if (Array.isArray(selectedObject.mesh.material)) {
+      selectedObject.mesh.material.forEach(mat => {
+        if (mat.emissive) mat.emissive.setHex(0x000000);
+      });
+    } else if (selectedObject.mesh.material.emissive) {
+      selectedObject.mesh.material.emissive.setHex(0x000000);
+    }
+  }
+  
+  selectedObject = obj;
+  selectedObjects.clear();
+  selectedObjects.add(obj);
+  transformControls.attach(tree);
+  
+  return obj;
+}
+
+function createShape(type, position, isClone = false) {
+  let geometry, shape, body;
+  const material = new THREE.MeshPhongMaterial({ 
+    color: isClone && selectedObject ? selectedObject.mesh.material.color : document.getElementById('colorPicker').value 
+  });
+  
+  switch(type) {
+    case 'box':
+      geometry = new THREE.BoxGeometry(1, 1, 1);
+      shape = new CANNON.Box(new CANNON.Vec3(0.5, 0.5, 0.5));
+      break;
+    case 'sphere':
+      geometry = new THREE.SphereGeometry(0.5);
+      shape = new CANNON.Sphere(0.5);
+      break;
+    case 'cylinder':
+      geometry = new THREE.CylinderGeometry(0.5, 0.5, 1);
+      shape = new CANNON.Cylinder(0.5, 0.5, 1, 16);
+      break;
+  }
+
+  const mesh = new THREE.Mesh(geometry, material);
+  mesh.position.copy(position);
+  mesh.castShadow = true;
+  mesh.receiveShadow = true;
+  scene.add(mesh);
+
+  body = new CANNON.Body({
+    mass: 1,
+    shape: shape,
+    position: new CANNON.Vec3(position.x, position.y, position.z)
+  });
+  world.addBody(body);
+
+  const object = {
+    mesh: mesh,
+    body: body,
+    anchored: false
+  };
+  objects.push(object);
+  return object;
+}
+
+function toggleGridSnap() {
+  const btn = document.getElementById('gridSnapBtn');
+  gridSnap = !gridSnap;
+  
+  if (gridSnap) {
+    btn.textContent = 'Disable Grid Snap';
+    btn.classList.add('active');
+  } else {
+    btn.textContent = 'Enable Grid Snap';
+    btn.classList.remove('active');
+  }
+}
+
+function toggleHeightPlacement() {
+  const btn = document.getElementById('heightPlacementBtn');
+  heightPlacement = !heightPlacement;
+  
+  if (heightPlacement) {
+    btn.textContent = 'Disable Height Placement';
+    btn.classList.add('active');
+  } else {
+    btn.textContent = 'Enable Height Placement';
+    btn.classList.remove('active');
+  }
+}
+
+function toggleAnchor() {
+  if (selectedObject) {
+    selectedObject.anchored = !selectedObject.anchored;
+    selectedObject.body.mass = selectedObject.anchored ? 0 : 1;
+    document.getElementById('anchorBtn').classList.toggle('active', selectedObject.anchored);
+  }
+}
+
+function cloneSelected() {
+  if (selectedObject) {
+    const newPosition = selectedObject.mesh.position.clone();
+    newPosition.x += 1; // Offset slightly to avoid exact overlap
+    const newObject = createShape(
+      document.getElementById('shapeSelect').value,
+      newPosition,
+      true
+    );
+    
+    // Copy properties from selected object
+    newObject.mesh.scale.copy(selectedObject.mesh.scale);
+    newObject.mesh.rotation.copy(selectedObject.mesh.rotation);
+    newObject.anchored = selectedObject.anchored;
+    newObject.body.mass = selectedObject.anchored ? 0 : 1;
+  }
+}
+
+function deleteSelected() {
+  if (selectedObject) {
+    // Remove from scene and physics world
+    scene.remove(selectedObject.mesh);
+    world.remove(selectedObject.body);
+    
+    // Remove from objects array
+    objects = objects.filter(obj => obj !== selectedObject);
+    
+    // Detach transform controls and reset selection
+    transformControls.detach();
+    selectedObject = null;
+    document.getElementById('anchorBtn').classList.remove('active');
+  }
+}
+
+// Add keyboard shortcut for delete
+window.addEventListener('keydown', (event) => {
+  if (event.key === 'Delete' && selectedObject) {
+    deleteSelected();
+  }
+});
+
+function setTool(tool) {
+  currentTool = tool;
+  document.querySelectorAll('.controls button').forEach(btn => btn.classList.remove('active'));
+  document.getElementById(tool + 'Btn').classList.add('active');
+  
+  if (tool !== 'move' && tool !== 'rotate' && tool !== 'scale') {
+    transformControls.detach();
+    selectedObject = null;
+    document.getElementById('anchorBtn').classList.remove('active');
+  }
+  
+  orbitControls.enabled = tool === 'create' || tool === 'select';
+}
+
+renderer.domElement.addEventListener('click', (event) => {
+  if (currentTool === 'create') {
+    const raycaster = new THREE.Raycaster();
+    const mouse = new THREE.Vector2();
+    
+    mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+    mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+    
+    raycaster.setFromCamera(mouse, camera);
+    
+    // If height placement is enabled, check for intersection with ALL objects
+    if (heightPlacement) {
+      const allMeshes = [groundMesh, ...objects.map(obj => obj.mesh)];
+      const intersects = raycaster.intersectObjects(allMeshes, true);
+      
+      if (intersects.length > 0) {
+        const pos = intersects[0].point;
+        if (gridSnap) {
+          pos.x = Math.round(pos.x / GRID_SIZE) * GRID_SIZE;
+          pos.z = Math.round(pos.z / GRID_SIZE) * GRID_SIZE;
+        }
+        pos.y += 0.5;
+        createShape(document.getElementById('shapeSelect').value, pos);
+      }
+    } else {
+      const intersects = raycaster.intersectObjects([groundMesh]);
+      
+      if (intersects.length > 0) {
+        const pos = intersects[0].point;
+        if (gridSnap) {
+          pos.x = Math.round(pos.x / GRID_SIZE) * GRID_SIZE;
+          pos.z = Math.round(pos.z / GRID_SIZE) * GRID_SIZE;
+          pos.y = Math.round(pos.y / GRID_SIZE) * GRID_SIZE + 0.5;
+        } else {
+          pos.y += 0.5;
+        }
+        createShape(document.getElementById('shapeSelect').value, pos);
+      }
+    }
+  } else if (currentTool === 'select' || currentTool === 'move' || currentTool === 'rotate' || currentTool === 'scale') {
+    const raycaster = new THREE.Raycaster();
+    const mouse = new THREE.Vector2();
+    
+    mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+    mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+    
+    raycaster.setFromCamera(mouse, camera);
+    
+    const selectableMeshes = objects.map(obj => obj.mesh);
+    const intersects = raycaster.intersectObjects(selectableMeshes, true);
+    
+    if (intersects.length > 0) {
+      let selectedMesh = intersects[0].object;
+      while (selectedMesh.parent && !(selectedMesh.parent instanceof THREE.Scene)) {
+        selectedMesh = selectedMesh.parent;
+      }
+      
+      const clickedObject = objects.find(obj => obj.mesh === selectedMesh);
+      if (clickedObject) {
+        if (selectedObject && selectedObject.mesh.material) {
+          if (Array.isArray(selectedObject.mesh.material)) {
+            selectedObject.mesh.material.forEach(mat => {
+              if (mat.emissive) mat.emissive.setHex(0x000000);
+            });
+          } else if (selectedObject.mesh.material.emissive) {
+            selectedObject.mesh.material.emissive.setHex(0x000000);
+          }
+        }
+        
+        selectedObject = clickedObject;
+        selectedObjects.clear();
+        selectedObjects.add(clickedObject);
+        
+        transformControls.detach();
+        switch(currentTool) {
+          case 'move':
+            transformControls.setMode('translate');
+            transformControls.attach(selectedMesh);
+            break;
+          case 'rotate':
+            transformControls.setMode('rotate');
+            transformControls.attach(selectedMesh);
+            break;
+          case 'scale':
+            transformControls.setMode('scale');
+            transformControls.attach(selectedMesh);
+            break;
+          case 'select':
+            break;
+        }
+        
+        document.getElementById('anchorBtn').classList.toggle('active', selectedObject.anchored);
+      }
+    } else {
+      if (selectedObject) {
+        if (selectedObject.mesh.material) {
+          if (Array.isArray(selectedObject.mesh.material)) {
+            selectedObject.mesh.material.forEach(mat => {
+              if (mat.emissive) mat.emissive.setHex(0x000000);
+            });
+          } else if (selectedObject.mesh.material.emissive) {
+            selectedObject.mesh.material.emissive.setHex(0x000000);
+          }
+        }
+        selectedObject = null;
+        selectedObjects.clear();
+        transformControls.detach();
+        document.getElementById('anchorBtn').classList.remove('active');
+      }
+    }
+  }
+});
+
+// Update the groupSelected function with safety checks
+function groupSelected() {
+  if (selectedObjects.size < 2) return;
+  
+  const validObjects = Array.from(selectedObjects).filter(obj => obj && obj.mesh);
+  if (validObjects.length < 2) return;
+  
+  const group = {
+    objects: validObjects,
+    mesh: new THREE.Group()
+  };
+  
+  group.objects.forEach(obj => {
+    if (obj.mesh) {
+      group.mesh.attach(obj.mesh);
+    }
+  });
+  
+  scene.add(group.mesh);
+  groups.push(group);
+  
+  selectedObjects.forEach(obj => {
+    if (obj.mesh && obj.mesh.material) {
+      obj.mesh.material.emissive.setHex(0x000000);
+    }
+  });
+  selectedObjects.clear();
+  
+  if (group.objects[0]) {
+    selectedObject = group.objects[0];
+    group.objects.forEach(obj => {
+      if (obj && obj.mesh && obj.mesh.material) {
+        selectedObjects.add(obj);
+        obj.mesh.material.emissive.setHex(0x444444);
+      }
+    });
+  }
+  
+  if (group.mesh) {
+    transformControls.attach(group.mesh);
+  }
+}
+
+function ungroupSelected() {
+  if (selectedObjects.size === 0) return;
+  
+  const group = groups.find(g => g.objects.some(obj => selectedObjects.has(obj)));
+  if (!group) return;
+  
+  group.objects.forEach(obj => {
+    scene.attach(obj.mesh);
+    obj.body.position.copy(obj.mesh.position);
+    obj.body.quaternion.copy(obj.mesh.quaternion);
+  });
+  
+  scene.remove(group.mesh);
+  groups = groups.filter(g => g !== group);
+  
+  selectedObjects.forEach(obj => {
+    obj.mesh.material.emissive.setHex(0x000000);
+  });
+  selectedObjects.clear();
+  selectedObject = null;
+  transformControls.detach();
+}
+
+// Modify clearObjects to handle groups
+function clearObjects() {
+  objects.forEach(obj => {
+    scene.remove(obj.mesh);
+    world.remove(obj.body);
+  });
+  groups.forEach(group => {
+    scene.remove(group.mesh);
+  });
+  objects = [];
+  groups = [];
+  selectedObjects.clear();
+  transformControls.detach();
+  selectedObject = null;
+  document.getElementById('anchorBtn').classList.remove('active');
+}
+
+// Add to existing transformControls listener
+transformControls.addEventListener('objectChange', () => {
+  if (selectedObject) {
+    selectedObject.body.position.copy(selectedObject.mesh.position);
+    selectedObject.body.quaternion.copy(selectedObject.mesh.quaternion);
+    
+    const group = groups.find(g => g.objects.includes(selectedObject));
+    if (group) {
+      group.objects.forEach(obj => {
+        if (obj !== selectedObject) {
+          obj.body.position.copy(obj.mesh.position);
+          obj.body.quaternion.copy(obj.mesh.quaternion);
+        }
+      });
+    }
+  }
+});
+
+function applyForce() {
+  if (selectedObject) {
+    const fx = parseFloat(document.getElementById('forceX').value) || 0;
+    const fy = parseFloat(document.getElementById('forceY').value) || 0;
+    const fz = parseFloat(document.getElementById('forceZ').value) || 0;
+    
+    selectedObject.body.applyImpulse(
+      new CANNON.Vec3(fx, fy, fz),
+      selectedObject.body.position
+    );
+  }
+}
+
+function runSimulation() {
+  physicsEnabled = !physicsEnabled;
+  const btn = document.getElementById('simulationBtn');
+  if (physicsEnabled) {
+    btn.textContent = 'Stop Simulation';
+    btn.classList.add('active');
+    setTool('create');
+    // Remove this line that was disabling buttons
+    // document.querySelectorAll('.controls button').forEach(btn => btn.disabled = true);
+  } else {
+    btn.textContent = 'Run Simulation';
+    btn.classList.remove('active');
+    // Remove this line since buttons were never disabled
+    // document.querySelectorAll('.controls button').forEach(btn => btn.disabled = false);
+  }
+}
+
+function createPreset() {
+  const preset = document.getElementById('presetSelect').value;
+  if (!preset) return;
+  
+  const raycaster = new THREE.Raycaster();
+  const mouse = new THREE.Vector2();
+  
+  mouse.x = 0;
+  mouse.y = 0;
+  
+  raycaster.setFromCamera(mouse, camera);
+  const intersects = raycaster.intersectObjects([groundMesh]);
+  
+  if (intersects.length > 0) {
+    const pos = intersects[0].point;
+    pos.y += 0.5;
+    
+    switch(preset) {
+      case 'car':
+        createCar(pos);
+        break;
+      case 'house':
+        createHouse(pos);
+        break;
+      case 'person':
+        createPerson(pos);
+        break;
+      case 'tree':
+        createTree(pos);
+        break;
+      case 'trashbin':
+        createTrashBin(pos);
+        break;
+      case 'waterbottle':
+        createWaterBottle(pos);
+        break;
+    }
+  }
+  
+  document.getElementById('presetSelect').value = '';
+}
+
+function changeColor() {
+  const newColor = document.getElementById('colorPicker').value;
+  
+  if (selectedObjects.size > 0) {
+    selectedObjects.forEach(obj => {
+      if (obj && obj.mesh) {
+        if (Array.isArray(obj.mesh.material)) {
+          obj.mesh.material.forEach(mat => {
+            if (mat) {
+              mat.color.setStyle(newColor);
+            }
+          });
+        } else if (obj.mesh.material) {
+          obj.mesh.material.color.setStyle(newColor);
+        }
+        
+        if (obj.mesh instanceof THREE.Group) {
+          obj.mesh.traverse(child => {
+            if (child instanceof THREE.Mesh && child.material) {
+              if (Array.isArray(child.material)) {
+                child.material.forEach(mat => {
+                  if (mat) {
+                    mat.color.setStyle(newColor);
+                  }
+                });
+              } else {
+                child.material.color.setStyle(newColor);
+              }
+            }
+          });
+        }
+      }
+    });
+  }
+}
+
+function createTrashBin(position) {
+  const trashBin = new THREE.Group();
+  
+  const binGeometry = new THREE.CylinderGeometry(0.3, 0.25, 0.8, 8);
+  const binMaterial = new THREE.MeshPhongMaterial({ 
+    color: 0x444444
+  });
+  const bin = new THREE.Mesh(binGeometry, binMaterial);
+  bin.castShadow = true;
+  bin.receiveShadow = true;
+  
+  const lidGeometry = new THREE.CylinderGeometry(0.32, 0.3, 0.1, 8);
+  const lidMaterial = new THREE.MeshPhongMaterial({ 
+    color: 0x333333
+  });
+  const lid = new THREE.Mesh(lidGeometry, lidMaterial);
+  lid.position.y = 0.45;
+  lid.castShadow = true;
+  lid.receiveShadow = true;
+  
+  trashBin.add(bin);
+  trashBin.add(lid);
+  
+  trashBin.position.copy(position);
+  scene.add(trashBin);
+  
+  const binBody = new CANNON.Body({
+    mass: 1,
+    shape: new CANNON.Cylinder(0.3, 0.25, 0.8, 8)
+  });
+  binBody.position.copy(position);
+  world.addBody(binBody);
+  
+  const obj = { mesh: trashBin, body: binBody, anchored: false };
+  objects.push(obj);
+  
+  if (selectedObject && selectedObject.mesh.material) {
+    if (Array.isArray(selectedObject.mesh.material)) {
+      selectedObject.mesh.material.forEach(mat => {
+        if (mat.emissive) mat.emissive.setHex(0x000000);
+      });
+    } else if (selectedObject.mesh.material.emissive) {
+      selectedObject.mesh.material.emissive.setHex(0x000000);
+    }
+  }
+  
+  selectedObject = obj;
+  selectedObjects.clear();
+  selectedObjects.add(obj);
+  transformControls.attach(trashBin);
+  
+  return obj;
+}
+
+function createWaterBottle(position) {
+  const bottle = new THREE.Group();
+  
+  const bodyGeometry = new THREE.CylinderGeometry(0.1, 0.1, 0.6, 16);
+  const bodyMaterial = new THREE.MeshPhongMaterial({ 
+    color: 0xC0C0C0,
+    metalness: 0.8,
+    roughness: 0.2
+  });
+  const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
+  body.castShadow = true;
+  body.receiveShadow = true;
+  
+  const neckGeometry = new THREE.CylinderGeometry(0.05, 0.08, 0.1, 16);
+  const neck = new THREE.Mesh(neckGeometry, bodyMaterial);
+  neck.position.y = 0.35;
+  neck.castShadow = true;
+  neck.receiveShadow = true;
+  
+  const capGeometry = new THREE.CylinderGeometry(0.06, 0.06, 0.05, 16);
+  const capMaterial = new THREE.MeshPhongMaterial({ 
+    color: 0x333333
+  });
+  const cap = new THREE.Mesh(capGeometry, capMaterial);
+  cap.position.y = 0.425;
+  cap.castShadow = true;
+  cap.receiveShadow = true;
+  
+  bottle.add(body);
+  bottle.add(neck);
+  bottle.add(cap);
+  
+  bottle.position.copy(position);
+  scene.add(bottle);
+  
+  const bottleBody = new CANNON.Body({
+    mass: 1,
+    shape: new CANNON.Cylinder(0.1, 0.1, 0.7, 8)
+  });
+  bottleBody.position.copy(position);
+  world.addBody(bottleBody);
+  
+  const obj = { mesh: bottle, body: bottleBody, anchored: false };
+  objects.push(obj);
+  
+  if (selectedObject && selectedObject.mesh) {
+    const materials = selectedObject.mesh.material;
+    if (Array.isArray(materials)) {
+      materials.forEach(mat => {
+        if (mat && mat.emissive) {
+          mat.emissive.setHex(0x000000);
+        }
+      });
+    } else if (materials && materials.emissive) {
+      materials.emissive.setHex(0x000000);
+    }
+  }
+  
+  selectedObject = obj;
+  selectedObjects.clear();
+  selectedObjects.add(obj);
+  transformControls.attach(bottle);
+  
+  return obj;
+}
+
+function createCar(position) {
+  const car = new THREE.Group();
+  
+  const bodyGeometry = new THREE.BoxGeometry(2, 0.5, 1);
+  const bodyMaterial = new THREE.MeshPhongMaterial({ 
+    color: 0xFF0000,
+    emissive: 0x000000
+  });
+  const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
+  
+  const topGeometry = new THREE.BoxGeometry(1, 0.4, 0.8);
+  const top = new THREE.Mesh(topGeometry, bodyMaterial);
+  top.position.y = 0.45;
+  top.position.x = -0.2;
+  
+  const wheelGeometry = new THREE.CylinderGeometry(0.2, 0.2, 0.1, 16);
+  const wheelMaterial = new THREE.MeshPhongMaterial({ 
+    color: 0x333333,
+    emissive: 0x000000
+  });
+  
+  const wheel1 = new THREE.Mesh(wheelGeometry, wheelMaterial);
+  wheel1.rotation.z = Math.PI/2;
+  wheel1.position.set(0.6, -0.2, 0.5);
+  
+  const wheel2 = new THREE.Mesh(wheelGeometry, wheelMaterial);
+  wheel2.rotation.z = Math.PI/2;
+  wheel2.position.set(0.6, -0.2, -0.5);
+  
+  const wheel3 = new THREE.Mesh(wheelGeometry, wheelMaterial);
+  wheel3.rotation.z = Math.PI/2;
+  wheel3.position.set(-0.6, -0.2, 0.5);
+  
+  const wheel4 = new THREE.Mesh(wheelGeometry, wheelMaterial);
+  wheel4.rotation.z = Math.PI/2;
+  wheel4.position.set(-0.6, -0.2, -0.5);
+  
+  car.add(body);
+  car.add(top);
+  car.add(wheel1);
+  car.add(wheel2);
+  car.add(wheel3);
+  car.add(wheel4);
+  
+  car.position.copy(position);
+  scene.add(car);
+  
+  const carBody = new CANNON.Body({
+    mass: 1,
+    shape: new CANNON.Box(new CANNON.Vec3(1, 0.5, 0.5))
+  });
+  carBody.position.copy(position);
+  world.addBody(carBody);
+  
+  const obj = { mesh: car, body: carBody, anchored: false };
+  objects.push(obj);
+  
+  selectedObject = obj;
+  selectedObjects.clear();
+  selectedObjects.add(obj);
+  transformControls.attach(car);
+}
+
+function createHouse(position) {
+  const house = new THREE.Group();
+  
+  const baseGeometry = new THREE.BoxGeometry(2, 1.5, 2);
+  const baseMaterial = new THREE.MeshPhongMaterial({ 
+    color: 0xCCCCCC,
+    emissive: 0x000000
+  });
+  const base = new THREE.Mesh(baseGeometry, baseMaterial);
+  
+  const roofGeometry = new THREE.ConeGeometry(1.5, 1, 4);
+  const roofMaterial = new THREE.MeshPhongMaterial({ 
+    color: 0x8B4513,
+    emissive: 0x000000
+  });
+  const roof = new THREE.Mesh(roofGeometry, roofMaterial);
+  roof.position.y = 1.5;
+  roof.rotation.y = Math.PI/4;
+  
+  const doorGeometry = new THREE.BoxGeometry(0.4, 0.8, 0.1);
+  const doorMaterial = new THREE.MeshPhongMaterial({ 
+    color: 0x8B4513,
+    emissive: 0x000000
+  });
+  const door = new THREE.Mesh(doorGeometry, doorMaterial);
+  door.position.set(0, -0.35, 1);
+  
+  house.add(base);
+  house.add(roof);
+  house.add(door);
+  
+  house.position.copy(position);
+  scene.add(house);
+  
+  const houseBody = new CANNON.Body({
+    mass: 1,
+    shape: new CANNON.Box(new CANNON.Vec3(1, 1.5, 1))
+  });
+  houseBody.position.copy(position);
+  world.addBody(houseBody);
+  
+  const obj = { mesh: house, body: houseBody, anchored: false };
+  objects.push(obj);
+  
+  selectedObject = obj;
+  selectedObjects.clear();
+  selectedObjects.add(obj);
+  transformControls.attach(house);
+}
+
+function createPerson(position) {
+  const person = new THREE.Group();
+  
+  const headGeometry = new THREE.SphereGeometry(0.2);
+  const skinMaterial = new THREE.MeshPhongMaterial({ 
+    color: 0xFFD700,
+    emissive: 0x000000
+  });
+  const head = new THREE.Mesh(headGeometry, skinMaterial);
+  head.position.y = 1.4;
+  
+  const bodyGeometry = new THREE.CylinderGeometry(0.2, 0.2, 0.8);
+  const clothesMaterial = new THREE.MeshPhongMaterial({ 
+    color: 0x0000FF,
+    emissive: 0x000000
+  });
+  const body = new THREE.Mesh(bodyGeometry, clothesMaterial);
+  body.position.y = 0.8;
+  
+  const legGeometry = new THREE.CylinderGeometry(0.1, 0.1, 0.8);
+  const leg1 = new THREE.Mesh(legGeometry, clothesMaterial);
+  leg1.position.set(0.1, 0.2, 0);
+  
+  const leg2 = new THREE.Mesh(legGeometry, clothesMaterial);
+  leg2.position.set(-0.1, 0.2, 0);
+  
+  person.add(head);
+  person.add(body);
+  person.add(leg1);
+  person.add(leg2);
+  
+  person.position.copy(position);
+  scene.add(person);
+  
+  const personBody = new CANNON.Body({
+    mass: 1,
+    shape: new CANNON.Cylinder(0.2, 0.2, 2, 8)
+  });
+  personBody.position.copy(position);
+  world.addBody(personBody);
+  
+  const obj = { mesh: person, body: personBody, anchored: false };
+  objects.push(obj);
+  
+  selectedObject = obj;
+  selectedObjects.clear();
+  selectedObjects.add(obj);
+  transformControls.attach(person);
+}
+
+function animate() {
+  requestAnimationFrame(animate);
+  
+  if (physicsEnabled) {
+    world.step(1/60);
+    objects.forEach(obj => {
+      if (!obj.anchored) {
+        obj.mesh.position.copy(obj.body.position);
+        obj.mesh.quaternion.copy(obj.body.quaternion);
+      }
+    });
+  }
+  
+  renderer.render(scene, camera);
+}
+
+window.addEventListener('resize', () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+transformControls.addEventListener('dragging-changed', (event) => {
+  orbitControls.enabled = !event.value;
+});
+
+// New Functions for Settings
+function toggleSettings() {
+  const menu = document.getElementById('settingsMenu');
+  menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+}
+
+function toggleShaders() {
+  const btn = document.getElementById('shaderBtn');
+  const usingShaders = btn.classList.contains('active');
+  
+  if (usingShaders) {
+    // Enable basic mode
+    renderer.shadowMap.enabled = false;
+    scene.traverse(node => {
+      if (node instanceof THREE.Mesh) {
+        if (Array.isArray(node.material)) {
+          node.material.forEach(mat => {
+            mat.flatShading = true;
+            mat.shininess = 0;
+          });
+        } else if (node.material) {
+          node.material.flatShading = true;
+          node.material.shininess = 0;
+        }
+      }
+    });
+    btn.textContent = 'Enable Full Graphics';
+  } else {
+    // Enable full graphics
+    renderer.shadowMap.enabled = true;
+    scene.traverse(node => {
+      if (node instanceof THREE.Mesh) {
+        if (Array.isArray(node.material)) {
+          node.material.forEach(mat => {
+            mat.flatShading = false;
+            mat.shininess = 30;
+          });
+        } else if (node.material) {
+          node.material.flatShading = false;
+          node.material.shininess = 30;
+        }
+      }
+    });
+    btn.textContent = 'Basic Graphics Mode';
+  }
+  
+  btn.classList.toggle('active');
+  renderer.compile(scene, camera);
+}
+
+function updateGravity() {
+  const preset = document.getElementById('gravityPreset').value;
+  const customContainer = document.getElementById('customGravityContainer');
+  const gravitySlider = document.getElementById('gravitySlider');
+  const gravityValue = document.getElementById('gravityValue');
+  
+  let gravityStrength;
+  
+  switch(preset) {
+    case 'moon':
+      gravityStrength = -1.62;
+      customContainer.style.display = 'none';
+      break;
+    case 'mars':
+      gravityStrength = -3.72;
+      customContainer.style.display = 'none';
+      break;
+    case 'earth':
+      gravityStrength = -9.82;
+      customContainer.style.display = 'none';
+      break;
+    case 'jupiter':
+      gravityStrength = -24.79;
+      customContainer.style.display = 'none';
+      break;
+    case 'custom':
+      gravityStrength = -parseFloat(gravitySlider.value);
+      customContainer.style.display = 'block';
+      break;
+  }
+  
+  world.gravity.set(0, gravityStrength, 0);
+}
+
+// Add event listener for gravity slider
+document.addEventListener('DOMContentLoaded', () => {
+  const gravitySlider = document.getElementById('gravitySlider');
+  const gravityValue = document.getElementById('gravityValue');
+  
+  gravitySlider.addEventListener('input', (e) => {
+    const value = e.target.value;
+    gravityValue.textContent = `${value} m/s²`;
+    if (document.getElementById('gravityPreset').value === 'custom') {
+      world.gravity.set(0, -value, 0);
+    }
+  });
+});
+
+// Set initial tool to select
+currentTool = 'select';
+setTool('select');
+
+animate();
+</script>
+</body>
+</html>
