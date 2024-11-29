@@ -1,0 +1,155 @@
+<html><head><base href="." /><title>Time From Now Calculator</title>
+<style>
+body {
+    background-color: #000;
+    color: #fff;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+}
+
+.container {
+    background-color: #111;
+    padding: 2rem;
+    border-radius: 15px;
+    box-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
+    max-width: 500px;
+    width: 90%;
+}
+
+.input-group {
+    margin-bottom: 1.5rem;
+}
+
+label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: #888;
+}
+
+input {
+    background-color: #222;
+    border: 1px solid #333;
+    color: #fff;
+    padding: 0.5rem;
+    border-radius: 5px;
+    width: 100%;
+    margin-bottom: 1rem;
+}
+
+button {
+    background-color: #0066ff;
+    color: white;
+    border: none;
+    padding: 0.8rem 1.5rem;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    width: 100%;
+}
+
+button:hover {
+    background-color: #0052cc;
+}
+
+.result {
+    margin-top: 2rem;
+    padding: 1rem;
+    background-color: #222;
+    border-radius: 5px;
+    display: none;
+}
+
+.glow {
+    text-shadow: 0 0 10px rgba(0, 102, 255, 0.5);
+}
+
+.result.visible {
+    display: block;
+    animation: fadeIn 0.5s ease-in;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+</style>
+</head>
+<body>
+<div class="container">
+    <h1 class="glow">Time From Now Calculator</h1>
+    <div class="input-group">
+        <label for="hours">Hours:</label>
+        <input type="number" id="hours" min="0" value="0">
+        
+        <label for="minutes">Minutes:</label>
+        <input type="number" id="minutes" min="0" max="59" value="0">
+        
+        <label for="seconds">Seconds:</label>
+        <input type="number" id="seconds" min="0" max="59" value="0">
+        
+        <button onclick="calculateTime()">Calculate Future Time</button>
+    </div>
+    
+    <div class="result" id="result">
+        <h3>Result:</h3>
+        <p id="futureTime"></p>
+        <p id="dayInfo"></p>
+    </div>
+</div>
+
+<script>
+function calculateTime() {
+    // Get current date and time
+    let currentDate = new Date();
+    
+    // Get input values
+    const hours = parseInt(document.getElementById('hours').value) || 0;
+    const minutes = parseInt(document.getElementById('minutes').value) || 0;
+    const seconds = parseInt(document.getElementById('seconds').value) || 0;
+    
+    // Calculate total seconds to add
+    const totalSeconds = (hours * 3600) + (minutes * 60) + seconds;
+    
+    // Add seconds to current date
+    let futureDate = new Date(currentDate.getTime() + (totalSeconds * 1000));
+    
+    // Calculate days difference
+    const daysDifference = Math.floor((futureDate - currentDate) / (1000 * 60 * 60 * 24));
+    
+    // Format the future time
+    const timeOptions = { 
+        hour: 'numeric', 
+        minute: '2-digit', 
+        second: '2-digit', 
+        hour12: true 
+    };
+    const dateOptions = { 
+        weekday: 'long', 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric' 
+    };
+    
+    const timeString = futureDate.toLocaleTimeString(undefined, timeOptions);
+    const dateString = futureDate.toLocaleDateString(undefined, dateOptions);
+    
+    // Display results
+    document.getElementById('futureTime').textContent = `Future time: ${timeString}`;
+    document.getElementById('dayInfo').textContent = `Future date: ${dateString}`;
+    
+    // Add day difference information
+    if (daysDifference > 0) {
+        document.getElementById('dayInfo').textContent += 
+            `\n(${daysDifference} day${daysDifference > 1 ? 's' : ''} from now)`;
+    }
+    
+    // Show result container with animation
+    const resultDiv = document.getElementById('result');
+    resultDiv.classList.add('visible');
+}
+</script>
+</body></html>
