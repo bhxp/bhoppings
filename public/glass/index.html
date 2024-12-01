@@ -1,0 +1,265 @@
+<html><head><base href="https://glassymorphicon.design%20move%20the%20copy%20css%20button%20to%20the%20section%20where%20the%20code%20is%20displayed">
+<title>GlassyMorph Box Designer</title>
+<style>
+    body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background: 
+            linear-gradient(45deg, rgba(255,154,158,0.7) 0%, rgba(250,208,196,0.7) 99%, rgba(250,208,196,0.7) 100%),
+            url('https://images.unsplash.com/photo-1579546929518-9e396f3cc809?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1470&q=80');
+        background-size: cover;
+        background-attachment: fixed;
+        margin: 0;
+        padding: 20px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+    }
+    .container {
+        background: rgba(255, 255, 255, 0.25);
+        box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+        backdrop-filter: blur(4px);
+        -webkit-backdrop-filter: blur(4px);
+        border-radius: 10px;
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        padding: 2rem;
+        width: 90%;
+        max-width: 1000px;
+    }
+    h1 {
+        color: #333;
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+    .preview-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 400px;
+        margin-bottom: 2rem;
+        background: url('https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1470&q=80') center/cover;
+        border-radius: 10px;
+    }
+    #boxPreview {
+        transition: all 0.3s ease;
+    }
+    .controls {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+    }
+    .control-group {
+        background: rgba(255, 255, 255, 0.1);
+        padding: 1rem;
+        border-radius: 10px;
+        backdrop-filter: blur(4px);
+        -webkit-backdrop-filter: blur(4px);
+    }
+    label {
+        display: block;
+        margin-bottom: 0.5rem;
+        color: #333;
+    }
+    input[type="range"] {
+        width: 100%;
+        margin-bottom: 0.5rem;
+    }
+    input[type="number"] {
+        width: 60px;
+        margin-left: 10px;
+    }
+    input[type="color"] {
+        width: 100%;
+        padding: 0.5rem;
+        border-radius: 5px;
+        border: 1px solid rgba(0, 0, 0, 0.3);
+        background: rgba(255, 255, 255, 0.2);
+        color: #333;
+        box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.1);
+    }
+    .css-output-container {
+        margin-top: 2rem;
+        position: relative;
+    }
+    .css-output {
+        background: rgba(0, 0, 0, 0.1);
+        padding: 1rem;
+        border-radius: 10px;
+        font-family: monospace;
+        white-space: pre-wrap;
+    }
+    .slider-value {
+        display: inline-block;
+        width: 50px;
+        text-align: right;
+    }
+    .unit-select {
+        margin-left: 10px;
+    }
+    #copyButton {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        background: rgba(255, 255, 255, 0.2);
+        border: none;
+        padding: 5px 10px;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: background 0.3s ease;
+    }
+    #copyButton:hover {
+        background: rgba(255, 255, 255, 0.3);
+    }
+    #copyButton:active {
+        background: rgba(255, 255, 255, 0.4);
+    }
+</style>
+</head>
+<body>
+<div class="container">
+    <h1>Glassmorphism Generator</h1>
+    <div class="preview-container">
+        <div id="boxPreview"></div>
+    </div>
+    <div class="controls">
+        <div class="control-group">
+            <label for="blurSlider">Blur: <span id="blurValue" class="slider-value">4px</span></label>
+            <input type="range" id="blurSlider" min="0" max="20" value="4">
+            <label for="opacitySlider">Opacity: <span id="opacityValue" class="slider-value">25%</span></label>
+            <input type="range" id="opacitySlider" min="0" max="100" value="25">
+        </div>
+        <div class="control-group">
+            <label for="bgColorPicker">Background Color:</label>
+            <input type="color" id="bgColorPicker" value="#ffffff">
+            <label for="borderColorPicker">Border Color:</label>
+            <input type="color" id="borderColorPicker" value="#ffffff">
+        </div>
+        <div class="control-group">
+            <label for="widthSlider">Width: <span id="widthValue" class="slider-value">200px</span></label>
+            <input type="range" id="widthSlider" min="50" max="500" value="200">
+            <input type="number" id="widthInput" min="50" max="500" value="200">
+            <select id="widthUnit" class="unit-select">
+                <option value="px">px</option>
+                <option value="%">%</option>
+            </select>
+            <label for="heightSlider">Height: <span id="heightValue" class="slider-value">200px</span></label>
+            <input type="range" id="heightSlider" min="50" max="500" value="200">
+            <input type="number" id="heightInput" min="50" max="500" value="200">
+            <select id="heightUnit" class="unit-select">
+                <option value="px">px</option>
+                <option value="%">%</option>
+            </select>
+        </div>
+        <div class="control-group">
+            <label for="borderRadiusSlider">Border Radius: <span id="borderRadiusValue" class="slider-value">10px</span></label>
+            <input type="range" id="borderRadiusSlider" min="0" max="50" value="10">
+            <label for="borderWidthSlider">Border Width: <span id="borderWidthValue" class="slider-value">1px</span></label>
+            <input type="range" id="borderWidthSlider" min="0" max="10" value="1">
+        </div>
+    </div>
+    <div class="css-output-container">
+        <div class="css-output" id="cssOutput"></div>
+        <button id="copyButton">Copy CSS</button>
+    </div>
+</div>
+<script>
+    const boxPreview = document.getElementById('boxPreview');
+    const blurSlider = document.getElementById('blurSlider');
+    const opacitySlider = document.getElementById('opacitySlider');
+    const bgColorPicker = document.getElementById('bgColorPicker');
+    const borderColorPicker = document.getElementById('borderColorPicker');
+    const widthSlider = document.getElementById('widthSlider');
+    const widthInput = document.getElementById('widthInput');
+    const widthUnit = document.getElementById('widthUnit');
+    const heightSlider = document.getElementById('heightSlider');
+    const heightInput = document.getElementById('heightInput');
+    const heightUnit = document.getElementById('heightUnit');
+    const borderRadiusSlider = document.getElementById('borderRadiusSlider');
+    const borderWidthSlider = document.getElementById('borderWidthSlider');
+    const cssOutput = document.getElementById('cssOutput');
+    const copyButton = document.getElementById('copyButton');
+
+    function updateBox() {
+        const blur = blurSlider.value;
+        const opacity = opacitySlider.value / 100;
+        const bgColor = bgColorPicker.value;
+        const borderColor = borderColorPicker.value;
+        const width = widthInput.value + widthUnit.value;
+        const height = heightInput.value + heightUnit.value;
+        const borderRadius = borderRadiusSlider.value;
+        const borderWidth = borderWidthSlider.value;
+
+        boxPreview.style.background = `rgba(${hexToRgb(bgColor)}, ${opacity})`;
+        boxPreview.style.boxShadow = '0 8px 32px 0 rgba(31, 38, 135, 0.37)';
+        boxPreview.style.backdropFilter = `blur(${blur}px)`;
+        boxPreview.style.webkitBackdropFilter = `blur(${blur}px)`;
+        boxPreview.style.borderRadius = `${borderRadius}px`;
+        boxPreview.style.border = `${borderWidth}px solid rgba(${hexToRgb(borderColor)}, 0.18)`;
+        boxPreview.style.width = width;
+        boxPreview.style.height = height;
+
+        document.getElementById('blurValue').textContent = blur + 'px';
+        document.getElementById('opacityValue').textContent = (opacity * 100).toFixed(0) + '%';
+        document.getElementById('widthValue').textContent = width;
+        document.getElementById('heightValue').textContent = height;
+        document.getElementById('borderRadiusValue').textContent = borderRadius + 'px';
+        document.getElementById('borderWidthValue').textContent = borderWidth + 'px';
+
+        cssOutput.textContent = `
+.glassmorphic-box {
+    background: rgba(${hexToRgb(bgColor)}, ${opacity});
+    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+    backdrop-filter: blur(${blur}px);
+    -webkit-backdrop-filter: blur(${blur}px);
+    border-radius: ${borderRadius}px;
+    border: ${borderWidth}px solid rgba(${hexToRgb(borderColor)}, 0.18);
+    width: ${width};
+    height: ${height};
+}`;
+    }
+
+    function hexToRgb(hex) {
+        const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+        return result ? `${parseInt(result[1], 16)}, ${parseInt(result[2], 16)}, ${parseInt(result[3], 16)}` : null;
+    }
+
+    function syncSliderWithInput(slider, input) {
+        slider.value = input.value;
+        updateBox();
+    }
+
+    blurSlider.addEventListener('input', updateBox);
+    opacitySlider.addEventListener('input', updateBox);
+    bgColorPicker.addEventListener('input', updateBox);
+    borderColorPicker.addEventListener('input', updateBox);
+    widthSlider.addEventListener('input', () => {
+        widthInput.value = widthSlider.value;
+        updateBox();
+    });
+    widthInput.addEventListener('input', () => syncSliderWithInput(widthSlider, widthInput));
+    widthUnit.addEventListener('change', updateBox);
+    heightSlider.addEventListener('input', () => {
+        heightInput.value = heightSlider.value;
+        updateBox();
+    });
+    heightInput.addEventListener('input', () => syncSliderWithInput(heightSlider, heightInput));
+    heightUnit.addEventListener('change', updateBox);
+    borderRadiusSlider.addEventListener('input', updateBox);
+    borderWidthSlider.addEventListener('input', updateBox);
+
+    copyButton.addEventListener('click', () => {
+        navigator.clipboard.writeText(cssOutput.textContent).then(() => {
+            copyButton.textContent = 'Copied!';
+            setTimeout(() => {
+                copyButton.textContent = 'Copy CSS';
+            }, 2000);
+        }).catch(err => {
+            console.error('Failed to copy text: ', err);
+        });
+    });
+
+    // Initialize with default values
+    updateBox();
+</script>
+</body>
+</html>
