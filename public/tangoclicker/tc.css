@@ -9,12 +9,12 @@ body {
 .background {
     background-image: url('https://i.imgur.com/qeLjlch.png');
     background-attachment: fixed;
-    background-size: fill;
+    background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
     position: fixed;
-    width: 200%; /* Make background 10% wider than the viewport */
-    height: 200%; /* Make background 10% taller than the viewport */
+    width: 110%; /* Make background 10% wider than the viewport */
+    height: 110%; /* Make background 10% taller than the viewport */
     top: -5%; /* Offset the background */
     left: -5%; /* Offset the background */
     z-index: -1; /* Ensure background is behind other content */
