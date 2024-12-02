@@ -164,11 +164,21 @@ document.addEventListener("keydown", (e) => {
   }
 });
     async function updateCounter() {
-      fetch("/get_views")
-      .then(response => response.json())
-      .then(data => {
-        $("#view-count").text(data);
-      })
+      try {
+        // Fetch current count from JSONBin
+        const response = await fetch(`https://api.jsonbin.io/v3/b/${binId}/latest`, {
+          headers: {
+            'X-Master-Key': apiKey,
+          }
+        });
+        const data = await response.json();
+        let count = data.record.visitCount;
+        // Display current count
+
+      } catch (error) {
+        console.error('Error updating counter:', error);
+        document.getElementById('count').innerText = 'Error';
+      }
     }
 
     updateCounter();
