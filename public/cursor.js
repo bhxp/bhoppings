@@ -1,7 +1,7 @@
 const cursor = document.createElement("img");
 cursor.classList.add("custom-cursor");
 
-cursor.setAttribute("src", "/images/cursor.png")
+cursor.setAttribute("src", "/images/cursor.svg")
 
 const styleElem = document.createElement("style");
 styleElem.innerHTML = `* {
