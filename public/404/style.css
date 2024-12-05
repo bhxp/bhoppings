@@ -1,0 +1,113 @@
+@font-face {
+    font-family: "Samsung Sharp Sans";
+    src: url("/fonts/SamsungSharpSans-Bold.ttf");
+  }
+  
+  @keyframes star-breathe {
+    0% {
+      transform: translate(-50%, -50%) scale(1) rotate(var(--rotation));
+    }
+  
+    50% {
+      transform: translate(-50%, -50%) scale(1.2) rotate(var(--rotation));
+    }
+  
+    100% {
+      transform: translate(-50%, -50%) scale(1) rotate(var(--rotation));
+    }
+  }
+  
+  html,
+  body {
+    height: 100vh;
+    width: 100vw;
+    margin: 0;
+    padding: 0;
+    background-color: #000;
+    overflow: hidden;
+  }
+  
+  #error-code {
+    width: 25vw;
+    aspect-ratio: 1;
+    position: fixed;
+    left: 50%;
+    bottom: 15vw;
+    transform: translate(-50%, +100%);
+    transition: all 0.4s ease;
+  }
+  
+  .error-code-fly-in {
+    transform: translate(-50%, 0%) !important;
+  }
+  
+  #planet {
+    position: fixed;
+    left: 50%;
+    bottom: 0%;
+    transform: translate(-50%, +58%);
+    width: 140vw;
+  }
+  
+  #home-button {
+    font-family: "Samsung Sharp Sans";
+    background-color: #fff;
+    color: #000;
+    font-size: 24px;
+    border-radius: 9999px;
+    border: none;
+    outline: none;
+    padding: 16px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translate(-50%, calc(200% + 24px));
+    transition: all 0.4s ease;
+    cursor: pointer;
+  }
+  
+  .home-button-fly-in {
+    transform: translate(-50%, 0%) !important;
+  }
+  
+  #home-button.home-button-fly-in:hover {
+    transition: all 0.2s ease;
+    transform: translate(-50%, 0%) scale(1.1) !important;
+  }
+  
+  #home-button img {
+    height: 70%;
+    aspect-ratio: 1;
+    margin-left: 12px;
+  }
+  
+  #star-container {
+    height: 100vh;
+    width: 100vw;
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+  }
+  
+  .star {
+    position: absolute;
+    height: calc(36px * var(--size));
+    width: calc(36px * var(--size));
+    animation: star-breathe var(--speed) ease infinite var(--delay);
+    transform: translate(-50%, -50%) scale(1) rotate(var(--rotation));
+    opacity: var(--opacity);
+  }
+  
+  #light-canvas {
+    position: fixed;
+    left: 50%;
+    bottom: -129.4vw;
+    transform: translate(-50%, -50%) rotate(180deg);
+    height: 100vw;
+    width: 100vw;
+    clip-path: ellipse(54.5% 25% at 50% 75%);
+  }
