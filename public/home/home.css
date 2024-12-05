@@ -82,7 +82,7 @@ html, body {
 	position: absolute;
 	display: block;
 	top: 79px;
-	transform: TranslateY(+0px);
+	transform: scaleY(1) TranslateY(+0%);
 	left: -28px;
 	padding: 0px 12px 4px 12px;
 	border-radius: 12px;
@@ -93,6 +93,8 @@ html, body {
 	width: max-content;
 	min-width: 120px;
     z-index: 9999;
+    pointer-events: all;
+      transform-origin: top;
 }
 
 .navbar-item {
@@ -122,8 +124,9 @@ html, body {
 }
 
 .dropdown.hidden {
-    transform: translateY(calc(-100% - 96px));
+    transform: scaleY(0.1) TranslateY(+0%);
     opacity: 0;
+    pointer-events: none;
 }
 
 .text {
