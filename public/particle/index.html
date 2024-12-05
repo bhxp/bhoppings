@@ -1,0 +1,496 @@
+<html><head><base href="." >
+<meta charset="UTF-8">
+<title>Enhanced Customizable Particle Simulation</title>
+<style>
+  body {
+    margin: 0;
+    overflow: hidden;
+    background: #111;
+    font-family: Arial, sans-serif;
+  }
+  
+  #controls {
+    position: fixed;
+    top: 10px;
+    left: 10px;
+    background: rgba(0,0,0,0.8);
+    padding: 15px;
+    border-radius: 8px;
+    color: white;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+  
+  .control-group {
+    margin-bottom: 10px;
+  }
+  
+  label {
+    display: block;
+    margin-bottom: 5px;
+  }
+  
+  input[type="range"] {
+    width: 200px;
+  }
+  
+  input[type="color"] {
+    width: 50px;
+    height: 25px;
+  }
+
+  select {
+    width: 200px;
+    padding: 5px;
+    background: #333;
+    color: white;
+    border: 1px solid #555;
+  }
+  
+  canvas {
+    display: block;
+  }
+
+  .checkbox-group {
+    margin-top: 5px;
+  }
+
+  #exportButton {
+    background: #4CAF50;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-top: 10px;
+    width: 100%;
+  }
+
+  #exportButton:hover {
+    background: #45a049;
+  }
+
+  #exportModal {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: #222;
+    padding: 20px;
+    border-radius: 8px;
+    z-index: 1000;
+    max-width: 800px;
+    width: 90%;
+    max-height: 80vh;
+    overflow-y: auto;
+  }
+
+  #exportModal textarea {
+    width: 100%;
+    height: 300px;
+    background: #333;
+    color: #fff;
+    border: 1px solid #555;
+    padding: 10px;
+    margin-top: 10px;
+    font-family: monospace;
+  }
+
+  .modal-close {
+    position: absolute;
+    right: 10px;
+    top: 10px;
+    background: none;
+    border: none;
+    color: white;
+    font-size: 20px;
+    cursor: pointer;
+  }
+
+  .overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.7);
+    z-index: 999;
+  }
+</style>
+</head>
+<body>
+<canvas id="particleCanvas"></canvas>
+
+<div id="controls">
+  <div class="control-group">
+    <label>Number of Particles: <span id="particleCount">100</span></label>
+    <input type="range" id="particleSlider" min="10" max="1000" value="100">
+  </div>
+  
+  <div class="control-group">
+    <label>Particle Size: <span id="sizeValue">3</span></label>
+    <input type="range" id="sizeSlider" min="1" max="20" value="3" step="0.5">
+  </div>
+  
+  <div class="control-group">
+    <label>Speed: <span id="speedValue">2</span></label>
+    <input type="range" id="speedSlider" min="0.1" max="10" value="2" step="0.1">
+  </div>
+  
+  <div class="control-group">
+    <label>Connection Range: <span id="rangeValue">100</span></label>
+    <input type="range" id="rangeSlider" min="20" max="300" value="100">
+  </div>
+  
+  <div class="control-group">
+    <label>Particle Color:</label>
+    <input type="color" id="particleColor" value="#ffffff">
+  </div>
+  
+  <div class="control-group">
+    <label>Line Color:</label>
+    <input type="color" id="lineColor" value="#4444ff">
+  </div>
+
+  <div class="control-group">
+    <label>Particle Shape:</label>
+    <select id="shapeSelect">
+      <option value="circle">Circle</option>
+      <option value="square">Square</option>
+      <option value="triangle">Triangle</option>
+      <option value="star">Star</option>
+    </select>
+  </div>
+
+  <div class="control-group">
+    <label>Background Color:</label>
+    <input type="color" id="bgColor" value="#111111">
+  </div>
+
+  <div class="control-group">
+    <label>Line Width: <span id="lineWidthValue">1</span></label>
+    <input type="range" id="lineWidthSlider" min="0.5" max="5" value="1" step="0.5">
+  </div>
+
+  <div class="control-group">
+    <label>Particle Behavior:</label>
+    <select id="behaviorSelect">
+      <option value="random">Random</option>
+      <option value="follow">Follow Mouse</option>
+      <option value="orbit">Orbit Center</option>
+    </select>
+  </div>
+
+  <div class="control-group checkbox-group">
+    <label><input type="checkbox" id="pulseCheck"> Pulse Size</label>
+    <label><input type="checkbox" id="fadeCheck"> Fade Effect</label>
+  </div>
+
+  <button id="exportButton">Export Code</button>
+</div>
+
+<div class="overlay" id="overlay"></div>
+<div id="exportModal">
+  <button class="modal-close">&times;</button>
+  <h2 style="color: white; margin-top: 0;">Export Code</h2>
+  <textarea id="exportCode" readonly></textarea>
+</div>
+
+<script>
+const canvas = document.getElementById('particleCanvas');
+const ctx = canvas.getContext('2d');
+
+let mouseX = 0;
+let mouseY = 0;
+
+canvas.addEventListener('mousemove', (e) => {
+    mouseX = e.clientX;
+    mouseY = e.clientY;
+});
+
+function resizeCanvas() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+}
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
+
+class Particle {
+    constructor() {
+        this.x = Math.random() * canvas.width;
+        this.y = Math.random() * canvas.height;
+        this.vx = (Math.random() - 0.5) * 2;
+        this.vy = (Math.random() - 0.5) * 2;
+        this.angle = Math.random() * Math.PI * 2;
+        this.pulseOffset = Math.random() * Math.PI * 2;
+    }
+
+    update(speed, behavior) {
+        switch(behavior) {
+            case 'random':
+                this.x += this.vx * speed;
+                this.y += this.vy * speed;
+                break;
+            case 'follow':
+                const dx = mouseX - this.x;
+                const dy = mouseY - this.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                if (dist > 1) {
+                    this.x += (dx / dist) * speed;
+                    this.y += (dy / dist) * speed;
+                }
+                break;
+            case 'orbit':
+                const centerX = canvas.width / 2;
+                const centerY = canvas.height / 2;
+                this.angle += speed * 0.01;
+                this.x = centerX + Math.cos(this.angle) * 200;
+                this.y = centerY + Math.sin(this.angle) * 200;
+                break;
+        }
+
+        if (this.x < 0 || this.x > canvas.width) this.vx *= -1;
+        if (this.y < 0 || this.y > canvas.height) this.vy *= -1;
+    }
+}
+
+let particles = [];
+function initParticles(count) {
+    particles = [];
+    for (let i = 0; i < count; i++) {
+        particles.push(new Particle());
+    }
+}
+
+let settings = {
+    particleCount: 100,
+    particleSize: 3,
+    speed: 2,
+    connectionRange: 100,
+    particleColor: '#ffffff',
+    lineColor: '#4444ff',
+    shape: 'circle',
+    backgroundColor: '#111111',
+    lineWidth: 1,
+    behavior: 'random',
+    pulse: false,
+    fade: false
+};
+
+function drawShape(x, y, size, shape) {
+    ctx.beginPath();
+    switch(shape) {
+        case 'square':
+            ctx.rect(x - size, y - size, size * 2, size * 2);
+            break;
+        case 'triangle':
+            ctx.moveTo(x, y - size);
+            ctx.lineTo(x + size, y + size);
+            ctx.lineTo(x - size, y + size);
+            ctx.closePath();
+            break;
+        case 'star':
+            for(let i = 0; i < 5; i++) {
+                const angle = (i * 4 * Math.PI) / 5;
+                const x1 = x + Math.cos(angle) * size;
+                const y1 = y + Math.sin(angle) * size;
+                if(i === 0) ctx.moveTo(x1, y1);
+                else ctx.lineTo(x1, y1);
+            }
+            ctx.closePath();
+            break;
+        default: // circle
+            ctx.arc(x, y, size, 0, Math.PI * 2);
+    }
+    ctx.fill();
+}
+
+function updateControls() {
+    document.getElementById('particleCount').textContent = settings.particleCount;
+    document.getElementById('sizeValue').textContent = settings.particleSize;
+    document.getElementById('speedValue').textContent = settings.speed;
+    document.getElementById('rangeValue').textContent = settings.connectionRange;
+    document.getElementById('lineWidthValue').textContent = settings.lineWidth;
+}
+
+document.getElementById('particleSlider').addEventListener('input', (e) => {
+    settings.particleCount = parseInt(e.target.value);
+    initParticles(settings.particleCount);
+    updateControls();
+});
+
+document.getElementById('sizeSlider').addEventListener('input', (e) => {
+    settings.particleSize = parseFloat(e.target.value);
+    updateControls();
+});
+
+document.getElementById('speedSlider').addEventListener('input', (e) => {
+    settings.speed = parseFloat(e.target.value);
+    updateControls();
+});
+
+document.getElementById('rangeSlider').addEventListener('input', (e) => {
+    settings.connectionRange = parseInt(e.target.value);
+    updateControls();
+});
+
+document.getElementById('lineWidthSlider').addEventListener('input', (e) => {
+    settings.lineWidth = parseFloat(e.target.value);
+    updateControls();
+});
+
+document.getElementById('particleColor').addEventListener('input', (e) => {
+    settings.particleColor = e.target.value;
+});
+
+document.getElementById('lineColor').addEventListener('input', (e) => {
+    settings.lineColor = e.target.value;
+});
+
+document.getElementById('bgColor').addEventListener('input', (e) => {
+    settings.backgroundColor = e.target.value;
+    document.body.style.background = e.target.value;
+});
+
+document.getElementById('shapeSelect').addEventListener('change', (e) => {
+    settings.shape = e.target.value;
+});
+
+document.getElementById('behaviorSelect').addEventListener('change', (e) => {
+    settings.behavior = e.target.value;
+});
+
+document.getElementById('pulseCheck').addEventListener('change', (e) => {
+    settings.pulse = e.target.checked;
+});
+
+document.getElementById('fadeCheck').addEventListener('change', (e) => {
+    settings.fade = e.target.checked;
+});
+
+function animate() {
+    ctx.fillStyle = settings.backgroundColor;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    particles.forEach(particle => {
+        particle.update(settings.speed, settings.behavior);
+        
+        let currentSize = settings.particleSize;
+        if(settings.pulse) {
+            currentSize += Math.sin(Date.now() * 0.005 + particle.pulseOffset) * 2;
+        }
+
+        ctx.fillStyle = settings.particleColor;
+        drawShape(particle.x, particle.y, currentSize, settings.shape);
+    });
+
+    particles.forEach((p1, i) => {
+        particles.slice(i + 1).forEach(p2 => {
+            const dx = p1.x - p2.x;
+            const dy = p1.y - p2.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+
+            if (distance < settings.connectionRange) {
+                ctx.beginPath();
+                ctx.moveTo(p1.x, p1.y);
+                ctx.lineTo(p2.x, p2.y);
+                ctx.strokeStyle = settings.lineColor;
+                ctx.lineWidth = settings.lineWidth;
+                let alpha = 1 - (distance / settings.connectionRange);
+                if(settings.fade) {
+                    alpha *= Math.abs(Math.sin(Date.now() * 0.001));
+                }
+                ctx.globalAlpha = alpha;
+                ctx.stroke();
+                ctx.globalAlpha = 1;
+            }
+        });
+    });
+
+    requestAnimationFrame(animate);
+}
+
+function generateExportCode() {
+    return `<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Particle Animation</title>
+    <style>
+        body { margin: 0; overflow: hidden; background: ${settings.backgroundColor}; }
+        canvas { display: block; }
+    </style>
+</head>
+<body>
+<canvas id="particleCanvas"></canvas>
+<script>
+// Settings object
+const settings = ${JSON.stringify(settings, null, 2)};
+
+// Particle class
+${Particle.toString()}
+
+// Helper functions
+${drawShape.toString()}
+${animate.toString()}
+
+// Initialize canvas and context
+const canvas = document.getElementById('particleCanvas');
+const ctx = canvas.getContext('2d');
+let mouseX = 0;
+let mouseY = 0;
+
+// Setup canvas
+function resizeCanvas() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+}
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
+canvas.addEventListener('mousemove', (e) => {
+    mouseX = e.clientX;
+    mouseY = e.clientY;
+});
+
+// Initialize particles
+let particles = [];
+for(let i = 0; i < settings.particleCount; i++) {
+    particles.push(new Particle());
+}
+
+// Start animation
+animate();
+<\/script>
+</body>
+</html>`;
+}
+
+// Export modal functionality
+const exportButton = document.getElementById('exportButton');
+const exportModal = document.getElementById('exportModal');
+const overlay = document.getElementById('overlay');
+const closeButton = document.querySelector('.modal-close');
+const exportCode = document.getElementById('exportCode');
+
+exportButton.addEventListener('click', () => {
+    exportModal.style.display = 'block';
+    overlay.style.display = 'block';
+    exportCode.value = generateExportCode();
+});
+
+closeButton.addEventListener('click', () => {
+    exportModal.style.display = 'none';
+    overlay.style.display = 'none';
+});
+
+overlay.addEventListener('click', () => {
+    exportModal.style.display = 'none';
+    overlay.style.display = 'none';
+});
+
+initParticles(settings.particleCount);
+animate();
+</script>
+</body></html>
