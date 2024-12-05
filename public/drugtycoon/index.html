@@ -1,0 +1,593 @@
+<html><head><base href="." />
+<title>🍁 Drug Tycoon 🍁</title>
+<style>
+body {
+    margin: 0;
+    padding: 20px;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    color: #fff;
+    overflow: hidden;
+    transition: all 0.3s;
+    min-height: 100vh;
+}
+
+.warning {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    padding: 20px;
+    background: linear-gradient(90deg, #ff0000, #ff4444);
+    color: white;
+    text-align: center;
+    z-index: 1000;
+    box-shadow: 0 2px 10px rgba(255,0,0,0.3);
+    animation: pulse-warning 2s infinite;
+}
+
+#tripEffect {
+    position: fixed;
+    top: 0;
+    left: 0;
+    pointer-events: none;
+    z-index: -1; /* Place behind game content */
+}
+
+.game-container {
+    max-width: 1000px;
+    margin: 80px auto;
+    padding: 30px;
+    background: rgba(255,255,255,0.1); /* Added some transparency to the background */
+    border-radius: 20px;
+    position: relative;
+    z-index: 3;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 0 30px rgba(0,0,0,0.3);
+    border: 1px solid rgba(255,255,255,0.1);
+}
+
+.stats-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin: 20px 0;
+    padding: 20px;
+    background: rgba(0,0,0,0.2);
+    border-radius: 15px;
+    font-size: 1.2em;
+    text-shadow: 0 0 10px rgba(255,255,255,0.3);
+}
+
+.buttons {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 15px;
+    margin-top: 20px;
+}
+
+button {
+    padding: 15px;
+    border: none;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #2a2a4a 0%, #1a1a3a 100%);
+    color: white;
+    cursor: pointer;
+    transition: all 0.3s;
+    font-size: 0.9em;
+    text-shadow: 0 0 5px rgba(255,255,255,0.3);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    border: 1px solid rgba(255,255,255,0.1);
+}
+
+button:hover {
+    transform: translateY(-2px) scale(1.02);
+    background: linear-gradient(135deg, #3a3a6a 0%, #2a2a5a 100%);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+}
+
+button:active {
+    transform: translateY(1px);
+}
+
+#mainClicker {
+    width: 180px;
+    height: 180px;
+    margin: 30px auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #4a4a8a 0%, #2a2a6a 100%);
+    border-radius: 50%;
+    cursor: pointer;
+    animation: pulse 2s infinite;
+    font-size: 3em;
+    box-shadow: 0 0 30px rgba(0,0,0,0.3),
+                inset 0 0 30px rgba(255,255,255,0.1);
+    border: 2px solid rgba(255,255,255,0.1);
+}
+
+#mainClicker:hover {
+    transform: scale(1.1);
+    box-shadow: 0 0 50px rgba(255,255,255,0.2),
+                inset 0 0 50px rgba(255,255,255,0.1);
+}
+
+.prestige-section {
+    margin-top: 30px;
+    padding: 20px;
+    background: linear-gradient(135deg, rgba(128,0,128,0.2) 0%, rgba(75,0,130,0.2) 100%);
+    border-radius: 15px;
+    border: 1px solid rgba(255,255,255,0.1);
+}
+
+.achievements {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 15px;
+    margin-top: 30px;
+}
+
+.achievement {
+    padding: 15px;
+    background: rgba(0,0,0,0.2);
+    border-radius: 10px;
+    text-align: center;
+    opacity: 0.5;
+    transition: all 0.3s;
+    border: 1px solid rgba(255,255,255,0.05);
+}
+
+.achievement.unlocked {
+    opacity: 1;
+    background: linear-gradient(135deg, rgba(0,255,0,0.1) 0%, rgba(0,128,0,0.1) 100%);
+    box-shadow: 0 0 20px rgba(0,255,0,0.2);
+    animation: achievement-unlock 1s;
+}
+
+h1 {
+    text-align: center;
+    font-size: 2.5em;
+    margin-bottom: 30px;
+    background: linear-gradient(90deg, #fff, #aaa);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    text-shadow: 0 0 20px rgba(255,255,255,0.1);
+}
+
+@keyframes achievement-unlock {
+    0% { transform: scale(0.8); opacity: 0; }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes pulse-warning {
+    0% { opacity: 1; }
+    50% { opacity: 0.8; }
+    100% { opacity: 1; }
+}
+
+#devMenu {
+    background: linear-gradient(135deg, rgba(255,0,0,0.1) 0%, rgba(128,0,0,0.1) 100%) !important;
+    border: 1px solid rgba(255,0,0,0.2);
+    border-radius: 15px;
+    padding: 25px;
+    margin-top: 30px;
+}
+
+#devMenu h2 {
+    color: #ff4444;
+    margin-top: 0;
+}
+
+#money, #totalMoney, #nextPrestige {
+    font-family: 'Courier New', monospace;
+    font-weight: bold;
+    text-shadow: 0 0 10px rgba(255,255,255,0.3);
+}
+</style>
+</head>
+<body>
+
+<div class="warning" id="warning">
+    ⚠️ WARNING: This game contains flashing lights and effects that may trigger seizures in people with photosensitive epilepsy. Proceed with caution. ⚠️
+    <button onclick="this.parentElement.style.display='none'">I Understand</button>
+</div>
+
+<svg id="tripEffect"></svg>
+<div class="effect-container"></div>
+
+<div class="game-container">
+    <h1>Drug Tycoon</h1>
+
+    <div class="stats-container">
+        <div>
+            Money: $<span id="money">0</span><br>
+            Trip Level: <span id="tripLevel">0</span><br>
+            <span class="multiplier">Click Multiplier: x<span id="clickMultiplier">1</span></span>
+        </div>
+        <div>
+            Prestige Points: <span id="prestigePoints">0</span><br>
+            Total Money Made: $<span id="totalMoney">0</span>
+        </div>
+    </div>
+
+    <button id="mainClicker" onclick="clickMain()"></button>
+
+    <div class="buttons">
+        <button onclick="upgrade('basic')">Weed Farm ($10)<br>+$1/s<br>Level: <span id="basicLevel">0</span></button>
+        <button onclick="upgrade('medium')" id="mediumBtn" style="display:none">Shroom Lab ($50)<br>+$5/s<br>Level: <span id="mediumLevel">0</span></button>
+        <button onclick="upgrade('advanced')" id="advancedBtn" style="display:none">Acid Factory ($200)<br>+$20/s<br>Level: <span id="advancedLevel">0</span></button>
+        <button onclick="upgrade('ultimate')" id="ultimateBtn" style="display:none">DMT Portal ($1000)<br>+$100/s<br>Level: <span id="ultimateLevel">0</span></button>
+        <button onclick="upgrade('crystalLab')" id="crystalLabBtn" style="display:none">Crystal Lab ($5,000)<br>+$500/s<br>Level: <span id="crystalLabLevel">0</span></button>
+        <button onclick="upgrade('opiumDen')" id="opiumDenBtn" style="display:none">Opium Den ($20,000)<br>+$2,000/s<br>Level: <span id="opiumDenLevel">0</span></button>
+        <button onclick="upgrade('cocaineEmpire')" id="cocaineEmpireBtn" style="display:none">Cocaine Empire ($100,000)<br>+$10,000/s<br>Level: <span id="cocaineEmpireLevel">0</span></button>
+        <button onclick="upgrade('alienTech')" id="alienTechBtn" style="display:none">Alien Tech ($500,000)<br>+$50,000/s<br>Level: <span id="alienTechLevel">0</span></button>
+        <button onclick="upgrade('quantumLab')" id="quantumLabBtn" style="display:none">Quantum Lab ($2M)<br>+$200,000/s<br>Level: <span id="quantumLabLevel">0</span></button>
+        <button onclick="upgrade('cosmicGateway')" id="cosmicGatewayBtn" style="display:none">Cosmic Gateway ($10M)<br>+$1M/s<br>Level: <span id="cosmicGatewayLevel">0</span></button>
+        <button onclick="upgrade('realityBender')" id="realityBenderBtn" style="display:none">Reality Bender ($50M)<br>+$5M/s<br>Level: <span id="realityBenderLevel">0</span></button>
+        <button onclick="upgrade('dimensionWarp')" id="dimensionWarpBtn" style="display:none">Dimension Warp ($200M)<br>+$20M/s<br>Level: <span id="dimensionWarpLevel">0</span></button>
+        <button onclick="upgrade('timeDistorter')" id="timeDistorterBtn" style="display:none">Time Distorter ($1B)<br>+$100M/s<br>Level: <span id="timeDistorterLevel">0</span></button>
+        <button onclick="upgrade('universalNexus')" id="universalNexusBtn" style="display:none">Universal Nexus ($5B)<br>+$500M/s<br>Level: <span id="universalNexusLevel">0</span></button>
+    </div>
+
+    <div class="prestige-section" id="prestigeSection" style="display:none">
+        <h2>Prestige Options</h2>
+        <p>Reset your progress for prestige points! Each point gives +10% to all production.</p>
+        <button onclick="prestige()">Prestige Now (Next at: $<span id="nextPrestige">1000</span>)</button>
+    </div>
+
+    <div class="achievements">
+        <div class="achievement" id="ach1">
+            First High<br>
+            Get your first upgrade
+        </div>
+        <div class="achievement" id="ach2">
+            Getting Serious<br>
+            Reach $1,000
+        </div>
+        <div class="achievement" id="ach3">
+            Drug Lord<br>
+            Own all types of production
+        </div>
+    </div>
+
+    <div id="devMenu" style="display: none;">
+        <h2>Developer Menu</h2>
+        <div class="buttons">
+            <button onclick="addMoney(1000)">Add $1,000</button>
+            <button onclick="addMoney(10000)">Add $10,000</button>
+            <button onclick="addMoney(100000)">Add $100,000</button>
+            <button onclick="addMoney(1000000)">Add $1,000,000</button>
+            <button onclick="gameState.prestigePoints += 10; updateDisplay();">Add 10 Prestige Points</button>
+            <button onclick="maxAllUpgrades()">Max All Upgrades</button>
+        </div>
+    </div>
+</div>
+
+<script>
+let gameState = {
+    money: 0,
+    totalMoney: 0,
+    tripLevel: 0,
+    prestigePoints: 0,
+    clickMultiplier: 1,
+    upgrades: {
+        basic: 0,
+        medium: 0,
+        advanced: 0,
+        ultimate: 0,
+        crystalLab: 0,
+        opiumDen: 0,
+        cocaineEmpire: 0,
+        alienTech: 0,
+        quantumLab: 0,
+        cosmicGateway: 0,
+        realityBender: 0,
+        dimensionWarp: 0,
+        timeDistorter: 0,
+        universalNexus: 0
+    },
+    costs: {
+        basic: 10,
+        medium: 50,
+        advanced: 200,
+        ultimate: 1000,
+        crystalLab: 5000,
+        opiumDen: 20000,
+        cocaineEmpire: 100000,
+        alienTech: 500000,
+        quantumLab: 2000000,
+        cosmicGateway: 10000000,
+        realityBender: 50000000,
+        dimensionWarp: 200000000,
+        timeDistorter: 1000000000,
+        universalNexus: 5000000000
+    },
+    achievements: {
+        ach1: false,
+        ach2: false,
+        ach3: false
+    }
+};
+
+function clickMain() {
+    const baseClick = 1;
+    const prestigeBonus = 1 + (gameState.prestigePoints * 0.1);
+    const clickAmount = baseClick * gameState.clickMultiplier * prestigeBonus;
+    gameState.money += clickAmount;
+    gameState.totalMoney += clickAmount;
+
+    const clicker = document.getElementById('mainClicker');
+    clicker.style.transform = 'scale(0.95)';
+    setTimeout(() => clicker.style.transform = '', 100);
+
+    checkAchievements();
+    updateDisplay();
+}
+
+function createTripEffect() {
+    const level = gameState.tripLevel;
+    const svg = document.getElementById('tripEffect');
+    svg.innerHTML = '';
+
+    svg.setAttribute('width', '100vw');
+    svg.setAttribute('height', '100vh');
+    svg.setAttribute('viewBox', `0 0 ${window.innerWidth} ${window.innerHeight}`);
+
+    const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+    rect.setAttribute('width', '100%');
+    rect.setAttribute('height', '100%');
+    rect.setAttribute('fill', `hsl(${Date.now() % 360}, 50%, 50%)`);
+    rect.setAttribute('opacity', Math.min(level * 0.05, 0.3)); // Reduced opacity
+    svg.appendChild(rect);
+
+    if (level > 5) {
+        for (let i = 0; i < Math.min(level, 30); i++) {
+            const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+            circle.setAttribute('cx', Math.random() * window.innerWidth);
+            circle.setAttribute('cy', Math.random() * window.innerHeight);
+            circle.setAttribute('r', 20 + Math.random() * 50);
+            circle.setAttribute('fill', `hsl(${(Date.now() + i * 30) % 360}, 70%, 50%)`);
+            circle.setAttribute('opacity', '0.2'); // Reduced opacity
+            circle.setAttribute('filter', 'blur(5px)');
+            svg.appendChild(circle);
+        }
+    }
+
+    if (level > 10) {
+        document.body.style.animation = `wave ${Math.max(2 - level * 0.1, 0.2)}s infinite`;
+    }
+    if (level > 15) {
+        document.body.style.filter = `hue-rotate(${Date.now() % 360}deg)`;
+    }
+    if (level > 20) {
+        document.querySelector('.game-container').style.transform =
+            `rotate(${Math.sin(Date.now() / 1000) * (level - 20)}deg)`;
+    }
+}
+
+window.addEventListener('resize', () => {
+    const svg = document.getElementById('tripEffect');
+    svg.setAttribute('width', '100vw');
+    svg.setAttribute('height', '100vh');
+    svg.setAttribute('viewBox', `0 0 ${window.innerWidth} ${window.innerHeight}`);
+});
+
+function createUpgradeEffects() {
+    const effectContainer = document.querySelector('.effect-container');
+    effectContainer.innerHTML = '';
+
+    if (gameState.upgrades.medium > 0) {
+        if (Math.random() < 0.1) {
+            const mushroom = document.createElement('div');
+            mushroom.className = 'mushroom';
+            mushroom.style.left = Math.random() * window.innerWidth + 'px';
+            mushroom.style.bottom = '0';
+            mushroom.innerHTML = '🍄';
+            effectContainer.appendChild(mushroom);
+            setTimeout(() => mushroom.remove(), 3000);
+        }
+    }
+
+    if (gameState.upgrades.advanced > 0) {
+        if (!document.querySelector('.acid-pool')) {
+            const acidPool = document.createElement('div');
+            acidPool.className = 'acid-pool';
+            effectContainer.appendChild(acidPool);
+        }
+    }
+}
+
+function updateClickerAppearance() {
+    const mainClicker = document.getElementById('mainClicker');
+    const highestUpgrade = getHighestUpgrade();
+
+    let icon = '🌿';
+
+    switch(highestUpgrade) {
+        case 'medium':
+            icon = '🍄';
+            break;
+        case 'advanced':
+            icon = '🧪';
+            break;
+        case 'ultimate':
+            icon = '🌌';
+            break;
+        case 'crystalLab':
+            icon = '💎';
+            break;
+        case 'opiumDen':
+            icon = '🏠';
+            break;
+        case 'cocaineEmpire':
+            icon = '💰';
+            break;
+        case 'alienTech':
+            icon = '👽';
+            break;
+        case 'quantumLab':
+            icon = '⚛️';
+            break;
+        case 'cosmicGateway':
+            icon = '🌌';
+            break;
+        case 'realityBender':
+            icon = '🔮';
+            break;
+        case 'dimensionWarp':
+            icon = '🌀';
+            break;
+        case 'timeDistorter':
+            icon = '⌛';
+            break;
+        case 'universalNexus':
+            icon = '🌌';
+            break;
+    }
+
+    mainClicker.innerHTML = icon;
+}
+
+function getHighestUpgrade() {
+    const upgradeOrder = ['basic', 'medium', 'advanced', 'ultimate', 'crystalLab', 'opiumDen', 'cocaineEmpire', 'alienTech', 'quantumLab', 'cosmicGateway', 'realityBender', 'dimensionWarp', 'timeDistorter', 'universalNexus'];
+    for (let i = upgradeOrder.length - 1; i >= 0; i--) {
+        if (gameState.upgrades[upgradeOrder[i]] > 0) {
+            return upgradeOrder[i];
+        }
+    }
+    return 'basic';
+}
+
+function checkAchievements() {
+    if (!gameState.achievements.ach1 && Object.values(gameState.upgrades).some(v => v > 0)) {
+        gameState.achievements.ach1 = true;
+        document.getElementById('ach1').classList.add('unlocked');
+        gameState.clickMultiplier++;
+    }
+    if (!gameState.achievements.ach2 && gameState.totalMoney >= 1000) {
+        gameState.achievements.ach2 = true;
+        document.getElementById('ach2').classList.add('unlocked');
+        gameState.clickMultiplier++;
+    }
+    if (!gameState.achievements.ach3 && Object.values(gameState.upgrades).every(v => v > 0)) {
+        gameState.achievements.ach3 = true;
+        document.getElementById('ach3').classList.add('unlocked');
+        gameState.clickMultiplier *= 2;
+    }
+}
+
+function prestige() {
+    const newPoints = Math.floor(Math.log10(gameState.totalMoney));
+    if (newPoints > 0) {
+        gameState.prestigePoints += newPoints;
+        gameState.money = 0;
+        gameState.tripLevel = 0;
+        gameState.upgrades = {basic: 0, medium: 0, advanced: 0, ultimate: 0, crystalLab: 0, opiumDen: 0, cocaineEmpire: 0, alienTech: 0, quantumLab: 0, cosmicGateway: 0, realityBender: 0, dimensionWarp: 0, timeDistorter: 0, universalNexus: 0};
+        gameState.costs = {basic: 10, medium: 50, advanced: 200, ultimate: 1000, crystalLab: 5000, opiumDen: 20000, cocaineEmpire: 100000, alienTech: 500000, quantumLab: 2000000, cosmicGateway: 10000000, realityBender: 50000000, dimensionWarp: 200000000, timeDistorter: 1000000000, universalNexus: 5000000000};
+        updateDisplay();
+    }
+}
+
+function upgrade(type) {
+    const cost = gameState.costs[type];
+    if (gameState.money >= cost) {
+        gameState.money -= cost;
+        gameState.upgrades[type]++;
+        gameState.tripLevel++;
+        gameState.costs[type] = Math.floor(cost * 1.5);
+        updateDisplay();
+        checkAchievements();
+    }
+}
+
+function updateDisplay() {
+    document.getElementById('money').textContent = Math.floor(gameState.money);
+    document.getElementById('totalMoney').textContent = Math.floor(gameState.totalMoney);
+    document.getElementById('tripLevel').textContent = gameState.tripLevel;
+    document.getElementById('clickMultiplier').textContent = gameState.clickMultiplier;
+    document.getElementById('prestigePoints').textContent = gameState.prestigePoints;
+
+    for (const type of ['basic', 'medium', 'advanced', 'ultimate', 'crystalLab', 'opiumDen', 'cocaineEmpire', 'alienTech', 'quantumLab', 'cosmicGateway', 'realityBender', 'dimensionWarp', 'timeDistorter', 'universalNexus']) {
+        document.getElementById(`${type}Level`).textContent = gameState.upgrades[type];
+    }
+
+    if (gameState.upgrades.basic >= 5) document.getElementById('mediumBtn').style.display = 'block';
+    if (gameState.upgrades.medium >= 5) document.getElementById('advancedBtn').style.display = 'block';
+    if (gameState.upgrades.advanced >= 5) document.getElementById('ultimateBtn').style.display = 'block';
+    if (gameState.upgrades.ultimate >= 5) document.getElementById('crystalLabBtn').style.display = 'block';
+    if (gameState.upgrades.crystalLab >= 5) document.getElementById('opiumDenBtn').style.display = 'block';
+    if (gameState.upgrades.opiumDen >= 5) document.getElementById('cocaineEmpireBtn').style.display = 'block';
+    if (gameState.upgrades.cocaineEmpire >= 5) document.getElementById('alienTechBtn').style.display = 'block';
+    if (gameState.upgrades.alienTech >= 5) document.getElementById('quantumLabBtn').style.display = 'block';
+    if (gameState.upgrades.quantumLab >= 5) document.getElementById('cosmicGatewayBtn').style.display = 'block';
+    if (gameState.upgrades.cosmicGateway >= 5) document.getElementById('realityBenderBtn').style.display = 'block';
+    if (gameState.upgrades.realityBender >= 5) document.getElementById('dimensionWarpBtn').style.display = 'block';
+    if (gameState.upgrades.dimensionWarp >= 5) document.getElementById('timeDistorterBtn').style.display = 'block';
+    if (gameState.upgrades.timeDistorter >= 5) document.getElementById('universalNexusBtn').style.display = 'block';
+
+    if (gameState.totalMoney >= 1000) {
+        document.getElementById('prestigeSection').style.display = 'block';
+        document.getElementById('nextPrestige').textContent =
+            Math.pow(10, Math.floor(Math.log10(gameState.totalMoney)) + 1);
+    }
+}
+
+document.addEventListener('keydown', function(event) {
+    if (event.key === 'F8') {
+        event.preventDefault();
+        const devMenu = document.getElementById('devMenu');
+        devMenu.style.display = devMenu.style.display === 'none' ? 'block' : 'none';
+    }
+});
+
+function addMoney(amount) {
+    gameState.money += amount;
+    gameState.totalMoney += amount;
+    updateDisplay();
+}
+
+function maxAllUpgrades() {
+    const types = ['basic', 'medium', 'advanced', 'ultimate', 'crystalLab', 'opiumDen', 'cocaineEmpire', 'alienTech', 'quantumLab', 'cosmicGateway', 'realityBender', 'dimensionWarp', 'timeDistorter', 'universalNexus'];
+    types.forEach(type => {
+        gameState.upgrades[type] = 100;
+        gameState.costs[type] *= Math.pow(1.5, 100);
+    });
+    gameState.tripLevel = 400;
+    updateDisplay();
+}
+
+setInterval(() => {
+    const prestigeBonus = 1 + (gameState.prestigePoints * 0.1);
+    const production = (
+        gameState.upgrades.basic * 1 +
+        gameState.upgrades.medium * 5 +
+        gameState.upgrades.advanced * 20 +
+        gameState.upgrades.ultimate * 100 +
+        gameState.upgrades.crystalLab * 500 +
+        gameState.upgrades.opiumDen * 2000 +
+        gameState.upgrades.cocaineEmpire * 10000 +
+        gameState.upgrades.alienTech * 50000 +
+        gameState.upgrades.quantumLab * 200000 +
+        gameState.upgrades.cosmicGateway * 1000000 +
+        gameState.upgrades.realityBender * 5000000 +
+        gameState.upgrades.dimensionWarp * 20000000 +
+        gameState.upgrades.timeDistorter * 100000000 +
+        gameState.upgrades.universalNexus * 500000000
+    ) * prestigeBonus;
+
+    gameState.money += production / 10;
+    gameState.totalMoney += production / 10;
+
+    updateDisplay();
+    createTripEffect();
+    createUpgradeEffects();
+    updateClickerAppearance();
+}, 100);
+
+updateDisplay();
+</script>
+
+</body></html>
