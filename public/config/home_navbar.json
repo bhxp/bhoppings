@@ -96,6 +96,10 @@
             {
                 "text": "time from now",
                 "url": "/timefromnow"
+            },
+            {
+                "text": "particle",
+                "url": "/particle"
             }
         ]
     },
