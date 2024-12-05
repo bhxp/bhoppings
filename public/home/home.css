@@ -26,6 +26,7 @@ html, body {
     left: 24px;
     top: 0px;
     border-bottom: solid 2px rgb(64, 64, 64);
+    z-index: 2;
 }
 
 .gradient-text {
@@ -86,14 +87,13 @@ html, body {
     left: -28px;
     padding: 0.4rem;
     border-radius: 12px;
-    backdrop-filter: blur(1.5px);
+    backdrop-filter: blur(3px);
     background-color: rgba(0, 0, 0, 0.2);
     opacity: 1;
     border: solid 1px #2F2F2F;
     width: max-content;
     min-width: 120px;
-    z-index: 9999;
-    pointer-events: all;
+    z-index: 2;
     transform-origin: top;
 }
 
@@ -117,10 +117,11 @@ html, body {
 }
 
 #center {
-    position: fixed;
+    position: absolute;
     top: 50%;
     left: 42px;
     transform: TranslateY(-50%);
+    z-index: 1;
 }
 
 #center .gradient-text {
@@ -130,9 +131,8 @@ html, body {
 }
 
 .dropdown.hidden {
-    transform: scaleY(0.1) TranslateY(+0%);
+    transform: scaleY(0) TranslateY(+0%);
     opacity: 0;
-    pointer-events: none;
 }
 
 .text {
