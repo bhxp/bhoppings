@@ -9,8 +9,8 @@ styleElem.innerHTML = `* {
 }
 .custom-cursor {
   position: fixed;
-  width: 32px;
-  height: 32px;
+  width: 48px;
+  height: 48px;
   border-radius: 50%;
   pointer-events: none;
   transform: translate(-50%, -50%);
