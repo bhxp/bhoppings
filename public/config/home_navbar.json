@@ -40,12 +40,14 @@
         ]
     },
     {
-        "text": "tangini",
-        "url": "/tangini"
-    },
-    {
-        "text": "tango clicker",
-        "url": "/tangoclicker"
+        "multiple": true,
+        "text": "downloads",
+        "pages": [     
+            {
+                "text": "tango clicker",
+                "url": "/tangoclicker"
+            }
+        ]
     },
     {
         "multiple": true,
@@ -96,5 +98,9 @@
                 "url": "/timefromnow"
             }
         ]
+    },
+    {
+        "text": "tangini",
+        "url": "/tangini"
     }
 ]
