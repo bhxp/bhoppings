@@ -149,7 +149,7 @@ html, body {
 	left: 50%;
 	top: calc(50% + 4px);
 	transform: TranslateX(-50%);
-	border: solid 2px #fff;
+	border: solid 2.5px #fff;
 	width: 0px;
 	border-radius: 1000px;
 	transition: width 0.2s ease-in-out, opacity 0.2s ease-in-out;
@@ -159,6 +159,6 @@ html, body {
 }
 
 .navbar-item-top:hover hr {
-	width: 48px;
-	opacity: 0.7;
+    width: 36px;
+    opacity: 1;
 }
