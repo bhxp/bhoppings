@@ -32,48 +32,10 @@
             {
                 "text": "damyan run",
                 "url": "/damyan-run"
-            }
-        ]
-    },
-    {
-        "multiple": true,
-        "text": "movies",
-        "pages": [
-            {
-                "text": "500 days of summer",
-                "url": "/movies/500daysofsummer"
             },
             {
-                "text": "deadpool and wolverine",
-                "url": "/movies/deadpoolandwolverine"
-            },
-            {
-                "text": "despicable me 4",
-                "url": "/movies/despicableme4"
-            },
-            {
-                "text": "godfather",
-                "url": "/movies/godfather"
-            },
-            {
-                "text": "mario",
-                "url": "/movies/mario"
-            },
-            {
-                "text": "quiet place",
-                "url": "/movies/quietplace"
-            },
-            {
-                "text": "the pornman 😍",
-                "url": "/movies/the-pornman"
-            },
-            {
-                "text": "the batman",
-                "url": "/movies/thebatman"
-            },
-            {
-                "text": "trans people won",
-                "url": "/movies/trans-people-won"
+                "text": "tic tac unbound",
+                "url": "/tic-tag-unbound"
             }
         ]
     },
@@ -96,6 +58,42 @@
             {
                 "text": "happy imessage",
                 "url": "/happyimessage"
+            },
+            {
+                "text": "bird with balls",
+                "url": "/birdwithballs"
+            },
+            {
+                "text": "glass",
+                "url": "/height map gen"
+            },
+            {
+                "text": "hell's domain",
+                "url": "/hellsdomain"
+            },
+            {
+                "text": "lightroom renderer",
+                "url": "/happyimessage"
+            },
+            {
+                "text": "physics sandbox",
+                "url": "/physic-sandbox"
+            },
+            {
+                "text": "sell your soul",
+                "url": "/sellyoursoul"
+            },
+            {
+                "text": "poopstagram",
+                "url": "/poopstagram"
+            },
+            {
+                "text": "protocol 533",
+                "url": "/protocol_553"
+            },
+            {
+                "text": "time from now",
+                "url": "/timefromnow"
             }
         ]
     }
