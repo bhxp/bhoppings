@@ -133,6 +133,7 @@ html, body {
 .dropdown.hidden {
     transform: scaleY(0) TranslateY(+0%);
     opacity: 0;
+    backdrop-filter: blur(0px);
 }
 
 .text {
