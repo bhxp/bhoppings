@@ -1,764 +1,811 @@
 <html><head><base href="." /><meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" /><title>Modern Scrollbar Generator</title><style>
-:root {
-    --primary: #2196f3;
-    --dark: #222;
-    --light: #fff;
-    --border: #ccc;
-}
-
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
-
-body {
-    font-family: 'Inter', sans-serif;
-    background: #f5f5f5;
-    color: var(--dark);
-    line-height: 1.6;
-}
-
-.container {
-    max-width: 1200px;
-    margin: 2rem auto;
-    padding: 0 1rem;
-}
-
-.header {
-    text-align: center;
-    margin-bottom: 2rem;
-}
-
-.mode-switch {
-    display: flex;
-    justify-content: center;
-    gap: 1rem;
-    margin-bottom: 2rem;
-}
-
-.mode-btn {
-    padding: 0.5rem 1.5rem;
-    border: none;
-    border-radius: 25px;
-    background: var(--light);
-    cursor: pointer;
-    transition: all 0.3s ease;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-}
-
-.mode-btn.active {
-    background: var(--primary);
-    color: var(--light);
-}
-
-.generator-container {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 2rem;
-}
-
-.controls {
-    background: var(--light);
-    padding: 2rem;
-    border-radius: 10px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-}
-
-.preview {
-    position: sticky;
-    top: 20px;
-    height: calc(100vh - 40px);
-    background: var(--light);
-    padding: 10px; /* Updated padding */
-    margin: 10px; /* Updated margin */
-    border-radius: 10px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-    overflow-y: scroll;
-}
-
-.dev-mode .preview {
-    margin-top: 20px;
-    height: 400px; /* Fixed height for dev mode */
-    position: relative; /* Reset position for dev mode */
-}
-
-.control-group {
-    margin-bottom: 1.5rem;
-}
-
-.control-group h3 {
-    margin-bottom: 1rem;
-    color: var(--dark);
-}
-
-.control-item {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 1rem;
-}
-
-.control-item input[type="range"] {
-    flex: 1;
-}
-
-.control-item input[type="number"] {
-    width: 60px;
-    padding: 4px;
-    border: 1px solid var(--border);
-    border-radius: 4px;
-}
-
-.control-item.with-color {
-    display: grid;
-    grid-template-columns: 1fr 60px 50px;
-    gap: 10px;
-}
-
-label {
-    display: block;
-    margin-bottom: 0.5rem;
-}
-
-input[type="range"],
-input[type="color"],
-select {
-    width: 100%;
-    padding: 0.5rem;
-    border: 1px solid var(--border);
-    border-radius: 5px;
-}
-
-input[type="color"] {
-    height: 40px;
-}
-
-.control-item input[type="range"] {
-    width: calc(100% - 60px);
-    display: inline-block;
-}
-
-.control-item input[type="color"] {
-    width: 50px;
-    height: 30px;
-    vertical-align: middle;
-    margin-left: 10px;
-}
-
-.preset-list {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-    gap: 1rem;
-    margin-bottom: 1rem;
-}
-
-.preset {
-    padding: 0.5rem;
-    border: 1px solid var(--border);
-    border-radius: 5px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-}
-
-.preset:hover {
-    background: var(--primary);
-    color: var(--light);
-}
-
-.export-btn {
-    width: 100%;
-    padding: 1rem;
-    background: var(--primary);
-    color: var(--light);
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    margin-top: 1rem;
-}
-
-.export-btn:hover {
-    background: #1976d2;
-}
-
-.preview-content {
-    height: 1000px;
-    padding: 1rem;
-    background: linear-gradient(45deg, #f3f3f3 25%, transparent 25%),
-                linear-gradient(-45deg, #f3f3f3 25%, transparent 25%),
-                linear-gradient(45deg, transparent 75%, #f3f3f3 75%),
-                linear-gradient(-45deg, transparent 75%, #f3f3f3 75%);
-    background-size: 20px 20px;
-    background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
-}
-
-#code-output {
-    width: 100%;
-    height: 200px;
-    margin-top: 1rem;
-    padding: 1rem;
-    background: #f8f9fa;
-    border: 1px solid var(--border);
-    border-radius: 5px;
-    font-family: monospace;
-    resize: none;
-}
-
-.copy-btn {
-    padding: 0.5rem 1rem;
-    background: var(--dark);
-    color: var(--light);
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    margin-top: 0.5rem;
-}
-
-/* Advanced Mode Specific Styles */
-.advanced-controls {
-    display: none;
-}
-
-.advanced .advanced-controls {
-    display: block;
-}
-
-.dev-mode {
-    display: none;
-    background: var(--light);
-    padding: 2rem;
-    border-radius: 10px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-}
-
-.dev-mode.active {
-    display: block;
-}
-
-.dev-editor {
-    width: 100%;
-    height: 300px;
-    font-family: 'Source Code Pro', monospace;
-    background: #1e1e1e;
-    color: #d4d4d4;
-    padding: 1rem;
-    border: none;
-    border-radius: 5px;
-    resize: vertical;
-    margin-bottom: 1rem;
-}
-
-.error-display {
-    color: #ff4444;
-    background: rgba(255, 68, 68, 0.1);
-    padding: 1rem;
-    border-radius: 5px;
-    margin: 1rem 0;
-    font-family: monospace;
-    display: none;
-}
-
-.error-display.active {
-    display: block;
-}
-
-.dev-controls {
-    display: flex;
-    gap: 1rem;
-    margin-bottom: 1rem;
-}
-
-.dev-btn {
-    padding: 0.5rem 1rem;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    background: var(--primary);
-    color: var(--light);
-}
-
-.dev-btn.reset {
-    background: var(--dark);
-}
-
-.control-item.gradient-toggle {
-    margin-bottom: 1rem;
-}
-
-.gradient-controls {
-    display: none;
-    margin-top: 1rem;
-}
-
-.gradient-controls.active {
-    display: block;
-}
-</style>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-<link href="https://fonts.googleapis.com/css2?family=Source+Code+Pro:wght@400;600&display=swap" rel="stylesheet">
-</head>
-<body>
-    <div class="container">
-        <div class="header">
-            <h1>Modern Scrollbar Generator</h1>
-            <p>Create beautiful custom scrollbars for your website</p>
-        </div>
-
-        <div class="mode-switch">
-            <button class="mode-btn active" data-mode="simple">Simple Mode</button>
-            <button class="mode-btn" data-mode="advanced">Advanced Mode</button>
-            <button class="mode-btn" data-mode="dev">Developer Mode</button>
-        </div>
-
-        <div class="generator-container">
-            <div class="controls">
-                <div class="control-group">
-                    <h3>Presets</h3>
-                    <div class="preset-list">
-                        <div class="preset" data-preset="minimal">Minimal</div>
-                        <div class="preset" data-preset="rounded">Rounded</div>
-                        <div class="preset" data-preset="fancy">Fancy</div>
-                        <div class="preset" data-preset="neon">Neon</div>
-                        <div class="preset" data-preset="gradient">Gradient</div>
-                    </div>
-                </div>
-
-                <div class="control-group">
-                    <h3>Basic Settings</h3>
-                    <div class="control-item">
-                        <label>Width</label>
-                        <input type="range" id="width" min="5" max="50" value="10">
-                        <input type="number" id="width-value" min="5" max="100" value="10">
-                    </div>
-                    <div class="control-item">
-                        <label>Border Radius</label>
-                        <input type="range" id="radius" min="0" max="10" value="5">
-                        <input type="number" id="radius-value" min="0" max="10" value="5">
-                    </div>
-                    <div class="control-item with-color">
-                        <label>Track Color</label>
-                        <input type="color" id="trackColor" value="#f1f1f1">
-                    </div>
-                    <div class="control-item with-color">
-                        <label>Thumb Color</label>
-                        <input type="color" id="thumbColor" value="#888888">
-                    </div>
-                </div>
-
-                <div class="advanced-controls">
-                    <div class="control-group">
-                        <h3>Advanced Settings</h3>
-                        <div class="control-item">
-                            <label>Track Opacity</label>
-                            <input type="range" id="trackOpacity" min="0" max="100" value="100">
-                            <input type="number" id="trackOpacity-value" min="0" max="100" value="100">
-                        </div>
-                        <div class="control-item with-color">
-                            <label>Track Border</label>
-                            <input type="range" id="trackBorder" min="0" max="20" value="0">
-                            <input type="number" id="trackBorder-value" min="0" max="20" value="0">
-                            <input type="color" id="trackBorderColor" value="#cccccc">
-                        </div>
-                        <div class="control-item">
-                            <label>Thumb Opacity</label>
-                            <input type="range" id="thumbOpacity" min="0" max="100" value="100">
-                            <input type="number" id="thumbOpacity-value" min="0" max="100" value="100">
-                        </div>
-                        <div class="control-item with-color">
-                            <label>Thumb Border</label>
-                            <input type="range" id="thumbBorder" min="0" max="20" value="0">
-                            <input type="number" id="thumbBorder-value" min="0" max="20" value="0">
-                            <input type="color" id="thumbBorderColor" value="#000000">
-                        </div>
-                        <div class="control-item">
-                            <label>Thumb Length</label>
-                            <input type="range" id="thumbLength" min="30" max="200" value="100">
-                            <input type="number" id="thumbLength-value" min="30" max="200" value="100">
-                        </div>
-                        <div class="control-item">
-                            <label>Transition Duration</label>
-                            <input type="range" id="transitionDuration" min="0" max="1000" value="300" step="50">
-                            <input type="number" id="transitionDuration-value" min="0" max="1000" value="300" step="50">
-                        </div>
-                        <div class="control-item">
-                            <label>Transition Timing</label>
-                            <select id="transitionTiming">
-                                <option value="linear">Linear</option>
-                                <option value="ease">Ease</option>
-                                <option value="ease-in">Ease In</option>
-                                <option value="ease-out">Ease Out</option>
-                                <option value="ease-in-out">Ease In Out</option>
-                                <option value="cubic-bezier(0.4, 0, 0.2, 1)">Material</option>
-                            </select>
-                        </div>
-                        <div class="control-item">
-                            <label>Shadow Spread</label>
-                            <input type="range" id="shadowSpread" min="0" max="20" value="0">
-                            <input type="number" id="shadowSpread-value" min="0" max="20" value="0">
-                        </div>
-                        <div class="control-item">
-                            <label>Shadow Offset X</label>
-                            <input type="range" id="shadowOffsetX" min="-20" max="20" value="0">
-                            <input type="number" id="shadowOffsetX-value" min="-20" max="20" value="0">
-                        </div>
-                        <div class="control-item">
-                            <label>Shadow Offset Y</label>
-                            <input type="range" id="shadowOffsetY" min="-20" max="20" value="0">
-                            <input type="number" id="shadowOffsetY-value" min="-20" max="20" value="0">
-                        </div>
-                        <div class="control-item">
-                            <label>Shadow Opacity</label>
-                            <input type="range" id="shadowOpacity" min="0" max="100" value="50">
-                            <input type="number" id="shadowOpacity-value" min="0" max="100" value="50">
-                        </div>
-                        <div class="control-item with-color">
-                            <label>Shadow Color</label>
-                            <input type="color" id="shadowColor" value="#000000">
-                        </div>
-                        <div class="control-item">
-                            <label>Shadow Blur</label>
-                            <input type="range" id="shadowBlur" min="0" max="30" value="0">
-                            <input type="number" id="shadowBlur-value" min="0" max="30" value="0">
-                        </div>
-                        <div class="control-item">
-                            <label>Hover Effect</label>
-                            <select id="hoverEffect">
-                                <option value="none">None</option>
-                                <option value="grow">Grow</option>
-                                <option value="glow">Glow</option>
-                                <option value="color">Color Change</option>
-                            </select>
-                        </div>
-                        <div class="control-item gradient-toggle">
-                            <label>Use Gradient</label>
-                            <input type="checkbox" id="useGradient">
-                        </div>
-                        <div class="gradient-controls">
-                            <div class="control-item with-color">
-                                <label>Gradient Start Color</label>
-                                <input type="color" id="gradientStart" value="#ff416c">
-                            </div>
-                            <div class="control-item with-color">
-                                <label>Gradient End Color</label>
-                                <input type="color" id="gradientEnd" value="#ff4b2b">
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <button class="export-btn">Export CSS</button>
-                <textarea id="code-output" readonly></textarea>
-                <button class="copy-btn">Copy to Clipboard</button>
+    :root {
+        --primary: #2196f3;
+        --dark: #222;
+        --light: #fff;
+        --border: #ccc;
+    }
+    
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+    
+    body {
+        font-family: 'Inter', sans-serif;
+        background: #f5f5f5;
+        color: var(--dark);
+        line-height: 1.6;
+    }
+    
+    .container {
+        max-width: 1200px;
+        margin: 2rem auto;
+        padding: 0 1rem;
+    }
+    
+    .header {
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+    
+    .mode-switch {
+        display: flex;
+        justify-content: center;
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+    
+    .mode-btn {
+        padding: 0.5rem 1.5rem;
+        border: none;
+        border-radius: 25px;
+        background: var(--light);
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    
+    .mode-btn.active {
+        background: var(--primary);
+        color: var(--light);
+    }
+    
+    .generator-container {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 2rem;
+    }
+    
+    .controls {
+        background: var(--light);
+        padding: 2rem;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    
+    .preview {
+        position: sticky;
+        top: 20px;
+        height: calc(100vh - 512px);
+        background: var(--light);
+        padding: 10px;
+        margin: 10px;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        overflow-y: scroll;
+    }
+    
+    .dev-mode .preview {
+        margin-top: 20px;
+        height: 400px; /* Fixed height for dev mode */
+        position: relative; /* Reset position for dev mode */
+    }
+    
+    .control-group {
+        margin-bottom: 1.5rem;
+    }
+    
+    .control-group h3 {
+        margin-bottom: 1rem;
+        color: var(--dark);
+    }
+    
+    .control-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 1rem;
+    }
+    
+    .control-item input[type="range"] {
+        flex: 1;
+    }
+    
+    .control-item input[type="number"] {
+        width: 60px;
+        padding: 4px;
+        border: 1px solid var(--border);
+        border-radius: 4px;
+    }
+    
+    .control-item.with-color {
+        display: grid;
+        grid-template-columns: 1fr 60px 50px;
+        gap: 10px;
+    }
+    
+    label {
+        display: block;
+        margin-bottom: 0.5rem;
+    }
+    
+    input[type="range"],
+    input[type="color"],
+    select {
+        width: 100%;
+        padding: 0.5rem;
+        border: 1px solid var(--border);
+        border-radius: 5px;
+    }
+    
+    input[type="color"] {
+        height: 40px;
+    }
+    
+    .control-item input[type="range"] {
+        width: calc(100% - 60px);
+        display: inline-block;
+    }
+    
+    .control-item input[type="color"] {
+        width: 50px;
+        height: 30px;
+        vertical-align: middle;
+        margin-left: 10px;
+    }
+    
+    .preset-list {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+    
+    .preset {
+        padding: 0.5rem;
+        border: 1px solid var(--border);
+        border-radius: 5px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .preset:hover {
+        background: var(--primary);
+        color: var(--light);
+    }
+    
+    .export-btn {
+        width: 100%;
+        padding: 1rem;
+        background: var(--primary);
+        color: var(--light);
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        margin-top: 1rem;
+    }
+    
+    .export-btn:hover {
+        background: #1976d2;
+    }
+    
+    .preview-content {
+        height: 1000px;
+        padding: 1rem;
+        background: linear-gradient(45deg, #f3f3f3 25%, transparent 25%),
+                    linear-gradient(-45deg, #f3f3f3 25%, transparent 25%),
+                    linear-gradient(45deg, transparent 75%, #f3f3f3 75%),
+                    linear-gradient(-45deg, transparent 75%, #f3f3f3 75%);
+        background-size: 20px 20px;
+        background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+    }
+    
+    #code-output {
+        width: 100%;
+        height: 200px;
+        margin-top: 1rem;
+        padding: 1rem;
+        background: #f8f9fa;
+        border: 1px solid var(--border);
+        border-radius: 5px;
+        font-family: monospace;
+        resize: none;
+    }
+    
+    .copy-btn {
+        padding: 0.5rem 1rem;
+        background: var(--dark);
+        color: var(--light);
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        margin-top: 0.5rem;
+    }
+    
+    /* Advanced Mode Specific Styles */
+    .advanced-controls {
+        display: none;
+    }
+    
+    .advanced .advanced-controls {
+        display: block;
+    }
+    
+    .dev-mode {
+        display: none;
+        background: var(--light);
+        padding: 2rem;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    
+    .dev-mode.active {
+        display: block;
+    }
+    
+    .dev-editor {
+        width: 100%;
+        height: 300px;
+        font-family: 'Source Code Pro', monospace;
+        background: #1e1e1e;
+        color: #d4d4d4;
+        padding: 1rem;
+        border: none;
+        border-radius: 5px;
+        resize: vertical;
+        margin-bottom: 1rem;
+    }
+    
+    .error-display {
+        color: #ff4444;
+        background: rgba(255, 68, 68, 0.1);
+        padding: 1rem;
+        border-radius: 5px;
+        margin: 1rem 0;
+        font-family: monospace;
+        display: none;
+    }
+    
+    .error-display.active {
+        display: block;
+    }
+    
+    .dev-controls {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+    
+    .dev-btn {
+        padding: 0.5rem 1rem;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        background: var(--primary);
+        color: var(--light);
+    }
+    
+    .dev-btn.reset {
+        background: var(--dark);
+    }
+    
+    .control-item.gradient-toggle {
+        margin-bottom: 1rem;
+    }
+    
+    .gradient-controls {
+        display: none;
+        margin-top: 1rem;
+    }
+    
+    .gradient-controls.active {
+        display: block;
+    }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Source+Code+Pro:wght@400;600&display=swap" rel="stylesheet">
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <h1>Modern Scrollbar Generator</h1>
+                <p>Create beautiful custom scrollbars for your website</p>
             </div>
-
-            <div class="dev-mode">
-                <div class="dev-controls">
-                    <button class="dev-btn">Apply Changes</button>
-                    <button class="dev-btn reset">Reset</button>
+    
+            <div class="mode-switch">
+                <button class="mode-btn active" data-mode="simple">Simple Mode</button>
+                <button class="mode-btn" data-mode="advanced">Advanced Mode</button>
+                <button class="mode-btn" data-mode="dev">Developer Mode</button>
+            </div>
+    
+            <div class="generator-container">
+                <div class="controls">
+                    <div class="control-group">
+                        <h3>Presets</h3>
+                        <div class="preset-list">
+                            <div class="preset" data-preset="minimal">Minimal</div>
+                            <div class="preset" data-preset="rounded">Rounded</div>
+                            <div class="preset" data-preset="fancy">Fancy</div>
+                            <div class="preset" data-preset="neon">Neon</div>
+                            <div class="preset" data-preset="gradient">Gradient</div>
+                        </div>
+                    </div>
+    
+                    <div class="control-group">
+                        <h3>Basic Settings</h3>
+                        <div class="control-item">
+                            <label>Width</label>
+                            <input type="range" id="width" min="5" max="50" value="10">
+                            <input type="number" id="width-value" min="5" max="100" value="10">
+                        </div>
+                        <div class="control-item">
+                            <label>Border Radius</label>
+                            <input type="range" id="radius" min="0" max="10" value="5">
+                            <input type="number" id="radius-value" min="0" max="10" value="5">
+                        </div>
+                        <div class="control-item with-color">
+                            <label>Track Color</label>
+                            <input type="color" id="trackColor" value="#f1f1f1">
+                        </div>
+                        <div class="control-item with-color">
+                            <label>Thumb Color</label>
+                            <input type="color" id="thumbColor" value="#888888">
+                        </div>
+                    </div>
+    
+                    <div class="advanced-controls">
+                        <div class="control-group">
+                            <h3>Advanced Settings</h3>
+                            <div class="control-item">
+                                <label>Track Opacity</label>
+                                <input type="range" id="trackOpacity" min="0" max="100" value="100">
+                                <input type="number" id="trackOpacity-value" min="0" max="100" value="100">
+                            </div>
+                            <div class="control-item with-color">
+                                <label>Track Border</label>
+                                <input type="range" id="trackBorder" min="0" max="20" value="0">
+                                <input type="number" id="trackBorder-value" min="0" max="20" value="0">
+                                <input type="color" id="trackBorderColor" value="#cccccc">
+                            </div>
+                            <div class="control-item">
+                                <label>Thumb Opacity</label>
+                                <input type="range" id="thumbOpacity" min="0" max="100" value="100">
+                                <input type="number" id="thumbOpacity-value" min="0" max="100" value="100">
+                            </div>
+                            <div class="control-item with-color">
+                                <label>Thumb Border</label>
+                                <input type="range" id="thumbBorder" min="0" max="20" value="0">
+                                <input type="number" id="thumbBorder-value" min="0" max="20" value="0">
+                                <input type="color" id="thumbBorderColor" value="#000000">
+                            </div>
+                            <div class="control-item">
+                                <label>Thumb Length</label>
+                                <input type="range" id="thumbLength" min="30" max="200" value="100">
+                                <input type="number" id="thumbLength-value" min="30" max="200" value="100">
+                            </div>
+                            <div class="control-item">
+                                <label>Transition Duration</label>
+                                <input type="range" id="transitionDuration" min="0" max="1000" value="300" step="50">
+                                <input type="number" id="transitionDuration-value" min="0" max="1000" value="300" step="50">
+                            </div>
+                            <div class="control-item">
+                                <label>Transition Timing</label>
+                                <select id="transitionTiming">
+                                    <option value="linear">Linear</option>
+                                    <option value="ease">Ease</option>
+                                    <option value="ease-in">Ease In</option>
+                                    <option value="ease-out">Ease Out</option>
+                                    <option value="ease-in-out">Ease In Out</option>
+                                    <option value="cubic-bezier(0.4, 0, 0.2, 1)">Material</option>
+                                </select>
+                            </div>
+                            <div class="control-item">
+                                <label>Shadow Spread</label>
+                                <input type="range" id="shadowSpread" min="0" max="20" value="0">
+                                <input type="number" id="shadowSpread-value" min="0" max="20" value="0">
+                            </div>
+                            <div class="control-item">
+                                <label>Shadow Offset X</label>
+                                <input type="range" id="shadowOffsetX" min="-20" max="20" value="0">
+                                <input type="number" id="shadowOffsetX-value" min="-20" max="20" value="0">
+                            </div>
+                            <div class="control-item">
+                                <label>Shadow Offset Y</label>
+                                <input type="range" id="shadowOffsetY" min="-20" max="20" value="0">
+                                <input type="number" id="shadowOffsetY-value" min="-20" max="20" value="0">
+                            </div>
+                            <div class="control-item">
+                                <label>Shadow Opacity</label>
+                                <input type="range" id="shadowOpacity" min="0" max="100" value="50">
+                                <input type="number" id="shadowOpacity-value" min="0" max="100" value="50">
+                            </div>
+                            <div class="control-item with-color">
+                                <label>Shadow Color</label>
+                                <input type="color" id="shadowColor" value="#000000">
+                            </div>
+                            <div class="control-item">
+                                <label>Shadow Blur</label>
+                                <input type="range" id="shadowBlur" min="0" max="30" value="0">
+                                <input type="number" id="shadowBlur-value" min="0" max="30" value="0">
+                            </div>
+                            <div class="control-item">
+                                <label>Hover Effect</label>
+                                <select id="hoverEffect">
+                                    <option value="none">None</option>
+                                    <option value="grow">Grow</option>
+                                    <option value="glow">Glow</option>
+                                    <option value="color">Color Change</option>
+                                </select>
+                            </div>
+                            <div class="control-item gradient-toggle">
+                                <label>Use Gradient</label>
+                                <input type="checkbox" id="useGradient">
+                            </div>
+                            <div class="gradient-controls">
+                                <div class="control-item with-color">
+                                    <label>Gradient Start Color</label>
+                                    <input type="color" id="gradientStart" value="#ff416c">
+                                </div>
+                                <div class="control-item with-color">
+                                    <label>Gradient End Color</label>
+                                    <input type="color" id="gradientEnd" value="#ff4b2b">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+    
+                    <button class="export-btn">Export CSS</button>
+                    <textarea id="code-output" readonly></textarea>
+                    <button class="copy-btn">Copy to Clipboard</button>
                 </div>
-                <textarea class="dev-editor" spellcheck="false">/* Edit your scrollbar CSS here */
-::-webkit-scrollbar {
-    width: 10px;
-}
-::-webkit-scrollbar-track {
-    background: rgba(241, 241, 241, 1);
-    border-radius: 5px;
-}
-::-webkit-scrollbar-thumb {
-    background: rgba(136, 136, 136, 1);
-    border-radius: 5px;
-    min-height: 100px;
-}</textarea>
-                <div class="error-display"></div>
+    
+                <div class="dev-mode">
+                    <div class="dev-controls">
+                        <button class="dev-btn">Apply Changes</button>
+                        <button class="dev-btn reset">Reset</button>
+                    </div>
+                    <textarea class="dev-editor" spellcheck="false">/* Edit your scrollbar CSS here */
+    ::-webkit-scrollbar {
+        width: 10px;
+    }
+    ::-webkit-scrollbar-track {
+        background: rgba(241, 241, 241, 1);
+        border-radius: 5px;
+    }
+    ::-webkit-scrollbar-thumb {
+        background: rgba(136, 136, 136, 1);
+        border-radius: 5px;
+        min-height: 100px;
+    }</textarea>
+                    <div class="error-display"></div>
+                    <div class="preview">
+                        <div class="preview-content">
+                            Scroll to preview your custom scrollbar!
+                        </div>
+                    </div>
+                </div>
+    
                 <div class="preview">
                     <div class="preview-content">
                         Scroll to preview your custom scrollbar!
                     </div>
                 </div>
             </div>
-
-            <div class="preview">
-                <div class="preview-content">
-                    Scroll to preview your custom scrollbar!
-                </div>
-            </div>
         </div>
-    </div>
-
-    <script>
-const generatorContainer = document.querySelector('.generator-container');
-const devMode = document.querySelector('.dev-mode');
-
-document.getElementById('trackBorder').setAttribute('max', '20');
-document.getElementById('thumbBorder').setAttribute('max', '20');
-
-function formatCSS(css) {
-    return css
-        .replace(/^\s+/gm, '')
-        .replace(/\s+$/gm, '')
-        .replace(/\n\s*\n/g, '\n')
-        .replace(/\{\s+/g, '{ ')
-        .replace(/\s+\}/g, ' }')
-        .replace(/;\s+/g, '; ')
-        .replace(/:\s+/g, ': ')
-        .split('\n')
-        .filter(line => line.trim())
-        .join('\n')
-        .trim();
-}
-
-const controls = {
-    width: document.getElementById('width') || { value: 10 },
-    radius: document.getElementById('radius') || { value: 5 },
-    trackColor: document.getElementById('trackColor') || { value: '#f1f1f1' },
-    thumbColor: document.getElementById('thumbColor') || { value: '#888888' },
-    trackOpacity: document.getElementById('trackOpacity') || { value: 100 },
-    trackBorder: document.getElementById('trackBorder') || { value: 0 },
-    trackBorderColor: document.getElementById('trackBorderColor') || { value: '#cccccc' },
-    thumbOpacity: document.getElementById('thumbOpacity') || { value: 100 },
-    thumbBorder: document.getElementById('thumbBorder') || { value: 0 },
-    thumbBorderColor: document.getElementById('thumbBorderColor') || { value: '#000000' },
-    thumbLength: document.getElementById('thumbLength') || { value: 100 },
-    transitionDuration: document.getElementById('transitionDuration') || { value: 300 },
-    transitionTiming: document.getElementById('transitionTiming') || { value: 'linear' },
-    shadowSpread: document.getElementById('shadowSpread') || { value: 0 },
-    shadowOffsetX: document.getElementById('shadowOffsetX') || { value: 0 },
-    shadowOffsetY: document.getElementById('shadowOffsetY') || { value: 0 },
-    shadowOpacity: document.getElementById('shadowOpacity') || { value: 50 },
-    shadowColor: document.getElementById('shadowColor') || { value: '#000000' },
-    shadowBlur: document.getElementById('shadowBlur') || { value: 0 },
-    gradientStart: document.getElementById('gradientStart') || { value: '#ff416c' },
-    gradientEnd: document.getElementById('gradientEnd') || { value: '#ff4b2b' },
-    hoverEffect: document.getElementById('hoverEffect') || { value: 'none' }
-};
-
-const preview = document.querySelector('.preview');
-const codeOutput = document.getElementById('code-output');
-const modeBtns = document.querySelectorAll('.mode-btn');
-const presets = document.querySelectorAll('.preset');
-const exportBtn = document.querySelector('.export-btn');
-const copyBtn = document.querySelector('.copy-btn');
-
-// Presets configuration
-const presetConfigs = {
-    minimal: {
-        width: 8,
-        radius: 0,
-        trackColor: '#f1f1f1',
-        thumbColor: '#888888',
-        trackOpacity: 100,
-        thumbOpacity: 100,
-        trackBorder: 0,
-        trackBorderColor: '#cccccc',
-        thumbBorder: 0,
-        thumbBorderColor: '#000000',
-        thumbLength: 100,
-        shadowColor: '#000000',
-        shadowBlur: 0,
-        shadowSpread: 0,
-        shadowOffsetX: 0,
-        shadowOffsetY: 0,
-        shadowOpacity: 50,
-        hoverEffect: 'none',
-        transitionDuration: 300,
-        transitionTiming: 'linear',
-        gradientStart: '#ff416c',
-        gradientEnd: '#ff4b2b'
-    },
-    rounded: {
-        width: 10,
-        radius: 10,
-        trackColor: '#f1f1f1',
-        thumbColor: '#4CAF50',
-        trackOpacity: 100,
-        thumbOpacity: 100,
-        trackBorder: 0,
-        trackBorderColor: '#cccccc',
-        thumbBorder: 0,
-        thumbBorderColor: '#000000',
-        thumbLength: 100,
-        shadowColor: '#000000',
-        shadowBlur: 5,
-        shadowSpread: 0,
-        shadowOffsetX: 0,
-        shadowOffsetY: 0,
-        shadowOpacity: 50,
-        hoverEffect: 'grow',
-        transitionDuration: 300,
-        transitionTiming: 'linear',
-        gradientStart: '#ff416c',
-        gradientEnd: '#ff4b2b'
-    },
-    fancy: {
-        width: 12,
-        radius: 6,
-        trackColor: '#e0e0e0',
-        thumbColor: '#2196F3',
-        trackOpacity: 100,
-        thumbOpacity: 100,
-        trackBorder: 0,
-        trackBorderColor: '#cccccc',
-        thumbBorder: 0,
-        thumbBorderColor: '#000000',
-        thumbLength: 100,
-        shadowColor: '#000000',
-        shadowBlur: 8,
-        shadowSpread: 0,
-        shadowOffsetX: 0,
-        shadowOffsetY: 0,
-        shadowOpacity: 50,
-        hoverEffect: 'glow',
-        transitionDuration: 300,
-        transitionTiming: 'linear',
-        gradientStart: '#ff416c',
-        gradientEnd: '#ff4b2b'
-    },
-    neon: {
-        width: 8,
-        radius: 4,
-        trackColor: '#111111',
-        thumbColor: '#00ff00',
-        trackOpacity: 100,
-        thumbOpacity: 100,
-        trackBorder: 0,
-        trackBorderColor: '#cccccc',
-        thumbBorder: 0,
-        thumbBorderColor: '#000000',
-        thumbLength: 100,
-        shadowColor: '#00ff00',
-        shadowBlur: 15,
-        shadowSpread: 0,
-        shadowOffsetX: 0,
-        shadowOffsetY: 0,
-        shadowOpacity: 50,
-        hoverEffect: 'color',
-        transitionDuration: 300,
-        transitionTiming: 'linear',
-        gradientStart: '#ff416c',
-        gradientEnd: '#ff4b2b'
-    },
-    gradient: {
-        width: 15,
-        radius: 7,
-        trackColor: '#f0f0f0',
-        thumbColor: '#ff416c',
-        trackOpacity: 100,
-        thumbOpacity: 100,
-        trackBorder: 0,
-        trackBorderColor: '#cccccc',
-        thumbBorder: 0,
-        thumbBorderColor: '#000000',
-        thumbLength: 100,
-        shadowColor: '#000000',
-        shadowBlur: 10,
-        shadowSpread: 0,
-        shadowOffsetX: 0,
-        shadowOffsetY: 0,
-        shadowOpacity: 50,
-        hoverEffect: 'grow',
-        transitionDuration: 300,
-        transitionTiming: 'linear',
-        gradientStart: '#ff416c',
-        gradientEnd: '#ff4b2b'
+    
+        <script>
+    const generatorContainer = document.querySelector('.generator-container');
+    const devMode = document.querySelector('.dev-mode');
+    
+    document.getElementById('trackBorder').setAttribute('max', '20');
+    document.getElementById('thumbBorder').setAttribute('max', '20');
+    
+    function formatCSS(css) {
+        return css
+            .replace(/^\s+/gm, '')
+            .replace(/\s+$/gm, '')
+            .replace(/\n\s*\n/g, '\n')
+            .replace(/\{\s+/g, '{ ')
+            .replace(/\s+\}/g, ' }')
+            .replace(/;\s+/g, '; ')
+            .replace(/:\s+/g, ': ')
+            .split('\n')
+            .filter(line => line.trim())
+            .join('\n')
+            .trim();
     }
-};
-
-// Event Listeners
-Object.values(controls).forEach(control => {
-    if (control && control.addEventListener) {
-        control.addEventListener('input', updateScrollbar);
-    }
-});
-
-const useGradient = document.getElementById('useGradient');
-const gradientControls = document.querySelector('.gradient-controls');
-
-useGradient.addEventListener('change', (e) => {
-    gradientControls.classList.toggle('active', e.target.checked);
-    updateScrollbar();
-});
-
-modeBtns.forEach(btn => {
-    btn.addEventListener('click', () => {
-        document.querySelector('.mode-btn.active').classList.remove('active');
-        btn.classList.add('active');
-        
-        const mode = btn.dataset.mode;
-        document.querySelector('.controls').classList.toggle('advanced', mode === 'advanced');
-        generatorContainer.style.display = mode === 'dev' ? 'none' : 'grid';
-        devMode.style.display = mode === 'dev' ? 'block' : 'none';
-        
-        if (mode !== 'dev') {
-            updateScrollbar();
+    
+    const controls = {
+        width: document.getElementById('width') || { value: 10 },
+        radius: document.getElementById('radius') || { value: 5 },
+        trackColor: document.getElementById('trackColor') || { value: '#f1f1f1' },
+        thumbColor: document.getElementById('thumbColor') || { value: '#888888' },
+        trackOpacity: document.getElementById('trackOpacity') || { value: 100 },
+        trackBorder: document.getElementById('trackBorder') || { value: 0 },
+        trackBorderColor: document.getElementById('trackBorderColor') || { value: '#cccccc' },
+        thumbOpacity: document.getElementById('thumbOpacity') || { value: 100 },
+        thumbBorder: document.getElementById('thumbBorder') || { value: 0 },
+        thumbBorderColor: document.getElementById('thumbBorderColor') || { value: '#000000' },
+        thumbLength: document.getElementById('thumbLength') || { value: 100 },
+        transitionDuration: document.getElementById('transitionDuration') || { value: 300 },
+        transitionTiming: document.getElementById('transitionTiming') || { value: 'linear' },
+        shadowSpread: document.getElementById('shadowSpread') || { value: 0 },
+        shadowOffsetX: document.getElementById('shadowOffsetX') || { value: 0 },
+        shadowOffsetY: document.getElementById('shadowOffsetY') || { value: 0 },
+        shadowOpacity: document.getElementById('shadowOpacity') || { value: 50 },
+        shadowColor: document.getElementById('shadowColor') || { value: '#000000' },
+        shadowBlur: document.getElementById('shadowBlur') || { value: 0 },
+        gradientStart: document.getElementById('gradientStart') || { value: '#ff416c' },
+        gradientEnd: document.getElementById('gradientEnd') || { value: '#ff4b2b' },
+        hoverEffect: document.getElementById('hoverEffect') || { value: 'none' }
+    };
+    
+    const preview = document.querySelector('.preview');
+    const codeOutput = document.getElementById('code-output');
+    const modeBtns = document.querySelectorAll('.mode-btn');
+    const presets = document.querySelectorAll('.preset');
+    const exportBtn = document.querySelector('.export-btn');
+    const copyBtn = document.querySelector('.copy-btn');
+    
+    // Presets configuration
+    const presetConfigs = {
+        minimal: {
+            width: 8,
+            radius: 0,
+            trackColor: '#f1f1f1',
+            thumbColor: '#888888',
+            trackOpacity: 100,
+            thumbOpacity: 100,
+            trackBorder: 0,
+            trackBorderColor: '#cccccc',
+            thumbBorder: 0,
+            thumbBorderColor: '#000000',
+            thumbLength: 100,
+            shadowColor: '#000000',
+            shadowBlur: 0,
+            shadowSpread: 0,
+            shadowOffsetX: 0,
+            shadowOffsetY: 0,
+            shadowOpacity: 50,
+            hoverEffect: 'none',
+            transitionDuration: 300,
+            transitionTiming: 'linear',
+            gradientStart: '#ff416c',
+            gradientEnd: '#ff4b2b'
+        },
+        rounded: {
+            width: 10,
+            radius: 10,
+            trackColor: '#f1f1f1',
+            thumbColor: '#4CAF50',
+            trackOpacity: 100,
+            thumbOpacity: 100,
+            trackBorder: 0,
+            trackBorderColor: '#cccccc',
+            thumbBorder: 0,
+            thumbBorderColor: '#000000',
+            thumbLength: 100,
+            shadowColor: '#000000',
+            shadowBlur: 5,
+            shadowSpread: 0,
+            shadowOffsetX: 0,
+            shadowOffsetY: 0,
+            shadowOpacity: 50,
+            hoverEffect: 'grow',
+            transitionDuration: 300,
+            transitionTiming: 'linear',
+            gradientStart: '#ff416c',
+            gradientEnd: '#ff4b2b'
+        },
+        fancy: {
+            width: 12,
+            radius: 6,
+            trackColor: '#e0e0e0',
+            thumbColor: '#2196F3',
+            trackOpacity: 100,
+            thumbOpacity: 100,
+            trackBorder: 0,
+            trackBorderColor: '#cccccc',
+            thumbBorder: 0,
+            thumbBorderColor: '#000000',
+            thumbLength: 100,
+            shadowColor: '#000000',
+            shadowBlur: 8,
+            shadowSpread: 0,
+            shadowOffsetX: 0,
+            shadowOffsetY: 0,
+            shadowOpacity: 50,
+            hoverEffect: 'glow',
+            transitionDuration: 300,
+            transitionTiming: 'linear',
+            gradientStart: '#ff416c',
+            gradientEnd: '#ff4b2b'
+        },
+        neon: {
+            width: 8,
+            radius: 4,
+            trackColor: '#111111',
+            thumbColor: '#00ff00',
+            trackOpacity: 100,
+            thumbOpacity: 100,
+            trackBorder: 0,
+            trackBorderColor: '#cccccc',
+            thumbBorder: 0,
+            thumbBorderColor: '#000000',
+            thumbLength: 100,
+            shadowColor: '#00ff00',
+            shadowBlur: 15,
+            shadowSpread: 0,
+            shadowOffsetX: 0,
+            shadowOffsetY: 0,
+            shadowOpacity: 50,
+            hoverEffect: 'color',
+            transitionDuration: 300,
+            transitionTiming: 'linear',
+            gradientStart: '#ff416c',
+            gradientEnd: '#ff4b2b'
+        },
+        gradient: {
+            width: 15,
+            radius: 7,
+            trackColor: '#f0f0f0',
+            thumbColor: '#ff416c',
+            trackOpacity: 100,
+            thumbOpacity: 100,
+            trackBorder: 0,
+            trackBorderColor: '#cccccc',
+            thumbBorder: 0,
+            thumbBorderColor: '#000000',
+            thumbLength: 100,
+            shadowColor: '#000000',
+            shadowBlur: 10,
+            shadowSpread: 0,
+            shadowOffsetX: 0,
+            shadowOffsetY: 0,
+            shadowOpacity: 50,
+            hoverEffect: 'grow',
+            transitionDuration: 300,
+            transitionTiming: 'linear',
+            gradientStart: '#ff416c',
+            gradientEnd: '#ff4b2b'
+        }
+    };
+    
+    // Event Listeners
+    Object.values(controls).forEach(control => {
+        if (control && control.addEventListener) {
+            control.addEventListener('input', updateScrollbar);
         }
     });
-});
-
-presets.forEach(preset => {
-    preset.addEventListener('click', () => {
-        const config = presetConfigs[preset.dataset.preset];
-        Object.entries(config).forEach(([key, value]) => {
-            if (controls[key]) {
-                controls[key].value = value;
+    
+    const useGradient = document.getElementById('useGradient');
+    const gradientControls = document.querySelector('.gradient-controls');
+    
+    useGradient.addEventListener('change', (e) => {
+        gradientControls.classList.toggle('active', e.target.checked);
+        updateScrollbar();
+    });
+    
+    modeBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelector('.mode-btn.active').classList.remove('active');
+            btn.classList.add('active');
+            
+            const mode = btn.dataset.mode;
+            document.querySelector('.controls').classList.toggle('advanced', mode === 'advanced');
+            generatorContainer.style.display = mode === 'dev' ? 'none' : 'grid';
+            devMode.style.display = mode === 'dev' ? 'block' : 'none';
+            
+            if (mode !== 'dev') {
+                updateScrollbar();
+            }
+        });
+    });
+    
+    presets.forEach(preset => {
+        preset.addEventListener('click', () => {
+            const config = presetConfigs[preset.dataset.preset];
+            Object.entries(config).forEach(([key, value]) => {
+                if (controls[key]) {
+                    controls[key].value = value;
+                    const numberInput = document.getElementById(`${key}-value`);
+                    if (numberInput) {
+                        numberInput.value = value;
+                    }
+                }
+            });
+            updateScrollbar();
+        });
+    });
+    
+    exportBtn.addEventListener('click', generateCSS);
+    copyBtn.addEventListener('click', copyToClipboard);
+    
+    const devEditor = document.querySelector('.dev-editor');
+    const errorDisplay = document.querySelector('.error-display');
+    const applyBtn = document.querySelector('.dev-btn');
+    const resetBtn = document.querySelector('.dev-btn.reset');
+    
+    if (devEditor && errorDisplay) {
+        let typingTimer;
+    
+        // Live validation and preview
+        devEditor.addEventListener('input', () => {
+            clearTimeout(typingTimer);
+            typingTimer = setTimeout(validateAndApplyCSS, 500);
+        });
+    
+        if (applyBtn) {
+            applyBtn.addEventListener('click', validateAndApplyCSS);
+        }
+    
+        if (resetBtn) {
+            resetBtn.addEventListener('click', () => {
+                devEditor.value = `/* Edit your scrollbar CSS here */
+    ::-webkit-scrollbar {
+        width: 10px;
+    }
+    ::-webkit-scrollbar-track {
+        background: rgba(241, 241, 241, 1);
+        border-radius: 5px;
+    }
+    ::-webkit-scrollbar-thumb {
+        background: rgba(136, 136, 136, 1);
+        border-radius: 5px;
+        min-height: 100px;
+    }`;
+                validateAndApplyCSS();
+            });
+        }
+    }
+    
+    function validateAndApplyCSS() {
+        const css = devEditor.value;
+        try {
+            const style = document.createElement('style');
+            style.textContent = css;
+            document.head.appendChild(style);
+            document.head.removeChild(style);
+            
+            let styleElement = document.getElementById('preview-styles');
+            if (!styleElement) {
+                styleElement = document.createElement('style');
+                styleElement.id = 'preview-styles';
+                document.head.appendChild(styleElement);
+            }
+            
+            const modifiedCSS = css.replace(/::-webkit-scrollbar/g, '.preview::-webkit-scrollbar');
+            styleElement.textContent = modifiedCSS;
+            
+            errorDisplay.textContent = '';
+            errorDisplay.classList.remove('active');
+        } catch (error) {
+            errorDisplay.textContent = `Error: ${error.message}`;
+            errorDisplay.classList.add('active');
+        }
+    }
+    
+    function setupNumberInputs() {
+        Object.entries(controls).forEach(([key, control]) => {
+            if (control && control.type === 'range') {
                 const numberInput = document.getElementById(`${key}-value`);
                 if (numberInput) {
-                    numberInput.value = value;
+                    control.addEventListener('input', () => {
+                        numberInput.value = control.value;
+                        updateScrollbar();
+                    });
+    
+                    numberInput.addEventListener('input', () => {
+                        const value = parseInt(numberInput.value);
+                        if (key === 'width' || key === 'thumbBorder') {
+                            control.value = Math.min(control.max, value);
+                        } else {
+                            control.value = Math.min(control.max, value);
+                        }
+                        updateScrollbar();
+                    });
+    
+                    numberInput.value = control.value;
                 }
             }
         });
-        updateScrollbar();
-    });
-});
-
-exportBtn.addEventListener('click', generateCSS);
-copyBtn.addEventListener('click', copyToClipboard);
-
-const devEditor = document.querySelector('.dev-editor');
-const errorDisplay = document.querySelector('.error-display');
-const applyBtn = document.querySelector('.dev-btn');
-const resetBtn = document.querySelector('.dev-btn.reset');
-
-if (devEditor && errorDisplay) {
-    let typingTimer;
-
-    // Live validation and preview
-    devEditor.addEventListener('input', () => {
-        clearTimeout(typingTimer);
-        typingTimer = setTimeout(validateAndApplyCSS, 500);
-    });
-
-    if (applyBtn) {
-        applyBtn.addEventListener('click', validateAndApplyCSS);
     }
-
-    if (resetBtn) {
-        resetBtn.addEventListener('click', () => {
-            devEditor.value = `/* Edit your scrollbar CSS here */
-::-webkit-scrollbar {
-    width: 10px;
-}
-::-webkit-scrollbar-track {
-    background: rgba(241, 241, 241, 1);
-    border-radius: 5px;
-}
-::-webkit-scrollbar-thumb {
-    background: rgba(136, 136, 136, 1);
-    border-radius: 5px;
-    min-height: 100px;
-}`;
-            validateAndApplyCSS();
-        });
-    }
-}
-
-function validateAndApplyCSS() {
-    const css = devEditor.value;
-    try {
-        const style = document.createElement('style');
-        style.textContent = css;
-        document.head.appendChild(style);
-        document.head.removeChild(style);
+    
+    function updateScrollbar() {
+        const isAdvanced = document.querySelector('.mode-btn.active').dataset.mode === 'advanced';
         
         let styleElement = document.getElementById('preview-styles');
         if (!styleElement) {
@@ -766,155 +813,108 @@ function validateAndApplyCSS() {
             styleElement.id = 'preview-styles';
             document.head.appendChild(styleElement);
         }
-        
-        const modifiedCSS = css.replace(/::-webkit-scrollbar/g, '.preview::-webkit-scrollbar');
-        styleElement.textContent = modifiedCSS;
-        
-        errorDisplay.textContent = '';
-        errorDisplay.classList.remove('active');
-    } catch (error) {
-        errorDisplay.textContent = `Error: ${error.message}`;
-        errorDisplay.classList.add('active');
-    }
-}
-
-function setupNumberInputs() {
-    Object.entries(controls).forEach(([key, control]) => {
-        if (control && control.type === 'range') {
-            const numberInput = document.getElementById(`${key}-value`);
-            if (numberInput) {
-                control.addEventListener('input', () => {
-                    numberInput.value = control.value;
-                    updateScrollbar();
-                });
-
-                numberInput.addEventListener('input', () => {
-                    const value = parseInt(numberInput.value);
-                    if (key === 'width' || key === 'thumbBorder') {
-                        control.value = Math.min(control.max, value);
-                    } else {
-                        control.value = Math.min(control.max, value);
-                    }
-                    updateScrollbar();
-                });
-
-                numberInput.value = control.value;
+    
+        const trackOpacityValue = controls.trackOpacity.value / 100;
+        const thumbOpacityValue = controls.thumbOpacity.value / 100;
+        const shadowOpacityValue = controls.shadowOpacity.value / 100;
+    
+        const trackColorRgba = hexToRgba(controls.trackColor.value, trackOpacityValue);
+        const thumbColorRgba = hexToRgba(controls.thumbColor.value, thumbOpacityValue);
+        const shadowColorRgba = hexToRgba(controls.shadowColor.value, shadowOpacityValue);
+    
+        const boxShadow = isAdvanced && (controls.shadowBlur.value > 0 || controls.shadowSpread.value > 0) 
+            ? `${controls.shadowOffsetX.value}px ${controls.shadowOffsetY.value}px ${controls.shadowBlur.value}px ${controls.shadowSpread.value}px ${shadowColorRgba}`
+            : 'none';
+    
+        const getControlValue = (controlKey) => {
+            const numberInput = document.getElementById(`${controlKey}-value`);
+            return numberInput ? numberInput.value : controls[controlKey].value;
+        };
+    
+        const thumbBackground = useGradient.checked ? 
+            `linear-gradient(to bottom, ${controls.gradientStart.value}, ${controls.gradientEnd.value})` : 
+            thumbColorRgba;
+    
+        let scrollbarCSS = `
+            .preview::-webkit-scrollbar {
+                width: ${getControlValue('width')}px;
             }
-        }
-    });
-}
-
-function updateScrollbar() {
-    const isAdvanced = document.querySelector('.mode-btn.active').dataset.mode === 'advanced';
+            .preview::-webkit-scrollbar-track {
+                background: ${trackColorRgba};
+                border-radius: ${getControlValue('radius')}px;
+                ${isAdvanced ? `
+                    border: ${getControlValue('trackBorder')}px solid ${controls.trackBorderColor.value};
+                    box-shadow: ${boxShadow};
+                ` : ''}
+            }
+            .preview::-webkit-scrollbar-thumb {
+                background: ${thumbBackground};
+                border-radius: ${getControlValue('radius')}px;
+                min-height: ${getControlValue('thumbLength')}px;
+                transition: all ${getControlValue('transitionDuration')}ms ${controls.transitionTiming.value};
+                ${isAdvanced ? `
+                    border: ${getControlValue('thumbBorder')}px solid ${controls.thumbBorderColor.value};
+                    box-shadow: ${boxShadow};
+                ` : ''}
+            }
+        `;
     
-    let styleElement = document.getElementById('preview-styles');
-    if (!styleElement) {
-        styleElement = document.createElement('style');
-        styleElement.id = 'preview-styles';
-        document.head.appendChild(styleElement);
+        styleElement.textContent = scrollbarCSS;
+        
+        let exportCSS = `
+            /* Scrollbar styles */
+            ::-webkit-scrollbar {
+                width: ${getControlValue('width')}px;
+            }
+            ::-webkit-scrollbar-track {
+                background: ${trackColorRgba};
+                border-radius: ${getControlValue('radius')}px;
+                ${isAdvanced ? `
+                    border: ${getControlValue('trackBorder')}px solid ${controls.trackBorderColor.value};
+                    box-shadow: ${boxShadow};
+                ` : ''}
+            }
+            ::-webkit-scrollbar-thumb {
+                background: ${thumbBackground};
+                border-radius: ${getControlValue('radius')}px;
+                min-height: ${getControlValue('thumbLength')}px;
+                transition: all ${getControlValue('transitionDuration')}ms ${controls.transitionTiming.value};
+                ${isAdvanced ? `border: ${getControlValue('thumbBorder')}px solid ${controls.thumbBorderColor.value};` : ''}
+            }
+            /* Firefox */
+            * {
+                scrollbar-width: thin;
+                scrollbar-color: ${thumbBackground} ${trackColorRgba};
+            }
+        `;
+    
+        codeOutput.value = formatCSS(exportCSS);
     }
-
-    const trackOpacityValue = controls.trackOpacity.value / 100;
-    const thumbOpacityValue = controls.thumbOpacity.value / 100;
-    const shadowOpacityValue = controls.shadowOpacity.value / 100;
-
-    const trackColorRgba = hexToRgba(controls.trackColor.value, trackOpacityValue);
-    const thumbColorRgba = hexToRgba(controls.thumbColor.value, thumbOpacityValue);
-    const shadowColorRgba = hexToRgba(controls.shadowColor.value, shadowOpacityValue);
-
-    const boxShadow = isAdvanced && (controls.shadowBlur.value > 0 || controls.shadowSpread.value > 0) 
-        ? `${controls.shadowOffsetX.value}px ${controls.shadowOffsetY.value}px ${controls.shadowBlur.value}px ${controls.shadowSpread.value}px ${shadowColorRgba}`
-        : 'none';
-
-    const getControlValue = (controlKey) => {
-        const numberInput = document.getElementById(`${controlKey}-value`);
-        return numberInput ? numberInput.value : controls[controlKey].value;
-    };
-
-    const thumbBackground = useGradient.checked ? 
-        `linear-gradient(to bottom, ${controls.gradientStart.value}, ${controls.gradientEnd.value})` : 
-        thumbColorRgba;
-
-    let scrollbarCSS = `
-        .preview::-webkit-scrollbar {
-            width: ${getControlValue('width')}px;
-        }
-        .preview::-webkit-scrollbar-track {
-            background: ${trackColorRgba};
-            border-radius: ${getControlValue('radius')}px;
-            ${isAdvanced ? `
-                border: ${getControlValue('trackBorder')}px solid ${controls.trackBorderColor.value};
-                box-shadow: ${boxShadow};
-            ` : ''}
-        }
-        .preview::-webkit-scrollbar-thumb {
-            background: ${thumbBackground};
-            border-radius: ${getControlValue('radius')}px;
-            min-height: ${getControlValue('thumbLength')}px;
-            transition: all ${getControlValue('transitionDuration')}ms ${controls.transitionTiming.value};
-            ${isAdvanced ? `
-                border: ${getControlValue('thumbBorder')}px solid ${controls.thumbBorderColor.value};
-                box-shadow: ${boxShadow};
-            ` : ''}
-        }
-    `;
-
-    styleElement.textContent = scrollbarCSS;
     
-    let exportCSS = `
-        /* Scrollbar styles */
-        ::-webkit-scrollbar {
-            width: ${getControlValue('width')}px;
-        }
-        ::-webkit-scrollbar-track {
-            background: ${trackColorRgba};
-            border-radius: ${getControlValue('radius')}px;
-            ${isAdvanced ? `
-                border: ${getControlValue('trackBorder')}px solid ${controls.trackBorderColor.value};
-                box-shadow: ${boxShadow};
-            ` : ''}
-        }
-        ::-webkit-scrollbar-thumb {
-            background: ${thumbBackground};
-            border-radius: ${getControlValue('radius')}px;
-            min-height: ${getControlValue('thumbLength')}px;
-            transition: all ${getControlValue('transitionDuration')}ms ${controls.transitionTiming.value};
-            ${isAdvanced ? `border: ${getControlValue('thumbBorder')}px solid ${controls.thumbBorderColor.value};` : ''}
-        }
-        /* Firefox */
-        * {
-            scrollbar-width: thin;
-            scrollbar-color: ${thumbBackground} ${trackColorRgba};
-        }
-    `;
-
-    codeOutput.value = formatCSS(exportCSS);
-}
-
-function hexToRgba(hex, opacity) {
-    let r = parseInt(hex.slice(1, 3), 16),
-        g = parseInt(hex.slice(3, 5), 16),
-        b = parseInt(hex.slice(5, 7), 16);
+    function hexToRgba(hex, opacity) {
+        let r = parseInt(hex.slice(1, 3), 16),
+            g = parseInt(hex.slice(3, 5), 16),
+            b = parseInt(hex.slice(5, 7), 16);
+        
+        return `rgba(${r}, ${g}, ${b}, ${opacity})`;
+    }
     
-    return `rgba(${r}, ${g}, ${b}, ${opacity})`;
-}
-
-function generateCSS() {
-    const css = preview.style.cssText;
-    codeOutput.value = formatCSS(css);
-}
-
-function copyToClipboard() {
-    codeOutput.select();
-    document.execCommand('copy');
-    copyBtn.textContent = 'Copied!';
-    setTimeout(() => {
-        copyBtn.textContent = 'Copy to Clipboard';
-    }, 2000);
-}
-
-// Initialize
-setupNumberInputs();
-updateScrollbar();
-</script>
+    function generateCSS() {
+        const css = preview.style.cssText;
+        codeOutput.value = formatCSS(css);
+    }
+    
+    function copyToClipboard() {
+        codeOutput.select();
+        document.execCommand('copy');
+        copyBtn.textContent = 'Copied!';
+        setTimeout(() => {
+            copyBtn.textContent = 'Copy to Clipboard';
+        }, 2000);
+    }
+    
+    // Initialize
+    setupNumberInputs();
+    updateScrollbar();
+    </script>
 </body></html>
