@@ -1,0 +1,544 @@
+<html><head><base href="https://maze-gen.com/">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Custom Maze Generator</title>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-start;
+        min-height: 100vh;
+        margin: 0;
+        background-color: #f0f0f0;
+        transition: background-color 0.3s;
+        overflow: hidden;
+    }
+    #controls {
+        width: 100%;
+        padding: 10px;
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        align-items: center;
+        background-color: #333;
+    }
+    h1 {
+        color: white;
+        font-size: 20px;
+        margin: 0 10px 0 0;
+    }
+    #maze {
+        border: 2px solid #333;
+        margin: 20px 0;
+        touch-action: none;
+    }
+    button, select {
+        font-size: 14px;
+        padding: 5px 10px;
+        margin: 0 5px;
+        cursor: pointer;
+        border: none;
+        border-radius: 5px;
+        transition: background-color 0.3s;
+    }
+    #generate { background-color: #4CAF50; color: white; }
+    #clear { background-color: #f44336; color: white; }
+    #toggleSolution { background-color: #2196F3; color: white; }
+    #toggleTheme { background-color: #9C27B0; color: white; }
+    #changeLineColor { background-color: blue; color: white; }
+    #size, #difficulty { background-color: white; color: #333; }
+    button:hover, select:hover { filter: brightness(90%); }
+    #message {
+        position: absolute;
+        bottom: 10px;
+        left: 50%;
+        transform: translateX(-50%);
+        font-size: 24px;
+        font-weight: bold;
+        color: #4CAF50;
+    }
+    .dark-theme {
+        background-color: #333;
+        color: #f0f0f0;
+    }
+    .dark-theme #maze {
+        border-color: #f0f0f0;
+    }
+</style>
+</head>
+<body>
+<div id="controls">
+    <h1>Custom Maze Generator</h1>
+    <select id="size">
+        <option value="10x10">Small (10x10)</option>
+        <option value="20x15" selected>Medium (20x15)</option>
+        <option value="30x20">Large (30x20)</option>
+        <option value="40x25">Extra Large (40x25)</option>
+    </select>
+    <select id="difficulty">
+        <option value="easy">Easy</option>
+        <option value="medium" selected>Medium</option>
+        <option value="hard">Hard</option>
+    </select>
+    <button id="generate">Generate New Maze</button>
+    <button id="clear">Clear Solution</button>
+    <button id="toggleSolution">Show/Hide Solution</button>
+    <button id="toggleTheme">Toggle Theme</button>
+    <button id="changeLineColor">Change Line Color</button>
+</div>
+<canvas id="maze"></canvas>
+<div id="message"></div>
+
+<script>
+const canvas = document.getElementById('maze');
+const ctx = canvas.getContext('2d');
+let cellSize, cols, rows;
+let grid = [];
+let start, goal;
+let userPath = [];
+let solutionPath = [];
+let isDrawing = false;
+let lastCell = null;
+let showSolution = false;
+let timerInterval;
+let startTime;
+let lineColor = 'blue';
+let difficulty = 'medium';
+
+class Cell {
+    constructor(i, j) {
+        this.i = i;
+        this.j = j;
+        this.walls = [true, true, true, true];
+        this.visited = false;
+    }
+
+    show() {
+        let x = this.i * cellSize;
+        let y = this.j * cellSize;
+        ctx.strokeStyle = '#000';
+        ctx.lineWidth = 2;
+        if (this.walls[0]) {
+            ctx.beginPath();
+            ctx.moveTo(x, y);
+            ctx.lineTo(x + cellSize, y);
+            ctx.stroke();
+        }
+        if (this.walls[1]) {
+            ctx.beginPath();
+            ctx.moveTo(x + cellSize, y);
+            ctx.lineTo(x + cellSize, y + cellSize);
+            ctx.stroke();
+        }
+        if (this.walls[2]) {
+            ctx.beginPath();
+            ctx.moveTo(x + cellSize, y + cellSize);
+            ctx.lineTo(x, y + cellSize);
+            ctx.stroke();
+        }
+        if (this.walls[3]) {
+            ctx.beginPath();
+            ctx.moveTo(x, y + cellSize);
+            ctx.lineTo(x, y);
+            ctx.stroke();
+        }
+    }
+}
+
+function index(i, j) {
+    if (i < 0 || j < 0 || i > cols - 1 || j > rows - 1) {
+        return -1;
+    }
+    return i + j * cols;
+}
+
+function removeWalls(a, b) {
+    let x = a.i - b.i;
+    if (x === 1) {
+        a.walls[3] = false;
+        b.walls[1] = false;
+    } else if (x === -1) {
+        a.walls[1] = false;
+        b.walls[3] = false;
+    }
+    let y = a.j - b.j;
+    if (y === 1) {
+        a.walls[0] = false;
+        b.walls[2] = false;
+    } else if (y === -1) {
+        a.walls[2] = false;
+        b.walls[0] = false;
+    }
+}
+
+function generateMaze() {
+    const size = document.getElementById('size').value.split('x');
+    cols = parseInt(size[0]);
+    rows = parseInt(size[1]);
+    cellSize = Math.floor(Math.min(window.innerWidth * 0.9 / cols, (window.innerHeight - 150) / rows));
+
+    canvas.width = cols * cellSize;
+    canvas.height = rows * cellSize;
+
+    grid = [];
+    for (let j = 0; j < rows; j++) {
+        for (let i = 0; i < cols; i++) {
+            let cell = new Cell(i, j);
+            grid.push(cell);
+        }
+    }
+
+    start = grid[0];
+    goal = grid[grid.length - 1];
+
+    let current = start;
+    let stack = [];
+
+    while (true) {
+        current.visited = true;
+        let neighbors = getUnvisitedNeighbors(current);
+
+        if (neighbors.length > 0) {
+            let next = neighbors[Math.floor(Math.random() * neighbors.length)];
+            removeWalls(current, next);
+            stack.push(current);
+            current = next;
+        } else if (stack.length > 0) {
+            current = stack.pop();
+        } else {
+            break;
+        }
+    }
+
+    userPath = [];
+    solutionPath = [];
+    showSolution = false;
+    document.getElementById('message').textContent = '';
+    clearInterval(timerInterval);
+    startTime = null;
+    difficulty = document.getElementById('difficulty').value;
+    applyDifficulty();
+    solveMaze();
+    drawMaze();
+}
+
+function resizeMaze() {
+    const size = document.getElementById('size').value.split('x');
+    cols = parseInt(size[0]);
+    rows = parseInt(size[1]);
+    cellSize = Math.floor(Math.min(window.innerWidth * 0.9 / cols, (window.innerHeight - 150) / rows));
+
+    canvas.width = cols * cellSize;
+    canvas.height = rows * cellSize;
+
+    drawMaze();
+}
+
+function getUnvisitedNeighbors(cell) {
+    let neighbors = [];
+    let i = cell.i;
+    let j = cell.j;
+
+    let top    = grid[index(i, j - 1)];
+    let right  = grid[index(i + 1, j)];
+    let bottom = grid[index(i, j + 1)];
+    let left   = grid[index(i - 1, j)];
+
+    if (top && !top.visited) neighbors.push(top);
+    if (right && !right.visited) neighbors.push(right);
+    if (bottom && !bottom.visited) neighbors.push(bottom);
+    if (left && !left.visited) neighbors.push(left);
+
+    return neighbors;
+}
+
+function drawMaze() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    for (let cell of grid) {
+        cell.show();
+    }
+    drawStartAndGoal();
+    drawUserPath();
+    if (showSolution) {
+        drawSolutionPath();
+    }
+}
+
+function drawStartAndGoal() {
+    ctx.fillStyle = 'green';
+    ctx.beginPath();
+    ctx.arc(start.i * cellSize + cellSize / 2, start.j * cellSize + cellSize / 2, cellSize / 3, 0, 2 * Math.PI);
+    ctx.fill();
+
+    ctx.fillStyle = 'red';
+    ctx.beginPath();
+    ctx.arc(goal.i * cellSize + cellSize / 2, goal.j * cellSize + cellSize / 2, cellSize / 3, 0, 2 * Math.PI);
+    ctx.fill();
+}
+
+function drawUserPath() {
+    if (userPath.length < 1) return;
+
+    ctx.beginPath();
+    ctx.moveTo(userPath[0].i * cellSize + cellSize / 2, userPath[0].j * cellSize + cellSize / 2);
+    for (let i = 1; i < userPath.length; i++) {
+        ctx.lineTo(userPath[i].i * cellSize + cellSize / 2, userPath[i].j * cellSize + cellSize / 2);
+    }
+    ctx.strokeStyle = lineColor;
+    ctx.lineWidth = cellSize / 4;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.stroke();
+}
+
+function drawSolutionPath() {
+    if (solutionPath.length < 2) return;
+
+    ctx.beginPath();
+    ctx.moveTo(solutionPath[0].i * cellSize + cellSize / 2, solutionPath[0].j * cellSize + cellSize / 2);
+    for (let i = 1; i < solutionPath.length; i++) {
+        ctx.lineTo(solutionPath[i].i * cellSize + cellSize / 2, solutionPath[i].j * cellSize + cellSize / 2);
+    }
+    ctx.strokeStyle = 'rgba(255, 165, 0, 0.5)';
+    ctx.lineWidth = cellSize / 4;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.stroke();
+}
+
+function getCellFromPoint(x, y) {
+    let i = Math.floor(x / cellSize);
+    let j = Math.floor(y / cellSize);
+    return grid[index(i, j)];
+}
+
+function canMoveBetweenCells(fromCell, toCell) {
+    if (!fromCell || !toCell) return false;
+
+    let dx = toCell.i - fromCell.i;
+    let dy = toCell.j - fromCell.j;
+
+    if (Math.abs(dx) + Math.abs(dy) === 1) {
+        if (dx === 1 && !fromCell.walls[1]) return true;
+        if (dx === -1 && !fromCell.walls[3]) return true;
+        if (dy === 1 && !fromCell.walls[2]) return true;
+        if (dy === -1 && !fromCell.walls[0]) return true;
+    }
+
+    return false;
+}
+
+function findNearestValidCell(fromCell, toCell) {
+    if (!fromCell || !toCell) return null;
+
+    if (canMoveBetweenCells(fromCell, toCell)) return toCell;
+
+    let dx = toCell.i - fromCell.i;
+    let dy = toCell.j - fromCell.j;
+
+    if (dx !== 0) {
+        let horizontalCellIndex = index(fromCell.i + Math.sign(dx), fromCell.j);
+        let horizontalCell = horizontalCellIndex !== -1 ? grid[horizontalCellIndex] : null;
+        if (horizontalCell && canMoveBetweenCells(fromCell, horizontalCell)) return horizontalCell;
+    }
+
+    if (dy !== 0) {
+        let verticalCellIndex = index(fromCell.i, fromCell.j + Math.sign(dy));
+        let verticalCell = verticalCellIndex !== -1 ? grid[verticalCellIndex] : null;
+        if (verticalCell && canMoveBetweenCells(fromCell, verticalCell)) return verticalCell;
+    }
+
+    return null;
+}
+
+function startDrawing(e) {
+    isDrawing = true;
+    let rect = canvas.getBoundingClientRect();
+    let x = (e.clientX || e.touches[0].clientX) - rect.left;
+    let y = (e.clientY || e.touches[0].clientY) - rect.top;
+    let cell = getCellFromPoint(x, y);
+    
+    if (cell === start) {
+        lastCell = start;
+        userPath = [start];
+        if (!startTime) {
+            startTime = Date.now();
+            timerInterval = setInterval(updateTimer, 100);
+        }
+    } else {
+        let nearestCellIndex = userPath.indexOf(cell);
+        if (nearestCellIndex !== -1) {
+            userPath = userPath.slice(0, nearestCellIndex + 1);
+            lastCell = cell;
+        } else {
+            return; 
+        }
+    }
+    drawMaze();
+    document.getElementById('message').textContent = '';
+}
+
+function updateTimer() {
+}
+
+function draw(e) {
+    if (!isDrawing) return;
+
+    let rect = canvas.getBoundingClientRect();
+    let x = (e.clientX || e.touches[0].clientX) - rect.left;
+    let y = (e.clientY || e.touches[0].clientY) - rect.top;
+
+    let cell = getCellFromPoint(x, y);
+    if (!cell || !lastCell) return;
+
+    let nearestValidCell = findNearestValidCell(lastCell, cell);
+
+    if (nearestValidCell && nearestValidCell !== lastCell) {
+        let backIndex = userPath.indexOf(nearestValidCell);
+        if (backIndex !== -1) {
+            userPath = userPath.slice(0, backIndex + 1);
+        } else {
+            userPath.push(nearestValidCell);
+        }
+        lastCell = nearestValidCell;
+        drawMaze();
+
+        if (nearestValidCell === goal && userPath[0] === start) {
+            clearInterval(timerInterval);
+            let elapsedTime = Date.now() - startTime;
+            let seconds = Math.floor(elapsedTime / 1000);
+            let minutes = Math.floor(seconds / 60);
+            seconds %= 60;
+            let finalTime = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            document.getElementById('message').textContent = `Maze Solved! (${finalTime})`;
+        }
+    }
+}
+
+function clearSolution() {
+    userPath = [];
+    drawMaze();
+    document.getElementById('message').textContent = '';
+    clearInterval(timerInterval);
+    startTime = null;
+}
+
+function toggleSolution() {
+    showSolution = !showSolution;
+    drawMaze();
+}
+
+function solveMaze() {
+    let visited = new Set();
+    let queue = [[start]];
+    
+    while (queue.length > 0) {
+        let path = queue.shift();
+        let cell = path[path.length - 1];
+        
+        if (cell === goal) {
+            solutionPath = path;
+            return;
+        }
+        
+        if (!visited.has(cell)) {
+            visited.add(cell);
+            let neighbors = getValidNeighbors(cell);
+            for (let neighbor of neighbors) {
+                if (!visited.has(neighbor)) {
+                    queue.push([...path, neighbor]);
+                }
+            }
+        }
+    }
+}
+
+function getValidNeighbors(cell) {
+    let neighbors = [];
+    let i = cell.i;
+    let j = cell.j;
+
+    if (!cell.walls[0]) neighbors.push(grid[index(i, j - 1)]);
+    if (!cell.walls[1]) neighbors.push(grid[index(i + 1, j)]);
+    if (!cell.walls[2]) neighbors.push(grid[index(i, j + 1)]);
+    if (!cell.walls[3]) neighbors.push(grid[index(i - 1, j)]);
+
+    return neighbors.filter(n => n !== undefined);
+}
+
+function toggleTheme() {
+    document.body.classList.toggle('dark-theme');
+}
+
+function changeLineColor() {
+    const colors = ['blue', 'red', 'green', 'purple', 'orange'];
+    lineColor = colors[(colors.indexOf(lineColor) + 1) % colors.length];
+    document.getElementById('changeLineColor').style.backgroundColor = lineColor;
+    drawMaze();
+}
+
+function applyDifficulty() {
+    let removalFactor;
+    switch (difficulty) {
+        case 'easy':
+            removalFactor = 0.3;
+            break;
+        case 'medium':
+            removalFactor = 0.15;
+            break;
+        case 'hard':
+            removalFactor = 0.05;
+            break;
+    }
+
+    for (let cell of grid) {
+        for (let i = 0; i < 4; i++) {
+            if (cell.walls[i] && Math.random() < removalFactor) {
+                cell.walls[i] = false;
+                let neighbor = getNeighbor(cell, i);
+                if (neighbor) {
+                    neighbor.walls[(i + 2) % 4] = false;
+                }
+            }
+        }
+    }
+}
+
+function getNeighbor(cell, wallIndex) {
+    let i = cell.i;
+    let j = cell.j;
+    switch (wallIndex) {
+        case 0: return grid[index(i, j - 1)];
+        case 1: return grid[index(i + 1, j)];
+        case 2: return grid[index(i, j + 1)];
+        case 3: return grid[index(i - 1, j)];
+    }
+}
+
+canvas.addEventListener('mousedown', startDrawing);
+canvas.addEventListener('mouseup', () => isDrawing = false);
+canvas.addEventListener('touchstart', startDrawing);
+canvas.addEventListener('touchend', () => isDrawing = false);
+canvas.addEventListener('mousemove', draw);
+canvas.addEventListener('touchmove', (e) => {
+    e.preventDefault();
+    draw(e.touches[0]);
+});
+
+document.getElementById('generate').addEventListener('click', generateMaze);
+document.getElementById('clear').addEventListener('click', clearSolution);
+document.getElementById('toggleSolution').addEventListener('click', toggleSolution);
+document.getElementById('toggleTheme').addEventListener('click', toggleTheme);
+document.getElementById('changeLineColor').addEventListener('click', changeLineColor);
+document.getElementById('difficulty').addEventListener('change', generateMaze);
+document.getElementById('size').addEventListener('change', generateMaze);
+
+window.removeEventListener('resize', resizeMaze);
+window.addEventListener('resize', generateMaze);
+
+document.getElementById('changeLineColor').style.backgroundColor = lineColor;
+generateMaze();
+</script>
+</body></html>
