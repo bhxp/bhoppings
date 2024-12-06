@@ -1,0 +1,593 @@
+<html><head><base href="poop">
+<title>Interactive 3D Floral Visualization</title>
+<style>
+  body, html {
+    margin: 0;
+    padding: 0;
+    font-family: 'Arial', sans-serif;
+    overflow: hidden;
+    background-color: #000;
+    color: #fff;
+  }
+  #canvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+  }
+  #ui {
+    position: fixed;
+    top: 10px;
+    left: 10px;
+    z-index: 100;
+    background: rgba(0, 0, 0, 0.7);
+    padding: 10px;
+    border-radius: 5px;
+  }
+  button, select {
+    background: #333;
+    color: #fff;
+    border: 1px solid #fff;
+    padding: 5px 10px;
+    margin: 5px;
+    cursor: pointer;
+    transition: all 0.3s;
+  }
+  button:hover, select:hover {
+    background: #555;
+  }
+  #info {
+    position: fixed;
+    bottom: 10px;
+    right: 10px;
+    text-align: right;
+    background: rgba(0, 0, 0, 0.7);
+    padding: 10px;
+    border-radius: 5px;
+  }
+  #equation {
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    background: rgba(0, 0, 0, 0.7);
+    padding: 10px;
+    border-radius: 5px;
+    font-family: 'Courier New', monospace;
+    font-size: 14px;
+    max-width: 400px;
+    overflow-wrap: break-word;
+  }
+</style>
+</head>
+<body>
+<canvas id="canvas" w-tid="6"></canvas>
+<div id="ui">
+  <button id="changeEquation">Change Equation</button>
+  <select id="colorScheme">
+    <option value="rainbow">Rainbow</option>
+    <option value="pastel">Pastel</option>
+    <option value="neon">Neon</option>
+    <option value="sunset">Sunset</option>
+    <option value="ocean">Ocean</option>
+    <option value="forest">Forest</option>
+    <option value="galaxy">Galaxy</option>
+    <option value="fire">Fire</option>
+    <option value="aurora">Aurora</option>
+    <option value="candy">Candy</option>
+    <option value="jewel">Jewel</option>
+    <option value="cyberpunk">Cyberpunk</option>
+    <option value="autumn">Autumn</option>
+    <option value="tropical">Tropical</option>
+    <option value="monochrome">Monochrome</option>
+    <option value="icy">Icy</option>
+    <option value="desert">Desert</option>
+    <option value="vintage">Vintage</option>
+    <option value="electric">Electric</option>
+    <option value="retro">Retro</option>
+    <option value="bubblegum">Bubblegum</option>
+    <option value="metallic">Metallic</option>
+    <option value="earthy">Earthy</option>
+    <option value="psychedelic">Psychedelic</option>
+  </select>
+  <button id="toggleRotation">Toggle Rotation</button>
+  <select id="cameraPosition">
+    <option value="default">Default View</option>
+    <option value="top">Top View</option>
+    <option value="side">Side View</option>
+    <option value="front">Front View</option>
+    <option value="diagonal">Diagonal View</option>
+    <option value="closeup">Close-up View</option>
+    <option value="faraway">Far Away View</option>
+  </select>
+  <button id="toggleParticles">Toggle Particles</button>
+  <button id="resetView">Reset View</button>
+  <button id="randomize">Randomize</button>
+  <button id="exportImage">Export Image</button>
+  <button id="toggleAnimation">Toggle Animation</button>
+  <button id="shareCreation">Share Creation</button>
+</div>
+<div id="info">
+  <p>Interactive 3D Floral Visualization</p>
+  <p>Drag to rotate | Scroll to zoom</p>
+</div>
+<div id="equation">
+  <p>Current Equation:</p>
+  <p id="equationText"></p>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+const renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('canvas'), antialias: true });
+renderer.setSize(window.innerWidth, window.innerHeight);
+
+// Lighting
+const ambientLight = new THREE.AmbientLight(0x404040);
+scene.add(ambientLight);
+
+const pointLight = new THREE.PointLight(0xffffff, 1);
+pointLight.position.set(5, 5, 5);
+scene.add(pointLight);
+
+camera.position.z = 30;
+
+// Floral structure
+const floralGroup = new THREE.Group();
+scene.add(floralGroup);
+
+let currentEquation = 0;
+const equations = [
+  (u, v) => {
+    const x = Math.sin(u) * Math.cos(v);
+    const y = Math.sin(u) * Math.sin(v);
+    const z = Math.cos(u);
+    return new THREE.Vector3(x, y, z);
+  },
+  (u, v) => {
+    const x = Math.sin(u) * Math.cos(v) * (Math.exp(Math.cos(u)) - 2 * Math.cos(4 * u) - Math.pow(Math.sin(u / 12), 5));
+    const y = Math.sin(u) * Math.sin(v) * (Math.exp(Math.cos(u)) - 2 * Math.cos(4 * u) - Math.pow(Math.sin(u / 12), 5));
+    const z = Math.cos(u) * (Math.exp(Math.cos(u)) - 2 * Math.cos(4 * u) - Math.pow(Math.sin(u / 12), 5));
+    return new THREE.Vector3(x, y, z);
+  },
+  (u, v) => {
+    const x = Math.sin(u) * Math.cos(v) * Math.tan(u);
+    const y = Math.sin(u) * Math.sin(v) * Math.tan(v);
+    const z = Math.cos(u) * Math.cos(v);
+    return new THREE.Vector3(x, y, z);
+  },
+  (u, v) => {
+    const x = Math.sin(u) * Math.cos(v) * Math.log(Math.abs(u) + 1);
+    const y = Math.sin(u) * Math.sin(v) * Math.log(Math.abs(v) + 1);
+    const z = Math.cos(u) * Math.sqrt(Math.abs(u * v) + 1);
+    return new THREE.Vector3(x, y, z);
+  },
+  (u, v) => {
+    const x = Math.sin(u) * Math.cos(v) * Math.sinh(u / 2);
+    const y = Math.sin(u) * Math.sin(v) * Math.cosh(v / 2);
+    const z = Math.cos(u) * Math.tanh((u + v) / 2);
+    return new THREE.Vector3(x, y, z);
+  },
+  (u, v) => {
+    const x = Math.sin(u) * Math.cos(v) * Math.pow(Math.abs(Math.sin(3 * u)), 1/3);
+    const y = Math.sin(u) * Math.sin(v) * Math.pow(Math.abs(Math.cos(3 * v)), 1/3);
+    const z = Math.cos(u) * Math.sin(u + v);
+    return new THREE.Vector3(x, y, z);
+  },
+  (u, v) => {
+    const x = Math.sin(u) * Math.cos(v) * (1 + Math.cos(6 * u));
+    const y = Math.sin(u) * Math.sin(v) * (1 + Math.sin(6 * v));
+    const z = Math.cos(u) * Math.sin(u * v);
+    return new THREE.Vector3(x, y, z);
+  },
+  (u, v) => {
+    const x = Math.sin(u) * Math.cos(v) * Math.exp(Math.sin(u));
+    const y = Math.sin(u) * Math.sin(v) * Math.exp(Math.cos(v));
+    const z = Math.cos(u) * Math.sin(u * v);
+    return new THREE.Vector3(x, y, z);
+  },
+  (u, v) => {
+    const x = Math.sin(u) * Math.cos(v) * Math.sin(5 * u);
+    const y = Math.sin(u) * Math.sin(v) * Math.cos(5 * v);
+    const z = Math.cos(u) * Math.sin(u * v);
+    return new THREE.Vector3(x, y, z);
+  },
+  (u, v) => {
+    const x = Math.sin(u) * Math.cos(v) * Math.pow(Math.abs(Math.sin(u)), 0.5);
+    const y = Math.sin(u) * Math.sin(v) * Math.pow(Math.abs(Math.cos(v)), 0.5);
+    const z = Math.cos(u) * Math.pow(Math.sin(u * v), 2);
+    return new THREE.Vector3(x, y, z);
+  },
+  (u, v) => {
+    const x = Math.sin(u) * Math.cos(v) * Math.sin(u * v);
+    const y = Math.sin(u) * Math.sin(v) * Math.cos(u * v);
+    const z = Math.cos(u) * Math.sin(u + v);
+    return new THREE.Vector3(x, y, z);
+  },
+  (u, v) => {
+    const x = Math.sin(u) * Math.cos(v) * (1 + 0.5 * Math.sin(8 * u));
+    const y = Math.sin(u) * Math.sin(v) * (1 + 0.5 * Math.cos(8 * v));
+    const z = Math.cos(u) * Math.sin(4 * u * v);
+    return new THREE.Vector3(x, y, z);
+  }
+];
+
+const equationTexts = [
+  "x = sin(u) * cos(v)\ny = sin(u) * sin(v)\nz = cos(u)",
+  "x = sin(u) * cos(v) * (e^cos(u) - 2cos(4u) - sin^5(u/12))\ny = sin(u) * sin(v) * (e^cos(u) - 2cos(4u) - sin^5(u/12))\nz = cos(u) * (e^cos(u) - 2cos(4u) - sin^5(u/12))",
+  "x = sin(u) * cos(v) * tan(u)\ny = sin(u) * sin(v) * tan(v)\nz = cos(u) * cos(v)",
+  "x = sin(u) * cos(v) * log(|u| + 1)\ny = sin(u) * sin(v) * log(|v| + 1)\nz = cos(u) * sqrt(|u * v| + 1)",
+  "x = sin(u) * cos(v) * sinh(u/2)\ny = sin(u) * sin(v) * cosh(v/2)\nz = cos(u) * tanh((u + v)/2)",
+  "x = sin(u) * cos(v) * |sin(3u)|^(1/3)\ny = sin(u) * sin(v) * |cos(3v)|^(1/3)\nz = cos(u) * sin(u + v)",
+  "x = sin(u) * cos(v) * (1 + cos(6u))\ny = sin(u) * sin(v) * (1 + sin(6v))\nz = cos(u) * sin(u * v)",
+  "x = sin(u) * cos(v) * e^sin(u)\ny = sin(u) * sin(v) * e^cos(v)\nz = cos(u) * sin(u * v)",
+  "x = sin(u) * cos(v) * sin(5u)\ny = sin(u) * sin(v) * cos(5v)\nz = cos(u) * sin(u * v)",
+  "x = sin(u) * cos(v) * |sin(u)|^0.5\ny = sin(u) * sin(v) * |cos(v)|^0.5\nz = cos(u) * sin^2(u * v)",
+  "x = sin(u) * cos(v) * sin(u * v)\ny = sin(u) * sin(v) * cos(u * v)\nz = cos(u) * sin(u + v)",
+  "x = sin(u) * cos(v) * (1 + 0.5sin(8u))\ny = sin(u) * sin(v) * (1 + 0.5cos(8v))\nz = cos(u) * sin(4u * v)"
+];
+
+function updateEquationText() {
+  document.getElementById('equationText').innerText = equationTexts[currentEquation];
+}
+
+let showParticles = true;
+let particles = null;
+let particleSystem = null;
+
+function createFlower() {
+  floralGroup.clear();
+
+  const geometry = new THREE.BufferGeometry();
+  const material = new THREE.PointsMaterial({ size: 0.05, vertexColors: true });
+
+  const positions = [];
+  const colors = [];
+  const equation = equations[currentEquation];
+
+  for (let u = 0; u < Math.PI * 2; u += 0.02) {
+    for (let v = 0; v < Math.PI; v += 0.02) {
+      const vector = equation(u, v);
+      positions.push(vector.x * 10, vector.y * 10, vector.z * 10);
+
+      const color = new THREE.Color();
+      color.setHSL(u / (Math.PI * 2), 1, 0.5);
+      colors.push(color.r, color.g, color.b);
+    }
+  }
+
+  geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+  geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+
+  const points = new THREE.Points(geometry, material);
+  floralGroup.add(points);
+
+  // Add lines
+  const lineMaterial = new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.3 });
+  for (let u = 0; u < Math.PI * 2; u += 0.2) {
+    const lineGeometry = new THREE.BufferGeometry();
+    const linePositions = [];
+    for (let v = 0; v < Math.PI; v += 0.02) {
+      const vector = equation(u, v);
+      linePositions.push(vector.x * 10, vector.y * 10, vector.z * 10);
+    }
+    lineGeometry.setAttribute('position', new THREE.Float32BufferAttribute(linePositions, 3));
+    const line = new THREE.Line(lineGeometry, lineMaterial);
+    floralGroup.add(line);
+  }
+
+  // Create particles
+  particles = new THREE.BufferGeometry();
+  const particlePositions = new Float32Array(1000 * 3);
+  const particleColors = new Float32Array(1000 * 3);
+
+  for (let i = 0; i < 1000; i++) {
+    const u = Math.random() * Math.PI * 2;
+    const v = Math.random() * Math.PI;
+    const vector = equation(u, v);
+
+    particlePositions[i * 3] = vector.x * 10;
+    particlePositions[i * 3 + 1] = vector.y * 10;
+    particlePositions[i * 3 + 2] = vector.z * 10;
+
+    const color = new THREE.Color();
+    color.setHSL(u / (Math.PI * 2), 1, 0.5);
+    particleColors[i * 3] = color.r;
+    particleColors[i * 3 + 1] = color.g;
+    particleColors[i * 3 + 2] = color.b;
+  }
+
+  particles.setAttribute('position', new THREE.BufferAttribute(particlePositions, 3));
+  particles.setAttribute('color', new THREE.BufferAttribute(particleColors, 3));
+
+  const particleMaterial = new THREE.PointsMaterial({ size: 0.1, vertexColors: true });
+  particleSystem = new THREE.Points(particles, particleMaterial);
+  floralGroup.add(particleSystem);
+}
+
+createFlower();
+updateEquationText();
+
+// UI Controls
+document.getElementById('changeEquation').addEventListener('click', () => {
+  currentEquation = (currentEquation + 1) % equations.length;
+  createFlower();
+  updateEquationText();
+});
+
+document.getElementById('colorScheme').addEventListener('change', (event) => {
+  const scheme = event.target.value;
+  const geometry = floralGroup.children[0].geometry;
+  const colors = geometry.attributes.color.array;
+
+  for (let i = 0; i < colors.length; i += 3) {
+    const u = (i / colors.length) * Math.PI * 2;
+    const color = new THREE.Color();
+
+    switch (scheme) {
+      case 'rainbow':
+        color.setHSL(u / (Math.PI * 2), 1, 0.5);
+        break;
+      case 'pastel':
+        color.setHSL(u / (Math.PI * 2), 0.3, 0.8);
+        break;
+      case 'neon':
+        color.setHSL(u / (Math.PI * 2), 1, 0.7);
+        break;
+      case 'sunset':
+        color.setHSL((u / (Math.PI * 2) * 0.15) + 0.05, 0.8, 0.6);
+        break;
+      case 'ocean':
+        color.setHSL((u / (Math.PI * 2) * 0.1) + 0.5, 0.7, 0.5);
+        break;
+      case 'forest':
+        color.setHSL((u / (Math.PI * 2) * 0.15) + 0.25, 0.8, 0.4);
+        break;
+      case 'galaxy':
+        color.setHSL((u / (Math.PI * 2) * 0.3) + 0.6, 0.9, 0.6);
+        break;
+      case 'fire':
+        color.setHSL((u / (Math.PI * 2) * 0.1) + 0.05, 1, 0.5);
+        break;
+      case 'aurora':
+        color.setHSL((u / (Math.PI * 2) * 0.2) + 0.4, 0.8, 0.6);
+        break;
+      case 'candy':
+        color.setHSL((u / (Math.PI * 2) * 0.5) + 0.8, 0.7, 0.7);
+        break;
+      case 'jewel':
+        color.setHSL((u / (Math.PI * 2) * 0.25) + 0.2, 0.9, 0.5);
+        break;
+      case 'cyberpunk':
+        color.setHSL((u / (Math.PI * 2) * 0.1) + 0.7, 1, 0.6);
+        break;
+      case 'autumn':
+        color.setHSL((u / (Math.PI * 2) * 0.1) + 0.05, 0.8, 0.5);
+        break;
+      case 'tropical':
+        color.setHSL((u / (Math.PI * 2) * 0.3) + 0.1, 0.9, 0.6);
+        break;
+      case 'monochrome':
+        const gray = (Math.sin(u * 5) + 1) / 2;
+        color.setRGB(gray, gray, gray);
+        break;
+      case 'icy':
+        color.setHSL((u / (Math.PI * 2) * 0.1) + 0.5, 0.5, 0.7);
+        break;
+      case 'desert':
+        color.setHSL((u / (Math.PI * 2) * 0.1) + 0.05, 0.7, 0.7);
+        break;
+      case 'vintage':
+        color.setHSL((u / (Math.PI * 2) * 0.2) + 0.1, 0.3, 0.7);
+        break;
+      case 'electric':
+        color.setHSL((u / (Math.PI * 2) * 0.2) + 0.6, 1, 0.5);
+        break;
+      case 'retro':
+        color.setHSL((Math.floor(u / (Math.PI * 2) * 5) / 5), 0.7, 0.6);
+        break;
+      case 'bubblegum':
+        color.setHSL((u / (Math.PI * 2) * 0.2) + 0.8, 0.7, 0.7);
+        break;
+      case 'metallic':
+        const metallic = (Math.sin(u * 10) + 1) / 2;
+        color.setRGB(0.7 * metallic, 0.7 * metallic, 0.8 * metallic);
+        break;
+      case 'earthy':
+        color.setHSL((u / (Math.PI * 2) * 0.15) + 0.05, 0.6, 0.4);
+        break;
+      case 'psychedelic':
+        color.setHSL((Math.sin(u * 5) + 1) / 2, 1, 0.5);
+        break;
+    }
+
+    colors[i] = color.r;
+    colors[i + 1] = color.g;
+    colors[i + 2] = color.b;
+  }
+
+  geometry.attributes.color.needsUpdate = true;
+
+  // Update particle colors
+  const particleColors = particleSystem.geometry.attributes.color.array;
+  for (let i = 0; i < particleColors.length; i += 3) {
+    const u = (i / particleColors.length) * Math.PI * 2;
+    const color = new THREE.Color();
+    color.setHSL(u / (Math.PI * 2), 1, 0.5);
+    particleColors[i] = color.r;
+    particleColors[i + 1] = color.g;
+    particleColors[i + 2] = color.b;
+  }
+  particleSystem.geometry.attributes.color.needsUpdate = true;
+});
+
+let isRotating = true;
+document.getElementById('toggleRotation').addEventListener('click', () => {
+  isRotating = !isRotating;
+});
+
+// Camera position control
+document.getElementById('cameraPosition').addEventListener('change', (event) => {
+  const position = event.target.value;
+  switch (position) {
+    case 'default':
+      camera.position.set(0, 0, 30);
+      break;
+    case 'top':
+      camera.position.set(0, 30, 0);
+      break;
+    case 'side':
+      camera.position.set(30, 0, 0);
+      break;
+    case 'front':
+      camera.position.set(0, 0, 30);
+      break;
+    case 'diagonal':
+      camera.position.set(20, 20, 20);
+      break;
+    case 'closeup':
+      camera.position.set(5, 5, 5);
+      break;
+    case 'faraway':
+      camera.position.set(0, 0, 50);
+      break;
+  }
+  camera.lookAt(scene.position);
+});
+
+document.getElementById('toggleParticles').addEventListener('click', () => {
+  showParticles = !showParticles;
+  particleSystem.visible = showParticles;
+});
+
+// Animation
+function animate() {
+  requestAnimationFrame(animate);
+  
+  if (isRotating) {
+    floralGroup.rotation.y += 0.005;
+    floralGroup.rotation.x += 0.002;
+  }
+  
+  if (showParticles) {
+    const positions = particleSystem.geometry.attributes.position.array;
+    for (let i = 0; i < positions.length; i += 3) {
+      positions[i] += (Math.random() - 0.5) * 0.1;
+      positions[i + 1] += (Math.random() - 0.5) * 0.1;
+      positions[i + 2] += (Math.random() - 0.5) * 0.1;
+
+      const distanceFromCenter = Math.sqrt(positions[i]**2 + positions[i+1]**2 + positions[i+2]**2);
+      if (distanceFromCenter > 15) {
+        const scale = 15 / distanceFromCenter;
+        positions[i] *= scale;
+        positions[i + 1] *= scale;
+        positions[i + 2] *= scale;
+      }
+    }
+    particleSystem.geometry.attributes.position.needsUpdate = true;
+  }
+  
+  renderer.render(scene, camera);
+}
+
+animate();
+
+// Controls
+let isDragging = false;
+let previousMousePosition = { x: 0, y: 0 };
+
+renderer.domElement.addEventListener('mousedown', (e) => {
+  isDragging = true;
+});
+
+renderer.domElement.addEventListener('mousemove', (e) => {
+  if (isDragging) {
+    const deltaMove = {
+      x: e.offsetX - previousMousePosition.x,
+      y: e.offsetY - previousMousePosition.y
+    };
+    
+    floralGroup.rotation.y += deltaMove.x * 0.005;
+    floralGroup.rotation.x += deltaMove.y * 0.005;
+  }
+  
+  previousMousePosition = {
+    x: e.offsetX,
+    y: e.offsetY
+  };
+});
+
+renderer.domElement.addEventListener('mouseup', (e) => {
+  isDragging = false;
+});
+
+renderer.domElement.addEventListener('wheel', (e) => {
+  e.preventDefault();
+  camera.position.z += e.deltaY * 0.05;
+  camera.position.z = Math.max(5, Math.min(camera.position.z, 100));
+});
+
+// Responsive design
+window.addEventListener('resize', () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+// New buttons functionality
+document.getElementById('resetView').addEventListener('click', () => {
+  camera.position.set(0, 0, 30);
+  camera.lookAt(scene.position);
+  floralGroup.rotation.set(0, 0, 0);
+});
+
+document.getElementById('randomize').addEventListener('click', () => {
+  currentEquation = Math.floor(Math.random() * equations.length);
+  createFlower();
+  updateEquationText();
+  document.getElementById('colorScheme').selectedIndex = Math.floor(Math.random() * document.getElementById('colorScheme').options.length);
+  document.getElementById('colorScheme').dispatchEvent(new Event('change'));
+});
+
+document.getElementById('exportImage').addEventListener('click', () => {
+  renderer.render(scene, camera);
+  const dataURL = renderer.domElement.toDataURL('image/png');
+  const link = document.createElement('a');
+  link.download = 'floral_visualization.png';
+  link.href = dataURL;
+  link.click();
+});
+
+let isAnimating = true;
+document.getElementById('toggleAnimation').addEventListener('click', () => {
+  isAnimating = !isAnimating;
+  if (isAnimating) {
+    animate();
+  }
+});
+
+document.getElementById('shareCreation').addEventListener('click', () => {
+  const shareUrl = `${window.location.origin}${window.location.pathname}?equation=${currentEquation}&colorScheme=${document.getElementById('colorScheme').value}`;
+  navigator.clipboard.writeText(shareUrl).then(() => {
+    alert('Share link copied to clipboard!');
+  });
+});
+
+// Parse URL parameters on load
+window.addEventListener('load', () => {
+  const urlParams = new URLSearchParams(window.location.search);
+  const equationParam = urlParams.get('equation');
+  const colorSchemeParam = urlParams.get('colorScheme');
+
+  if (equationParam !== null) {
+    currentEquation = parseInt(equationParam);
+    createFlower();
+    updateEquationText();
+  }
+
+  if (colorSchemeParam !== null) {
+    document.getElementById('colorScheme').value = colorSchemeParam;
+    document.getElementById('colorScheme').dispatchEvent(new Event('change'));
+  }
+});
+</script>
+</body></html>
