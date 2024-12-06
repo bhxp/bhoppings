@@ -1,0 +1,722 @@
+<html><head><base href="https://creaturebuilder.io"/>
+<title>Creature Builder - Design Your Own Fantastic Beasts</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&family=Playfair+Display:wght@400;700&display=swap');
+
+  body, html {
+    margin: 0;
+    padding: 0;
+    font-family: 'Roboto', sans-serif;
+    background-color: #f5f5f5;
+    height: 100%;
+    overflow: hidden;
+    color: #333;
+  }
+  .container {
+    display: flex;
+    height: 100%;
+  }
+  .sidebar {
+    width: 300px;
+    background-color: #ffffff;
+    padding: 20px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+  }
+  .main-content {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 20px;
+  }
+  .viewer {
+    flex-grow: 1;
+    background-color: #e0e0e0;
+    position: relative;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  }
+  h1 {
+    margin: 0 0 20px 0;
+    font-size: 32px;
+    color: #333;
+    text-align: center;
+    font-weight: 700;
+    font-family: 'Playfair Display', serif;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+  .category {
+    margin-bottom: 20px;
+    background-color: #f9f9f9;
+    padding: 15px;
+    border-radius: 8px;
+  }
+  .category h2 {
+    font-size: 18px;
+    margin: 0 0 15px 0;
+    color: #555;
+    font-weight: 400;
+  }
+  select, button, input[type="color"] {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 10px;
+    border-radius: 5px;
+    border: 1px solid #ddd;
+    font-size: 14px;
+    background-color: #fff;
+    color: #333;
+  }
+  button {
+    background-color: #4a4a4a;
+    color: #fff;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    font-weight: 500;
+    border: none;
+  }
+  button:hover {
+    background-color: #333;
+  }
+  #canvas {
+    width: 100%;
+    height: 100%;
+  }
+  .controls {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 10px;
+  }
+  .controls button {
+    padding: 10px 15px;
+    font-size: 14px;
+    background-color: rgba(255,255,255,0.7);
+    color: #333;
+  }
+  .controls button:hover {
+    background-color: rgba(255,255,255,0.9);
+  }
+  input[type="range"] {
+    width: 100%;
+    margin-top: 5px;
+    -webkit-appearance: none;
+    background: #ddd;
+    outline: none;
+    opacity: 0.7;
+    transition: opacity .2s;
+    border-radius: 5px;
+  }
+  input[type="range"]:hover {
+    opacity: 1;
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    background: #4a4a4a;
+    cursor: pointer;
+    border-radius: 50%;
+  }
+  input[type="range"]::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+    background: #4a4a4a;
+    cursor: pointer;
+    border-radius: 50%;
+  }
+  .button-container {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+  .button-container button {
+    flex: 1;
+  }
+  .slider-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    margin-top: 5px;
+    color: #777;
+  }
+  @media (max-width: 768px) {
+    .container {
+      flex-direction: column;
+    }
+    .sidebar {
+      width: 100%;
+      max-height: 50%;
+    }
+    .main-content {
+      height: 50%;
+    }
+  }
+</style>
+</head>
+<body>
+  <div class="container">
+    <div class="sidebar">
+      <h1>Creature Builder</h1>
+      <div class="button-container">
+        <button id="randomize">Randomize</button>
+        <button id="save">Save Creation</button>
+      </div>
+      <div class="category">
+        <h2>Head</h2>
+        <select id="head-select">
+          <option value="sphere">Sphere</option>
+          <option value="cube">Cube</option>
+          <option value="cone">Cone</option>
+          <option value="cylinder">Cylinder</option>
+        </select>
+        <input type="color" id="head-color" value="#8B4513">
+        <input type="range" id="head-size" min="0" max="100" step="1" value="75">
+        <div class="slider-label"><span>Size</span><span>75</span></div>
+        <select id="head-texture">
+          <option value="standard">Standard</option>
+          <option value="glossy">Glossy</option>
+          <option value="matte">Matte</option>
+          <option value="metallic">Metallic</option>
+          <option value="luster">Luster</option>
+        </select>
+        <input type="range" id="head-luster" min="0" max="100" step="1" value="50">
+        <div class="slider-label"><span>Texture</span><span>50</span></div>
+      </div>
+      <div class="category">
+        <h2>Body</h2>
+        <select id="body-select">
+          <option value="cylinder">Cylinder</option>
+          <option value="sphere">Sphere</option>
+          <option value="cube">Cube</option>
+          <option value="torus">Torus</option>
+        </select>
+        <input type="color" id="body-color" value="#8B4513">
+        <input type="range" id="body-size" min="0" max="100" step="1" value="75">
+        <div class="slider-label"><span>Size</span><span>75</span></div>
+        <select id="body-texture">
+          <option value="standard">Standard</option>
+          <option value="glossy">Glossy</option>
+          <option value="matte">Matte</option>
+          <option value="metallic">Metallic</option>
+          <option value="luster">Luster</option>
+        </select>
+        <input type="range" id="body-luster" min="0" max="100" step="1" value="50">
+        <div class="slider-label"><span>Texture</span><span>50</span></div>
+      </div>
+      <div class="category">
+        <h2>Limbs</h2>
+        <select id="limbs-select">
+          <option value="cylinder">Cylinder</option>
+          <option value="cube">Cube</option>
+          <option value="cone">Cone</option>
+          <option value="torus">Torus</option>
+        </select>
+        <input type="color" id="limbs-color" value="#8B4513">
+        <input type="range" id="limbs-size" min="0" max="100" step="1" value="75">
+        <div class="slider-label"><span>Size</span><span>75</span></div>
+        <select id="limbs-texture">
+          <option value="standard">Standard</option>
+          <option value="glossy">Glossy</option>
+          <option value="matte">Matte</option>
+          <option value="metallic">Metallic</option>
+          <option value="luster">Luster</option>
+        </select>
+        <input type="range" id="limbs-luster" min="0" max="100" step="1" value="50">
+        <div class="slider-label"><span>Texture</span><span>50</span></div>
+      </div>
+      <div class="category">
+        <h2>Eyes</h2>
+        <select id="eyes-select">
+          <option value="sphere">Sphere</option>
+          <option value="torus">Torus</option>
+          <option value="cone">Cone</option>
+          <option value="cube">Cube</option>
+        </select>
+        <input type="color" id="eyes-color" value="#FFFFFF">
+        <input type="range" id="eyes-size" min="0" max="100" step="1" value="75">
+        <div class="slider-label"><span>Size</span><span>75</span></div>
+        <select id="eyes-texture">
+          <option value="standard">Standard</option>
+          <option value="glossy">Glossy</option>
+          <option value="matte">Matte</option>
+          <option value="metallic">Metallic</option>
+          <option value="luster">Luster</option>
+        </select>
+        <input type="range" id="eyes-luster" min="0" max="100" step="1" value="50">
+        <div class="slider-label"><span>Texture</span><span>50</span></div>
+      </div>
+      <div class="category">
+        <h2>Tail</h2>
+        <select id="tail-select">
+          <option value="cone">Cone</option>
+          <option value="cylinder">Cylinder</option>
+          <option value="torus">Torus</option>
+          <option value="cube">Cube</option>
+        </select>
+        <input type="color" id="tail-color" value="#8B4513">
+        <input type="range" id="tail-size" min="0" max="100" step="1" value="75">
+        <div class="slider-label"><span>Size</span><span>75</span></div>
+        <select id="tail-texture">
+          <option value="standard">Standard</option>
+          <option value="glossy">Glossy</option>
+          <option value="matte">Matte</option>
+          <option value="metallic">Metallic</option>
+          <option value="luster">Luster</option>
+        </select>
+        <input type="range" id="tail-luster" min="0" max="100" step="1" value="50">
+        <div class="slider-label"><span>Texture</span><span>50</span></div>
+      </div>
+      <div class="category">
+        <h2>Wings</h2>
+        <select id="wings-select">
+          <option value="none">None</option>
+          <option value="bat">Bat</option>
+          <option value="bird">Bird</option>
+          <option value="insect">Insect</option>
+          <option value="dragon">Dragon</option>
+        </select>
+        <input type="color" id="wings-color" value="#A52A2A">
+        <input type="range" id="wings-size" min="0" max="100" step="1" value="75">
+        <div class="slider-label"><span>Size</span><span>75</span></div>
+        <select id="wings-texture">
+          <option value="standard">Standard</option>
+          <option value="glossy">Glossy</option>
+          <option value="matte">Matte</option>
+          <option value="metallic">Metallic</option>
+          <option value="luster">Luster</option>
+        </select>
+        <input type="range" id="wings-luster" min="0" max="100" step="1" value="50">
+        <div class="slider-label"><span>Texture</span><span>50</span></div>
+      </div>
+    </div>
+    <div class="main-content">
+      <div class="viewer">
+        <canvas id="canvas"></canvas>
+        <div class="controls">
+          <button id="rotate-left">⟲ Rotate Left</button>
+          <button id="rotate-right">⟳ Rotate Right</button>
+          <button id="zoom-in">+ Zoom In</button>
+          <button id="zoom-out">- Zoom Out</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script>
+    // Initialize Three.js scene
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    const renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('canvas'), antialias: true });
+    
+    function resizeRenderer() {
+      const canvas = renderer.domElement;
+      const width = canvas.clientWidth;
+      const height = canvas.clientHeight;
+      const needResize = canvas.width !== width || canvas.height !== height;
+      if (needResize) {
+        renderer.setSize(width, height, false);
+        camera.aspect = width / height;
+        camera.updateProjectionMatrix();
+      }
+      return needResize;
+    }
+
+    // Add lighting
+    const ambientLight = new THREE.AmbientLight(0x404040);
+    scene.add(ambientLight);
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
+    directionalLight.position.set(1, 1, 1);
+    scene.add(directionalLight);
+
+    // Create grey box background
+    function createGreyBoxBackground() {
+      const roomColor = 0x808080; // Grey color
+      const lineColor = 0xFFFFFF; // White color
+
+      // Floor
+      const floorGeometry = new THREE.PlaneGeometry(20, 20);
+      const floorMaterial = new THREE.MeshPhongMaterial({ color: roomColor, side: THREE.DoubleSide });
+      const floor = new THREE.Mesh(floorGeometry, floorMaterial);
+      floor.rotation.x = Math.PI / 2;
+      floor.position.y = -2;
+      scene.add(floor);
+
+      // Walls
+      const wallGeometry = new THREE.PlaneGeometry(20, 10);
+      const wallMaterial = new THREE.MeshPhongMaterial({ color: roomColor, side: THREE.DoubleSide });
+      
+      const backWall = new THREE.Mesh(wallGeometry, wallMaterial);
+      backWall.position.z = -10;
+      backWall.position.y = 3;
+      scene.add(backWall);
+
+      const leftWall = new THREE.Mesh(wallGeometry, wallMaterial);
+      leftWall.rotation.y = Math.PI / 2;
+      leftWall.position.x = -10;
+      leftWall.position.y = 3;
+      scene.add(leftWall);
+
+      const rightWall = new THREE.Mesh(wallGeometry, wallMaterial);
+      rightWall.rotation.y = -Math.PI / 2;
+      rightWall.position.x = 10;
+      rightWall.position.y = 3;
+      scene.add(rightWall);
+
+      // Grid lines on the floor and walls
+      const gridHelper = new THREE.GridHelper(20, 20, lineColor, lineColor);
+      gridHelper.position.y = -1.99;
+      scene.add(gridHelper);
+
+      // Grid lines on the back wall
+      const backGridHelper = new THREE.GridHelper(20, 20, lineColor, lineColor);
+      backGridHelper.rotation.x = Math.PI / 2;
+      backGridHelper.position.z = -9.99;
+      backGridHelper.position.y = 3;
+      scene.add(backGridHelper);
+
+      // Grid lines on the left wall
+      const leftGridHelper = new THREE.GridHelper(20, 20, lineColor, lineColor);
+      leftGridHelper.rotation.z = Math.PI / 2;
+      leftGridHelper.position.x = -9.99;
+      leftGridHelper.position.y = 3;
+      scene.add(leftGridHelper);
+
+      // Grid lines on the right wall
+      const rightGridHelper = new THREE.GridHelper(20, 20, lineColor, lineColor);
+      rightGridHelper.rotation.z = Math.PI / 2;
+      rightGridHelper.position.x = 9.99;
+      rightGridHelper.position.y = 3;
+      scene.add(rightGridHelper);
+    }
+
+    createGreyBoxBackground();
+
+    // Create animal parts
+    let head, body, limbs, eyes, tail, wings;
+    const animalGroup = new THREE.Group();
+    scene.add(animalGroup);
+
+    function getGeometry(type, size = 1) {
+      const normalizedSize = size / 50; // Normalize size from 0-100 to 0-2 (decreased from 0-3)
+      switch(type) {
+        case 'sphere':
+          return new THREE.SphereGeometry(normalizedSize * 0.5, 32, 32);
+        case 'cube':
+          return new THREE.BoxGeometry(normalizedSize, normalizedSize, normalizedSize);
+        case 'cone':
+          return new THREE.ConeGeometry(normalizedSize * 0.5, normalizedSize, 32);
+        case 'cylinder':
+          return new THREE.CylinderGeometry(normalizedSize * 0.3, normalizedSize * 0.3, normalizedSize, 32);
+        case 'torus':
+          return new THREE.TorusGeometry(normalizedSize * 0.3, normalizedSize * 0.1, 16, 100);
+        default:
+          return new THREE.SphereGeometry(normalizedSize * 0.5, 32, 32);
+      }
+    }
+
+    function getMaterial(color, texture, textureValue) {
+      const normalizedTextureValue = textureValue / 100; // Normalize texture from 0-100 to 0-1
+      let material;
+      
+      switch(texture) {
+        case 'glossy':
+          material = new THREE.MeshPhongMaterial({ 
+            color: color,
+            shininess: 100 * normalizedTextureValue,
+            specular: new THREE.Color(normalizedTextureValue, normalizedTextureValue, normalizedTextureValue)
+          });
+          break;
+        case 'matte':
+          material = new THREE.MeshLambertMaterial({ 
+            color: color,
+            emissive: new THREE.Color(normalizedTextureValue * 0.2, normalizedTextureValue * 0.2, normalizedTextureValue * 0.2)
+          });
+          break;
+        case 'metallic':
+          material = new THREE.MeshStandardMaterial({ 
+            color: color,
+            metalness: 0.8,
+            roughness: 1 - normalizedTextureValue
+          });
+          break;
+        case 'luster':
+          material = new THREE.MeshPhysicalMaterial({
+            color: color,
+            clearcoat: normalizedTextureValue,
+            clearcoatRoughness: 0.1,
+            metalness: 0.5,
+            roughness: 0.5
+          });
+          break;
+        default: // 'standard'
+          material = new THREE.MeshStandardMaterial({ 
+            color: color,
+            roughness: 1 - normalizedTextureValue,
+            metalness: normalizedTextureValue * 0.5
+          });
+      }
+      
+      return material;
+    }
+
+    function createHead(type, color, size, texture, textureValue) {
+      const geometry = getGeometry(type, size);
+      const material = getMaterial(color, texture, textureValue);
+      head = new THREE.Mesh(geometry, material);
+      head.position.set(0, 1.05 * size/50, 0.75 * size/50);
+      animalGroup.add(head);
+    }
+
+    function createBody(type, color, size, texture, textureValue) {
+      const geometry = getGeometry(type, size * 1.5);
+      const material = getMaterial(color, texture, textureValue);
+      body = new THREE.Mesh(geometry, material);
+      if (type !== 'sphere' && type !== 'cube') {
+        body.rotation.x = Math.PI / 2;
+      }
+      animalGroup.add(body);
+    }
+
+    function createLimbs(type, color, size, texture, textureValue) {
+      const geometry = getGeometry(type, size);
+      const material = getMaterial(color, texture, textureValue);
+      limbs = new THREE.Group();
+      for (let i = 0; i < 4; i++) {
+        const limb = new THREE.Mesh(geometry, material);
+        limb.position.set(
+          (i % 2 === 0 ? -0.6 : 0.6) * size/50,
+          -0.75 * size/50,
+          (i < 2 ? 0.75 : -0.75) * size/50
+        );
+        if (type !== 'sphere' && type !== 'cube') {
+          limb.rotation.x = Math.PI / 2;
+        }
+        limb.scale.set(0.2, 0.9, 0.2);
+        limbs.add(limb);
+      }
+      animalGroup.add(limbs);
+    }
+
+    function createEyes(type, color, size, texture, textureValue) {
+      const geometry = getGeometry(type, size * 0.2);
+      const material = getMaterial(color, texture, textureValue);
+      eyes = new THREE.Group();
+      for (let i = 0; i < 2; i++) {
+        const eye = new THREE.Mesh(geometry, material);
+        eye.position.set((i === 0 ? -0.3 : 0.3) * size/50, 1.2 * size/50, 1.05 * size/50);
+        eyes.add(eye);
+      }
+      animalGroup.add(eyes);
+    }
+
+    function createTail(type, color, size, texture, textureValue) {
+      const geometry = getGeometry(type, size * 0.5);
+      const material = getMaterial(color, texture, textureValue);
+      tail = new THREE.Mesh(geometry, material);
+      tail.position.set(0, 0, -1.35 * size/50);
+      if (type !== 'sphere' && type !== 'cube') {
+        tail.rotation.x = -Math.PI / 4;
+      }
+      animalGroup.add(tail);
+    }
+
+    function createWings(type, color, size, texture, textureValue) {
+      if (type === 'none') {
+        return;
+      }
+      
+      const material = getMaterial(color, texture, textureValue);
+      wings = new THREE.Group();
+
+      let wingGeometry;
+      switch(type) {
+        case 'bat':
+          wingGeometry = new THREE.BufferGeometry();
+          const vertices = new Float32Array([
+            0, 0, 0,
+            size/33, size/99, 0,
+            size/33, -size/99, 0
+          ]);
+          wingGeometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
+          break;
+        case 'bird':
+          wingGeometry = new THREE.ShapeGeometry(
+            new THREE.Shape().moveTo(0, 0).lineTo(size/33, size/99).lineTo(size/33, -size/99).lineTo(0, 0)
+          );
+          break;
+        case 'insect':
+          wingGeometry = new THREE.CircleGeometry(size/99, 32, 0, Math.PI);
+          break;
+        case 'dragon':
+          wingGeometry = new THREE.BufferGeometry();
+          const dragonVertices = new Float32Array([
+            0, 0, 0,
+            size/33, size/99, 0,
+            size/39, 0, 0,
+            size/33, -size/99, 0
+          ]);
+          wingGeometry.setAttribute('position', new THREE.BufferAttribute(dragonVertices, 3));
+          break;
+      }
+
+      for (let i = 0; i < 2; i++) {
+        const wing = new THREE.Mesh(wingGeometry, material);
+        wing.position.set((i === 0 ? -0.3 : 0.3) * size/50, 0.75 * size/50, 0);
+        wing.rotation.y = (i === 0 ? 1 : -1) * Math.PI / 4;
+        wings.add(wing);
+      }
+
+      animalGroup.add(wings);
+    }
+
+    function createAnimal() {
+      createHead(
+        document.getElementById('head-select').value,
+        document.getElementById('head-color').value,
+        parseFloat(document.getElementById('head-size').value),
+        document.getElementById('head-texture').value,
+        parseFloat(document.getElementById('head-luster').value)
+      );
+      createBody(
+        document.getElementById('body-select').value,
+        document.getElementById('body-color').value,
+        parseFloat(document.getElementById('body-size').value),
+        document.getElementById('body-texture').value,
+        parseFloat(document.getElementById('body-luster').value)
+      );
+      createLimbs(
+        document.getElementById('limbs-select').value,
+        document.getElementById('limbs-color').value,
+        parseFloat(document.getElementById('limbs-size').value),
+        document.getElementById('limbs-texture').value,
+        parseFloat(document.getElementById('limbs-luster').value)
+      );
+      createEyes(
+        document.getElementById('eyes-select').value,
+        document.getElementById('eyes-color').value,
+        parseFloat(document.getElementById('eyes-size').value),
+        document.getElementById('eyes-texture').value,
+        parseFloat(document.getElementById('eyes-luster').value)
+      );
+      createTail(
+        document.getElementById('tail-select').value,
+        document.getElementById('tail-color').value,
+        parseFloat(document.getElementById('tail-size').value),
+        document.getElementById('tail-texture').value,
+        parseFloat(document.getElementById('tail-luster').value)
+      );
+      createWings(
+        document.getElementById('wings-select').value,
+        document.getElementById('wings-color').value,
+        parseFloat(document.getElementById('wings-size').value),
+        document.getElementById('wings-texture').value,
+        parseFloat(document.getElementById('wings-luster').value)
+      );
+    }
+
+    createAnimal();
+
+    camera.position.set(0, 3, 7);
+    camera.lookAt(0, 0, 0);
+
+    // Animation loop
+    function animate() {
+      requestAnimationFrame(animate);
+      if (resizeRenderer()) {
+        // The canvas was resized, so we need to update the camera
+        const canvas = renderer.domElement;
+        camera.aspect = canvas.clientWidth / canvas.clientHeight;
+        camera.updateProjectionMatrix();
+      }
+      renderer.render(scene, camera);
+    }
+    animate();
+
+    // Handle window resizing
+    window.addEventListener('resize', resizeRenderer);
+
+    // Generate random color
+    function getRandomColor() {
+      return '#' + Math.floor(Math.random()*16777215).toString(16);
+    }
+
+    // UI Interactions
+    document.getElementById('randomize').addEventListener('click', () => {
+      const shapes = ['sphere', 'cube', 'cone', 'cylinder', 'torus'];
+      const textures = ['standard', 'glossy', 'matte', 'metallic', 'luster'];
+      const wingTypes = ['none', 'bat', 'bird', 'insect', 'dragon'];
+      const parts = ['head', 'body', 'limbs', 'eyes', 'tail', 'wings'];
+      parts.forEach(part => {
+        const select = document.getElementById(`${part}-select`);
+        const colorInput = document.getElementById(`${part}-color`);
+        const sizeInput = document.getElementById(`${part}-size`);
+        const textureSelect = document.getElementById(`${part}-texture`);
+        const lusterInput = document.getElementById(`${part}-luster`);
+        if (part === 'wings') {
+          select.value = wingTypes[Math.floor(Math.random() * wingTypes.length)];
+        } else {
+          select.value = shapes[Math.floor(Math.random() * shapes.length)];
+        }
+        colorInput.value = getRandomColor();
+        sizeInput.value = Math.floor(Math.random() * 101); // Random size between 0 and 100
+        textureSelect.value = textures[Math.floor(Math.random() * textures.length)];
+        lusterInput.value = Math.floor(Math.random() * 101); // Random texture value between 0 and 100
+      });
+      updateAnimal();
+    });
+
+    document.getElementById('save').addEventListener('click', () => {
+      console.log('Saving current creation');
+      // TODO: Implement save functionality
+    });
+
+    document.getElementById('rotate-left').addEventListener('click', () => {
+      animalGroup.rotation.y -= Math.PI / 4;
+    });
+
+    document.getElementById('rotate-right').addEventListener('click', () => {
+      animalGroup.rotation.y += Math.PI / 4;
+    });
+
+    document.getElementById('zoom-in').addEventListener('click', () => {
+      camera.position.z = Math.max(camera.position.z - 0.5, 2);
+    });
+
+    document.getElementById('zoom-out').addEventListener('click', () => {
+      camera.position.z = Math.min(camera.position.z + 0.5, 10);
+    });
+
+    function updateAnimal() {
+      animalGroup.clear();
+      createAnimal();
+    }
+
+    // Handle part selection, color change, size change, texture change, and texture value change
+    const partSelects = ['head', 'body', 'limbs', 'eyes', 'tail', 'wings'];
+    partSelects.forEach(part => {
+      document.getElementById(`${part}-select`).addEventListener('change', updateAnimal);
+      document.getElementById(`${part}-color`).addEventListener('input', updateAnimal);
+      document.getElementById(`${part}-size`).addEventListener('input', updateAnimal);
+      document.getElementById(`${part}-texture`).addEventListener('change', updateAnimal);
+      document.getElementById(`${part}-luster`).addEventListener('input', updateAnimal);
+    });
+
+    // Update slider labels
+    const sliders = document.querySelectorAll('input[type="range"]');
+    sliders.forEach(slider => {
+      slider.addEventListener('input', function() {
+        this.nextElementSibling.lastElementChild.textContent = this.value;
+      });
+    });
+  </script>
+</body></html>
