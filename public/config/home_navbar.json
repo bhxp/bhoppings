@@ -51,6 +51,24 @@
     },
     {
         "multiple": true,
+        "text": "tools",
+        "pages": [     
+            {
+                "text": "glass",
+                "url": "/glass"
+            },
+            {
+                "text": "time from now",
+                "url": "/timefromnow"
+            },
+            {
+                "text": "lightroom renderer",
+                "url": "/lightroom-renderer"
+            }
+        ]
+    },
+    {
+        "multiple": true,
         "text": "misc",
         "pages": [
             {
@@ -66,16 +84,8 @@
                 "url": "/birdwithballs"
             },
             {
-                "text": "glass",
-                "url": "/height map gen"
-            },
-            {
                 "text": "hell's domain",
                 "url": "/hellsdomain"
-            },
-            {
-                "text": "lightroom renderer",
-                "url": "/happyimessage"
             },
             {
                 "text": "physics sandbox",
@@ -91,11 +101,7 @@
             },
             {
                 "text": "protocol 533",
-                "url": "/protocol_553"
-            },
-            {
-                "text": "time from now",
-                "url": "/timefromnow"
+                "url": "/protocol_533"
             },
             {
                 "text": "particle",
