@@ -1,0 +1,882 @@
+<!DOCTYPE html><html><head><base href="https://cyberpunk-biohack-math-dashboard.com/">
+<title>Spixe Visualization Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.7.7/dat.gui.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/MathJax.js?config=TeX-AMS_HTML"></script>
+<script src="https://w.soundcloud.com/player/api.js"></script>
+<style>
+@font-face {
+    font-family: 'AlienSymbols';
+    src: url('https://fonts.cdnfonts.com/css/alien-symbols') format('woff2');
+    font-weight: normal;
+    font-style: normal;
+}
+
+body, html {
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    width: 100%;
+    height: 100%;
+    background-color: #0a0a0a;
+    color: #00aaff;
+    font-family: 'AlienSymbols', 'Courier New', monospace;
+}
+
+canvas {
+    display: block;
+}
+
+#dashboard {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    background-color: rgba(0, 10, 20, 0.8);
+    padding: 20px;
+    border-radius: 10px;
+    border: 2px solid #00aaff;
+    box-shadow: 0 0 10px #00aaff;
+    max-width: 400px;
+    user-select: none;
+}
+
+#mathFormula {
+    font-size: 18px;
+    margin-bottom: 20px;
+    font-family: 'AlienSymbols', 'Courier New', monospace;
+}
+
+.parameter {
+    margin-bottom: 15px;
+}
+
+.parameter-name {
+    font-weight: bold;
+    color: #00ffff;
+}
+
+.parameter-value {
+    color: #ff00ff;
+}
+
+#biometrics {
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid #00aaff;
+}
+
+#audioPlayer {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 90%;
+    max-width: 800px;
+    z-index: 1000;
+    background-color: rgba(0, 10, 20, 0.8);
+    border-radius: 10px;
+    border: 2px solid #00aaff;
+    box-shadow: 0 0 10px #00aaff;
+    padding: 10px;
+}
+
+#audioPlayer iframe {
+    border-radius: 5px;
+    width: 100%;
+    height: 80px;
+    background-color: #001a2a;
+}
+
+#audioInfo {
+    margin-top: 10px;
+    font-size: 12px;
+    color: #00aaff;
+    text-align: center;
+}
+
+#audioInfo a {
+    color: #00ffff;
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+#audioInfo a:hover {
+    color: #ff00ff;
+}
+
+#audioControls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 10px;
+}
+
+.audio-btn {
+    background-color: #003344;
+    color: #00aaff;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.audio-btn:hover {
+    background-color: #004466;
+}
+
+#progressBar {
+    width: 70%;
+    height: 5px;
+    background-color: #003344;
+    position: relative;
+}
+
+#progress {
+    width: 0;
+    height: 100%;
+    background-color: #00aaff;
+    position: absolute;
+    transition: width 0.1s linear;
+}
+
+#timeDisplay {
+    font-size: 12px;
+    color: #00aaff;
+}
+
+/* New styles for sliders and toggles */
+.slider {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 4px;
+    border-radius: 2px;
+    background: #003344;
+    outline: none;
+    opacity: 0.7;
+    transition: opacity .2s;
+}
+
+.slider:hover {
+    opacity: 1;
+}
+
+.slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #00aaff;
+    cursor: pointer;
+    transition: background .2s;
+}
+
+.slider::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #00aaff;
+    cursor: pointer;
+    transition: background .2s;
+}
+
+.slider::-webkit-slider-thumb:hover,
+.slider::-moz-range-thumb:hover {
+    background: #00ffff;
+}
+
+.toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 40px;
+    height: 20px;
+}
+
+.toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #003344;
+    transition: .4s;
+    border-radius: 20px;
+}
+
+.toggle-slider:before {
+    position: absolute;
+    content: "";
+    height: 16px;
+    width: 16px;
+    left: 2px;
+    bottom: 2px;
+    background-color: #00aaff;
+    transition: .4s;
+    border-radius: 50%;
+}
+
+input:checked + .toggle-slider {
+    background-color: #006688;
+}
+
+input:checked + .toggle-slider:before {
+    transform: translateX(20px);
+    background-color: #00ffff;
+}
+
+.color-picker {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    width: 40px;
+    height: 40px;
+    background-color: transparent;
+    border: none;
+    cursor: pointer;
+}
+.color-picker::-webkit-color-swatch {
+    border-radius: 50%;
+    border: 2px solid #00aaff;
+}
+.color-picker::-moz-color-swatch {
+    border-radius: 50%;
+    border: 2px solid #00aaff;
+}
+
+#uploadMp3 {
+    display: none;
+}
+
+#uploadMp3Label {
+    display: inline-block;
+    padding: 10px 15px;
+    background-color: #003344;
+    color: #00aaff;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+#uploadMp3Label:hover {
+    background-color: #004466;
+}
+
+#customAudioPlayer {
+    width: 100%;
+    margin-top: 10px;
+}
+
+#customAudioControls {
+    display: flex;
+    align-items: center;
+    margin-top: 10px;
+}
+
+#customPlayPauseBtn {
+    background-color: #003344;
+    color: #00aaff;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    margin-right: 10px;
+}
+
+#customPlayPauseBtn:hover {
+    background-color: #004466;
+}
+
+#customProgressBar {
+    flex-grow: 1;
+    height: 5px;
+    background-color: #003344;
+    position: relative;
+    cursor: pointer;
+}
+
+#customProgress {
+    width: 0;
+    height: 100%;
+    background-color: #00aaff;
+    position: absolute;
+}
+
+#customTimeDisplay {
+    margin-left: 10px;
+    font-size: 12px;
+    color: #00aaff;
+}
+</style>
+</head>
+<body>
+<div id="dashboard">
+    <div id="dashboard-header" style="cursor: move; user-select: none; background-color: #001a2a; padding: 10px; border-top-left-radius: 8px; border-top-right-radius: 8px; display: flex; justify-content: space-between; align-items: center;">
+        <h2 style="margin: 0; font-size: 1.2em;">Spixe Formula</h2>
+        <div>
+            <button id="minimize-btn" style="background: none; border: none; color: #00aaff; cursor: pointer; font-size: 1.2em; margin-right: 5px;">
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M2 8H14" stroke="#00aaff" stroke-width="2" stroke-linecap="round"></path>
+    </svg>
+</button>
+            <button id="maximize-btn" style="background: none; border: none; color: #00aaff; cursor: pointer; font-size: 1.2em; margin-right: 5px;">◀</button>
+            <button id="close-btn" style="background: none; border: none; color: #00aaff; cursor: pointer; font-size: 1.2em;">×</button>
+        </div>
+    </div>
+    <div id="dashboard-content" style="padding: 20px; max-height: 80vh; overflow-y: auto;">
+    <h2>
+        <pre style="font-family: monospace; line-height: 1; white-space: pre; overflow: hidden; font-size: 10px; color: #00ffff; text-shadow: 0 0 5px #00aaff;"><span class="ascii-art" style="display: inline-block; animation: rotate3D 4s infinite linear; font-size: 6px;">
+  _____  _____  _____ __   __ ______ 
+ / ____||  __ \|_   _|\ \ / /|  ____|
+| (___  | |__) | | |   \ V / | |__   
+ \___ \ |  ___/  | |    &gt; &lt;  |  __|  
+ ____) || |     _| |_  / . \ | |____ 
+|_____/ |_|    |_____|/_/ \_\|______|
+</span>
+        </pre>
+        <p style="font-size: 0.5em; color: #00ffff; margin-top: 5px;">
+            SPIXE: An interactive visual math experience. Adjust sliders to change patterns and interact with your mouse nigger!
+        </p>
+    </h2>
+    <div id="mathFormula" style="font-size: 0.8em;">
+        \[
+        \Psi(s, t) = \sum_{i=0}^{n} S_i(\theta_t) \cdot |s_{xy}| - (\alpha + \beta \sin(\omega t))
+        \]
+    </div>
+    <div id="parameters" style="font-size: 0.9em;">
+        <div class="parameter">
+            <span class="parameter-name">Spike Density (n):</span>
+            <span id="iterations" class="parameter-value"></span>
+            <input type="range" min="1" max="10" step="1" id="iterationsSlider" class="slider">
+        </div>
+        <div class="parameter">
+            <span class="parameter-name">Spike Rotation (θ):</span>
+            <span id="rotationSpeed" class="parameter-value"></span>
+            <input type="range" min="0.01" max="0.1" step="0.01" id="rotationSpeedSlider" class="slider">
+        </div>
+        <div class="parameter">
+            <span class="parameter-name">Spike Core Size (α):</span>
+            <span id="shapeSize" class="parameter-value"></span>
+            <input type="range" min="0.1" max="1" step="0.1" id="shapeSizeSlider" class="slider">
+        </div>
+        <div class="parameter">
+            <span class="parameter-name">Visual Pulse Rate (ω):</span>
+            <span id="bpm" class="parameter-value"></span>
+            <input type="range" min="60" max="180" step="1" id="bpmSlider" class="slider">
+        </div>
+        <div class="parameter">
+            <span class="parameter-name">Spike Color:</span>
+            <input type="color" id="color1Picker" class="color-picker">
+        </div>
+        <div class="parameter">
+            <span class="parameter-name">Core Color:</span>
+            <input type="color" id="color2Picker" class="color-picker">
+        </div>
+        <div class="parameter">
+            <span class="parameter-name">Pulse Sync:</span>
+            <label class="toggle-switch">
+                <input type="checkbox" id="bpmToggle" checked="">
+                <span class="toggle-slider"></span>
+            </label>
+        </div>
+        <div class="parameter">
+            <span class="parameter-name">Audio Reactive:</span>
+            <label class="toggle-switch">
+                <input type="checkbox" id="audioReactiveToggle" checked="">
+                <span class="toggle-slider"></span>
+            </label>
+        </div>
+        <div class="parameter">
+            <span class="parameter-name">Mouse Interaction:</span>
+            <label class="toggle-switch">
+                <input type="checkbox" id="mouseInteractionToggle" checked="">
+                <span class="toggle-slider"></span>
+            </label>
+        </div>
+    </div>
+    <div id="biometrics" style="font-size: 0.9em;">
+        <h3>Visual Feedback</h3>
+        <div class="parameter">
+            <span class="parameter-name">Spike Intensity:</span>
+            <span id="synapticLoad" class="parameter-value"></span>
+        </div>
+        <div class="parameter">
+            <span class="parameter-name">Visual Coherence:</span>
+            <span id="quantumCoherence" class="parameter-value"></span>
+        </div>
+        <div class="parameter">
+            <span class="parameter-name">Audio Sync:</span>
+            <span id="audioReactivity" class="parameter-value"></span>
+        </div>
+    </div>
+    <div id="uploadSection" style="font-size: 0.9em;">
+        <h3>Upload Your Own Music</h3>
+        <input type="file" id="uploadMp3" accept=".mp3">
+        <label for="uploadMp3" id="uploadMp3Label">Choose MP3 File</label>
+        <div id="customAudioPlayer" style="display: none;">
+            <audio id="customAudio" src=""></audio>
+            <div id="customAudioControls">
+                <button id="customPlayPauseBtn">Play</button>
+                <div id="customProgressBar">
+                    <div id="customProgress"></div>
+                </div>
+                <span id="customTimeDisplay">0:00 / 0:00</span>
+            </div>
+        </div>
+    </div>
+</div>
+    <div id="resize-handle" style="position: absolute; bottom: 0; right: 0; width: 15px; height: 15px; cursor: nwse-resize; background: linear-gradient(135deg, transparent 50%, #00aaff 50%);"></div>
+</div>
+
+<div></div>
+
+<script id="vertexShader" type="x-shader/x-vertex">
+void main() {
+    gl_Position = vec4(position, 1.0);
+}
+</script>
+
+<script id="fragmentShader" type="x-shader/x-fragment">
+uniform float iTime;
+uniform vec2 iResolution;
+uniform vec2 iMouse;
+uniform float uSpikeDensity;
+uniform float uSpikeRotation;
+uniform float uSpikeCoreSize;
+uniform vec3 uSpikeColor;
+uniform vec3 uCoreColor;
+uniform float uVisualPulseRate;
+uniform float uBeatOffset;
+uniform bool uPulseSyncEnabled;
+uniform float uAudioLevel;
+uniform bool uAudioReactive;
+uniform bool uMouseInteractionEnabled;
+
+vec3 palette(float d) {
+    return mix(uSpikeColor, uCoreColor, d);
+}
+
+vec2 rotate(vec2 p, float a) {
+    float c = cos(a);
+    float s = sin(a);
+    return p * mat2(c, s, -s, c);
+}
+
+float map(vec3 p) {
+    float beatTime = mod(iTime + uBeatOffset, 60.0 / uVisualPulseRate);
+    float beatProgress = beatTime / (60.0 / uVisualPulseRate);
+    float angle = iTime * uSpikeRotation;
+    
+    // Mouse interaction
+    float mouseDistortion = 0.0;
+    if (uMouseInteractionEnabled) {
+        vec2 mouseRotation = iMouse / iResolution - 0.5;
+        angle += mouseRotation.x * 2.0 * 3.14159;
+        mouseDistortion = length(mouseRotation) * 0.5;
+    }
+    
+    float pulse = uPulseSyncEnabled ? (sin(beatProgress * 3.14159 * 2.0) * 0.5 + 0.5) : 0.0;
+    float audioReactiveEffect = uAudioReactive ? uAudioLevel * 0.2 : 0.0;
+    
+    for (int i = 0; i < 10; ++i) {
+        if (float(i) >= uSpikeDensity) break;
+        float t = angle + audioReactiveEffect + mouseDistortion;
+        p.xz = rotate(p.xz, t);
+        p.xy = rotate(p.xy, t * 7.3);
+        p.xz = abs(p.xz);
+        p.xz -= 0.2 + pulse * 0.1 + audioReactiveEffect * 0.5;
+    }
+    
+    float shape = length(p.xy) - (uSpikeCoreSize + pulse * 0.1 + audioReactiveEffect + mouseDistortion * 0.2);
+    return shape;
+}
+
+vec4 rm(vec3 ro, vec3 rd) {
+    float t = 1.0;
+    vec3 col = vec3(0.0);
+    float d;
+    for (float i = 0.0; i < 100.0; i++) {
+        vec3 p = ro + rd * t;
+        d = map(p) * 0.5;
+        if (d < 0.02) break;
+        if (d > 200.0) break;
+        col += palette(length(p) * 0.15 + uAudioLevel * 0.1) / (400.0 * d);
+        t += d;
+    }
+    return vec4(col, 1.0 / (d * 80.0));
+}
+
+void main() {
+    vec2 uv = (gl_FragCoord.xy - (iResolution.xy / 2.0)) / iResolution.x;
+    vec3 ro = vec3(0.0, 0.0, -110.0);
+    ro.xz = rotate(ro.xz, iTime);
+    vec3 cf = normalize(-ro);
+    vec3 cs = normalize(cross(cf, vec3(0.2, 0.1, 0.1)));
+    vec3 cu = normalize(cross(cf, cs));
+    
+    vec3 uuv = ro + cf * 3.0 + uv.x * cs + uv.y * cu;
+    
+    vec3 rd = normalize(uuv - ro);
+    
+    gl_FragColor = rm(ro, rd);
+}
+</script>
+
+<script>
+let scene, camera, renderer, material, mesh;
+let gui, params;
+let mousePosition = { x: 0, y: 0 };
+let customAudio, customAudioSource, customAnalyser;
+
+function init() {
+    scene = new THREE.Scene();
+    camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+
+    renderer = new THREE.WebGLRenderer();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.body.appendChild(renderer.domElement);
+
+    const geometry = new THREE.PlaneGeometry(2, 2);
+
+    params = {
+        spikeDensity: 5,
+        spikeRotation: 0.05,
+        spikeCoreSize: 0.4,
+        spikeColor: [0, 1, 1],
+        coreColor: [1, 0, 1],
+        visualPulseRate: 120,
+        beatOffset: 0,
+        pulseSyncEnabled: true,
+        audioReactive: true,
+        mouseInteractionEnabled: true
+    };
+
+    material = new THREE.ShaderMaterial({
+        uniforms: {
+            iTime: { value: 0 },
+            iResolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) },
+            iMouse: { value: new THREE.Vector2(0, 0) },
+            uSpikeDensity: { value: params.spikeDensity },
+            uSpikeRotation: { value: params.spikeRotation },
+            uSpikeCoreSize: { value: params.spikeCoreSize },
+            uSpikeColor: { value: new THREE.Vector3(...params.spikeColor) },
+            uCoreColor: { value: new THREE.Vector3(...params.coreColor) },
+            uVisualPulseRate: { value: params.visualPulseRate },
+            uBeatOffset: { value: params.beatOffset },
+            uPulseSyncEnabled: { value: params.pulseSyncEnabled },
+            uAudioLevel: { value: 0 },
+            uAudioReactive: { value: params.audioReactive },
+            uMouseInteractionEnabled: { value: params.mouseInteractionEnabled }
+        },
+        vertexShader: document.getElementById('vertexShader').textContent,
+        fragmentShader: document.getElementById('fragmentShader').textContent
+    });
+
+    mesh = new THREE.Mesh(geometry, material);
+    scene.add(mesh);
+
+    window.addEventListener('resize', onWindowResize, false);
+    document.addEventListener('mousemove', onMouseMove, false);
+
+    setupControls();
+    updateDashboard();
+    setupDraggableControls();
+    
+    window.addEventListener('load', function() {
+        setupCustomAudioUpload();
+    });
+    
+    MathJax.Hub.Queue(["Typeset", MathJax.Hub]);
+}
+
+function onMouseMove(event) {
+    mousePosition.x = event.clientX;
+    mousePosition.y = event.clientY;
+    material.uniforms.iMouse.value.set(mousePosition.x, mousePosition.y);
+}
+
+function setupControls() {
+    const iterationsSlider = document.getElementById('iterationsSlider');
+    const rotationSpeedSlider = document.getElementById('rotationSpeedSlider');
+    const shapeSizeSlider = document.getElementById('shapeSizeSlider');
+    const bpmSlider = document.getElementById('bpmSlider');
+    const color1Picker = document.getElementById('color1Picker');
+    const color2Picker = document.getElementById('color2Picker');
+    const bpmToggle = document.getElementById('bpmToggle');
+    const audioReactiveToggle = document.getElementById('audioReactiveToggle');
+    const mouseInteractionToggle = document.getElementById('mouseInteractionToggle');
+
+    if (iterationsSlider) iterationsSlider.value = params.spikeDensity;
+    if (rotationSpeedSlider) rotationSpeedSlider.value = params.spikeRotation;
+    if (shapeSizeSlider) shapeSizeSlider.value = params.spikeCoreSize;
+    if (bpmSlider) bpmSlider.value = params.visualPulseRate;
+    if (color1Picker) color1Picker.value = rgbToHex(params.spikeColor);
+    if (color2Picker) color2Picker.value = rgbToHex(params.coreColor);
+    if (bpmToggle) bpmToggle.checked = params.pulseSyncEnabled;
+    if (audioReactiveToggle) audioReactiveToggle.checked = params.audioReactive;
+    if (mouseInteractionToggle) mouseInteractionToggle.checked = params.mouseInteractionEnabled;
+
+    if (iterationsSlider) {
+        iterationsSlider.addEventListener('input', (e) => {
+            params.spikeDensity = parseInt(e.target.value);
+            material.uniforms.uSpikeDensity.value = params.spikeDensity;
+            updateDashboard();
+        });
+    }
+
+    if (rotationSpeedSlider) {
+        rotationSpeedSlider.addEventListener('input', (e) => {
+            params.spikeRotation = parseFloat(e.target.value);
+            material.uniforms.uSpikeRotation.value = params.spikeRotation;
+            updateDashboard();
+        });
+    }
+
+    if (shapeSizeSlider) {
+        shapeSizeSlider.addEventListener('input', (e) => {
+            params.spikeCoreSize = parseFloat(e.target.value);
+            material.uniforms.uSpikeCoreSize.value = params.spikeCoreSize;
+            updateDashboard();
+        });
+    }
+
+    if (bpmSlider) {
+        bpmSlider.addEventListener('input', (e) => {
+            params.visualPulseRate = parseInt(e.target.value);
+            material.uniforms.uVisualPulseRate.value = params.visualPulseRate;
+            updateDashboard();
+        });
+    }
+
+    if (color1Picker) {
+        color1Picker.addEventListener('input', (e) => {
+            params.spikeColor = hexToRgb(e.target.value);
+            material.uniforms.uSpikeColor.value.set(...params.spikeColor);
+        });
+    }
+
+    if (color2Picker) {
+        color2Picker.addEventListener('input', (e) => {
+            params.coreColor = hexToRgb(e.target.value);
+            material.uniforms.uCoreColor.value.set(...params.coreColor);
+        });
+    }
+
+    if (bpmToggle) {
+        bpmToggle.addEventListener('change', (e) => {
+            params.pulseSyncEnabled = e.target.checked;
+            material.uniforms.uPulseSyncEnabled.value = params.pulseSyncEnabled;
+        });
+    }
+
+    if (audioReactiveToggle) {
+        audioReactiveToggle.addEventListener('change', (e) => {
+            params.audioReactive = e.target.checked;
+            material.uniforms.uAudioReactive.value = params.audioReactive;
+        });
+    }
+
+    if (mouseInteractionToggle) {
+        mouseInteractionToggle.addEventListener('change', (e) => {
+            params.mouseInteractionEnabled = e.target.checked;
+            material.uniforms.uMouseInteractionEnabled.value = params.mouseInteractionEnabled;
+        });
+    }
+}
+
+function updateDashboard() {
+    const iterations = document.getElementById('iterations');
+    const rotationSpeed = document.getElementById('rotationSpeed');
+    const shapeSize = document.getElementById('shapeSize');
+    const bpm = document.getElementById('bpm');
+    const synapticLoad = document.getElementById('synapticLoad');
+    const quantumCoherence = document.getElementById('quantumCoherence');
+    const audioReactivity = document.getElementById('audioReactivity');
+
+    if (iterations) iterations.textContent = params.spikeDensity.toFixed(0);
+    if (rotationSpeed) rotationSpeed.textContent = params.spikeRotation.toFixed(3);
+    if (shapeSize) shapeSize.textContent = params.spikeCoreSize.toFixed(3);
+    if (bpm) bpm.textContent = params.visualPulseRate.toFixed(1);
+
+    if (synapticLoad) synapticLoad.textContent = (params.spikeDensity * params.spikeRotation * 100).toFixed(2) + '%';
+    if (quantumCoherence) quantumCoherence.textContent = (params.spikeCoreSize * params.visualPulseRate / 100).toFixed(3);
+    if (audioReactivity) audioReactivity.textContent = params.audioReactive ? 'Enabled' : 'Disabled';
+}
+
+function onWindowResize() {
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    material.uniforms.iResolution.value.set(window.innerWidth, window.innerHeight);
+}
+
+function animate(time) {
+    material.uniforms.iTime.value = time / 1000.0;
+    
+    if (customAnalyser && customAudio && customAudio.currentTime > 0 && !customAudio.paused && !customAudio.ended) {
+        customAnalyser.getByteFrequencyData(dataArray);
+        let sum = 0;
+        for (let i = 0; i < dataArray.length; i++) {
+            sum += dataArray[i];
+        }
+        let average = sum / dataArray.length;
+        let normalizedAverage = average / 255;
+        material.uniforms.uAudioLevel.value = normalizedAverage;
+    }
+
+    renderer.render(scene, camera);
+    requestAnimationFrame(animate);
+}
+
+function rgbToHex(rgb) {
+    return "#" + rgb.map(x => Math.round(x * 255).toString(16).padStart(2, '0')).join('');
+}
+
+function hexToRgb(hex) {
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result ? [
+        parseInt(result[1], 16) / 255,
+        parseInt(result[2], 16) / 255,
+        parseInt(result[3], 16) / 255
+    ] : null;
+}
+
+function setupDraggableControls() {
+    const dashboard = document.getElementById('dashboard');
+    const header = document.getElementById('dashboard-header');
+    const resizeHandle = document.getElementById('resize-handle');
+    const minimizeBtn = document.getElementById('minimize-btn');
+    const maximizeBtn = document.getElementById('maximize-btn');
+    const closeBtn = document.getElementById('close-btn');
+    const content = document.getElementById('dashboard-content');
+
+    let isDragging = false;
+    let isResizing = false;
+    let startX, startY, startWidth, startHeight;
+
+    header.addEventListener('mousedown', (e) => {
+        isDragging = true;
+        startX = e.clientX - dashboard.offsetLeft;
+        startY = e.clientY - dashboard.offsetTop;
+    });
+
+    resizeHandle.addEventListener('mousedown', (e) => {
+        isResizing = true;
+        startX = e.clientX;
+        startY = e.clientY;
+        startWidth = parseInt(document.defaultView.getComputedStyle(dashboard).width, 10);
+        startHeight = parseInt(document.defaultView.getComputedStyle(dashboard).height, 10);
+        e.preventDefault();
+    });
+
+    document.addEventListener('mousemove', (e) => {
+        if (isDragging) {
+            dashboard.style.left = (e.clientX - startX) + 'px';
+            dashboard.style.top = (e.clientY - startY) + 'px';
+        }
+        if (isResizing) {
+            const newWidth = startWidth + (e.clientX - startX);
+            const newHeight = startHeight + (e.clientY - startY);
+            dashboard.style.width = newWidth + 'px';
+            dashboard.style.height = newHeight + 'px';
+        }
+    });
+
+    document.addEventListener('mouseup', () => {
+        isDragging = false;
+        isResizing = false;
+    });
+
+    minimizeBtn.addEventListener('click', () => {
+        content.style.display = content.style.display === 'none' ? 'block' : 'none';
+    });
+
+    maximizeBtn.addEventListener('click', () => {
+        if (dashboard.style.width === '100vw' && dashboard.style.height === '100vh') {
+            dashboard.style.width = '400px';
+            dashboard.style.height = 'auto';
+            dashboard.style.top = '20px';
+            dashboard.style.left = '20px';
+            maximizeBtn.textContent = '◀';
+        } else {
+            dashboard.style.width = '100vw';
+            dashboard.style.height = '100vh';
+            dashboard.style.top = '0';
+            dashboard.style.left = '0';
+            maximizeBtn.textContent = '▶';
+        }
+    });
+
+    closeBtn.addEventListener('click', () => {
+        dashboard.style.display = 'none';
+    });
+}
+
+function setupCustomAudioUpload() {
+    const audioUpload = document.getElementById('uploadMp3');
+    const customAudioPlayer = document.getElementById('customAudioPlayer');
+    const customAudio = document.getElementById('customAudio');
+    const customPlayPauseBtn = document.getElementById('customPlayPauseBtn');
+    const customProgressBar = document.getElementById('customProgressBar');
+    const customProgress = document.getElementById('customProgress');
+    const customTimeDisplay = document.getElementById('customTimeDisplay');
+
+    audioUpload.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            const objectURL = URL.createObjectURL(file);
+            customAudio.src = objectURL;
+            customAudioPlayer.style.display = 'block';
+
+            // Set up Web Audio API
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            customAudioSource = audioContext.createMediaElementSource(customAudio);
+            customAnalyser = audioContext.createAnalyser();
+            customAudioSource.connect(customAnalyser);
+            customAnalyser.connect(audioContext.destination);
+
+            customAnalyser.fftSize = 256;
+            dataArray = new Uint8Array(customAnalyser.frequencyBinCount);
+        }
+    });
+
+    customPlayPauseBtn.addEventListener('click', function() {
+        if (customAudio.paused) {
+            customAudio.play();
+            customPlayPauseBtn.textContent = 'Pause';
+        } else {
+            customAudio.pause();
+            customPlayPauseBtn.textContent = 'Play';
+        }
+    });
+
+    customAudio.addEventListener('timeupdate', function() {
+        const progress = (customAudio.currentTime / customAudio.duration) * 100;
+        customProgress.style.width = progress + '%';
+        customTimeDisplay.textContent = formatTime(customAudio.currentTime) + ' / ' + formatTime(customAudio.duration);
+    });
+
+    customProgressBar.addEventListener('click', function(e) {
+        const clickPosition = (e.pageX - this.offsetLeft) / this.offsetWidth;
+        const clickTime = clickPosition * customAudio.duration;
+        customAudio.currentTime = clickTime;
+    });
+}
+
+function formatTime(time) {
+    const minutes = Math.floor(time / 60);
+    const seconds = Math.floor(time % 60);
+    return minutes + ':' + (seconds < 10 ? '0' : '') + seconds;
+}
+
+init();
+animate();
+</script>
+
+</body></html>
