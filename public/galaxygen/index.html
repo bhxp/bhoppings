@@ -1,0 +1,183 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Random Galaxy Generator with Black Hole</title>
+    <style>
+        body { margin: 0; overflow: hidden; background-color: black; }
+        #info {
+            position: absolute;
+            top: 10px;
+            width: 100%;
+            text-align: center;
+            color: white;
+            font-family: sans-serif;
+            z-index: 1;
+        }
+        #generateBtn {
+            position: absolute;
+            top: 60px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 10px 20px;
+            background-color: #222;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            z-index: 1;
+        }
+        #generateBtn:hover {
+            background-color: #444;
+        }
+    </style>
+</head>
+<body>
+    <div id="info">
+        <h1>Random Galaxy Generator with Black Hole</h1>
+    </div>
+    <button id="generateBtn">Generate New Galaxy</button>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/build/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/examples/js/controls/OrbitControls.js"></script>
+    <script>
+        let scene, camera, renderer, controls;
+        let galaxy, blackHole;
+        let clock = new THREE.Clock();
+
+        function init() {
+            scene = new THREE.Scene();
+
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 1, 5000);
+            camera.position.z = 1500;
+
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            document.body.appendChild(renderer.domElement);
+
+            // Add controls
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+
+            // Add black hole in the center
+            const blackHoleGeometry = new THREE.SphereGeometry(50, 32, 32);
+            const blackHoleMaterial = new THREE.MeshBasicMaterial({ color: 0x000000 });
+            blackHole = new THREE.Mesh(blackHoleGeometry, blackHoleMaterial);
+            scene.add(blackHole);
+
+            // Generate initial galaxy
+            generateGalaxy();
+
+            window.addEventListener('resize', onWindowResize, false);
+            document.getElementById('generateBtn').addEventListener('click', regenerateGalaxy);
+
+            animate();
+        }
+
+        function generateGalaxy() {
+            // Remove existing galaxy if any
+            if (galaxy) {
+                scene.remove(galaxy);
+                galaxy.geometry.dispose();
+                galaxy.material.dispose();
+                galaxy = null;
+            }
+
+            // Galaxy parameters
+            const galaxyParams = {
+                count: 100000,
+                size: 2,
+                radius: 800,
+                branches: Math.floor(Math.random() * 8) + 2,
+                spin: Math.random() * 5,
+                randomness: Math.random() * 5,
+                randomnessPower: Math.random() * 3 + 1,
+                insideColor: '#' + Math.floor(Math.random() * 16777215).toString(16),
+                outsideColor: '#' + Math.floor(Math.random() * 16777215).toString(16)
+            };
+
+            const positions = new Float32Array(galaxyParams.count * 3);
+            const colors = new Float32Array(galaxyParams.count * 3);
+
+            const insideColor = new THREE.Color(galaxyParams.insideColor);
+            const outsideColor = new THREE.Color(galaxyParams.outsideColor);
+
+            for (let i = 0; i < galaxyParams.count; i++) {
+                const i3 = i * 3;
+
+                // Radius
+                const radius = Math.random() * galaxyParams.radius;
+
+                // Spin
+                const spinAngle = radius * galaxyParams.spin;
+
+                // Branches
+                const branchAngle = ((i % galaxyParams.branches) / galaxyParams.branches) * Math.PI * 2;
+
+                // Randomness
+                const randomX = Math.pow(Math.random(), galaxyParams.randomnessPower) * (Math.random() < 0.5 ? 1 : -1) * galaxyParams.randomness * radius;
+                const randomY = Math.pow(Math.random(), galaxyParams.randomnessPower) * (Math.random() < 0.5 ? 1 : -1) * galaxyParams.randomness * radius;
+                const randomZ = Math.pow(Math.random(), galaxyParams.randomnessPower) * (Math.random() < 0.5 ? 1 : -1) * galaxyParams.randomness * radius;
+
+                positions[i3] = Math.cos(branchAngle + spinAngle) * radius + randomX;
+                positions[i3 + 1] = randomY;
+                positions[i3 + 2] = Math.sin(branchAngle + spinAngle) * radius + randomZ;
+
+                const mixedColor = insideColor.clone();
+                mixedColor.lerp(outsideColor, radius / galaxyParams.radius);
+
+                colors[i3] = mixedColor.r;
+                colors[i3 + 1] = mixedColor.g;
+                colors[i3 + 2] = mixedColor.b;
+            }
+
+            const geometry = new THREE.BufferGeometry();
+            geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+            geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+
+            const sprite = new THREE.TextureLoader().load('https://threejs.org/examples/textures/sprites/disc.png');
+
+            const material = new THREE.PointsMaterial({
+                size: galaxyParams.size,
+                map: sprite,
+                vertexColors: true,
+                blending: THREE.AdditiveBlending,
+                depthTest: false,
+                transparent: true
+            });
+
+            galaxy = new THREE.Points(geometry, material);
+            scene.add(galaxy);
+        }
+
+        function regenerateGalaxy() {
+            generateGalaxy();
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            // Swirl effect
+            if (galaxy) {
+                galaxy.rotation.y += 0.0002;
+                galaxy.rotation.x += 0.0001;
+            }
+
+            // Rotate black hole slowly for visual effect
+            blackHole.rotation.y += 0.0005;
+
+            controls.update();
+
+            renderer.render(scene, camera);
+        }
+
+        init();
+    </script>
+</body>
+</html>
