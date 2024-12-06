@@ -76,6 +76,10 @@
             {
                 "text": "particle",
                 "url": "/particle"
+            },
+            {
+                "text": "loading animations",
+                "url": "/loadinganimations"
             }
         ]
     },

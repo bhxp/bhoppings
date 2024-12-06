@@ -1,0 +1,2846 @@
+<html><head><base href="." /><meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" /><title>CSS Loading Animations</title>
+<style>
+:root {
+  --primary: #2ecc71;
+  --secondary: #e74c3c;
+  --dark: #34495e;
+  --light: #ecf0f1;
+}
+
+body {
+  margin: 0;
+  padding: 20px;
+  background: #f5f6fa;
+  font-family: 'Arial', sans-serif;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
+}
+
+.loader-card {
+  background: white;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 2px 15px rgba(0,0,0,0.1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+}
+
+.loader-container {
+  width: 100px;
+  height: 100px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 20px 0;
+}
+
+.copy-btn {
+  padding: 8px 16px;
+  background: var(--primary);
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.copy-btn:hover {
+  background: #27ae60;
+}
+
+.code-snippet {
+  background: #f8f9fa;
+  padding: 15px;
+  border-radius: 5px;
+  font-family: monospace;
+  font-size: 12px;
+  width: 100%;
+  box-sizing: border-box;
+  margin: 10px 0;
+  max-height: 150px;
+  overflow-y: auto;
+}
+
+/* Loader 1 - Spinning Circle */
+.loader-1 {
+  width: 48px;
+  height: 48px;
+  border: 5px solid #f3f3f3;
+  border-top: 5px solid var(--primary);
+  border-radius: 50%;
+  animation: spin1 1s linear infinite;
+}
+
+@keyframes spin1 {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Loader 2 - Pulsing Dots */
+.loader-2 {
+  display: flex;
+  gap: 5px;
+}
+
+.loader-2 div {
+  width: 12px;
+  height: 12px;
+  background: var(--primary);
+  border-radius: 50%;
+  animation: pulse2 1.5s ease-in-out infinite;
+}
+
+.loader-2 div:nth-child(2) { animation-delay: 0.2s; }
+.loader-2 div:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes pulse2 {
+  0%, 100% { transform: scale(0.8); opacity: 0.5; }
+  50% { transform: scale(1.2); opacity: 1; }
+}
+
+/* Loader 3 - Growing Bar */
+.loader-3 {
+  width: 100px;
+  height: 4px;
+  background: #f3f3f3;
+  position: relative;
+  overflow: hidden;
+}
+
+.loader-3::after {
+  content: '';
+  position: absolute;
+  width: 40%;
+  height: 100%;
+  background: var(--primary);
+  animation: grow3 1.5s ease-in-out infinite;
+}
+
+@keyframes grow3 {
+  0% { left: -40%; }
+  100% { left: 100%; }
+}
+
+/* Loader 4 - Bouncing Balls */
+.loader-4 {
+  display: flex;
+  gap: 4px;
+}
+
+.loader-4 div {
+  width: 10px;
+  height: 10px;
+  background: var(--primary);
+  border-radius: 50%;
+  animation: bounce4 0.5s alternate infinite;
+}
+
+.loader-4 div:nth-child(2) { animation-delay: 0.15s; }
+.loader-4 div:nth-child(3) { animation-delay: 0.3s; }
+
+@keyframes bounce4 {
+  from { transform: translateY(0); }
+  to { transform: translateY(-15px); }
+}
+
+/* Loader 5 - Rotating Square */
+.loader-5 {
+  width: 40px;
+  height: 40px;
+  background: var(--primary);
+  animation: rotate5 1.2s ease-in-out infinite;
+}
+
+@keyframes rotate5 {
+  0% { transform: perspective(120px) rotateX(0deg) rotateY(0deg); }
+  50% { transform: perspective(120px) rotateX(-180.1deg) rotateY(0deg); }
+  100% { transform: perspective(120px) rotateX(-180deg) rotateY(-179.9deg); }
+}
+
+/* Loader 6 - Dual Ring */
+.loader-6 {
+  width: 48px;
+  height: 48px;
+  border: 5px solid var(--primary);
+  border-bottom-color: transparent;
+  border-radius: 50%;
+  display: inline-block;
+  position: relative;
+  animation: rotation6 1s linear infinite;
+}
+
+.loader-6::after {
+  content: '';
+  position: absolute;
+  left: 2px;
+  top: 2px;
+  width: 34px;
+  height: 34px;
+  border: 5px solid var(--secondary);
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: rotation6 0.5s linear infinite reverse;
+}
+
+@keyframes rotation6 {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Loader 7 - Growing Circle */
+.loader-7 {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: inline-block;
+  position: relative;
+  background: linear-gradient(0deg, rgba(46,204,113,0.2) 33%, var(--primary) 100%);
+  animation: rotation7 1s linear infinite;
+}
+
+.loader-7::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: #f5f6fa;
+}
+
+@keyframes rotation7 {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Loader 8 - Fading Dots */
+.loader-8 {
+  display: flex;
+  gap: 4px;
+}
+
+.loader-8 div {
+  width: 8px;
+  height: 8px;
+  background: var(--primary);
+  border-radius: 50%;
+  animation: fade8 0.8s ease-in-out infinite alternate;
+}
+
+.loader-8 div:nth-child(1) { animation-delay: -0.8s; }
+.loader-8 div:nth-child(2) { animation-delay: -0.4s; }
+.loader-8 div:nth-child(3) { animation-delay: 0s; }
+
+@keyframes fade8 {
+  from { opacity: 1; }
+  to { opacity: 0.2; }
+}
+
+/* Loader 9 - Ripple Effect */
+.loader-9 {
+  width: 50px;
+  height: 50px;
+  position: relative;
+}
+
+.loader-9 div {
+  position: absolute;
+  border: 4px solid var(--primary);
+  border-radius: 50%;
+  animation: ripple9 1.5s ease-out infinite;
+}
+
+.loader-9 div:nth-child(2) {
+  animation-delay: 0.5s;
+}
+
+@keyframes ripple9 {
+  from {
+    width: 0;
+    height: 0;
+    opacity: 1;
+  }
+  to {
+    width: 50px;
+    height: 50px;
+    opacity: 0;
+  }
+}
+
+/* Loader 10 - Cube Grid */
+.loader-10 {
+  width: 40px;
+  height: 40px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2px;
+}
+
+.loader-10 div {
+  background: var(--primary);
+  animation: scale10 1.2s ease-in-out infinite;
+}
+
+.loader-10 div:nth-child(1) { animation-delay: 0.0s; }
+.loader-10 div:nth-child(2) { animation-delay: 0.1s; }
+.loader-10 div:nth-child(3) { animation-delay: 0.2s; }
+.loader-10 div:nth-child(4) { animation-delay: 0.3s; }
+.loader-10 div:nth-child(5) { animation-delay: 0.4s; }
+.loader-10 div:nth-child(6) { animation-delay: 0.5s; }
+.loader-10 div:nth-child(7) { animation-delay: 0.6s; }
+.loader-10 div:nth-child(8) { animation-delay: 0.7s; }
+.loader-10 div:nth-child(9) { animation-delay: 0.8s; }
+
+@keyframes scale10 {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(0.5); }
+}
+
+/* Loader 11 - Clock */
+.loader-11 {
+  width: 40px;
+  height: 40px;
+  border: 4px solid var(--primary);
+  border-radius: 50%;
+  position: relative;
+}
+
+.loader-11::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 2px;
+  height: 15px;
+  background: var(--primary);
+  transform-origin: 50% 0;
+  animation: clock11 1s linear infinite;
+}
+
+@keyframes clock11 {
+  to { transform: rotate(360deg); }
+}
+
+/* Loader 12 - Split Ring */
+.loader-12 {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 4px solid transparent;
+  border-top-color: var(--primary);
+  border-bottom-color: var(--secondary);
+  animation: rotate12 1s cubic-bezier(0.68, -0.55, 0.265, 1.55) infinite;
+}
+
+@keyframes rotate12 {
+  0% { transform: rotate(0deg); }
+  50% { transform: rotate(180deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Loader 13 - Wave */
+.loader-13 {
+  display: flex;
+  gap: 3px;
+  align-items: flex-end;
+}
+
+.loader-13 div {
+  width: 5px;
+  height: 20px;
+  background: var(--primary);
+  animation: wave13 1s ease-in-out infinite;
+}
+
+.loader-13 div:nth-child(2) { animation-delay: 0.1s; }
+.loader-13 div:nth-child(3) { animation-delay: 0.2s; }
+.loader-13 div:nth-child(4) { animation-delay: 0.3s; }
+.loader-13 div:nth-child(5) { animation-delay: 0.4s; }
+
+@keyframes wave13 {
+  0%, 100% { transform: scaleY(1); }
+  50% { transform: scaleY(2); }
+}
+
+/* Loader 14 - Square Dots */
+.loader-14 {
+  display: flex;
+  gap: 5px;
+}
+
+.loader-14 div {
+  width: 10px;
+  height: 10px;
+  background: var(--primary);
+  animation: rotate14 1.5s ease-in-out infinite;
+}
+
+.loader-14 div:nth-child(2) { animation-delay: 0.2s; }
+.loader-14 div:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes rotate14 {
+  0% { transform: rotate(0); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Loader 15 - Interwind */
+.loader-15 {
+  width: 40px;
+  height: 40px;
+  position: relative;
+}
+
+.loader-15 div {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border: 4px solid transparent;
+  border-radius: 50%;
+  animation: rotate15 1.5s cubic-bezier(0.77, 0, 0.175, 1) infinite;
+}
+
+.loader-15 div:first-child {
+  border-top-color: var(--primary);
+}
+
+.loader-15 div:last-child {
+  border-bottom-color: var(--secondary);
+  animation-delay: 0.75s;
+}
+
+@keyframes rotate15 {
+  0% { transform: rotate(0); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Loader 16 - Cross Fade */
+.loader-16 {
+  width: 40px;
+  height: 40px;
+  position: relative;
+}
+
+.loader-16::before,
+.loader-16::after {
+  content: '';
+  position: absolute;
+  width: 100%;
+  height: 4px;
+  background: var(--primary);
+  animation: fade16 1s ease-in-out infinite;
+}
+
+.loader-16::after {
+  transform: rotate(90deg);
+}
+
+@keyframes fade16 {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+/* Loader 17 - DNA Helix */
+.loader-17 {
+  width: 40px;
+  height: 40px;
+  position: relative;
+}
+
+.loader-17 div {
+  position: absolute;
+  width: 3px;
+  height: 8px;
+  background: var(--primary);
+  animation: dna17 1.5s ease-in-out infinite;
+}
+
+.loader-17 div:nth-child(1) { left: 4px; animation-delay: 0s; }
+.loader-17 div:nth-child(2) { left: 12px; animation-delay: 0.1s; }
+.loader-17 div:nth-child(3) { left: 20px; animation-delay: 0.2s; }
+.loader-17 div:nth-child(4) { left: 28px; animation-delay: 0.3s; }
+
+@keyframes dna17 {
+  0%, 100% { transform: scaleY(1.5); }
+  50% { transform: scaleY(0.5); }
+}
+
+/* Loader 18 - Infinity */
+.loader-18 {
+  width: 40px;
+  height: 20px;
+  position: relative;
+}
+
+.loader-18::before,
+.loader-18::after {
+  content: '';
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  border: 3px solid var(--primary);
+  border-radius: 50%;
+  animation: infinity18 1.5s ease-in-out infinite;
+}
+
+.loader-18::after {
+  left: 15px;
+  animation-delay: 0.75s;
+}
+
+@keyframes infinity18 {
+  0% { transform: scale(1); }
+  50% { transform: scale(0.7); }
+  100% { transform: scale(1); }
+}
+
+/* Loader 19 - Hexagon */
+.loader-19 {
+  width: 40px;
+  height: 35px;
+  position: relative;
+  clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
+  background: var(--primary);
+  animation: pulse19 1s ease-in-out infinite;
+}
+
+@keyframes pulse19 {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(0.8); opacity: 0.5; }
+}
+
+/* Loader 20 - Matrix */
+.loader-20 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2px;
+  width: 40px;
+  height: 40px;
+}
+
+.loader-20 div {
+  background: var(--primary);
+  animation: matrix20 1.5s ease infinite;
+  opacity: 0;
+}
+
+.loader-20 div:nth-child(1) { animation-delay: 0.0s; }
+.loader-20 div:nth-child(2) { animation-delay: 0.2s; }
+.loader-20 div:nth-child(3) { animation-delay: 0.4s; }
+.loader-20 div:nth-child(4) { animation-delay: 0.6s; }
+.loader-20 div:nth-child(5) { animation-delay: 0.8s; }
+.loader-20 div:nth-child(6) { animation-delay: 1.0s; }
+.loader-20 div:nth-child(7) { animation-delay: 1.2s; }
+.loader-20 div:nth-child(8) { animation-delay: 1.4s; }
+.loader-20 div:nth-child(9) { animation-delay: 1.6s; }
+
+@keyframes matrix20 {
+  0%, 100% { opacity: 0; }
+  50% { opacity: 1; }
+}
+
+/* Loader 21 - Circular Segments */
+.loader-21 {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 4px solid var(--primary);
+  position: relative;
+  animation: segment21 2s linear infinite;
+}
+
+.loader-21::before {
+  content: '';
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  border: inherit;
+  border-color: transparent;
+  border-top-color: var(--primary);
+  animation: segment21 1s linear infinite reverse;
+}
+
+@keyframes segment21 {
+  100% { transform: rotate(360deg); }
+}
+
+/* Loader 22 - Quantum Dots */
+.loader-22 {
+  width: 40px;
+  height: 40px;
+  position: relative;
+}
+
+.loader-22 div {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--primary);
+  animation: quantum22 2s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+}
+
+.loader-22 div:nth-child(1) {
+  top: 0;
+  left: 0;
+  animation-delay: 0s;
+}
+
+.loader-22 div:nth-child(2) {
+  top: 0;
+  right: 0;
+  animation-delay: 0.5s;
+}
+
+.loader-22 div:nth-child(3) {
+  bottom: 0;
+  right: 0;
+  animation-delay: 1s;
+}
+
+.loader-22 div:nth-child(4) {
+  bottom: 0;
+  left: 0;
+  animation-delay: 1.5s;
+}
+
+@keyframes quantum22 {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.5); opacity: 0.5; }
+  100% { transform: scale(1); }
+}
+
+/* Loader 23 - Circular Progress */
+.loader-23 {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: conic-gradient(var(--primary) 0%, transparent);
+  animation: progress23 1s linear infinite;
+}
+
+@keyframes progress23 {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Loader 24 - Pulsing Square */
+.loader-24 {
+  width: 40px;
+  height: 40px;
+  background: var(--primary);
+  animation: pulse24 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse24 {
+  0% { transform: scale(1); }
+  50% { transform: scale(0.7); box-shadow: 0 0 15px var(--primary); }
+  100% { transform: scale(1); }
+}
+
+/* Loader 25 - Rotating Triangles */
+.loader-25 {
+  width: 40px;
+  height: 40px;
+  position: relative;
+}
+
+.loader-25 div {
+  position: absolute;
+  width: 0;
+  height: 0;
+  border-left: 20px solid transparent;
+  border-right: 20px solid transparent;
+  border-bottom: 34px solid var(--primary);
+  animation: triangle25 1.5s ease-in-out infinite;
+}
+
+.loader-25 div:last-child {
+  transform: rotate(180deg);
+  animation-delay: 0.75s;
+}
+
+@keyframes triangle25 {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+/* Loader 26 - Sliding Squares */
+.loader-26 {
+  width: 40px;
+  height: 40px;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 2px;
+}
+
+.loader-26 div {
+  width: 18px;
+  height: 18px;
+  background: var(--primary);
+  animation: slide26 2s ease infinite;
+}
+
+.loader-26 div:nth-child(2) { animation-delay: 0.5s; }
+.loader-26 div:nth-child(3) { animation-delay: 1s; }
+.loader-26 div:nth-child(4) { animation-delay: 1.5s; }
+
+@keyframes slide26 {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(0); }
+}
+
+/* Loader 27 - Circular Orbit */
+.loader-27 {
+  width: 40px;
+  height: 40px;
+  position: relative;
+}
+
+.loader-27 div {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  background: var(--primary);
+  border-radius: 50%;
+  animation: orbit27 2s cubic-bezier(.25, .25, .25, 1) infinite;
+}
+
+.loader-27 div:nth-child(1) { animation-delay: 0s; }
+.loader-27 div:nth-child(2) { animation-delay: 0.3s; }
+.loader-27 div:nth-child(3) { animation-delay: 0.6s; }
+
+@keyframes orbit27 {
+  0% { transform: rotate(0) translateX(15px) rotate(0); }
+  100% { transform: rotate(360deg) translateX(15px) rotate(-360deg); }
+}
+
+/* Loader 28 - Morphing Square */
+.loader-28 {
+  width: 40px;
+  height: 40px;
+  background: var(--primary);
+  animation: morph28 2s ease-in-out infinite;
+}
+
+@keyframes morph28 {
+  0%, 100% { transform: rotate(0deg) scale(1); border-radius: 0; }
+  25% { transform: rotate(45deg) scale(1.2); border-radius: 10px; }
+  50% { transform: rotate(90deg) scale(1); border-radius: 50%; }
+  75% { transform: rotate(135deg) scale(1.2); border-radius: 10px; }
+}
+
+/* Loader 29 - Spiral Dots */
+.loader-29 {
+  width: 40px;
+  height: 40px;
+  position: relative;
+}
+
+.loader-29 div {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  background: var(--primary);
+  border-radius: 50%;
+  animation: spiral29 1.5s ease-in-out infinite;
+}
+
+.loader-29 div:nth-child(1) { top: 0; left: 50%; margin-left: -3px; animation-delay: 0s; }
+.loader-29 div:nth-child(2) { top: 25%; right: 25%; animation-delay: 0.1s; }
+.loader-29 div:nth-child(3) { right: 0; top: 50%; margin-top: -3px; animation-delay: 0.2s; }
+.loader-29 div:nth-child(4) { bottom: 25%; right: 25%; animation-delay: 0.3s; }
+.loader-29 div:nth-child(5) { bottom: 0; left: 50%; margin-left: -3px; animation-delay: 0.4s; }
+.loader-29 div:nth-child(6) { bottom: 25%; left: 25%; animation-delay: 0.5s; }
+.loader-29 div:nth-child(7) { left: 0; top: 50%; margin-top: -3px; animation-delay: 0.6s; }
+.loader-29 div:nth-child(8) { top: 25%; left: 25%; animation-delay: 0.7s; }
+
+@keyframes spiral29 {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(0); }
+}
+
+/* Loader 30 - Folding Cube */
+.loader-30 {
+  width: 40px;
+  height: 40px;
+  position: relative;
+  transform: rotateZ(45deg);
+}
+
+.loader-30 div {
+  float: left;
+  width: 50%;
+  height: 50%;
+  position: relative;
+  transform: scale(1.1);
+}
+
+.loader-30 div:before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: var(--primary);
+  animation: fold30 2.4s infinite linear both;
+  transform-origin: 100% 100%;
+}
+
+.loader-30 div:nth-child(2) { transform: scale(1.1) rotateZ(90deg); }
+.loader-30 div:nth-child(3) { transform: scale(1.1) rotateZ(270deg); }
+.loader-30 div:nth-child(4) { transform: scale(1.1) rotateZ(180deg); }
+
+.loader-30 div:nth-child(2):before { animation-delay: 0.3s; }
+.loader-30 div:nth-child(3):before { animation-delay: 0.6s; }
+.loader-30 div:nth-child(4):before { animation-delay: 0.9s; }
+
+@keyframes fold30 {
+  0%, 10% { transform: perspective(140px) rotateX(-180deg); opacity: 0; }
+  25%, 75% { transform: perspective(140px) rotateX(0deg); opacity: 1; }
+  90%, 100% { transform: perspective(140px) rotateY(180deg); opacity: 0; }
+}
+
+/* Loader 31 - Staggered Wave */
+.loader-31 {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  height: 40px;
+}
+
+.loader-31 div {
+  width: 4px;
+  height: 100%;
+  background: var(--primary);
+  animation: wave31 1s ease-in-out infinite;
+}
+
+.loader-31 div:nth-child(2) { animation-delay: 0.1s; }
+.loader-31 div:nth-child(3) { animation-delay: 0.2s; }
+.loader-31 div:nth-child(4) { animation-delay: 0.3s; }
+.loader-31 div:nth-child(5) { animation-delay: 0.4s; }
+
+@keyframes wave31 {
+  0%, 40%, 100% { transform: scaleY(0.4); }
+  20% { transform: scaleY(1); }
+}
+
+/* Loader 32 - Pulse Ring */
+.loader-32 {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--primary);
+  position: relative;
+}
+
+.loader-32::before,
+.loader-32::after {
+  content: '';
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: var(--primary);
+  animation: pulse32 2s ease-out infinite;
+}
+
+.loader-32::after {
+  animation-delay: 1s;
+}
+
+@keyframes pulse32 {
+  0% { transform: scale(1); opacity: 1; }
+  100% { transform: scale(2); opacity: 0; }
+}
+
+/* Loader 33 - Windmill */
+.loader-33 {
+  width: 40px;
+  height: 40px;
+  position: relative;
+}
+
+.loader-33 div {
+  position: absolute;
+  width: 16px;
+  height: 4px;
+  background: var(--primary);
+  top: 50%;
+  left: 50%;
+  margin-top: -2px;
+  margin-left: -8px;
+  transform-origin: left center;
+  animation: windmill33 2s linear infinite;
+}
+
+.loader-33 div:nth-child(1) { animation-delay: 0s; }
+.loader-33 div:nth-child(2) { animation-delay: 0.5s; }
+.loader-33 div:nth-child(3) { animation-delay: 1s; }
+.loader-33 div:nth-child(4) { animation-delay: 1.5s; }
+
+@keyframes windmill33 {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Loader 34 - DNA Spin */
+.loader-34 {
+  width: 40px;
+  height: 40px;
+  position: relative;
+}
+
+.loader-34 div {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  background: var(--primary);
+  border-radius: 50%;
+  animation: dna34 1.5s ease-in-out infinite;
+}
+
+.loader-34 div:nth-child(1) { top: 0; left: 18px; }
+.loader-34 div:nth-child(2) { top: 4px; left: 14px; }
+.loader-34 div:nth-child(3) { top: 8px; left: 10px; }
+.loader-34 div:nth-child(4) { top: 12px; left: 14px; }
+.loader-34 div:nth-child(5) { top: 16px; left: 18px; }
+.loader-34 div:nth-child(6) { top: 20px; left: 14px; }
+.loader-34 div:nth-child(7) { top: 24px; left: 10px; }
+.loader-34 div:nth-child(8) { top: 28px; left: 14px; }
+.loader-34 div:nth-child(9) { top: 32px; left: 18px; }
+.loader-34 div:nth-child(10) { top: 36px; left: 14px; }
+
+@keyframes dna34 {
+  0%, 100% { transform: translateX(0); }
+  50% { transform: translateX(10px); }
+}
+
+/* Loader 35 - Elastic Circle */
+.loader-35 {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--primary);
+  animation: elastic35 1.5s ease-in-out infinite;
+}
+
+@keyframes elastic35 {
+  0%, 100% { transform: scale(1); }
+  25% { transform: scale(0.95) skewX(5deg); }
+  50% { transform: scale(1.05) skewX(-5deg); }
+  75% { transform: scale(0.95) skewX(5deg); }
+}
+
+/* Loader 36 - Meteor Shower */
+.loader-36 {
+  width: 40px;
+  height: 40px;
+  position: relative;
+}
+
+.loader-36 div {
+  position: absolute;
+  width: 2px;
+  height: 8px;
+  background: var(--primary);
+  transform-origin: center bottom;
+  animation: meteor36 1.5s ease-in-out infinite;
+}
+
+.loader-36 div:nth-child(1) { left: 0; transform: rotate(-45deg); animation-delay: 0s; }
+.loader-36 div:nth-child(2) { left: 10px; transform: rotate(-25deg); animation-delay: 0.2s; }
+.loader-36 div:nth-child(3) { left: 20px; transform: rotate(0deg); animation-delay: 0.4s; }
+.loader-36 div:nth-child(4) { left: 30px; transform: rotate(25deg); animation-delay: 0.6s; }
+.loader-36 div:nth-child(5) { left: 40px; transform: rotate(45deg); animation-delay: 0.8s; }
+
+@keyframes meteor36 {
+  0% { transform-origin: center bottom; transform: scaleY(1) rotate(-45deg); }
+  50% { transform-origin: center bottom; transform: scaleY(2) rotate(-45deg); }
+  100% { transform-origin: center bottom; transform: scaleY(1) rotate(-45deg); }
+}
+
+/* Loader 37 - Floating Squares */
+.loader-37 {
+  width: 40px;
+  height: 40px;
+  position: relative;
+}
+
+.loader-37 div {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  background: var(--primary);
+  animation: float37 2s ease-in-out infinite;
+}
+
+.loader-37 div:nth-child(1) { top: 0; left: 0; animation-delay: 0s; }
+.loader-37 div:nth-child(2) { top: 0; right: 0; animation-delay: 0.5s; }
+.loader-37 div:nth-child(3) { bottom: 0; right: 0; animation-delay: 1s; }
+.loader-37 div:nth-child(4) { bottom: 0; left: 0; animation-delay: 1.5s; }
+
+@keyframes float37 {
+  0%, 100% { transform: translate(0, 0); }
+  25% { transform: translate(2px, -2px); }
+  50% { transform: translate(0, -4px); }
+  75% { transform: translate(-2px, -2px); }
+}
+
+/* Loader 38 - Spinning Triangles */
+.loader-38 {
+  width: 40px;
+  height: 40px;
+  position: relative;
+}
+
+.loader-38 div {
+  position: absolute;
+  width: 0;
+  height: 0;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-bottom: 16px solid var(--primary);
+  animation: spinTriangle38 1.5s linear infinite;
+}
+
+.loader-38 div:nth-child(1) { animation-delay: 0s; }
+.loader-38 div:nth-child(2) { animation-delay: 0.5s; opacity: 0.5; }
+.loader-38 div:nth-child(3) { animation-delay: 1s; opacity: 0.25; }
+
+@keyframes spinTriangle38 {
+  0% { transform: rotate(0deg) translateY(0); }
+  100% { transform: rotate(360deg) translateY(0); }
+}
+
+/* Loader 39 - Pixel Grid */
+.loader-39 {
+  width: 40px;
+  height: 40px;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 2px;
+}
+
+.loader-39 div {
+  background: var(--primary);
+  animation: pixel39 1.5s ease-in-out infinite;
+}
+
+.loader-39 div:nth-child(1) { animation-delay: 0.0s; }
+.loader-39 div:nth-child(2) { animation-delay: 0.1s; }
+.loader-39 div:nth-child(3) { animation-delay: 0.2s; }
+.loader-39 div:nth-child(4) { animation-delay: 0.3s; }
+.loader-39 div:nth-child(5) { animation-delay: 0.4s; }
+.loader-39 div:nth-child(6) { animation-delay: 0.5s; }
+.loader-39 div:nth-child(7) { animation-delay: 0.6s; }
+.loader-39 div:nth-child(8) { animation-delay: 0.7s; }
+.loader-39 div:nth-child(9) { animation-delay: 0.8s; }
+.loader-39 div:nth-child(10) { animation-delay: 0.9s; }
+.loader-39 div:nth-child(11) { animation-delay: 1.0s; }
+.loader-39 div:nth-child(12) { animation-delay: 1.1s; }
+.loader-39 div:nth-child(13) { animation-delay: 1.2s; }
+.loader-39 div:nth-child(14) { animation-delay: 1.3s; }
+.loader-39 div:nth-child(15) { animation-delay: 1.4s; }
+.loader-39 div:nth-child(16) { animation-delay: 1.5s; }
+
+@keyframes pixel39 {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.2; }
+}
+
+/* Loader 40 - Rotating Pentagon */
+.loader-40 {
+  width: 40px;
+  height: 38px;
+  background: var(--primary);
+  clip-path: polygon(50% 0%, 100% 38%, 82% 100%, 18% 100%, 0% 38%);
+  animation: rotatePentagon40 2s linear infinite;
+}
+
+@keyframes rotatePentagon40 {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Loader 41 - Binary Pulse */
+.loader-41 {
+  width: 40px;
+  height: 40px;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 4px;
+}
+
+.loader-41 div {
+  background: var(--primary);
+  animation: binaryPulse41 1s ease-in-out infinite;
+}
+
+.loader-41 div:nth-child(1) { animation-delay: 0.0s; }
+.loader-41 div:nth-child(2) { animation-delay: 0.2s; }
+.loader-41 div:nth-child(3) { animation-delay: 0.4s; }
+.loader-41 div:nth-child(4) { animation-delay: 0.6s; }
+
+@keyframes binaryPulse41 {
+  0%, 100% { transform: scale(0.8); opacity: 0.5; }
+  50% { transform: scale(1.2); opacity: 1; }
+}
+
+/* Loader 42 - Hypnotic Spiral */
+.loader-42 {
+  width: 40px;
+  height: 40px;
+  border: 4px solid transparent;
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  position: relative;
+  animation: spiral42 1s linear infinite;
+}
+
+.loader-42::before,
+.loader-42::after {
+  content: '';
+  position: absolute;
+  border: inherit;
+  border-radius: 50%;
+}
+
+.loader-42::before {
+  top: -12px;
+  left: -12px;
+  right: -12px;
+  bottom: -12px;
+  animation: spiral42 2s linear infinite;
+}
+
+.loader-42::after {
+  top: 4px;
+  left: 4px;
+  right: 4px;
+  bottom: 4px;
+  animation: spiral42 3s linear infinite;
+}
+
+@keyframes spiral42 {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Loader 43 - Fractal Squares */
+.loader-43 {
+  width: 40px;
+  height: 40px;
+  position: relative;
+}
+
+.loader-43 div {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border: 2px solid var(--primary);
+  animation: fractal43 1.5s ease-in-out infinite alternate;
+}
+
+.loader-43 div:nth-child(1) { animation-delay: 0s; }
+.loader-43 div:nth-child(2) { animation-delay: 0.5s; }
+.loader-43 div:nth-child(3) { animation-delay: 1s; }
+
+@keyframes fractal43 {
+  0% { transform: rotate(0deg) scale(0.3); }
+  100% { transform: rotate(90deg) scale(1); }
+}
+
+/* Loader 44 - Quantum Ripple */
+.loader-44 {
+  width: 40px;
+  height: 40px;
+  position: relative;
+}
+
+.loader-44 div {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border: 2px solid var(--primary);
+  border-radius: 50%;
+  opacity: 0;
+  animation: ripple44 1.5s cubic-bezier(0.1, 0.4, 0.3, 1) infinite;
+}
+
+.loader-44 div:nth-child(2) { animation-delay: 0.5s; }
+.loader-44 div:nth-child(3) { animation-delay: 1s; }
+
+@keyframes ripple44 {
+  0% { transform: scale(0); opacity: 1; }
+  100% { transform: scale(1.5); opacity: 0; }
+}
+
+/* Loader 45 - Digital Rain */
+.loader-45 {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  justify-content: space-between;
+}
+
+.loader-45 div {
+  width: 2px;
+  height: 100%;
+  background: var(--primary);
+  animation: rain45 1s linear infinite;
+  transform-origin: 50% 100%;
+}
+
+.loader-45 div:nth-child(1) { animation-delay: 0.0s; }
+.loader-45 div:nth-child(2) { animation-delay: 0.1s; }
+.loader-45 div:nth-child(3) { animation-delay: 0.2s; }
+.loader-45 div:nth-child(4) { animation-delay: 0.3s; }
+.loader-45 div:nth-child(5) { animation-delay: 0.4s; }
+.loader-45 div:nth-child(6) { animation-delay: 0.5s; }
+.loader-45 div:nth-child(7) { animation-delay: 0.6s; }
+.loader-45 div:nth-child(8) { animation-delay: 0.7s; }
+.loader-45 div:nth-child(9) { animation-delay: 0.8s; }
+.loader-45 div:nth-child(10) { animation-delay: 0.9s; }
+
+@keyframes rain45 {
+  0% { transform: scaleY(0); }
+  50% { transform: scaleY(1); }
+  100% { transform: scaleY(0); }
+}
+
+/* Loader 46 - Constellation */
+.loader-46 {
+  width: 40px;
+  height: 40px;
+  position: relative;
+}
+
+.loader-46 div {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  background: var(--primary);
+  border-radius: 50%;
+  animation: constellation46 2s ease infinite;
+}
+
+.loader-46 div:nth-child(1) { top: 0; left: 0; }
+.loader-46 div:nth-child(2) { top: 0; right: 0; animation-delay: 0.4s; }
+.loader-46 div:nth-child(3) { bottom: 0; left: 0; animation-delay: 0.8s; }
+.loader-46 div:nth-child(4) { bottom: 0; right: 0; animation-delay: 1.2s; }
+.loader-46 div:nth-child(5) { top: 50%; left: 50%; transform: translate(-50%, -50%); animation-delay: 1.6s; }
+
+@keyframes constellation46 {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.5); box-shadow: 0 0 10px var(--primary); }
+}
+
+/* Loader 47 - Atomic Spin */
+.loader-47 {
+  width: 40px;
+  height: 40px;
+  position: relative;
+}
+
+.loader-47 div {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border: 2px solid var(--primary);
+  border-radius: 50%;
+}
+
+.loader-47 div:nth-child(1) {
+  animation: atomic47-1 2s linear infinite;
+}
+
+.loader-47 div:nth-child(2) {
+  animation: atomic47-2 2s linear infinite;
+}
+
+@keyframes atomic47-1 {
+  0% { transform: rotate(0deg) scale(1); }
+  50% { transform: rotate(180deg) scale(0.8); }
+  100% { transform: rotate(360deg) scale(1); }
+}
+
+@keyframes atomic47-2 {
+  0% { transform: rotate(90deg) scale(0.8); }
+  50% { transform: rotate(270deg) scale(1); }
+  100% { transform: rotate(450deg) scale(0.8); }
+}
+
+/* Loader 48 - Energy Burst */
+.loader-48 {
+  width: 40px;
+  height: 40px;
+  position: relative;
+}
+
+.loader-48 div {
+  position: absolute;
+  width: 20px;
+  height: 2px;
+  background: var(--primary);
+  top: 50%;
+  left: 50%;
+  transform-origin: 0 50%;
+}
+
+.loader-48 div:nth-child(1) { transform: rotate(0deg); }
+.loader-48 div:nth-child(2) { transform: rotate(90deg); }
+.loader-48 div:nth-child(3) { transform: rotate(180deg); }
+.loader-48 div:nth-child(4) { transform: rotate(270deg); }
+
+.loader-48 div {
+  animation: burst48 1s cubic-bezier(0.3, 0.1, 0.7, 0.9) infinite;
+}
+
+@keyframes burst48 {
+  0% { transform: rotate(0deg) scaleX(0); opacity: 0; }
+  50% { transform: rotate(360deg) scaleX(1); opacity: 1; }
+  100% { transform: rotate(720deg) scaleX(0); opacity: 0; }
+}
+
+/* Loader 49 - Quantum Tunnel */
+.loader-49 {
+  width: 40px;
+  height: 40px;
+  position: relative;
+  perspective: 200px;
+}
+
+.loader-49 div {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border: 2px solid var(--primary);
+  animation: tunnel49 2s cubic-bezier(0.17, 0.67, 0.83, 0.67) infinite;
+}
+
+.loader-49 div:nth-child(1) { animation-delay: 0s; }
+.loader-49 div:nth-child(2) { animation-delay: 0.6s; }
+.loader-49 div:nth-child(3) { animation-delay: 1.2s; }
+
+@keyframes tunnel49 {
+  0% { transform: rotateX(0deg) rotateY(0deg) scale(0.2); opacity: 0; }
+  50% { opacity: 1; }
+  100% { transform: rotateX(360deg) rotateY(360deg) scale(1); opacity: 0; }
+}
+
+/* Loader 50 - Plasma Field */
+.loader-50 {
+  width: 40px;
+  height: 40px;
+  background: var(--primary);
+  clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+  animation: plasma50 2s ease-in-out infinite;
+  position: relative;
+}
+
+.loader-50::before {
+  content: '';
+  position: absolute;
+  inset: 2px;
+  background: white;
+  clip-path: inherit;
+  animation: plasma50-inner 2s ease-in-out infinite;
+}
+
+@keyframes plasma50 {
+  0%, 100% { transform: rotate(0deg) scale(1); }
+  25% { transform: rotate(90deg) scale(1.2); }
+  50% { transform: rotate(180deg) scale(1); }
+  75% { transform: rotate(270deg) scale(0.8); }
+}
+
+@keyframes plasma50-inner {
+  0%, 100% { transform: scale(0.8); }
+  50% { transform: scale(1.1); }
+}
+</style>
+</head>
+<body>
+<h1>CSS Loading Animations</h1>
+<p>Click the "Copy CSS" button to copy the animation code.</p>
+
+<div class="grid" id="loaderGrid"></div>
+
+<script>
+const loaders = [
+  {
+    name: "Spinning Circle",
+    html: '<div class="loader-1"></div>',
+    css: `.loader-1 {
+  width: 48px;
+  height: 48px;
+  border: 5px solid #f3f3f3;
+  border-top: 5px solid #2ecc71;
+  border-radius: 50%;
+  animation: spin1 1s linear infinite;
+}
+
+@keyframes spin1 {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}`
+  },
+  {
+    name: "Pulsing Dots",
+    html: '<div class="loader-2"><div></div><div></div><div></div></div>',
+    css: `.loader-2 {
+  display: flex;
+  gap: 5px;
+}
+
+.loader-2 div {
+  width: 12px;
+  height: 12px;
+  background: #2ecc71;
+  border-radius: 50%;
+  animation: pulse2 1.5s ease-in-out infinite;
+}
+
+.loader-2 div:nth-child(2) { animation-delay: 0.2s; }
+.loader-2 div:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes pulse2 {
+  0%, 100% { transform: scale(0.8); opacity: 0.5; }
+  50% { transform: scale(1.2); opacity: 1; }
+}`
+  },
+  {
+    name: "Growing Bar",
+    html: '<div class="loader-3"></div>',
+    css: `.loader-3 {
+  width: 100px;
+  height: 4px;
+  background: #f3f3f3;
+  position: relative;
+  overflow: hidden;
+}
+
+.loader-3::after {
+  content: '';
+  position: absolute;
+  width: 40%;
+  height: 100%;
+  background: #2ecc71;
+  animation: grow3 1.5s ease-in-out infinite;
+}
+
+@keyframes grow3 {
+  0% { left: -40%; }
+  100% { left: 100%; }
+}`
+  },
+  {
+    name: "Bouncing Balls",
+    html: '<div class="loader-4"><div></div><div></div><div></div></div>',
+    css: `.loader-4 {
+  display: flex;
+  gap: 4px;
+}
+
+.loader-4 div {
+  width: 10px;
+  height: 10px;
+  background: #2ecc71;
+  border-radius: 50%;
+  animation: bounce4 0.5s alternate infinite;
+}
+
+.loader-4 div:nth-child(2) { animation-delay: 0.15s; }
+.loader-4 div:nth-child(3) { animation-delay: 0.3s; }
+
+@keyframes bounce4 {
+  from { transform: translateY(0); }
+  to { transform: translateY(-15px); }
+}`
+  },
+  {
+    name: "Rotating Square",
+    html: '<div class="loader-5"></div>',
+    css: `.loader-5 {
+  width: 40px;
+  height: 40px;
+  background: #2ecc71;
+  animation: rotate5 1.2s ease-in-out infinite;
+}
+
+@keyframes rotate5 {
+  0% { transform: perspective(120px) rotateX(0deg) rotateY(0deg); }
+  50% { transform: perspective(120px) rotateX(-180.1deg) rotateY(0deg); }
+  100% { transform: perspective(120px) rotateX(-180deg) rotateY(-179.9deg); }
+}`
+  },
+  {
+    name: "Dual Ring",
+    html: '<div class="loader-6"></div>',
+    css: `.loader-6 {
+  width: 48px;
+  height: 48px;
+  border: 5px solid #2ecc71;
+  border-bottom-color: transparent;
+  border-radius: 50%;
+  display: inline-block;
+  position: relative;
+  animation: rotation6 1s linear infinite;
+}
+
+.loader-6::after {
+  content: '';
+  position: absolute;
+  left: 2px;
+  top: 2px;
+  width: 34px;
+  height: 34px;
+  border: 5px solid #e74c3c;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: rotation6 0.5s linear infinite reverse;
+}
+
+@keyframes rotation6 {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}`
+  },
+  {
+    name: "Growing Circle",
+    html: '<div class="loader-7"></div>',
+    css: `.loader-7 {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: inline-block;
+  position: relative;
+  background: linear-gradient(0deg, rgba(46,204,113,0.2) 33%, #2ecc71 100%);
+  animation: rotation7 1s linear infinite;
+}
+
+.loader-7::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: #f5f6fa;
+}
+
+@keyframes rotation7 {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}`
+  },
+  {
+    name: "Fading Dots",
+    html: '<div class="loader-8"><div></div><div></div><div></div></div>',
+    css: `.loader-8 {
+  display: flex;
+  gap: 4px;
+}
+
+.loader-8 div {
+  width: 8px;
+  height: 8px;
+  background: #2ecc71;
+  border-radius: 50%;
+  animation: fade8 0.8s ease-in-out infinite alternate;
+}
+
+.loader-8 div:nth-child(1) { animation-delay: -0.8s; }
+.loader-8 div:nth-child(2) { animation-delay: -0.4s; }
+.loader-8 div:nth-child(3) { animation-delay: 0s; }
+
+@keyframes fade8 {
+  from { opacity: 1; }
+  to { opacity: 0.2; }
+}`
+  },
+  {
+    name: "Ripple Effect",
+    html: '<div class="loader-9"><div></div><div></div></div>',
+    css: `.loader-9 {
+  width: 50px;
+  height: 50px;
+  position: relative;
+}
+
+.loader-9 div {
+  position: absolute;
+  border: 4px solid #2ecc71;
+  border-radius: 50%;
+  animation: ripple9 1.5s ease-out infinite;
+}
+
+.loader-9 div:nth-child(2) {
+  animation-delay: 0.5s;
+}
+
+@keyframes ripple9 {
+  from {
+    width: 0;
+    height: 0;
+    opacity: 1;
+  }
+  to {
+    width: 50px;
+    height: 50px;
+    opacity: 0;
+  }
+}`
+  },
+  {
+    name: "Cube Grid",
+    html: '<div class="loader-10">' + Array(9).fill('<div></div>').join('') + '</div>',
+    css: `.loader-10 {
+  width: 40px;
+  height: 40px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2px;
+}
+
+.loader-10 div {
+  background: #2ecc71;
+  animation: scale10 1.2s ease-in-out infinite;
+}
+
+.loader-10 div:nth-child(1) { animation-delay: 0.0s; }
+.loader-10 div:nth-child(2) { animation-delay: 0.1s; }
+.loader-10 div:nth-child(3) { animation-delay: 0.2s; }
+.loader-10 div:nth-child(4) { animation-delay: 0.3s; }
+.loader-10 div:nth-child(5) { animation-delay: 0.4s; }
+.loader-10 div:nth-child(6) { animation-delay: 0.5s; }
+.loader-10 div:nth-child(7) { animation-delay: 0.6s; }
+.loader-10 div:nth-child(8) { animation-delay: 0.7s; }
+.loader-10 div:nth-child(9) { animation-delay: 0.8s; }
+
+@keyframes scale10 {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(0.5); }
+}`
+  },
+  {
+    name: "Clock",
+    html: '<div class="loader-11"></div>',
+    css: `.loader-11 {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #2ecc71;
+  border-radius: 50%;
+  position: relative;
+}
+
+.loader-11::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 2px;
+  height: 15px;
+  background: #2ecc71;
+  transform-origin: 50% 0;
+  animation: clock11 1s linear infinite;
+}
+
+@keyframes clock11 {
+  to { transform: rotate(360deg); }
+}`
+  },
+  {
+    name: "Split Ring",
+    html: '<div class="loader-12"></div>',
+    css: `.loader-12 {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 4px solid transparent;
+  border-top-color: #2ecc71;
+  border-bottom-color: #e74c3c;
+  animation: rotate12 1s cubic-bezier(0.68, -0.55, 0.265, 1.55) infinite;
+}
+
+@keyframes rotate12 {
+  0% { transform: rotate(0deg); }
+  50% { transform: rotate(180deg); }
+  100% { transform: rotate(360deg); }
+}`
+  },
+  {
+    name: "Wave",
+    html: '<div class="loader-13"><div></div><div></div><div></div><div></div><div></div></div>',
+    css: `.loader-13 {
+  display: flex;
+  gap: 3px;
+  align-items: flex-end;
+}
+
+.loader-13 div {
+  width: 5px;
+  height: 20px;
+  background: #2ecc71;
+  animation: wave13 1s ease-in-out infinite;
+}
+
+.loader-13 div:nth-child(2) { animation-delay: 0.1s; }
+.loader-13 div:nth-child(3) { animation-delay: 0.2s; }
+.loader-13 div:nth-child(4) { animation-delay: 0.3s; }
+.loader-13 div:nth-child(5) { animation-delay: 0.4s; }
+
+@keyframes wave13 {
+  0%, 100% { transform: scaleY(1); }
+  50% { transform: scaleY(2); }
+}`
+  },
+  {
+    name: "Square Dots",
+    html: '<div class="loader-14"><div></div><div></div><div></div></div>',
+    css: `.loader-14 {
+  display: flex;
+  gap: 5px;
+}
+
+.loader-14 div {
+  width: 10px;
+  height: 10px;
+  background: #2ecc71;
+  animation: rotate14 1.5s ease-in-out infinite;
+}
+
+.loader-14 div:nth-child(2) { animation-delay: 0.2s; }
+.loader-14 div:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes rotate14 {
+  0% { transform: rotate(0); }
+  100% { transform: rotate(360deg); }
+}`
+  },
+  {
+    name: "Interwind",
+    html: '<div class="loader-15"><div></div><div></div></div>',
+    css: `.loader-15 {
+  width: 40px;
+  height: 40px;
+  position: relative;
+}
+
+.loader-15 div {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border: 4px solid transparent;
+  border-radius: 50%;
+  animation: rotate15 1.5s cubic-bezier(0.77, 0, 0.175, 1) infinite;
+}
+
+.loader-15 div:first-child {
+  border-top-color: #2ecc71;
+}
+
+.loader-15 div:last-child {
+  border-bottom-color: #e74c3c;
+  animation-delay: 0.75s;
+}
+
+@keyframes rotate15 {
+  0% { transform: rotate(0); }
+  100% { transform: rotate(360deg); }
+}`
+  },
+  {
+    name: "Cross Fade",
+    html: '<div class="loader-16"></div>',
+    css: `.loader-16 {
+  width: 40px;
+  height: 40px;
+  position: relative;
+}
+
+.loader-16::before,
+.loader-16::after {
+  content: '';
+  position: absolute;
+  width: 100%;
+  height: 4px;
+  background: #2ecc71;
+  animation: fade16 1s ease-in-out infinite;
+}
+
+.loader-16::after {
+  transform: rotate(90deg);
+}
+
+@keyframes fade16 {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}`
+  },
+  {
+    name: "DNA Helix",
+    html: '<div class="loader-17">' + Array(4).fill('<div></div>').join('') + '</div>',
+    css: `/* DNA Helix loader CSS */
+.loader-17 {
+  width: 40px;
+  height: 40px;
+  position: relative;
+}
+
+.loader-17 div {
+  position: absolute;
+  width: 3px;
+  height: 8px;
+  background: var(--primary);
+  animation: dna17 1.5s ease-in-out infinite;
+}
+
+.loader-17 div:nth-child(1) { left: 4px; animation-delay: 0s; }
+.loader-17 div:nth-child(2) { left: 12px; animation-delay: 0.1s; }
+.loader-17 div:nth-child(3) { left: 20px; animation-delay: 0.2s; }
+.loader-17 div:nth-child(4) { left: 28px; animation-delay: 0.3s; }
+
+@keyframes dna17 {
+  0%, 100% { transform: scaleY(1.5); }
+  50% { transform: scaleY(0.5); }
+}`
+  },
+  {
+    name: "Infinity",
+    html: '<div class="loader-18"></div>',
+    css: `/* Infinity loader CSS */
+.loader-18 {
+  width: 40px;
+  height: 20px;
+  position: relative;
+}
+
+.loader-18::before,
+.loader-18::after {
+  content: '';
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  border: 3px solid var(--primary);
+  border-radius: 50%;
+  animation: infinity18 1.5s ease-in-out infinite;
+}
+
+.loader-18::after {
+  left: 15px;
+  animation-delay: 0.75s;
+}
+
+@keyframes infinity18 {
+  0% { transform: scale(1); }
+  50% { transform: scale(0.7); }
+  100% { transform: scale(1); }
+}`
+  },
+  {
+    name: "Hexagon",
+    html: '<div class="loader-19"></div>',
+    css: `/* Hexagon loader CSS */
+.loader-19 {
+  width: 40px;
+  height: 35px;
+  position: relative;
+  clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
+  background: var(--primary);
+  animation: pulse19 1s ease-in-out infinite;
+}
+
+@keyframes pulse19 {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(0.8); opacity: 0.5; }
+}`
+  },
+  {
+    name: "Matrix",
+    html: '<div class="loader-20">' + Array(9).fill('<div></div>').join('') + '</div>',
+    css: `/* Matrix loader CSS */
+.loader-20 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2px;
+  width: 40px;
+  height: 40px;
+}
+
+.loader-20 div {
+  background: var(--primary);
+  animation: matrix20 1.5s ease infinite;
+  opacity: 0;
+}
+
+.loader-20 div:nth-child(1) { animation-delay: 0.0s; }
+.loader-20 div:nth-child(2) { animation-delay: 0.2s; }
+.loader-20 div:nth-child(3) { animation-delay: 0.4s; }
+.loader-20 div:nth-child(4) { animation-delay: 0.6s; }
+.loader-20 div:nth-child(5) { animation-delay: 0.8s; }
+.loader-20 div:nth-child(6) { animation-delay: 1.0s; }
+.loader-20 div:nth-child(7) { animation-delay: 1.2s; }
+.loader-20 div:nth-child(8) { animation-delay: 1.4s; }
+.loader-20 div:nth-child(9) { animation-delay: 1.6s; }
+
+@keyframes matrix20 {
+  0%, 100% { opacity: 0; }
+  50% { opacity: 1; }
+}`
+  },
+  {
+    name: "Circular Segments",
+    html: '<div class="loader-21"></div>',
+    css: `.loader-21 {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 4px solid var(--primary);
+  position: relative;
+  animation: segment21 2s linear infinite;
+}
+
+.loader-21::before {
+  content: '';
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  border: inherit;
+  border-color: transparent;
+  border-top-color: var(--primary);
+  animation: segment21 1s linear infinite reverse;
+}
+
+@keyframes segment21 {
+  100% { transform: rotate(360deg); }
+}`
+  },
+  {
+    name: "Quantum Dots",
+    html: '<div class="loader-22">' + Array(4).fill('<div></div>').join('') + '</div>',
+    css: `.loader-22 {
+  width: 40px;
+  height: 40px;
+  position: relative;
+}
+
+.loader-22 div {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--primary);
+  animation: quantum22 2s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+}
+
+.loader-22 div:nth-child(1) {
+  top: 0;
+  left: 0;
+  animation-delay: 0s;
+}
+
+.loader-22 div:nth-child(2) {
+  top: 0;
+  right: 0;
+  animation-delay: 0.5s;
+}
+
+.loader-22 div:nth-child(3) {
+  bottom: 0;
+  right: 0;
+  animation-delay: 1s;
+}
+
+.loader-22 div:nth-child(4) {
+  bottom: 0;
+  left: 0;
+  animation-delay: 1.5s;
+}
+
+@keyframes quantum22 {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.5); opacity: 0.5; }
+  100% { transform: scale(1); }
+}`
+  },
+  {
+    name: "Circular Progress",
+    html: '<div class="loader-23"></div>',
+    css: `.loader-23 {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: conic-gradient(var(--primary) 0%, transparent);
+  animation: progress23 1s linear infinite;
+}
+
+@keyframes progress23 {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}`
+  },
+  {
+    name: "Pulsing Square",
+    html: '<div class="loader-24"></div>',
+    css: `.loader-24 {
+  width: 40px;
+  height: 40px;
+  background: var(--primary);
+  animation: pulse24 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse24 {
+  0% { transform: scale(1); }
+  50% { transform: scale(0.7); box-shadow: 0 0 15px var(--primary); }
+  100% { transform: scale(1); }
+}`
+  },
+  {
+    name: "Rotating Triangles",
+    html: '<div class="loader-25"><div></div><div></div></div>',
+    css: `.loader-25 {
+  width: 40px;
+  height: 40px;
+  position: relative;
+}
+
+.loader-25 div {
+  position: absolute;
+  width: 0;
+  height: 0;
+  border-left: 20px solid transparent;
+  border-right: 20px solid transparent;
+  border-bottom: 34px solid var(--primary);
+  animation: triangle25 1.5s ease-in-out infinite;
+}
+
+.loader-25 div:last-child {
+  transform: rotate(180deg);
+  animation-delay: 0.75s;
+}
+
+@keyframes triangle25 {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}`
+  },
+  {
+    name: "Sliding Squares",
+    html: '<div class="loader-26"><div></div><div></div><div></div><div></div></div>',
+    css: `.loader-26 {
+  width: 40px;
+  height: 40px;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 2px;
+}
+
+.loader-26 div {
+  width: 18px;
+  height: 18px;
+  background: var(--primary);
+  animation: slide26 2s ease infinite;
+}
+
+.loader-26 div:nth-child(2) { animation-delay: 0.5s; }
+.loader-26 div:nth-child(3) { animation-delay: 1s; }
+.loader-26 div:nth-child(4) { animation-delay: 1.5s; }
+
+@keyframes slide26 {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(0); }
+}`
+  },
+  {
+    name: "Circular Orbit",
+    html: '<div class="loader-27"><div></div><div></div><div></div></div>',
+    css: `.loader-27 {
+  width: 40px;
+  height: 40px;
+  position: relative;
+}
+
+.loader-27 div {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  background: var(--primary);
+  border-radius: 50%;
+  animation: orbit27 2s cubic-bezier(.25, .25, .25, 1) infinite;
+}
+
+.loader-27 div:nth-child(1) { animation-delay: 0s; }
+.loader-27 div:nth-child(2) { animation-delay: 0.3s; }
+.loader-27 div:nth-child(3) { animation-delay: 0.6s; }
+
+@keyframes orbit27 {
+  0% { transform: rotate(0) translateX(15px) rotate(0); }
+  100% { transform: rotate(360deg) translateX(15px) rotate(-360deg); }
+}`
+  },
+  {
+    name: "Morphing Square",
+    html: '<div class="loader-28"></div>',
+    css: `.loader-28 {
+  width: 40px;
+  height: 40px;
+  background: var(--primary);
+  animation: morph28 2s ease-in-out infinite;
+}
+
+@keyframes morph28 {
+  0%, 100% { transform: rotate(0deg) scale(1); border-radius: 0; }
+  25% { transform: rotate(45deg) scale(1.2); border-radius: 10px; }
+  50% { transform: rotate(90deg) scale(1); border-radius: 50%; }
+  75% { transform: rotate(135deg) scale(1.2); border-radius: 10px; }
+}`
+},
+{
+    name: "Spiral Dots",
+    html: '<div class="loader-29">' + Array(8).fill('<div></div>').join('') + '</div>',
+    css: `.loader-29 {
+  width: 40px;
+  height: 40px;
+  position: relative;
+}
+
+.loader-29 div {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  background: var(--primary);
+  border-radius: 50%;
+  animation: spiral29 1.5s ease-in-out infinite;
+}
+
+.loader-29 div:nth-child(1) { top: 0; left: 50%; margin-left: -3px; animation-delay: 0s; }
+.loader-29 div:nth-child(2) { top: 25%; right: 25%; animation-delay: 0.1s; }
+.loader-29 div:nth-child(3) { right: 0; top: 50%; margin-top: -3px; animation-delay: 0.2s; }
+.loader-29 div:nth-child(4) { bottom: 25%; right: 25%; animation-delay: 0.3s; }
+.loader-29 div:nth-child(5) { bottom: 0; left: 50%; margin-left: -3px; animation-delay: 0.4s; }
+.loader-29 div:nth-child(6) { bottom: 25%; left: 25%; animation-delay: 0.5s; }
+.loader-29 div:nth-child(7) { left: 0; top: 50%; margin-top: -3px; animation-delay: 0.6s; }
+.loader-29 div:nth-child(8) { top: 25%; left: 25%; animation-delay: 0.7s; }
+
+@keyframes spiral29 {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(0); }
+}`
+},
+{
+    name: "Folding Cube",
+    html: '<div class="loader-30"><div></div><div></div><div></div><div></div></div>',
+    css: `.loader-30 {
+  width: 40px;
+  height: 40px;
+  position: relative;
+  transform: rotateZ(45deg);
+}
+
+.loader-30 div {
+  float: left;
+  width: 50%;
+  height: 50%;
+  position: relative;
+  transform: scale(1.1);
+}
+
+.loader-30 div:before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: var(--primary);
+  animation: fold30 2.4s infinite linear both;
+  transform-origin: 100% 100%;
+}
+
+.loader-30 div:nth-child(2) { transform: scale(1.1) rotateZ(90deg); }
+.loader-30 div:nth-child(3) { transform: scale(1.1) rotateZ(270deg); }
+.loader-30 div:nth-child(4) { transform: scale(1.1) rotateZ(180deg); }
+
+.loader-30 div:nth-child(2):before { animation-delay: 0.3s; }
+.loader-30 div:nth-child(3):before { animation-delay: 0.6s; }
+.loader-30 div:nth-child(4):before { animation-delay: 0.9s; }
+
+@keyframes fold30 {
+  0%, 10% { transform: perspective(140px) rotateX(-180deg); opacity: 0; }
+  25%, 75% { transform: perspective(140px) rotateX(0deg); opacity: 1; }
+  90%, 100% { transform: perspective(140px) rotateY(180deg); opacity: 0; }
+}`
+},
+{
+    name: "Staggered Wave",
+    html: '<div class="loader-31">' + Array(5).fill('<div></div>').join('') + '</div>',
+    css: `.loader-31 {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  height: 40px;
+}
+
+.loader-31 div {
+  width: 4px;
+  height: 100%;
+  background: var(--primary);
+  animation: wave31 1s ease-in-out infinite;
+}
+
+.loader-31 div:nth-child(2) { animation-delay: 0.1s; }
+.loader-31 div:nth-child(3) { animation-delay: 0.2s; }
+.loader-31 div:nth-child(4) { animation-delay: 0.3s; }
+.loader-31 div:nth-child(5) { animation-delay: 0.4s; }
+
+@keyframes wave31 {
+  0%, 40%, 100% { transform: scaleY(0.4); }
+  20% { transform: scaleY(1); }
+}`
+},
+{
+    name: "Pulse Ring",
+    html: '<div class="loader-32"></div>',
+    css: `.loader-32 {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--primary);
+  position: relative;
+}
+
+.loader-32::before,
+.loader-32::after {
+  content: '';
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: var(--primary);
+  animation: pulse32 2s ease-out infinite;
+}
+
+.loader-32::after {
+  animation-delay: 1s;
+}
+
+@keyframes pulse32 {
+  0% { transform: scale(1); opacity: 1; }
+  100% { transform: scale(2); opacity: 0; }
+}`
+},
+{
+    name: "Windmill",
+    html: '<div class="loader-33"><div></div><div></div><div></div><div></div></div>',
+    css: `.loader-33 {
+  width: 40px;
+  height: 40px;
+  position: relative;
+}
+
+.loader-33 div {
+  position: absolute;
+  width: 16px;
+  height: 4px;
+  background: var(--primary);
+  top: 50%;
+  left: 50%;
+  margin-top: -2px;
+  margin-left: -8px;
+  transform-origin: left center;
+  animation: windmill33 2s linear infinite;
+}
+
+.loader-33 div:nth-child(1) { animation-delay: 0s; }
+.loader-33 div:nth-child(2) { animation-delay: 0.5s; }
+.loader-33 div:nth-child(3) { animation-delay: 1s; }
+.loader-33 div:nth-child(4) { animation-delay: 1.5s; }
+
+@keyframes windmill33 {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}`
+},
+{
+    name: "DNA Spin",
+    html: '<div class="loader-34">' + Array(10).fill('<div></div>').join('') + '</div>',
+    css: `.loader-34 {
+  width: 40px;
+  height: 40px;
+  position: relative;
+}
+
+.loader-34 div {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  background: var(--primary);
+  border-radius: 50%;
+  animation: dna34 1.5s ease-in-out infinite;
+}
+
+.loader-34 div:nth-child(1) { top: 0; left: 18px; }
+.loader-34 div:nth-child(2) { top: 4px; left: 14px; }
+.loader-34 div:nth-child(3) { top: 8px; left: 10px; }
+.loader-34 div:nth-child(4) { top: 12px; left: 14px; }
+.loader-34 div:nth-child(5) { top: 16px; left: 18px; }
+.loader-34 div:nth-child(6) { top: 20px; left: 14px; }
+.loader-34 div:nth-child(7) { top: 24px; left: 10px; }
+.loader-34 div:nth-child(8) { top: 28px; left: 14px; }
+.loader-34 div:nth-child(9) { top: 32px; left: 18px; }
+.loader-34 div:nth-child(10) { top: 36px; left: 14px; }
+
+@keyframes dna34 {
+  0%, 100% { transform: translateX(0); }
+  50% { transform: translateX(10px); }
+}`
+},
+{
+    name: "Elastic Circle",
+    html: '<div class="loader-35"></div>',
+    css: `.loader-35 {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--primary);
+  animation: elastic35 1.5s ease-in-out infinite;
+}
+
+@keyframes elastic35 {
+  0%, 100% { transform: scale(1); }
+  25% { transform: scale(0.95) skewX(5deg); }
+  50% { transform: scale(1.05) skewX(-5deg); }
+  75% { transform: scale(0.95) skewX(5deg); }
+}`
+},
+{
+    name: "Meteor Shower",
+    html: '<div class="loader-36">' + Array(5).fill('<div></div>').join('') + '</div>',
+    css: `/* Meteor Shower loader */
+.loader-36 {
+  width: 40px;
+  height: 40px;
+  position: relative;
+}
+
+.loader-36 div {
+  position: absolute;
+  width: 2px;
+  height: 8px;
+  background: var(--primary);
+  transform-origin: center bottom;
+  animation: meteor36 1.5s ease-in-out infinite;
+}
+
+.loader-36 div:nth-child(1) { left: 0; transform: rotate(-45deg); animation-delay: 0s; }
+.loader-36 div:nth-child(2) { left: 10px; transform: rotate(-25deg); animation-delay: 0.2s; }
+.loader-36 div:nth-child(3) { left: 20px; transform: rotate(0deg); animation-delay: 0.4s; }
+.loader-36 div:nth-child(4) { left: 30px; transform: rotate(25deg); animation-delay: 0.6s; }
+.loader-36 div:nth-child(5) { left: 40px; transform: rotate(45deg); animation-delay: 0.8s; }
+
+@keyframes meteor36 {
+  0% { transform-origin: center bottom; transform: scaleY(1) rotate(-45deg); }
+  50% { transform-origin: center bottom; transform: scaleY(2) rotate(-45deg); }
+  100% { transform-origin: center bottom; transform: scaleY(1) rotate(-45deg); }
+}`
+},
+{
+    name: "Floating Squares",
+    html: '<div class="loader-37"><div></div><div></div><div></div><div></div></div>',
+    css: `/* Floating Squares loader */
+.loader-37 {
+  width: 40px;
+  height: 40px;
+  position: relative;
+}
+
+.loader-37 div {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  background: var(--primary);
+  animation: float37 2s ease-in-out infinite;
+}
+
+.loader-37 div:nth-child(1) { top: 0; left: 0; animation-delay: 0s; }
+.loader-37 div:nth-child(2) { top: 0; right: 0; animation-delay: 0.5s; }
+.loader-37 div:nth-child(3) { bottom: 0; right: 0; animation-delay: 1s; }
+.loader-37 div:nth-child(4) { bottom: 0; left: 0; animation-delay: 1.5s; }
+
+@keyframes float37 {
+  0%, 100% { transform: translate(0, 0); }
+  25% { transform: translate(2px, -2px); }
+  50% { transform: translate(0, -4px); }
+  75% { transform: translate(-2px, -2px); }
+}`
+},
+{
+    name: "Spinning Triangles",
+    html: '<div class="loader-38"><div></div><div></div><div></div></div>',
+    css: `/* Spinning Triangles loader */
+.loader-38 {
+  width: 40px;
+  height: 40px;
+  position: relative;
+}
+
+.loader-38 div {
+  position: absolute;
+  width: 0;
+  height: 0;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-bottom: 16px solid var(--primary);
+  animation: spinTriangle38 1.5s linear infinite;
+}
+
+.loader-38 div:nth-child(1) { animation-delay: 0s; }
+.loader-38 div:nth-child(2) { animation-delay: 0.5s; opacity: 0.5; }
+.loader-38 div:nth-child(3) { animation-delay: 1s; opacity: 0.25; }
+
+@keyframes spinTriangle38 {
+  0% { transform: rotate(0deg) translateY(0); }
+  100% { transform: rotate(360deg) translateY(0); }
+}`
+},
+{
+    name: "Pixel Grid",
+    html: '<div class="loader-39">' + Array(16).fill('<div></div>').join('') + '</div>',
+    css: `/* Pixel Grid loader */
+.loader-39 {
+  width: 40px;
+  height: 40px;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 2px;
+}
+
+.loader-39 div {
+  background: var(--primary);
+  animation: pixel39 1.5s ease-in-out infinite;
+}
+
+.loader-39 div:nth-child(1) { animation-delay: 0.0s; }
+.loader-39 div:nth-child(2) { animation-delay: 0.1s; }
+.loader-39 div:nth-child(3) { animation-delay: 0.2s; }
+.loader-39 div:nth-child(4) { animation-delay: 0.3s; }
+.loader-39 div:nth-child(5) { animation-delay: 0.4s; }
+.loader-39 div:nth-child(6) { animation-delay: 0.5s; }
+.loader-39 div:nth-child(7) { animation-delay: 0.6s; }
+.loader-39 div:nth-child(8) { animation-delay: 0.7s; }
+.loader-39 div:nth-child(9) { animation-delay: 0.8s; }
+.loader-39 div:nth-child(10) { animation-delay: 0.9s; }
+.loader-39 div:nth-child(11) { animation-delay: 1.0s; }
+.loader-39 div:nth-child(12) { animation-delay: 1.1s; }
+.loader-39 div:nth-child(13) { animation-delay: 1.2s; }
+.loader-39 div:nth-child(14) { animation-delay: 1.3s; }
+.loader-39 div:nth-child(15) { animation-delay: 1.4s; }
+.loader-39 div:nth-child(16) { animation-delay: 1.5s; }
+
+@keyframes pixel39 {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.2; }
+}`},
+{
+    name: "Rotating Pentagon",
+    html: '<div class="loader-40"></div>',
+    css: `/* Rotating Pentagon loader */
+.loader-40 {
+  width: 40px;
+  height: 38px;
+  background: var(--primary);
+  clip-path: polygon(50% 0%, 100% 38%, 82% 100%, 18% 100%, 0% 38%);
+  animation: rotatePentagon40 2s linear infinite;
+}
+
+@keyframes rotatePentagon40 {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}`},
+{
+    name: "Binary Pulse",
+    html: '<div class="loader-41"><div></div><div></div><div></div><div></div></div>',
+    css: `/* Binary Pulse loader */
+.loader-41 {
+  width: 40px;
+  height: 40px;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 4px;
+}
+
+.loader-41 div {
+  background: var(--primary);
+  animation: binaryPulse41 1s ease-in-out infinite;
+}
+
+.loader-41 div:nth-child(1) { animation-delay: 0.0s; }
+.loader-41 div:nth-child(2) { animation-delay: 0.2s; }
+.loader-41 div:nth-child(3) { animation-delay: 0.4s; }
+.loader-41 div:nth-child(4) { animation-delay: 0.6s; }
+
+@keyframes binaryPulse41 {
+  0%, 100% { transform: scale(0.8); opacity: 0.5; }
+  50% { transform: scale(1.2); opacity: 1; }
+}`
+},
+{
+    name: "Hypnotic Spiral",
+    html: '<div class="loader-42"></div>',
+    css: `/* Hypnotic Spiral loader */
+.loader-42 {
+  width: 40px;
+  height: 40px;
+  border: 4px solid transparent;
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  position: relative;
+  animation: spiral42 1s linear infinite;
+}
+
+.loader-42::before,
+.loader-42::after {
+  content: '';
+  position: absolute;
+  border: inherit;
+  border-radius: 50%;
+}
+
+.loader-42::before {
+  top: -12px;
+  left: -12px;
+  right: -12px;
+  bottom: -12px;
+  animation: spiral42 2s linear infinite;
+}
+
+.loader-42::after {
+  top: 4px;
+  left: 4px;
+  right: 4px;
+  bottom: 4px;
+  animation: spiral42 3s linear infinite;
+}
+
+@keyframes spiral42 {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}`
+},
+{
+    name: "Fractal Squares",
+    html: '<div class="loader-43"><div></div><div></div><div></div></div>',
+    css: `/* Fractal Squares loader */
+.loader-43 {
+  width: 40px;
+  height: 40px;
+  position: relative;
+}
+
+.loader-43 div {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border: 2px solid var(--primary);
+  animation: fractal43 1.5s ease-in-out infinite alternate;
+}
+
+.loader-43 div:nth-child(1) { animation-delay: 0s; }
+.loader-43 div:nth-child(2) { animation-delay: 0.5s; }
+.loader-43 div:nth-child(3) { animation-delay: 1s; }
+
+@keyframes fractal43 {
+  0% { transform: rotate(0deg) scale(0.3); }
+  100% { transform: rotate(90deg) scale(1); }
+}`
+},
+{
+    name: "Quantum Ripple",
+    html: '<div class="loader-44"><div></div><div></div><div></div></div>',
+    css: `/* Quantum Ripple loader */
+.loader-44 {
+  width: 40px;
+  height: 40px;
+  position: relative;
+}
+
+.loader-44 div {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border: 2px solid var(--primary);
+  border-radius: 50%;
+  opacity: 0;
+  animation: ripple44 1.5s cubic-bezier(0.1, 0.4, 0.3, 1) infinite;
+}
+
+.loader-44 div:nth-child(2) { animation-delay: 0.5s; }
+.loader-44 div:nth-child(3) { animation-delay: 1s; }
+
+@keyframes ripple44 {
+  0% { transform: scale(0); opacity: 1; }
+  100% { transform: scale(1.5); opacity: 0; }
+}`
+},
+{
+    name: "Digital Rain",
+    html: '<div class="loader-45">' + Array(10).fill('<div></div>').join('') + '</div>',
+    css: `/* Digital Rain loader */
+.loader-45 {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  justify-content: space-between;
+}
+
+.loader-45 div {
+  width: 2px;
+  height: 100%;
+  background: var(--primary);
+  animation: rain45 1s linear infinite;
+  transform-origin: 50% 100%;
+}
+
+.loader-45 div:nth-child(1) { animation-delay: 0.0s; }
+.loader-45 div:nth-child(2) { animation-delay: 0.1s; }
+.loader-45 div:nth-child(3) { animation-delay: 0.2s; }
+.loader-45 div:nth-child(4) { animation-delay: 0.3s; }
+.loader-45 div:nth-child(5) { animation-delay: 0.4s; }
+.loader-45 div:nth-child(6) { animation-delay: 0.5s; }
+.loader-45 div:nth-child(7) { animation-delay: 0.6s; }
+.loader-45 div:nth-child(8) { animation-delay: 0.7s; }
+.loader-45 div:nth-child(9) { animation-delay: 0.8s; }
+.loader-45 div:nth-child(10) { animation-delay: 0.9s; }
+
+@keyframes rain45 {
+  0% { transform: scaleY(0); }
+  50% { transform: scaleY(1); }
+  100% { transform: scaleY(0); }
+}`
+},
+{
+    name: "Constellation",
+    html: '<div class="loader-46">' + Array(5).fill('<div></div>').join('') + '</div>',
+    css: `/* Constellation loader */
+.loader-46 {
+  width: 40px;
+  height: 40px;
+  position: relative;
+}
+
+.loader-46 div {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  background: var(--primary);
+  border-radius: 50%;
+  animation: constellation46 2s ease infinite;
+}
+
+.loader-46 div:nth-child(1) { top: 0; left: 0; }
+.loader-46 div:nth-child(2) { top: 0; right: 0; animation-delay: 0.4s; }
+.loader-46 div:nth-child(3) { bottom: 0; left: 0; animation-delay: 0.8s; }
+.loader-46 div:nth-child(4) { bottom: 0; right: 0; animation-delay: 1.2s; }
+.loader-46 div:nth-child(5) { top: 50%; left: 50%; transform: translate(-50%, -50%); animation-delay: 1.6s; }
+
+@keyframes constellation46 {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.5); box-shadow: 0 0 10px var(--primary); }
+}`
+},
+{
+    name: "Atomic Spin",
+    html: '<div class="loader-47"><div></div><div></div></div>',
+    css: `/* Atomic Spin loader */
+.loader-47 {
+  width: 40px;
+  height: 40px;
+  position: relative;
+}
+
+.loader-47 div {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border: 2px solid var(--primary);
+  border-radius: 50%;
+}
+
+.loader-47 div:nth-child(1) {
+  animation: atomic47-1 2s linear infinite;
+}
+
+.loader-47 div:nth-child(2) {
+  animation: atomic47-2 2s linear infinite;
+}
+
+@keyframes atomic47-1 {
+  0% { transform: rotate(0deg) scale(1); }
+  50% { transform: rotate(180deg) scale(0.8); }
+  100% { transform: rotate(360deg) scale(1); }
+}
+
+@keyframes atomic47-2 {
+  0% { transform: rotate(90deg) scale(0.8); }
+  50% { transform: rotate(270deg) scale(1); }
+  100% { transform: rotate(450deg) scale(0.8); }
+}`
+},
+{
+    name: "Energy Burst",
+    html: '<div class="loader-48"><div></div><div></div><div></div><div></div></div>',
+    css: `/* Energy Burst loader */
+.loader-48 {
+  width: 40px;
+  height: 40px;
+  position: relative;
+}
+
+.loader-48 div {
+  position: absolute;
+  width: 20px;
+  height: 2px;
+  background: var(--primary);
+  top: 50%;
+  left: 50%;
+  transform-origin: 0 50%;
+}
+
+.loader-48 div:nth-child(1) { transform: rotate(0deg); }
+.loader-48 div:nth-child(2) { transform: rotate(90deg); }
+.loader-48 div:nth-child(3) { transform: rotate(180deg); }
+.loader-48 div:nth-child(4) { transform: rotate(270deg); }
+
+.loader-48 div {
+  animation: burst48 1s cubic-bezier(0.3, 0.1, 0.7, 0.9) infinite;
+}
+
+@keyframes burst48 {
+  0% { transform: rotate(0deg) scaleX(0); opacity: 0; }
+  50% { transform: rotate(360deg) scaleX(1); opacity: 1; }
+  100% { transform: rotate(720deg) scaleX(0); opacity: 0; }
+}`
+},
+{
+    name: "Quantum Tunnel",
+    html: '<div class="loader-49"><div></div><div></div><div></div></div>',
+    css: `/* Quantum Tunnel loader */
+.loader-49 {
+  width: 40px;
+  height: 40px;
+  position: relative;
+  perspective: 200px;
+}
+
+.loader-49 div {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border: 2px solid var(--primary);
+  animation: tunnel49 2s cubic-bezier(0.17, 0.67, 0.83, 0.67) infinite;
+}
+
+.loader-49 div:nth-child(1) { animation-delay: 0s; }
+.loader-49 div:nth-child(2) { animation-delay: 0.6s; }
+.loader-49 div:nth-child(3) { animation-delay: 1.2s; }
+
+@keyframes tunnel49 {
+  0% { transform: rotateX(0deg) rotateY(0deg) scale(0.2); opacity: 0; }
+  50% { opacity: 1; }
+  100% { transform: rotateX(360deg) rotateY(360deg) scale(1); opacity: 0; }
+}`
+},
+{
+    name: "Plasma Field",
+    html: '<div class="loader-50"></div>',
+    css: `/* Plasma Field loader */
+.loader-50 {
+  width: 40px;
+  height: 40px;
+  background: var(--primary);
+  clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+  animation: plasma50 2s ease-in-out infinite;
+  position: relative;
+}
+
+.loader-50::before {
+  content: '';
+  position: absolute;
+  inset: 2px;
+  background: white;
+  clip-path: inherit;
+  animation: plasma50-inner 2s ease-in-out infinite;
+}
+
+@keyframes plasma50 {
+  0%, 100% { transform: rotate(0deg) scale(1); }
+  25% { transform: rotate(90deg) scale(1.2); }
+  50% { transform: rotate(180deg) scale(1); }
+  75% { transform: rotate(270deg) scale(0.8); }
+}
+
+@keyframes plasma50-inner {
+  0%, 100% { transform: scale(0.8); }
+  50% { transform: scale(1.1); }
+}
+`
+}];
+
+function createLoaderCard(loader, index) {
+  const card = document.createElement('div');
+  card.className = 'loader-card';
+
+  const title = document.createElement('h3');
+  title.textContent = loader.name;
+
+  const container = document.createElement('div');
+  container.className = 'loader-container';
+  container.innerHTML = loader.html;
+
+  const code = document.createElement('pre');
+  code.className = 'code-snippet';
+  code.textContent = loader.css;
+
+  const copyBtn = document.createElement('button');
+  copyBtn.className = 'copy-btn';
+  copyBtn.textContent = 'Copy CSS';
+  copyBtn.onclick = () => {
+    navigator.clipboard.writeText(loader.css)
+      .then(() => {
+        copyBtn.textContent = 'Copied!';
+        setTimeout(() => {
+          copyBtn.textContent = 'Copy CSS';
+        }, 2000);
+      });
+  };
+
+  card.appendChild(title);
+  card.appendChild(container);
+  card.appendChild(code);
+  card.appendChild(copyBtn);
+
+  return card;
+}
+
+const grid = document.getElementById('loaderGrid');
+loaders.forEach((loader, index) => {
+  grid.appendChild(createLoaderCard(loader, index));
+});
+</script>
+</body>
+</html>
