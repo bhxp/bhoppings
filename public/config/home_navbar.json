@@ -134,7 +134,13 @@
             {
                 "text": "dreamland",
                 "url": "/dreamland"
-            },
+            }
+        ]
+    },
+    {
+        "multiple": true,
+        "text": "misc 2",
+        "pages": [
             {
                 "text": "floral fractal test",
                 "url": "/floralfractletest"
@@ -161,7 +167,7 @@
             },
             {
                 "text": "spixe",
-                "url": "/spixe"
+                "url": "/spixe" 
             },
             {
                 "text": "terrain generator",
