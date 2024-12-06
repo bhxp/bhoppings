@@ -1,0 +1,305 @@
+<!DOCTYPE html><html><head><base href="https://psychedelic-dreams-vr.com/">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Immersive Psychedelic Dream Explorer</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.9.1/gsap.min.js"></script>
+<style>
+  body, html {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    font-family: 'Arial', sans-serif;
+    background-color: #000;
+  }
+  #dream-canvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+  #controls {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10;
+    display: flex;
+    gap: 10px;
+  }
+  button {
+    padding: 10px 20px;
+    font-size: 16px;
+    background-color: rgba(255, 255, 255, 0.1);
+    border: 2px solid #fff;
+    color: #fff;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border-radius: 20px;
+  }
+  button:hover {
+    background-color: rgba(255, 255, 255, 0.3);
+  }
+  #info {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    color: #fff;
+    font-size: 18px;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+  }
+</style>
+</head>
+<body>
+<canvas id="dream-canvas"></canvas>
+<div id="controls">
+  <button id="dream1">Kaleidoscope Realm</button>
+  <button id="dream2">Fractal Dimension</button>
+  <button id="dream3">Cosmic Consciousness</button>
+  <button id="dream4">Neon Dreamscape</button>
+  <button id="dream5">Quantum Vortex</button>
+  <button id="dream6">Astral Projection</button>
+  <button id="dream7">Lucid Labyrinth</button>
+  <button id="dream8">Ethereal Echoes</button>
+</div>
+<div id="info">Use your mouse to explore the dream. Click and drag to rotate.</div>
+
+<script>
+let scene, camera, renderer, dreamObjects = [], currentDream = 0;
+let mouseX = 0, mouseY = 0;
+
+function init() {
+  scene = new THREE.Scene();
+  camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+  renderer = new THREE.WebGLRenderer({canvas: document.getElementById('dream-canvas'), antialias: true});
+  renderer.setSize(window.innerWidth, window.innerHeight);
+
+  camera.position.z = 5;
+
+  window.addEventListener('resize', onWindowResize, false);
+  document.addEventListener('mousemove', onMouseMove, false);
+
+  createDreamScapes();
+  animate();
+}
+
+function createDreamScapes() {
+  // Existing dreamscapes
+  // Kaleidoscope Realm
+  const kaleidoscopeGroup = new THREE.Group();
+  const geometry = new THREE.IcosahedronGeometry(1, 1);
+  for (let i = 0; i < 50; i++) {
+    const material = new THREE.MeshBasicMaterial({
+      color: Math.random() * 0xffffff,
+      wireframe: true
+    });
+    const mesh = new THREE.Mesh(geometry, material);
+    mesh.position.set(
+      Math.random() * 8 - 4,
+      Math.random() * 8 - 4,
+      Math.random() * 8 - 4
+    );
+    mesh.rotation.set(Math.random() * Math.PI, Math.random() * Math.PI, Math.random() * Math.PI);
+    kaleidoscopeGroup.add(mesh);
+  }
+  dreamObjects.push(kaleidoscopeGroup);
+
+  // Fractal Dimension
+  const fractalGroup = new THREE.Group();
+  const fractalGeometry = new THREE.TetrahedronGeometry(0.5, 3);
+  for (let i = 0; i < 100; i++) {
+    const material = new THREE.MeshBasicMaterial({
+      color: 0xffffff,
+      opacity: Math.random() * 0.5 + 0.5,
+      transparent: true
+    });
+    const fractal = new THREE.Mesh(fractalGeometry, material);
+    fractal.position.set(
+      Math.random() * 10 - 5,
+      Math.random() * 10 - 5,
+      Math.random() * 10 - 5
+    );
+    fractal.rotation.set(Math.random() * Math.PI, Math.random() * Math.PI, Math.random() * Math.PI);
+    fractal.scale.setScalar(Math.random() * 0.5 + 0.5);
+    fractalGroup.add(fractal);
+  }
+  dreamObjects.push(fractalGroup);
+
+  // Cosmic Consciousness
+  const cosmicGroup = new THREE.Group();
+  const particleGeometry = new THREE.BufferGeometry();
+  const particleCount = 5000;
+  const posArray = new Float32Array(particleCount * 3);
+  for (let i = 0; i < particleCount * 3; i++) {
+    posArray[i] = (Math.random() - 0.5) * 10;
+  }
+  particleGeometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+  const particleMaterial = new THREE.PointsMaterial({
+    size: 0.02,
+    color: 0xffffff,
+    transparent: true,
+    opacity: 0.8,
+    blending: THREE.AdditiveBlending
+  });
+  const particleSystem = new THREE.Points(particleGeometry, particleMaterial);
+  cosmicGroup.add(particleSystem);
+  dreamObjects.push(cosmicGroup);
+
+  // New dreamscapes
+  // Neon Dreamscape
+  const neonGroup = new THREE.Group();
+  const neonGeometry = new THREE.TorusKnotGeometry(1, 0.3, 100, 16);
+  const neonMaterial = new THREE.MeshBasicMaterial({
+    color: 0x00ff00,
+    wireframe: true
+  });
+  const neonMesh = new THREE.Mesh(neonGeometry, neonMaterial);
+  neonGroup.add(neonMesh);
+  dreamObjects.push(neonGroup);
+
+  // Quantum Vortex
+  const vortexGroup = new THREE.Group();
+  const vortexGeometry = new THREE.SphereGeometry(1, 32, 32);
+  const vortexMaterial = new THREE.ShaderMaterial({
+    uniforms: {
+      time: { value: 0 }
+    },
+    vertexShader: `
+      varying vec2 vUv;
+      void main() {
+        vUv = uv;
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+      }
+    `,
+    fragmentShader: `
+      uniform float time;
+      varying vec2 vUv;
+      void main() {
+        vec2 p = -1.0 + 2.0 * vUv;
+        float r = length(p);
+        float angle = atan(p.y, p.x) + time;
+        float intensity = 0.5 + 0.5 * sin(10.0 * angle - 20.0 * r);
+        gl_FragColor = vec4(intensity, intensity * 0.5, intensity * 0.25, 1.0);
+      }
+    `
+  });
+  const vortexMesh = new THREE.Mesh(vortexGeometry, vortexMaterial);
+  vortexGroup.add(vortexMesh);
+  dreamObjects.push(vortexGroup);
+
+  // Astral Projection
+  const astralGroup = new THREE.Group();
+  const astralGeometry = new THREE.OctahedronGeometry(1, 0);
+  for (let i = 0; i < 100; i++) {
+    const astralMaterial = new THREE.MeshBasicMaterial({
+      color: new THREE.Color().setHSL(Math.random(), 1, 0.5),
+      transparent: true,
+      opacity: 0.7
+    });
+    const astralMesh = new THREE.Mesh(astralGeometry, astralMaterial);
+    astralMesh.position.set(
+      Math.random() * 10 - 5,
+      Math.random() * 10 - 5,
+      Math.random() * 10 - 5
+    );
+    astralMesh.rotation.set(Math.random() * Math.PI, Math.random() * Math.PI, Math.random() * Math.PI);
+    astralMesh.scale.setScalar(Math.random() * 0.5 + 0.1);
+    astralGroup.add(astralMesh);
+  }
+  dreamObjects.push(astralGroup);
+
+  // Lucid Labyrinth
+  const labyrinthGroup = new THREE.Group();
+  const labyrinthGeometry = new THREE.BoxGeometry(0.5, 0.5, 0.5);
+  for (let i = 0; i < 200; i++) {
+    const labyrinthMaterial = new THREE.MeshBasicMaterial({
+      color: Math.random() * 0xffffff,
+      transparent: true,
+      opacity: 0.6
+    });
+    const labyrinthMesh = new THREE.Mesh(labyrinthGeometry, labyrinthMaterial);
+    labyrinthMesh.position.set(
+      Math.random() * 10 - 5,
+      Math.random() * 10 - 5,
+      Math.random() * 10 - 5
+    );
+    labyrinthGroup.add(labyrinthMesh);
+  }
+  dreamObjects.push(labyrinthGroup);
+
+  // Ethereal Echoes
+  const echoesGroup = new THREE.Group();
+  const echoesGeometry = new THREE.RingGeometry(0.2, 1, 32);
+  for (let i = 0; i < 50; i++) {
+    const echoesMaterial = new THREE.MeshBasicMaterial({
+      color: new THREE.Color().setHSL(Math.random(), 0.5, 0.5),
+      side: THREE.DoubleSide,
+      transparent: true,
+      opacity: 0.3
+    });
+    const echoesMesh = new THREE.Mesh(echoesGeometry, echoesMaterial);
+    echoesMesh.position.set(
+      Math.random() * 10 - 5,
+      Math.random() * 10 - 5,
+      Math.random() * 10 - 5
+    );
+    echoesMesh.rotation.set(Math.random() * Math.PI, Math.random() * Math.PI, Math.random() * Math.PI);
+    echoesGroup.add(echoesMesh);
+  }
+  dreamObjects.push(echoesGroup);
+
+  dreamObjects.forEach(obj => scene.add(obj));
+}
+
+function animate() {
+  requestAnimationFrame(animate);
+
+  dreamObjects[currentDream].rotation.x += 0.001;
+  dreamObjects[currentDream].rotation.y += 0.002;
+
+  // Update Quantum Vortex shader
+  if (currentDream === 4) {
+    dreamObjects[currentDream].children[0].material.uniforms.time.value += 0.01;
+  }
+
+  camera.position.x += (mouseX * 0.05 - camera.position.x) * 0.05;
+  camera.position.y += (-mouseY * 0.05 - camera.position.y) * 0.05;
+  camera.lookAt(scene.position);
+
+  renderer.render(scene, camera);
+}
+
+function onWindowResize() {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+}
+
+function onMouseMove(event) {
+  mouseX = (event.clientX - window.innerWidth / 2) / 100;
+  mouseY = (event.clientY - window.innerHeight / 2) / 100;
+}
+
+function switchDream(index) {
+  gsap.to(dreamObjects[currentDream].scale, {x: 0, y: 0, z: 0, duration: 1, ease: "power2.in"});
+  gsap.to(camera.position, {z: 10, duration: 1, ease: "power2.inOut", onComplete: () => {
+    currentDream = index;
+    gsap.to(dreamObjects[currentDream].scale, {x: 1, y: 1, z: 1, duration: 1, ease: "power2.out"});
+    gsap.to(camera.position, {z: 5, duration: 1, ease: "power2.inOut"});
+  }});
+}
+
+document.getElementById('dream1').addEventListener('click', () => switchDream(0));
+document.getElementById('dream2').addEventListener('click', () => switchDream(1));
+document.getElementById('dream3').addEventListener('click', () => switchDream(2));
+document.getElementById('dream4').addEventListener('click', () => switchDream(3));
+document.getElementById('dream5').addEventListener('click', () => switchDream(4));
+document.getElementById('dream6').addEventListener('click', () => switchDream(5));
+document.getElementById('dream7').addEventListener('click', () => switchDream(6));
+document.getElementById('dream8').addEventListener('click', () => switchDream(7));
+
+init();
+</script>
+
+</body></html>
