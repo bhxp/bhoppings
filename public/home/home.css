@@ -149,6 +149,7 @@ html, body {
     left: -28px;
     top: -38px;
     height: 61px;
+    pointer-events: none !important;
 }
 
 .navbar-item-top hr {
@@ -169,3 +170,4 @@ html, body {
     width: 36px;
     opacity: 1;
 }
+
