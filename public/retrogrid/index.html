@@ -1,0 +1,417 @@
+<!DOCTYPE html><html><head><base href="https://neon-pulse.gl/view/retro-grid">
+<title>Retro Grid - Neon Pulse GLSL Art Viewer</title>
+<style>
+    body, html {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        font-family: 'Roboto', sans-serif;
+        background-color: #000;
+        color: #fff;
+    }
+    #canvas {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+    }
+    #ui {
+        position: fixed;
+        top: 20px;
+        left: 20px;
+        z-index: 10;
+        background-color: rgba(0,0,0,0.7);
+        padding: 20px;
+        border-radius: 10px;
+        transition: opacity 0.3s;
+    }
+    #ui.hidden {
+        opacity: 0;
+        pointer-events: none;
+    }
+    h1 {
+        margin-top: 0;
+        font-size: 24px;
+        color: #ff00ff;
+    }
+    .control {
+        margin-bottom: 15px;
+    }
+    label {
+        display: block;
+        margin-bottom: 5px;
+    }
+    input[type="range"] {
+        width: 200px;
+    }
+    #presets {
+        margin-top: 20px;
+    }
+    button {
+        background-color: #ff00ff;
+        color: #000;
+        border: none;
+        padding: 8px 12px;
+        margin-right: 10px;
+        cursor: pointer;
+        border-radius: 5px;
+        transition: background-color 0.3s;
+    }
+    button:hover {
+        background-color: #cc00cc;
+    }
+    #info {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        text-align: right;
+        font-size: 14px;
+        transition: opacity 0.3s;
+    }
+    #info.hidden {
+        opacity: 0;
+    }
+    a {
+        color: #ff00ff;
+        text-decoration: none;
+    }
+    a:hover {
+        text-decoration: underline;
+    }
+    #toggleUI {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 20;
+        background-color: rgba(0,0,0,0.5);
+        color: #fff;
+        border: none;
+        padding: 10px;
+        cursor: pointer;
+        border-radius: 5px;
+    }
+    .ripple {
+        position: absolute;
+        border-radius: 50%;
+        background-color: rgba(255, 255, 255, 0.7);
+        width: 5px;
+        height: 5px;
+        pointer-events: none;
+    }
+    @keyframes ripple-effect {
+        to {
+            transform: scale(40);
+            opacity: 0;
+        }
+    }
+</style>
+</head>
+<body>
+<canvas id="canvas"></canvas>
+<div id="ui">
+    <h1>Retro Grid</h1>
+    <div class="control">
+        <label for="speed">Speed:</label>
+        <input type="range" id="speed" min="0" max="2" step="0.1" value="1">
+    </div>
+    <div class="control">
+        <label for="gridDensity">Grid Density:</label>
+        <input type="range" id="gridDensity" min="5" max="50" step="1" value="20">
+    </div>
+    <div class="control">
+        <label for="glow">Glow Intensity:</label>
+        <input type="range" id="glow" min="0" max="2" step="0.1" value="1">
+    </div>
+    <div class="control">
+        <label for="colorShift">Color Shift:</label>
+        <input type="range" id="colorShift" min="0" max="6.28" step="0.1" value="0">
+    </div>
+    <div class="control">
+        <label for="perspective">Perspective:</label>
+        <input type="range" id="perspective" min="0.1" max="2" step="0.1" value="1">
+    </div>
+    <div id="presets">
+        <button id="preset1">Classic</button>
+        <button id="preset2">Neon Nights</button>
+        <button id="preset3">Cyber Horizon</button>
+    </div>
+</div>
+<div id="info">
+    Created by <a href="https://neon-pulse.gl/about">Neon Pulse Studio</a><br>
+    <a href="https://neon-pulse.gl/gallery">Back to Gallery</a> | <a href="https://neon-pulse.gl/learn">Learn GLSL</a>
+</div>
+<button id="toggleUI">Toggle UI</button>
+
+<script id="vertexShader" type="x-shader/x-vertex">
+    attribute vec3 position;
+    void main() {
+        gl_Position = vec4(position, 1.0);
+    }
+</script>
+
+<script id="fragmentShader" type="x-shader/x-fragment">
+    precision highp float;
+    uniform vec2 u_resolution;
+    uniform vec2 u_mouse;
+    uniform float u_time;
+    uniform float u_speed;
+    uniform float u_gridDensity;
+    uniform float u_glow;
+    uniform float u_colorShift;
+    uniform float u_perspective;
+    uniform vec2 u_touchLocation;
+
+    #define PI 3.14159265359
+
+    vec3 neonColor(float t) {
+        return 0.5 + 0.5*cos(2.0*PI*(vec3(1.0, 0.5, 0.0) * t + vec3(0.0, 0.1, 0.2)));
+    }
+
+    void main() {
+        vec2 uv = (gl_FragCoord.xy - 0.5 * u_resolution.xy) / min(u_resolution.y, u_resolution.x);
+        
+        // Apply perspective effect
+        uv.y /= u_perspective;
+        
+        // Move the grid
+        uv.y += u_time * u_speed * 0.1;
+        
+        // Create grid
+        vec2 grid = fract(uv * u_gridDensity) - 0.5;
+        float line = min(abs(grid.x), abs(grid.y));
+        
+        // Add some variation to the grid
+        line *= 0.5 + 0.5 * sin(u_time * u_speed + uv.x * 10.0 + uv.y * 5.0);
+        
+        // Create touch reaction
+        if (u_touchLocation.x >= 0.0 && u_touchLocation.y >= 0.0) {
+            float touchDist = length(uv - u_touchLocation);
+            float touchEffect = smoothstep(0.3, 0.0, touchDist);
+            line *= 1.0 + touchEffect * 2.0;
+        }
+        
+        // Create glow effect
+        float glow = 0.02 / (line + 0.01) * u_glow;
+        
+        // Create color
+        vec3 color = neonColor(uv.y * 0.5 + u_time * u_speed * 0.1 + u_colorShift);
+        
+        // Apply color and glow
+        gl_FragColor = vec4(color * glow, 1.0);
+    }
+</script>
+
+<script>
+    const canvas = document.getElementById('canvas');
+    const gl = canvas.getContext('webgl');
+
+    if (!gl) {
+        alert('WebGL not supported');
+    }
+
+    const program = gl.createProgram();
+
+    function createShader(type, source) {
+        const shader = gl.createShader(type);
+        gl.shaderSource(shader, source);
+        gl.compileShader(shader);
+        if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+            console.error('Shader compile error:', gl.getShaderInfoLog(shader));
+            gl.deleteShader(shader);
+            return null;
+        }
+        return shader;
+    }
+
+    const vertexShader = createShader(gl.VERTEX_SHADER, document.getElementById('vertexShader').textContent);
+    const fragmentShader = createShader(gl.FRAGMENT_SHADER, document.getElementById('fragmentShader').textContent);
+
+    gl.attachShader(program, vertexShader);
+    gl.attachShader(program, fragmentShader);
+    gl.linkProgram(program);
+
+    if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+        console.error('Program link error:', gl.getProgramInfoLog(program));
+    }
+
+    gl.useProgram(program);
+
+    const positionBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+    const positions = new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]);
+    gl.bufferData(gl.ARRAY_BUFFER, positions, gl.STATIC_DRAW);
+
+    const positionLocation = gl.getAttribLocation(program, 'position');
+    gl.enableVertexAttribArray(positionLocation);
+    gl.vertexAttribPointer(positionLocation, 2, gl.FLOAT, false, 0, 0);
+
+    const timeLocation = gl.getUniformLocation(program, 'u_time');
+    const resolutionLocation = gl.getUniformLocation(program, 'u_resolution');
+    const mouseLocation = gl.getUniformLocation(program, 'u_mouse');
+    const speedLocation = gl.getUniformLocation(program, 'u_speed');
+    const gridDensityLocation = gl.getUniformLocation(program, 'u_gridDensity');
+    const glowLocation = gl.getUniformLocation(program, 'u_glow');
+    const colorShiftLocation = gl.getUniformLocation(program, 'u_colorShift');
+    const perspectiveLocation = gl.getUniformLocation(program, 'u_perspective');
+    const touchLocationLocation = gl.getUniformLocation(program, 'u_touchLocation');
+
+    let mouseX = 0, mouseY = 0;
+    let touchX = -1, touchY = -1;
+    canvas.addEventListener('mousemove', (e) => {
+        mouseX = e.clientX;
+        mouseY = e.clientY;
+    });
+
+    function resizeCanvas() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        gl.viewport(0, 0, canvas.width, canvas.height);
+    }
+
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    const speedControl = document.getElementById('speed');
+    const gridDensityControl = document.getElementById('gridDensity');
+    const glowControl = document.getElementById('glow');
+    const colorShiftControl = document.getElementById('colorShift');
+    const perspectiveControl = document.getElementById('perspective');
+
+    function render(time) {
+        time *= 0.001;  // convert to seconds
+
+        gl.uniform1f(timeLocation, time);
+        gl.uniform2f(resolutionLocation, canvas.width, canvas.height);
+        gl.uniform2f(mouseLocation, mouseX, canvas.height - mouseY);
+        gl.uniform1f(speedLocation, parseFloat(speedControl.value));
+        gl.uniform1f(gridDensityLocation, parseFloat(gridDensityControl.value));
+        gl.uniform1f(glowLocation, parseFloat(glowControl.value));
+        gl.uniform1f(colorShiftLocation, parseFloat(colorShiftControl.value));
+        gl.uniform1f(perspectiveLocation, parseFloat(perspectiveControl.value));
+        gl.uniform2f(touchLocationLocation, touchX, touchY);
+
+        gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+
+        requestAnimationFrame(render);
+    }
+
+    requestAnimationFrame(render);
+
+    // Presets
+    document.getElementById('preset1').addEventListener('click', () => {
+        speedControl.value = 1.0;
+        gridDensityControl.value = 20;
+        glowControl.value = 1.0;
+        colorShiftControl.value = 0;
+        perspectiveControl.value = 1.0;
+    });
+
+    document.getElementById('preset2').addEventListener('click', () => {
+        speedControl.value = 0.8;
+        gridDensityControl.value = 30;
+        glowControl.value = 1.5;
+        colorShiftControl.value = 2.0;
+        perspectiveControl.value = 1.2;
+    });
+
+    document.getElementById('preset3').addEventListener('click', () => {
+        speedControl.value = 1.2;
+        gridDensityControl.value = 15;
+        glowControl.value = 1.8;
+        colorShiftControl.value = 4.0;
+        perspectiveControl.value = 0.8;
+    });
+
+    // Toggle UI visibility
+    const uiElement = document.getElementById('ui');
+    const infoElement = document.getElementById('info');
+    const toggleButton = document.getElementById('toggleUI');
+    let uiVisible = true;
+
+    toggleButton.addEventListener('click', () => {
+        uiVisible = !uiVisible;
+        uiElement.classList.toggle('hidden', !uiVisible);
+        infoElement.classList.toggle('hidden', !uiVisible);
+        toggleButton.textContent = uiVisible ? 'Hide UI' : 'Show UI';
+    });
+
+    // Double-click to enter/exit fullscreen
+    canvas.addEventListener('dblclick', () => {
+        if (!document.fullscreenElement) {
+            canvas.requestFullscreen().catch(err => {
+                alert(`Error attempting to enable fullscreen: ${err.message}`);
+            });
+        } else {
+            document.exitFullscreen();
+        }
+    });
+
+    // Enhanced touch support for mobile devices
+    let lastTouchY;
+    let touchStartTime;
+    const MAX_TAP_DURATION = 200; // milliseconds
+    const TAP_DISTANCE_THRESHOLD = 10; // pixels
+
+    canvas.addEventListener('touchstart', (e) => {
+        e.preventDefault(); // Prevent default touch behavior
+        lastTouchY = e.touches[0].clientY;
+        touchStartTime = Date.now();
+        const rect = canvas.getBoundingClientRect();
+        touchX = (e.touches[0].clientX - rect.left) / rect.width;
+        touchY = 1.0 - (e.touches[0].clientY - rect.top) / rect.height;
+    });
+
+    canvas.addEventListener('touchmove', (e) => {
+        e.preventDefault(); // Prevent default touch behavior
+        const touchY = e.touches[0].clientY;
+        const delta = (lastTouchY - touchY) * 0.01;
+        const newPerspective = Math.max(0.1, Math.min(2, parseFloat(perspectiveControl.value) + delta));
+        perspectiveControl.value = newPerspective;
+        lastTouchY = touchY;
+
+        const rect = canvas.getBoundingClientRect();
+        touchX = (e.touches[0].clientX - rect.left) / rect.width;
+        touchY = 1.0 - (e.touches[0].clientY - rect.top) / rect.height;
+    });
+
+    canvas.addEventListener('touchend', (e) => {
+        e.preventDefault(); // Prevent default touch behavior
+        const touchEndTime = Date.now();
+        const touchDuration = touchEndTime - touchStartTime;
+
+        if (touchDuration < MAX_TAP_DURATION) {
+            const rect = canvas.getBoundingClientRect();
+            const endX = e.changedTouches[0].clientX - rect.left;
+            const endY = e.changedTouches[0].clientY - rect.top;
+            const startX = touchX * rect.width;
+            const startY = (1 - touchY) * rect.height;
+            const distance = Math.sqrt(Math.pow(endX - startX, 2) + Math.pow(endY - startY, 2));
+
+            if (distance < TAP_DISTANCE_THRESHOLD) {
+                // This is a tap, create a ripple effect
+                createRipple(endX, endY);
+            }
+        }
+
+        touchX = -1;
+        touchY = -1;
+    });
+
+    function createRipple(x, y) {
+        const ripple = document.createElement('div');
+        ripple.classList.add('ripple');
+        ripple.style.left = `${x}px`;
+        ripple.style.top = `${y}px`;
+        canvas.appendChild(ripple);
+
+        // Animate the ripple
+        ripple.style.animation = 'ripple-effect 0.6s linear';
+        ripple.addEventListener('animationend', () => {
+            canvas.removeChild(ripple);
+        });
+    }
+</script>
+</body></html>
