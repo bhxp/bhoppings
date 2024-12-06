@@ -114,6 +114,58 @@
             {
                 "text": "protocol 533",
                 "url": "/protocol_533"
+            },
+            {
+                "text": "backrooms",
+                "url": "/backrooms"
+            },
+            {
+                "text": "cosmic",
+                "url": "/cosmic"
+            },
+            {
+                "text": "creature builder",
+                "url": "/creaturebuilder"
+            },
+            {
+                "text": "crt shader",
+                "url": "/crtemulationshader"
+            },
+            {
+                "text": "dreamland",
+                "url": "/dreamland"
+            },
+            {
+                "text": "floral fractal test",
+                "url": "/floralfractletest"
+            },
+            {
+                "text": "fractal land",
+                "url": "/fractalland"
+            },
+            {
+                "text": "hyper realistic fractal shader",
+                "url": "/protocol_533"
+            },
+            {
+                "text": "galaxy gen",
+                "url": "/galaxygen"
+            },
+            {
+                "text": "maze generator",
+                "url": "/mazegenerator"
+            },
+            {
+                "text": "shader test",
+                "url": "/shadertest"
+            },
+            {
+                "text": "spixe",
+                "url": "/spixe"
+            },
+            {
+                "text": "terrain generator",
+                "url": "/terraingen"
             }
         ]
     },
