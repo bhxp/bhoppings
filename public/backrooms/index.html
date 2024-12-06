@@ -1,0 +1,354 @@
+<html><head><base href="butthole.cum/"><title>Backrooms</title><script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script><style>body { margin: 0; overflow: hidden; }</style></head><body>
+<script>
+// Set up scene, camera, and renderer
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+const renderer = new THREE.WebGLRenderer();
+renderer.setSize(window.innerWidth, window.innerHeight);
+document.body.appendChild(renderer.domElement);
+
+// Load textures
+const textureLoader = new THREE.TextureLoader();
+const ceilingDiffuse = textureLoader.load('https://i.postimg.cc/8kxQj65Z/Ceiling-Diffuse.png');
+const ceilingEmissive = textureLoader.load('https://i.postimg.cc/05z1kf86/Ceiling-Emissive.png');
+const floorDiffuse = textureLoader.load('https://i.postimg.cc/52MhmW8v/Floor-Diffuse.png');
+const wallDiffuse = textureLoader.load('https://i.postimg.cc/SRk9rsQ3/Wall-Diffuse2.png');
+
+// Set texture repeat and wrap
+[ceilingDiffuse, ceilingEmissive, floorDiffuse, wallDiffuse].forEach(texture => {
+    texture.wrapS = THREE.RepeatWrapping;
+    texture.wrapT = THREE.RepeatWrapping;
+});
+
+// Scale textures
+const textureScale = 0.5;
+ceilingDiffuse.repeat.set(100 * textureScale, 100 * textureScale);
+ceilingEmissive.repeat.set(100 * textureScale, 100 * textureScale);
+floorDiffuse.repeat.set(100 * textureScale, 100 * textureScale);
+wallDiffuse.repeat.set(1 * textureScale, 1.2 * textureScale);
+
+// Create materials
+const floorMaterial = new THREE.MeshStandardMaterial({ 
+    map: floorDiffuse,
+    roughness: 1,
+    metalness: 0
+});
+const ceilingMaterial = new THREE.MeshStandardMaterial({ 
+    map: ceilingDiffuse,
+    emissiveMap: ceilingEmissive,
+    emissive: 0xffffff,
+    emissiveIntensity: 0.5,
+    roughness: 1,
+    metalness: 0
+});
+const wallMaterial = new THREE.MeshStandardMaterial({ 
+    map: wallDiffuse,
+    roughness: 1,
+    metalness: 0
+});
+
+// Create infinite planes for floor and ceiling
+const planeGeometry = new THREE.PlaneGeometry(1000, 1000);
+const floor = new THREE.Mesh(planeGeometry, floorMaterial);
+floor.rotation.x = -Math.PI / 2;
+floor.position.y = -2;
+scene.add(floor);
+
+const ceiling = new THREE.Mesh(planeGeometry, ceilingMaterial);
+ceiling.rotation.x = Math.PI / 2;
+ceiling.position.y = 10;
+scene.add(ceiling);
+
+// Create player
+const playerGeometry = new THREE.BoxGeometry(1, 2, 1);
+const playerMaterial = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+const player = new THREE.Mesh(playerGeometry, playerMaterial);
+scene.add(player);
+
+// Create flashlight
+const flashlight = new THREE.SpotLight(0xffffff, 1.5, 70, Math.PI / 6, 0.5, 1);
+camera.add(flashlight);
+flashlight.position.set(0, 0, 0);
+flashlight.target.position.set(0, 0, -1);
+camera.add(flashlight.target);
+scene.add(camera);
+
+// Add volumetric fog
+scene.fog = new THREE.FogExp2(0x000000, 0.02);
+
+// Add ambient light
+const ambientLight = new THREE.AmbientLight(0xffffff, 0.2);
+scene.add(ambientLight);
+
+// Audio setup
+const listener = new THREE.AudioListener();
+camera.add(listener);
+
+// Ambient sound
+const ambientSound = new THREE.Audio(listener);
+const ambientLoader = new THREE.AudioLoader();
+ambientLoader.load('https://cdn.discordapp.com/attachments/1241021868811747352/1259147945857519666/705240__ienba__interior-low-roomtone.wav?ex=668aa068&is=66894ee8&hm=0624bf727daa8aa995cfa55b2fce6ac59e64488f50e71a554b8f51d9434a9a5c&', function(buffer) {
+    ambientSound.setBuffer(buffer);
+    ambientSound.setLoop(true);
+    ambientSound.setVolume(0.5);
+    ambientSound.play();
+});
+
+// Footstep sound
+const footstepSound = new THREE.Audio(listener);
+const footstepLoader = new THREE.AudioLoader();
+footstepLoader.load('https://cdn.discordapp.com/attachments/1241021868811747352/1259147946667147376/254840__aevoy__footsteps.mp3?ex=668aa068&is=66894ee8&hm=396e5ecf226945c5759556a21d0854c40774dcedd206764eb0e6f461d0420218&', function(buffer) {
+    footstepSound.setBuffer(buffer);
+    footstepSound.setLoop(true);
+    footstepSound.setVolume(0.7);
+});
+
+// Player movement variables
+const moveSpeed = 0.05;
+const jumpForce = 0.15;
+let velocity = new THREE.Vector3();
+let onGround = true;
+
+// Input handling
+const keyState = {};
+document.addEventListener('keydown', (e) => { keyState[e.code] = true; });
+document.addEventListener('keyup', (e) => { keyState[e.code] = false; });
+
+// Mouse look
+let pitch = 0;
+let yaw = 0;
+document.addEventListener('mousemove', (e) => {
+    yaw -= e.movementX * 0.002;
+    pitch -= e.movementY * 0.002;
+    pitch = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, pitch));
+});
+
+// Lock pointer
+renderer.domElement.addEventListener('click', () => {
+    renderer.domElement.requestPointerLock();
+});
+
+// Maze generation
+const wallSize = 10;
+const mazeSize = 10;
+const walls = new Set();
+
+function generateMazeChunk(chunkX, chunkZ) {
+    for (let x = 0; x < mazeSize; x++) {
+        for (let z = 0; z < mazeSize; z++) {
+            if (Math.random() < 0.3) {
+                const wallX = chunkX * mazeSize * wallSize + x * wallSize;
+                const wallZ = chunkZ * mazeSize * wallSize + z * wallSize;
+                walls.add(`${wallX},${wallZ}`);
+            }
+        }
+    }
+}
+
+function createWall(x, z) {
+    const wallGeometry = new THREE.BoxGeometry(wallSize, 12, wallSize);
+    const wall = new THREE.Mesh(wallGeometry, wallMaterial);
+    wall.position.set(x, 4, z);
+    scene.add(wall);
+}
+
+function updateMaze() {
+    const playerChunkX = Math.floor(player.position.x / (mazeSize * wallSize));
+    const playerChunkZ = Math.floor(player.position.z / (mazeSize * wallSize));
+
+    for (let dx = -1; dx <= 1; dx++) {
+        for (let dz = -1; dz <= 1; dz++) {
+            const chunkX = playerChunkX + dx;
+            const chunkZ = playerChunkZ + dz;
+            const chunkKey = `${chunkX},${chunkZ}`;
+
+            if (!walls.has(chunkKey)) {
+                generateMazeChunk(chunkX, chunkZ);
+                walls.add(chunkKey);
+
+                for (let x = 0; x < mazeSize; x++) {
+                    for (let z = 0; z < mazeSize; z++) {
+                        const wallX = chunkX * mazeSize * wallSize + x * wallSize;
+                        const wallZ = chunkZ * mazeSize * wallSize + z * wallSize;
+                        const wallKey = `${wallX},${wallZ}`;
+
+                        if (walls.has(wallKey)) {
+                            createWall(wallX, wallZ);
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+// AABB Collision
+function checkAABBCollision(box1, box2) {
+    return (box1.min.x <= box2.max.x && box1.max.x >= box2.min.x) &&
+           (box1.min.y <= box2.max.y && box1.max.y >= box2.min.y) &&
+           (box1.min.z <= box2.max.z && box1.max.z >= box2.min.z);
+}
+
+function resolveCollision(playerBox, wallBox) {
+    const overlapX = Math.min(playerBox.max.x - wallBox.min.x, wallBox.max.x - playerBox.min.x);
+    const overlapY = Math.min(playerBox.max.y - wallBox.min.y, wallBox.max.y - playerBox.min.y);
+    const overlapZ = Math.min(playerBox.max.z - wallBox.min.z, wallBox.max.z - playerBox.min.z);
+
+    if (overlapX < overlapY && overlapX < overlapZ) {
+        return new THREE.Vector3(overlapX * Math.sign(playerBox.min.x - wallBox.min.x), 0, 0);
+    } else if (overlapY < overlapZ) {
+        return new THREE.Vector3(0, overlapY * Math.sign(playerBox.min.y - wallBox.min.y), 0);
+    } else {
+        return new THREE.Vector3(0, 0, overlapZ * Math.sign(playerBox.min.z - wallBox.min.z));
+    }
+}
+
+function spawnPlayerAgainstWall() {
+    let spawnPosition = new THREE.Vector3();
+    let spawnDirection = new THREE.Vector3();
+    let wallFound = false;
+
+    while (!wallFound) {
+        spawnPosition.set(
+            Math.floor(Math.random() * 100) * wallSize,
+            1,
+            Math.floor(Math.random() * 100) * wallSize
+        );
+
+        for (let wall of scene.children) {
+            if (wall.isMesh && wall.material === wallMaterial) {
+                const wallBox = new THREE.Box3().setFromObject(wall);
+                const playerBox = new THREE.Box3().setFromCenterAndSize(spawnPosition, new THREE.Vector3(1, 2, 1));
+
+                if (checkAABBCollision(playerBox, wallBox)) {
+                    spawnDirection.subVectors(playerBox.getCenter(new THREE.Vector3()), wallBox.getCenter(new THREE.Vector3())).normalize();
+                    spawnPosition.add(spawnDirection.multiplyScalar(6)); // Move player 6 units away from the wall
+                    wallFound = true;
+                    break;
+                }
+            }
+        }
+    }
+
+    player.position.copy(spawnPosition);
+    camera.position.copy(player.position);
+    camera.position.y += 0.8;
+
+    // Set initial yaw to face away from the wall
+    yaw = Math.atan2(spawnDirection.x, spawnDirection.z);
+    camera.rotation.y = yaw;
+}
+
+function updatePlayer() {
+    // Apply gravity
+    velocity.y -= 0.01;
+
+    // Jump
+    if (keyState['Space'] && onGround) {
+        velocity.y = jumpForce;
+        onGround = false;
+    }
+
+    // Movement
+    const forward = new THREE.Vector3(-Math.sin(yaw), 0, -Math.cos(yaw));
+    const right = new THREE.Vector3(Math.cos(yaw), 0, -Math.sin(yaw));
+
+    let isMoving = false;
+
+    if (keyState['KeyW']) {
+        velocity.add(forward.multiplyScalar(moveSpeed));
+        isMoving = true;
+    }
+    if (keyState['KeyS']) {
+        velocity.sub(forward.multiplyScalar(moveSpeed));
+        isMoving = true;
+    }
+    if (keyState['KeyA']) {
+        velocity.sub(right.multiplyScalar(moveSpeed));
+        isMoving = true;
+    }
+    if (keyState['KeyD']) {
+        velocity.add(right.multiplyScalar(moveSpeed));
+        isMoving = true;
+    }
+
+    // Play or pause footstep sound based on movement
+    if (isMoving && onGround && !footstepSound.isPlaying) {
+        footstepSound.play();
+    } else if ((!isMoving || !onGround) && footstepSound.isPlaying) {
+        footstepSound.pause();
+    }
+
+    // Update position
+    const newPosition = player.position.clone().add(velocity);
+
+    // Player AABB
+    const playerBox = new THREE.Box3().setFromObject(player);
+    playerBox.min.add(velocity);
+    playerBox.max.add(velocity);
+
+    // Wall collision
+    for (let wall of scene.children) {
+        if (wall.isMesh && wall.material === wallMaterial) {
+            const wallBox = new THREE.Box3().setFromObject(wall);
+
+            if (checkAABBCollision(playerBox, wallBox)) {
+                const resolution = resolveCollision(playerBox, wallBox);
+                newPosition.add(resolution);
+                playerBox.min.add(resolution);
+                playerBox.max.add(resolution);
+
+                if (resolution.x !== 0) velocity.x = 0;
+                if (resolution.y !== 0) velocity.y = 0;
+                if (resolution.z !== 0) velocity.z = 0;
+            }
+        }
+    }
+
+    player.position.copy(newPosition);
+
+    // Floor collision
+    if (player.position.y < 1) {
+        player.position.y = 1;
+        velocity.y = 0;
+        onGround = true;
+    }
+
+    // Ceiling collision
+    if (player.position.y > 9) {
+        player.position.y = 9;
+        velocity.y = 0;
+    }
+
+    // Update camera and flashlight
+    camera.position.copy(player.position);
+    camera.position.y += 0.8;
+    camera.rotation.order = 'YXZ';
+    camera.rotation.y = yaw;
+    camera.rotation.x = pitch;
+
+    // Apply friction
+    velocity.x *= 0.85;
+    velocity.z *= 0.85;
+}
+
+function animate() {
+    requestAnimationFrame(animate);
+    updatePlayer();
+    updateMaze();
+    renderer.render(scene, camera);
+}
+
+// Initialize the game
+updateMaze();
+spawnPlayerAgainstWall();
+animate();
+
+// Handle window resize
+window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+});
+</script>
+</body></html>
