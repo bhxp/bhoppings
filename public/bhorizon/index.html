@@ -1,0 +1,262 @@
+<html><head><base href="ok"><title>Project Bhorizon: 3D HDRI Environment Visualization</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/PointerLockControls.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/RGBELoader.js"></script>
+<style>
+  body { margin: 0; overflow: hidden; font-family: Arial, sans-serif; }
+  #info {
+    position: absolute;
+    top: 10px;
+    width: 100%;
+    text-align: center;
+    color: white;
+    font-size: 18px;
+    text-shadow: 1px 1px 2px black;
+  }
+  #instructions {
+    position: absolute;
+    top: 40px;
+    width: 100%;
+    text-align: center;
+    color: white;
+    font-size: 16px;
+    text-shadow: 1px 1px 2px black;
+  }
+  #controls {
+    position: absolute;
+    bottom: 10px;
+    left: 10px;
+    background-color: rgba(0,0,0,0.7);
+    padding: 10px;
+    border-radius: 5px;
+    color: white;
+  }
+  #controls button {
+    margin: 5px;
+    padding: 5px 10px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+  }
+  #controls button:hover {
+    background-color: #45a049;
+  }
+  #loading {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 24px;
+    color: white;
+    text-shadow: 1px 1px 2px black;
+  }
+</style>
+</head>
+<body>
+<div id="info">Project Bhorizon: 3D HDRI Environment Visualization</div>
+<div id="instructions">WASD to move | R to switch view | Click to start</div>
+<div id="controls">
+  <button onclick="toggleHelmet()">Toggle Helmet</button>
+  <button onclick="changeHDRI()">Change HDRI</button>
+  <button onclick="toggleWireframe()">Toggle Wireframe</button>
+</div>
+<div id="loading">Loading 3D environment...</div>
+<script>
+let scene, camera, renderer, controls, helmet, hdrEquirect;
+let helmetVisible = true;
+let wireframeMode = false;
+let moveForward = false;
+let moveBackward = false;
+let moveLeft = false;
+let moveRight = false;
+let isFirstPerson = false;
+let pointerLockControls;
+let orbitControls;
+let velocity = new THREE.Vector3();
+let direction = new THREE.Vector3();
+let prevTime = performance.now();
+
+const hdriUrls = [
+  'https://threejs.org/examples/textures/equirectangular/venice_sunset_1k.hdr',
+  'https://threejs.org/examples/textures/equirectangular/pedestrian_overpass_1k.hdr',
+  'https://threejs.org/examples/textures/equirectangular/royal_esplanade_1k.hdr'
+];
+let currentHdriIndex = 0;
+
+function init() {
+  scene = new THREE.Scene();
+  camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+  renderer = new THREE.WebGLRenderer({ antialias: true });
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1;
+  renderer.outputEncoding = THREE.sRGBEncoding;
+  document.body.appendChild(renderer.domElement);
+
+  orbitControls = new THREE.OrbitControls(camera, renderer.domElement);
+  orbitControls.enableDamping = true;
+  orbitControls.dampingFactor = 0.05;
+  orbitControls.screenSpacePanning = false;
+  orbitControls.minDistance = 1;
+  orbitControls.maxDistance = 10;
+  orbitControls.maxPolarAngle = Math.PI / 2;
+
+  pointerLockControls = new THREE.PointerLockControls(camera, document.body);
+
+  document.addEventListener('click', function() {
+    pointerLockControls.lock();
+  });
+
+  camera.position.set(0, 0, 5);
+  
+  // Create ground plane
+  const groundGeometry = new THREE.PlaneGeometry(1000, 1000);
+  const groundMaterial = new THREE.MeshStandardMaterial({ color: 0x808080 });
+  const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+  ground.rotation.x = -Math.PI / 2;
+  ground.position.y = -2;
+  scene.add(ground);
+
+  // Create some buildings
+  for(let i = 0; i < 50; i++) {
+    const height = Math.random() * 20 + 10;
+    const geometry = new THREE.BoxGeometry(5, height, 5);
+    const material = new THREE.MeshStandardMaterial({ color: 0x808080 });
+    const building = new THREE.Mesh(geometry, material);
+    building.position.x = Math.random() * 200 - 100;
+    building.position.z = Math.random() * 200 - 100;
+    building.position.y = height/2;
+    scene.add(building);
+  }
+
+  const ambientLight = new THREE.AmbientLight(0x404040, 1);
+  scene.add(ambientLight);
+
+  const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
+  directionalLight.position.set(1, 1, 1);
+  scene.add(directionalLight);
+
+  loadHDRI(hdriUrls[currentHdriIndex]);
+  loadHelmet();
+
+  document.addEventListener('keydown', onKeyDown);
+  document.addEventListener('keyup', onKeyUp);
+  window.addEventListener('resize', onWindowResize, false);
+}
+
+function onKeyDown(event) {
+  switch(event.code) {
+    case 'KeyW': moveForward = true; break;
+    case 'KeyS': moveBackward = true; break;
+    case 'KeyA': moveLeft = true; break;
+    case 'KeyD': moveRight = true; break;
+    case 'KeyR': toggleFirstPerson(); break;
+  }
+}
+
+function onKeyUp(event) {
+  switch(event.code) {
+    case 'KeyW': moveForward = false; break;
+    case 'KeyS': moveBackward = false; break;
+    case 'KeyA': moveLeft = false; break;
+    case 'KeyD': moveRight = false; break;
+  }
+}
+
+function toggleFirstPerson() {
+  isFirstPerson = !isFirstPerson;
+  if(isFirstPerson) {
+    orbitControls.enabled = false;
+    pointerLockControls.enabled = true;
+    if(helmet) helmet.visible = false;
+  } else {
+    orbitControls.enabled = true;
+    pointerLockControls.enabled = false;
+    if(helmet) helmet.visible = helmetVisible;
+  }
+}
+
+function loadHDRI(url) {
+  new THREE.RGBELoader()
+    .load(url, function(texture) {
+      texture.mapping = THREE.EquirectangularReflectionMapping;
+      scene.background = texture;
+      scene.environment = texture;
+      hdrEquirect = texture;
+      document.getElementById('loading').style.display = 'none';
+    });
+}
+
+function loadHelmet() {
+  const loader = new THREE.GLTFLoader();
+  loader.load('https://threejs.org/examples/models/gltf/DamagedHelmet/glTF/DamagedHelmet.gltf', function(gltf) {
+    helmet = gltf.scene;
+    helmet.position.set(0, 0, 0);
+    helmet.scale.set(2, 2, 2);
+    scene.add(helmet);
+  });
+}
+
+function toggleHelmet() {
+  helmetVisible = !helmetVisible;
+  if (helmet && !isFirstPerson) {
+    helmet.visible = helmetVisible;
+  }
+}
+
+function changeHDRI() {
+  currentHdriIndex = (currentHdriIndex + 1) % hdriUrls.length;
+  loadHDRI(hdriUrls[currentHdriIndex]);
+}
+
+function toggleWireframe() {
+  wireframeMode = !wireframeMode;
+  scene.traverse(function(object) {
+    if (object.isMesh) {
+      object.material.wireframe = wireframeMode;
+    }
+  });
+}
+
+function onWindowResize() {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+}
+
+function animate() {
+  requestAnimationFrame(animate);
+  
+  if(isFirstPerson) {
+    const time = performance.now();
+    const delta = (time - prevTime) / 1000;
+
+    velocity.x -= velocity.x * 10.0 * delta;
+    velocity.z -= velocity.z * 10.0 * delta;
+
+    direction.z = Number(moveForward) - Number(moveBackward);
+    direction.x = Number(moveRight) - Number(moveLeft);
+    direction.normalize();
+
+    if (moveForward || moveBackward) velocity.z -= direction.z * 400.0 * delta;
+    if (moveLeft || moveRight) velocity.x -= direction.x * 400.0 * delta;
+
+    pointerLockControls.moveRight(-velocity.x * delta);
+    pointerLockControls.moveForward(-velocity.z * delta);
+
+    prevTime = time;
+  } else {
+    orbitControls.update();
+  }
+  
+  renderer.render(scene, camera);
+}
+
+init();
+animate();
+</script>
+</body></html>
