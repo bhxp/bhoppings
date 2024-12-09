@@ -1,0 +1,283 @@
+<html>
+<head>
+<base href="." target="_blank">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Naivite Planet Explorer</title>
+<style>
+:root {
+  --gradient-1: linear-gradient(45deg, #ff69b4, #87ceeb); 
+  --gradient-2: linear-gradient(-45deg, #ffd700, #ff1493);
+  --hellish-gradient-1: linear-gradient(45deg, darkred, black);
+  --hellish-gradient-2: linear-gradient(-45deg, darkorange, red);
+}
+
+body {
+  margin: 0;
+  overflow: hidden;
+  background: black;
+  font-family: 'Arial Rounded MT Bold', Arial, sans-serif;
+  color: white;
+  transition: background 0.5s;
+}
+
+.planet-container {
+  position: relative; 
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.planet {
+  width: 300px;
+  height: 300px;
+  border-radius: 50%;
+  background: var(--gradient-1);
+  position: relative;
+  cursor: pointer;
+  animation: glow 3s infinite alternate;
+  transition: transform 0.3s, background 0.5s, box-shadow 0.5s;
+}
+
+.planet:hover {
+  transform: scale(1.1);
+}
+
+.cloud {
+  position: absolute;
+  background: var(--gradient-2);
+  border-radius: 50%;
+  filter: blur(10px);
+  opacity: 0.7;
+  animation: float 10s infinite alternate;
+  transition: background 0.5s;
+}
+
+@keyframes glow {
+  0% { box-shadow: 0 0 20px #ff69b4; }
+  100% { box-shadow: 0 0 40px #87ceeb; }
+}
+
+@keyframes float {
+  0% { transform: translateY(0) translateX(0); }
+  100% { transform: translateY(-20px) translateX(20px); }
+}
+
+.info-panel {
+  position: absolute;
+  right: 20px;
+  top: 20px;
+  background: rgba(255,255,255,0.1);
+  padding: 20px;
+  border-radius: 10px;
+  backdrop-filter: blur(5px);
+  max-width: 300px;
+  transform: translateY(-100%);
+  transition: transform 0.5s, background 0.5s, color 0.5s;
+}
+
+.info-panel.visible {
+  transform: translateY(0);
+}
+
+.creature {
+  position: absolute;
+  transition: all 0.5s;
+}
+
+.rainbow-creature {
+  animation: rainbow-pulse 2s infinite;
+}
+
+@keyframes rainbow-pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.2); }
+  100% { transform: scale(1); }
+}
+
+.burning {
+  animation: burn 2s forwards;
+}
+
+@keyframes burn {
+  0% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.2); opacity: 0.7; filter: hue-rotate(90deg); }
+  100% { transform: scale(0); opacity: 0; }
+}
+
+.fire {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 50px;
+  height: 50px;
+  background: radial-gradient(circle at center, rgba(255, 69, 0, 0.8), transparent);
+  pointer-events: none;
+  animation: flicker 0.5s infinite;
+}
+
+@keyframes flicker {
+  0%, 100% { opacity: 0.8; }
+  50% { opacity: 0.4; }
+}
+
+/* Hellish styles */
+body.hellish {
+  background: linear-gradient(black, darkred);
+  color: darkorange;
+}
+
+body.hellish .planet {
+  background: var(--hellish-gradient-1);
+  box-shadow: 0 0 50px red;
+}
+
+body.hellish .cloud {
+  background: var(--hellish-gradient-2);
+}
+
+body.hellish .info-panel {
+  background: rgba(50, 0, 0, 0.8);
+  color: darkorange;
+}
+
+body.hellish .creature {
+  filter: hue-rotate(180deg);
+}
+
+body.hellish .fire {
+  background: radial-gradient(circle at center, rgba(255, 0, 0, 0.8), transparent);
+}
+
+body.hellish .planet:hover {
+  transform: scale(1.1) rotate(10deg);
+}
+
+</style>
+</head>
+<body>
+
+<div class="planet-container">
+  <div class="planet" id="naivitePlanet"></div>
+  <div class="info-panel" id="infoPanel">
+    <h2>Welcome to Planet Naivite</h2>
+    <p>A world where everything is innocent and pure. The inhabitants live in perfect harmony, believing in the goodness of all things.</p>
+    <p>Click around to discover the gentle creatures that call this place home!</p>
+    <p>🔥 Press spacebar to spread fire and make everything turn hellish! 🔥</p>
+  </div>
+</div>
+
+<script>
+const planet = document.getElementById('naivitePlanet');
+const infoPanel = document.getElementById('infoPanel');
+const creatures = new Set();
+let isHellish = false;
+
+// Create floating clouds
+for (let i = 0; i < 10; i++) {
+  const cloud = document.createElement('div');
+  cloud.className = 'cloud';
+  cloud.style.width = Math.random() * 100 + 50 + 'px';
+  cloud.style.height = Math.random() * 100 + 50 + 'px';
+  cloud.style.left = Math.random() * window.innerWidth + 'px';
+  cloud.style.top = Math.random() * window.innerHeight + 'px';
+  cloud.style.animationDuration = (Math.random() * 5 + 5) + 's';
+  document.querySelector('.planet-container').appendChild(cloud);
+}
+
+// Show info panel
+setTimeout(() => {
+  infoPanel.classList.add('visible');
+}, 1000);
+
+// Create SVG creatures
+const createCreature = (x, y) => {
+  const creature = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  creature.setAttribute("width", "50");
+  creature.setAttribute("height", "50");
+  creature.setAttribute("viewBox", "0 0 50 50");
+  creature.classList.add('creature');
+  creature.style.left = x - 25 + 'px';
+  creature.style.top = y - 25 + 'px';
+
+  const body = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+  body.setAttribute("cx", "25");
+  body.setAttribute("cy", "25");
+  body.setAttribute("r", "20");
+  body.setAttribute("fill", `hsl(${Math.random() * 360}, 80%, 70%)`);
+
+  const eye1 = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+  eye1.setAttribute("cx", "18");
+  eye1.setAttribute("cy", "20");
+  eye1.setAttribute("r", "4");
+  eye1.setAttribute("fill", "black");
+
+  const eye2 = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+  eye2.setAttribute("cx", "32");
+  eye2.setAttribute("cy", "20");
+  eye2.setAttribute("r", "4");
+  eye2.setAttribute("fill", "black");
+
+  const mouth = document.createElementNS("http://www.w3.org/2000/svg", "path");
+  mouth.setAttribute("d", "M 15 30 Q 25 40 35 30");
+  mouth.setAttribute("stroke", "black");
+  mouth.setAttribute("fill", "none");
+  mouth.setAttribute("stroke-width", "2");
+
+  creature.appendChild(body);
+  creature.appendChild(eye1);
+  creature.appendChild(eye2);
+  creature.appendChild(mouth);
+
+  document.querySelector('.planet-container').appendChild(creature);
+  creatures.add(creature);
+
+  // Animate creature
+  const moveCreature = () => {
+    if (!isHellish) {
+      creature.style.transform = `translate(${Math.random() * 20 - 10}px, ${Math.random() * 20 - 10}px)`;
+    }
+  };
+  setInterval(moveCreature, 2000);
+};
+
+planet.addEventListener('click', (e) => {
+  if (!isHellish) {
+    createCreature(e.clientX, e.clientY);
+  }
+});
+
+// Spread fire, burn creatures, and toggle hellish mode when spacebar is pressed
+document.addEventListener('keydown', (e) => {
+  if (e.code === 'Space') {
+    isHellish = !isHellish;
+
+    if (isHellish) {
+      creatures.forEach(creature => {
+        creature.classList.add('burning');
+
+        // Add fire effect
+        const fire = document.createElement('div');
+        fire.className = 'fire';
+        creature.appendChild(fire);
+
+        // Remove creature after burning
+        setTimeout(() => {
+          creature.remove();
+          creatures.delete(creature);
+        }, 2000);
+      });
+
+      // Add 'hellish' class to body
+      document.body.classList.add('hellish');
+    } else {
+      // Remove 'hellish' class from body
+      document.body.classList.remove('hellish');
+    }
+  }
+});
+</script>
+</body>
+</html>
