@@ -1,0 +1,509 @@
+<html><head><base href="https://poop.com"><title>Quantum Particle Simulator - Interactive Mode</title>
+<style>
+  body {
+    margin: 0;
+    padding: 20px;
+    background-color: #1e1e1e;
+    color: #ffffff;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    overflow: hidden;
+  }
+  #canvas {
+    width: 100%;
+    height: 100%;
+    cursor: crosshair;
+    border-radius: 12px;
+    box-shadow: 0 0 20px rgba(0,0,0,0.3);
+  }
+  .macos-panel {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(12px);
+    border-radius: 12px;
+    padding: 15px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+  #controls {
+    position: absolute;
+    bottom: 20px;
+    left: 20px;
+    composes: macos-panel;
+  }
+  button, select {
+    background: linear-gradient(180deg, #0d6efd 0%, #0b5ed7 100%);
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    margin: 5px;
+    cursor: pointer;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  }
+  button:hover {
+    background: linear-gradient(180deg, #0b5ed7 0%, #0a58ca 100%);
+    transform: translateY(-1px);
+  }
+  select {
+    background: linear-gradient(180deg, #2c2c2e 0%, #1c1c1e 100%);
+    border: 1px solid rgba(255,255,255,0.1);
+  }
+  #info, #shapeInfo, #interactionInfo, #quantumEffects, #equationDisplay, #particleTracker {
+    composes: macos-panel;
+  }
+  #quantumEffects {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 24px;
+    text-align: center;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.5s;
+  }
+</style>
+</head>
+<body>
+<canvas id="canvas" width="980" height="1855"></canvas>
+<div id="controls">
+  <select id="shapeSelect">
+    <option value="quantumField">Quantum Field</option>
+    <option value="entanglement">Quantum Entanglement</option>
+    <option value="superposition">Superposition</option>
+    <option value="waveFunction">Wave Function</option>
+    <option value="stringTheory">String Theory</option>
+    <option value="spiral">Quantum Spiral</option>
+    <option value="dna">Quantum DNA</option>
+    <option value="galaxy">Quantum Galaxy</option>
+    <option value="cube">Quantum Cube</option>
+    <option value="sphere">Quantum Sphere</option>
+    <option value="torus">Quantum Torus</option>
+    <option value="mobius">Möbius Strip</option>
+    <option value="klein">Klein Bottle</option>
+    <option value="fractal">Quantum Fractal</option>
+    <option value="vortex">Quantum Vortex</option>
+    <option value="cyclone">Quantum Cyclone</option>
+    <option value="butterfly">Quantum Butterfly</option>
+    <option value="tessaract">4D Tessaract</option>
+    <option value="blackhole">Black Hole</option>
+  </select>
+  <button id="randomizeBtn">Randomize</button>
+  <button id="collapseBtn">Collapse Wave Function</button>
+  <button id="tunnelBtn">Quantum Tunneling</button>
+  <button id="addParticleBtn">Add Particle</button>
+  <button id="removeParticleBtn">Remove Particle</button>
+</div>
+<div id="info" style="display: none;">
+  <p>Particles: <span id="particleCount">40000</span></p>
+  <p>FPS: <span id="fps">0</span></p>
+  <p>Quantum State: <span id="quantumState">Coherent</span></p>
+</div>
+<div id="shapeInfo" class="macos-panel">
+  <h3>Superposition</h3>
+  <p>Illustrating the quantum superposition principle, where particles exist in multiple states simultaneously.</p>
+</div>
+<div id="interactionInfo" class="macos-panel">
+  <p>Click to create quantum disturbances</p>
+  <p>Drag to rotate</p>
+  <p>Scroll to zoom</p>
+  <p>Double-click to reset view</p>
+</div>
+<div id="quantumEffects">Quantum Randomization Complete!</div>
+<div id="equationDisplay" class="macos-panel">
+  <p>Equation: |ψ⟩ = α|0⟩ + β|1⟩</p>
+</div>
+<div id="particleTracker" class="macos-panel" style="display: none;">
+  <p>Tracked Particle: <span id="trackedParticleId">None</span></p>
+  <p>Position: <span id="trackedParticlePosition">N/A</span></p>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/9.4.4/math.js"></script>
+<script>
+// Initialize Three.js scene, camera, and renderer
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+const renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('canvas'), antialias: true });
+renderer.setSize(window.innerWidth, window.innerHeight);
+
+// Create particle system
+const particleCount = 40000;
+const particles = new THREE.BufferGeometry();
+const positions = new Float32Array(particleCount * 3);
+const colors = new Float32Array(particleCount * 3);
+
+for (let i = 0; i < particleCount * 3; i += 3) {
+  positions[i] = (Math.random() - 0.5) * 10;
+  positions[i + 1] = (Math.random() - 0.5) * 10;
+  positions[i + 2] = (Math.random() - 0.5) * 10;
+  
+  colors[i] = Math.random();
+  colors[i + 1] = Math.random();
+  colors[i + 2] = Math.random();
+}
+
+particles.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+particles.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+
+const particleMaterial = new THREE.PointsMaterial({
+  size: 0.08,
+  sizeAttenuation: true,
+  vertexColors: true,
+  blending: THREE.AdditiveBlending,
+  transparent: true,
+  map: createParticleTexture()
+});
+
+const particleSystem = new THREE.Points(particles, particleMaterial);
+scene.add(particleSystem);
+
+// Set up camera position
+camera.position.z = 5;
+
+// Animation loop
+function animate() {
+  requestAnimationFrame(animate);
+  
+  // Rotate particle system
+  particleSystem.rotation.x += 0.001;
+  particleSystem.rotation.y += 0.002;
+  
+  renderer.render(scene, camera);
+}
+
+animate();
+
+// Handle window resize
+window.addEventListener('resize', () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+// Implement shape changing functionality
+const shapeSelect = document.getElementById('shapeSelect');
+
+function changeShape() {
+  const selectedShape = shapeSelect.value;
+  const positions = particleSystem.geometry.attributes.position.array;
+  const colors = particleSystem.geometry.attributes.color.array;
+
+  for (let i = 0; i < positions.length; i += 3) {
+    let x, y, z;
+    
+    switch (selectedShape) {
+      case 'quantumField':
+        x = (Math.random() - 0.5) * 10;
+        y = (Math.random() - 0.5) * 10;
+        z = (Math.random() - 0.5) * 10;
+        break;
+        
+      case 'entanglement':
+        const theta = Math.random() * Math.PI * 2;
+        const phi = Math.acos(2 * Math.random() - 1);
+        const r = 5;
+        x = r * Math.sin(phi) * Math.cos(theta);
+        y = r * Math.sin(phi) * Math.sin(theta);
+        z = r * Math.cos(phi);
+        break;
+        
+      case 'superposition':
+        const t = (i/3) * 0.1;
+        x = Math.sin(t) * 5;
+        y = Math.cos(t) * 5;
+        z = Math.sin(t * 2) * 2;
+        break;
+        
+      case 'waveFunction':
+        x = (i/3) * 0.1 - 5;
+        y = Math.sin(x * 0.5) * 3;
+        z = Math.cos(x * 0.5) * 3;
+        break;
+        
+      case 'stringTheory':
+        const u = Math.random() * Math.PI * 2;
+        const v = Math.random() * Math.PI * 2;
+        x = (1 + 0.5 * Math.cos(v)) * Math.cos(u) * 3;
+        y = (1 + 0.5 * Math.cos(v)) * Math.sin(u) * 3;
+        z = 0.5 * Math.sin(v) * 3;
+        break;
+        
+      case 'spiral':
+        const time = (i/3) * 0.1;
+        x = Math.sin(time) * time * 0.3;
+        y = Math.cos(time) * time * 0.3;
+        z = time * 0.3;
+        break;
+        
+      case 'dna':
+        const angle = (i/3) * 0.5;
+        x = Math.sin(angle) * 3;
+        y = angle * 0.2 - 5;
+        z = Math.cos(angle) * 3;
+        break;
+        
+      case 'galaxy':
+        const radius = Math.sqrt(Math.random()) * 5;
+        const theta2 = Math.random() * Math.PI * 2;
+        x = radius * Math.cos(theta2);
+        y = radius * Math.sin(theta2);
+        z = (Math.random() - 0.5) * (5 - radius) * 0.5;
+        break;
+
+      case 'cube':
+        x = (Math.random() - 0.5) * 4;
+        y = (Math.random() - 0.5) * 4;
+        z = (Math.random() - 0.5) * 4;
+        break;
+
+      case 'sphere':
+        const phi2 = Math.random() * Math.PI * 2;
+        const costheta = 2 * Math.random() - 1;
+        const u2 = Math.random();
+        const r2 = 4 * Math.cbrt(u2);
+        x = r2 * Math.sqrt(1 - costheta * costheta) * Math.cos(phi2);
+        y = r2 * Math.sqrt(1 - costheta * costheta) * Math.sin(phi2);
+        z = r2 * costheta;
+        break;
+
+      case 'torus':
+        const u3 = Math.random() * Math.PI * 2;
+        const v3 = Math.random() * Math.PI * 2;
+        const R = 3;
+        const r3 = 1;
+        x = (R + r3 * Math.cos(v3)) * Math.cos(u3);
+        y = (R + r3 * Math.cos(v3)) * Math.sin(u3);
+        z = r3 * Math.sin(v3);
+        break;
+
+      case 'mobius':
+        const u4 = Math.random() * Math.PI * 2;
+        const v4 = Math.random() * 2 - 1;
+        x = (1 + v4 * Math.cos(u4/2)) * Math.cos(u4) * 3;
+        y = (1 + v4 * Math.cos(u4/2)) * Math.sin(u4) * 3;
+        z = v4 * Math.sin(u4/2) * 3;
+        break;
+
+      case 'klein':
+        const u5 = Math.random() * Math.PI * 2;
+        const v5 = Math.random() * Math.PI * 2;
+        const a = 3;
+        x = (a + Math.cos(u5/2) * Math.sin(v5) - Math.sin(u5/2) * Math.sin(2*v5)) * Math.cos(u5);
+        y = (a + Math.cos(u5/2) * Math.sin(v5) - Math.sin(u5/2) * Math.sin(2*v5)) * Math.sin(u5);
+        z = Math.sin(u5/2) * Math.sin(v5) + Math.cos(u5/2) * Math.sin(2*v5);
+        break;
+
+      case 'fractal':
+        const iter = Math.floor(Math.random() * 8);
+        x = Math.sin(iter) * 5;
+        y = Math.cos(iter) * 5;
+        z = Math.tan(iter) * 2;
+        break;
+
+      case 'vortex':
+        const t2 = (i/3) * 0.1;
+        const r4 = t2 * 0.3;
+        x = Math.sin(t2) * r4;
+        y = Math.cos(t2) * r4;
+        z = t2 * 0.5;
+        break;
+
+      case 'cyclone':
+        const t3 = (i/3) * 0.1;
+        x = Math.sin(t3) * (5 - t3 * 0.2);
+        y = Math.cos(t3) * (5 - t3 * 0.2);
+        z = t3 * 0.3;
+        break;
+
+      case 'butterfly':
+        const t4 = (i/3) * 0.1;
+        x = Math.sin(t4) * (Math.exp(Math.cos(t4)) - 2*Math.cos(4*t4) - Math.pow(Math.sin(t4/12), 5));
+        y = Math.cos(t4) * (Math.exp(Math.cos(t4)) - 2*Math.cos(4*t4) - Math.pow(Math.sin(t4/12), 5));
+        z = Math.sin(t4 * 3) * 2;
+        break;
+
+      case 'tessaract':
+        const w = Math.random() * 2 - 1;
+        x = Math.random() * 2 - 1;
+        y = Math.random() * 2 - 1;
+        z = Math.random() * 2 - 1;
+        // Project 4D to 3D
+        const scale = 4 / (4 + w);
+        x *= scale * 3;
+        y *= scale * 3;
+        z *= scale * 3;
+        break;
+
+      case 'blackhole':
+        const dist = Math.random() * 5;
+        const angle2 = Math.random() * Math.PI * 2;
+        const elevation = (Math.random() - 0.5) * Math.PI;
+        x = dist * Math.cos(angle2) * Math.cos(elevation);
+        y = dist * Math.sin(angle2) * Math.cos(elevation);
+        z = dist * Math.sin(elevation);
+        // Add gravitational lensing effect
+        const r5 = Math.sqrt(x*x + y*y + z*z);
+        const factor = 1 / (1 + Math.exp(-(r5-2)));
+        x *= factor;
+        y *= factor;
+        z *= factor;
+        break;
+    }
+    
+    positions[i] = x;
+    positions[i + 1] = y;
+    positions[i + 2] = z;
+    
+    // Add color variations based on position
+    colors[i] = (x + 5) / 10;     // R
+    colors[i + 1] = (y + 5) / 10; // G
+    colors[i + 1] = (z + 5) / 10; // B
+  }
+  
+  particleSystem.geometry.attributes.position.needsUpdate = true;
+  particleSystem.geometry.attributes.color.needsUpdate = true;
+  
+  // Update shape info display
+  const shapeInfo = document.getElementById('shapeInfo');
+  shapeInfo.innerHTML = `<h3>${selectedShape}</h3>
+    <p>Visualizing ${selectedShape} quantum formation pattern.</p>`;
+    
+  displayQuantumEffect(`${selectedShape} Formation Active!`);
+}
+
+// Add this to ensure shape changes when dropdown changes
+shapeSelect.addEventListener('change', changeShape);
+
+function createParticleTexture() {
+  const canvas = document.createElement('canvas');
+  canvas.width = 64;
+  canvas.height = 64;
+  const ctx = canvas.getContext('2d');
+  
+  const gradient = ctx.createRadialGradient(32, 32, 0, 32, 32, 32);
+  gradient.addColorStop(0, 'rgba(255,255,255,1)');
+  gradient.addColorStop(1, 'rgba(255,255,255,0)');
+  
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, 64, 64);
+  
+  const texture = new THREE.Texture(canvas);
+  texture.needsUpdate = true;
+  return texture;
+}
+
+// Implement other button functionalities
+document.getElementById('randomizeBtn').addEventListener('click', randomizeParticles);
+document.getElementById('collapseBtn').addEventListener('click', collapseWaveFunction);
+document.getElementById('tunnelBtn').addEventListener('click', quantumTunneling);
+document.getElementById('addParticleBtn').addEventListener('click', addParticle);
+document.getElementById('removeParticleBtn').addEventListener('click', removeParticle);
+
+function randomizeParticles() {
+  const positions = particleSystem.geometry.attributes.position.array;
+  const colors = particleSystem.geometry.attributes.color.array;
+
+  for (let i = 0; i < particleCount * 3; i += 3) {
+    positions[i] = (Math.random() - 0.5) * 10;
+    positions[i + 1] = (Math.random() - 0.5) * 10;
+    positions[i + 2] = (Math.random() - 0.5) * 10;
+
+    colors[i] = Math.random();
+    colors[i + 1] = Math.random();
+    colors[i + 2] = Math.random();
+  }
+
+  particleSystem.geometry.attributes.position.needsUpdate = true;
+  particleSystem.geometry.attributes.color.needsUpdate = true;
+
+  displayQuantumEffect("Quantum Randomization Complete!");
+}
+
+function collapseWaveFunction() {
+  const positions = particleSystem.geometry.attributes.position.array;
+
+  for (let i = 0; i < particleCount * 3; i += 3) {
+    const distance = Math.sqrt(positions[i]**2 + positions[i+1]**2 + positions[i+2]**2);
+    const factor = 5 / distance;
+    positions[i] *= factor;
+    positions[i + 1] *= factor;
+    positions[i + 2] *= factor;
+  }
+
+  particleSystem.geometry.attributes.position.needsUpdate = true;
+  displayQuantumEffect("Wave Function Collapsed!");
+}
+
+function quantumTunneling() {
+  const positions = particleSystem.geometry.attributes.position.array;
+
+  for (let i = 0; i < particleCount * 3; i += 3) {
+    if (Math.random() < 0.1) {
+      positions[i] = -positions[i];
+      positions[i + 1] = -positions[i + 1];
+      positions[i + 2] = -positions[i + 2];
+    }
+  }
+
+  particleSystem.geometry.attributes.position.needsUpdate = true;
+  displayQuantumEffect("Quantum Tunneling Observed!");
+}
+
+function addParticle() {
+  const positions = particleSystem.geometry.attributes.position.array;
+  const colors = particleSystem.geometry.attributes.color.array;
+
+  const newPositions = new Float32Array(positions.length + 3);
+  const newColors = new Float32Array(colors.length + 3);
+
+  newPositions.set(positions);
+  newColors.set(colors);
+
+  newPositions[positions.length] = (Math.random() - 0.5) * 10;
+  newPositions[positions.length + 1] = (Math.random() - 0.5) * 10;
+  newPositions[positions.length + 2] = (Math.random() - 0.5) * 10;
+
+  newColors[colors.length] = Math.random();
+  newColors[colors.length + 1] = Math.random();
+  newColors[colors.length + 2] = Math.random();
+
+  particleSystem.geometry.setAttribute('position', new THREE.BufferAttribute(newPositions, 3));
+  particleSystem.geometry.setAttribute('color', new THREE.BufferAttribute(newColors, 3));
+
+  displayQuantumEffect("Particle Added!");
+}
+
+function removeParticle() {
+  const positions = particleSystem.geometry.attributes.position.array;
+  const colors = particleSystem.geometry.attributes.color.array;
+
+  if (positions.length > 3) {
+    const newPositions = new Float32Array(positions.length - 3);
+    const newColors = new Float32Array(colors.length - 3);
+
+    newPositions.set(positions.slice(0, -3));
+    newColors.set(colors.slice(0, -3));
+
+    particleSystem.geometry.setAttribute('position', new THREE.BufferAttribute(newPositions, 3));
+    particleSystem.geometry.setAttribute('color', new THREE.BufferAttribute(newColors, 3));
+
+    displayQuantumEffect("Particle Removed!");
+  }
+}
+
+function displayQuantumEffect(message) {
+  const quantumEffects = document.getElementById('quantumEffects');
+  quantumEffects.textContent = message;
+  quantumEffects.style.opacity = 1;
+  setTimeout(() => {
+    quantumEffects.style.opacity = 0;
+  }, 2000);
+}
+
+// Initialize with a random shape
+changeShape();
+</script>
+
+</body></html>
