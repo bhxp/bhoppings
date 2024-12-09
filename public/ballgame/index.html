@@ -1,0 +1,1008 @@
+<html><head><base href="https://poop.men">
+  <title>3D Ball Rolling Game - Multiple Levels with Holes</title>
+  <style>
+    body { margin: 0; overflow: hidden; }
+    canvas { width: 100%; height: 100% }
+    #instructions {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      color: white;
+      font-family: Arial, sans-serif;
+      font-size: 14px;
+      background-color: rgba(0,0,0,0.5);
+      padding: 10px;
+      border-radius: 5px;
+    }
+    #winMessage {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: white;
+      font-family: 'Arial Black', sans-serif;
+      font-size: 72px;
+      text-align: center;
+      text-shadow: 0 0 10px #00ff00, 0 0 20px #00ff00, 0 0 30px #00ff00;
+      opacity: 0;
+      transition: opacity 1s;
+      display: none;
+    }
+    #fireworks {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 9999;
+    }
+    #coinCount {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      color: gold;
+      font-family: Arial, sans-serif;
+      font-size: 24px;
+      background-color: rgba(0,0,0,0.5);
+      padding: 10px;
+      border-radius: 5px;
+    }
+    #levelInfo {
+      position: absolute;
+      bottom: 10px;
+      left: 10px;
+      color: white;
+      font-family: Arial, sans-serif;
+      font-size: 24px;
+      background-color: rgba(0,0,0,0.5);
+      padding: 10px;
+      border-radius: 5px;
+    }
+    #credits {
+      position: absolute;
+      bottom: 10px;
+      right: 10px;
+      color: white;
+      font-family: Arial, sans-serif;
+      font-size: 14px;
+      background-color: rgba(0,0,0,0.5);
+      padding: 10px;
+      border-radius: 5px;
+    }
+    #timer {
+      position: absolute;
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      color: white;
+      font-family: Arial, sans-serif;
+      font-size: 24px;
+      background-color: rgba(0,0,0,0.5);
+      padding: 10px;
+      border-radius: 5px;
+    }
+    @keyframes rainbow {
+      0% { color: red; }
+      14% { color: orange; }
+      28% { color: yellow; }
+      42% { color: green; }
+      56% { color: blue; }
+      70% { color: indigo; }
+      84% { color: violet; }
+      100% { color: red; }
+    }
+    #winMessage span {
+      display: inline-block;
+      animation: rainbow 5s linear infinite, bounce 0.5s ease-in-out infinite alternate;
+    }
+    @keyframes bounce {
+      from { transform: translateY(0); }
+      to { transform: translateY(-20px); }
+    }
+  </style>
+  </head>
+  <body>
+  <div id="instructions">
+    Use WASD or Arrow keys to roll the rainbow ball.<br>
+    Collect all spinning coins and reach the checkered platform to advance to the next level!<br>
+    Be careful of holes - falling in one will reset the level!
+  </div>
+  <div id="winMessage">
+    <span>Y</span><span>o</span><span>u</span> <span>W</span><span>i</span><span>n</span><span>!</span>
+  </div>
+  <div id="fireworks"></div>
+  <div id="coinCount">Coins Remaining: 0</div>
+  <div id="levelInfo">Level: 1</div>
+  <div id="credits">Created by BookwormKevin and WebSim</div>
+  <div id="timer">Time: 00:00.000</div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.3/howler.min.js"></script>
+  <script>
+    let scene, camera, renderer, ball, platform;
+    let moveForward = false, moveBackward = false, moveLeft = false, moveRight = false;
+    let velocity = new THREE.Vector3();
+    let acceleration = new THREE.Vector3();
+    let walls = [];
+    let coins = [];
+    let holes = [];
+    let coinsRemaining = 0;
+    let clouds = [];
+    let currentLevel = 1;
+    let totalLevels = 5;
+    let gameWon = false;
+    let startTime;
+    let timerInterval;
+    
+    // Sound effects
+    const sounds = {
+      coinCollect: new Howl({
+        src: ['https://freesound.org/data/previews/162/162805_2578041-lq.mp3'],
+        volume: 0.5
+      }),
+      levelComplete: new Howl({
+        src: ['https://freesound.org/data/previews/122/122255_1074082-lq.mp3'],
+        volume: 0.5
+      }),
+      fallInHole: new Howl({
+        src: ['https://freesound.org/data/previews/326/326133_3271346-lq.mp3'],
+        volume: 0.5
+      }),
+      backgroundMusic: new Howl({
+        src: ['https://freesound.org/data/previews/560/560738_12295155-lq.mp3'],
+        volume: 0.3,
+        loop: true,
+      }),
+      winSound: new Howl({
+        src: ['https://freesound.org/data/previews/258/258142_4631294-lq.mp3'],
+        volume: 0.5
+      })
+    };
+    
+    function init() {
+      scene = new THREE.Scene();
+      camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+      renderer = new THREE.WebGLRenderer({ antialias: true });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      document.body.appendChild(renderer.domElement);
+  
+      // Improved Lighting
+      const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+      scene.add(ambientLight);
+      const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+      directionalLight.position.set(5, 10, 7);
+      directionalLight.castShadow = true;
+      scene.add(directionalLight);
+  
+      // Improved shadow settings
+      directionalLight.shadow.mapSize.width = 4096;
+      directionalLight.shadow.mapSize.height = 4096;
+      directionalLight.shadow.camera.near = 1;
+      directionalLight.shadow.camera.far = 50;
+      directionalLight.shadow.camera.left = -25;
+      directionalLight.shadow.camera.right = 25;
+      directionalLight.shadow.camera.top = 25;
+      directionalLight.shadow.camera.bottom = -25;
+  
+      // Enable shadow rendering
+      renderer.shadowMap.enabled = true;
+      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  
+      loadLevel(currentLevel);
+  
+      document.addEventListener('keydown', onKeyDown);
+      document.addEventListener('keyup', onKeyUp);
+  
+      // Start background music after a short delay
+      setTimeout(() => {
+        sounds.backgroundMusic.play();
+      }, 3000);
+  
+      startTimer();
+      animate();
+    }
+  
+    function startTimer() {
+      startTime = Date.now();
+      timerInterval = setInterval(updateTimer, 1);
+    }
+  
+    function updateTimer() {
+      const currentTime = Date.now();
+      const elapsedTime = new Date(currentTime - startTime);
+      const minutes = String(elapsedTime.getUTCMinutes()).padStart(2, '0');
+      const seconds = String(elapsedTime.getUTCSeconds()).padStart(2, '0');
+      const milliseconds = String(elapsedTime.getUTCMilliseconds()).padStart(3, '0');
+      document.getElementById('timer').textContent = `Time: ${minutes}:${seconds}.${milliseconds}`;
+    }
+  
+    function loadLevel(level) {
+      // Clear existing level
+      clearLevel();
+  
+      // Set background color based on level
+      if (level === 5) {
+        scene.background = new THREE.Color(0xff0000); // Red background for level 5
+      } else {
+        scene.background = new THREE.Color(0x87CEEB); // Sky blue background for other levels
+      }
+  
+      // Create new level
+      createBall();
+      createPlatform();
+      createWalls(level);
+      createCoins(level);
+      createHoles(level);
+      createClouds();
+      createWinPlatform(level);
+  
+      // Update level info
+      document.getElementById('levelInfo').textContent = `Level: ${level}`;
+      updateCoinCounter();
+    }
+  
+    function clearLevel() {
+      // Remove all objects from the scene except lights
+      while(scene.children.length > 0){ 
+        scene.remove(scene.children[0]); 
+      }
+      
+      // Re-add lights
+      const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+      scene.add(ambientLight);
+      const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+      directionalLight.position.set(5, 10, 7);
+      directionalLight.castShadow = true;
+      scene.add(directionalLight);
+      
+      // Improved shadow settings
+      directionalLight.shadow.mapSize.width = 4096;
+      directionalLight.shadow.mapSize.height = 4096;
+      directionalLight.shadow.camera.near = 1;
+      directionalLight.shadow.camera.far = 50;
+      directionalLight.shadow.camera.left = -25;
+      directionalLight.shadow.camera.right = 25;
+      directionalLight.shadow.camera.top = 25;
+      directionalLight.shadow.camera.bottom = -25;
+  
+      // Reset arrays and counters
+      walls = [];
+      coins = [];
+      holes = [];
+      clouds = [];
+      coinsRemaining = 0;
+    }
+  
+    function createBall() {
+      const geometry = new THREE.SphereGeometry(0.5, 32, 32);
+      const rainbowTexture = createRainbowTexture();
+      const material = new THREE.MeshPhongMaterial({ map: rainbowTexture });
+      ball = new THREE.Mesh(geometry, material);
+      ball.position.set(-9, 0.5, -9); // Starting position in the corner
+      ball.castShadow = true;
+      scene.add(ball);
+    }
+  
+    function createPlatform() {
+      const platformGeometry = new THREE.BoxGeometry(20, 0.1, 20);
+      const grassTexture = createGrassTexture();
+      const platformMaterial = new THREE.MeshPhongMaterial({ map: grassTexture });
+      platform = new THREE.Mesh(platformGeometry, platformMaterial);
+      platform.position.set(0, -0.05, 0);
+      platform.receiveShadow = true;
+      scene.add(platform);
+    }
+  
+    function createWalls(level) {
+      const brickTexture = createBrickTexture();
+  
+      // Outer walls
+      createWall(0, 0.5, -10, 20, 1, 0.1, brickTexture);  // North wall
+      createWall(0, 0.5, 10, 20, 1, 0.1, brickTexture);   // South wall
+      createWall(-10, 0.5, 0, 0.1, 1, 20, brickTexture);  // West wall
+      createWall(10, 0.5, 0, 0.1, 1, 20, brickTexture);   // East wall
+  
+      // Level-specific walls
+      switch(level) {
+        case 1:
+          createWall(-7, 0.5, -3, 6, 1, 0.1, brickTexture);
+          createWall(7, 0.5, 3, 6, 1, 0.1, brickTexture);
+          createWall(-3, 0.5, 7, 0.1, 1, 6, brickTexture);
+          createWall(3, 0.5, -7, 0.1, 1, 6, brickTexture);
+          createWall(0, 0.5, 0, 10, 1, 0.1, brickTexture);
+          break;
+        case 2:
+          createWall(-5, 0.5, -5, 5, 1, 0.1, brickTexture);
+          createWall(5, 0.5, 5, 5, 1, 0.1, brickTexture);
+          createWall(0, 0.5, 0, 0.1, 1, 10, brickTexture);
+          break;
+        case 3:
+          createWall(-7, 0.5, -7, 5, 1, 0.1, brickTexture);
+          createWall(7, 0.5, 7, 5, 1, 0.1, brickTexture);
+          createWall(-7, 0.5, 7, 5, 1, 0.1, brickTexture);
+          createWall(7, 0.5, -7, 5, 1, 0.1, brickTexture);
+          break;
+        case 4:
+          createWall(-6, 0.5, -6, 8, 1, 0.1, brickTexture);
+          createWall(6, 0.5, 6, 8, 1, 0.1, brickTexture);
+          createWall(-6, 0.5, 6, 8, 1, 0.1, brickTexture);
+          createWall(6, 0.5, -6, 8, 1, 0.1, brickTexture);
+          createWall(0, 0.5, 0, 12, 1, 0.1, brickTexture);
+          createWall(0, 0.5, 0, 0.1, 1, 12, brickTexture);
+          break;
+        case 5:
+          // Maze-like structure for the final level
+          createWall(-5, 0.5, -5, 10, 1, 0.1, brickTexture);
+          createWall(5, 0.5, 5, 5, 1, 0.1, brickTexture);
+          createWall(-5, 0.5, 0, 10, 1, 0.1, brickTexture);
+          createWall(5, 0.5, 0, 5, 1, 0.1, brickTexture);
+          createWall(-5, 0.5, 5, 0.1, 1, 5, brickTexture);
+          createWall(5, 0.5, -5, 0.1, 1, 10, brickTexture);
+          createWall(0, 0.5, -5, 0.1, 1, 5,  brickTexture);
+          createWall(0, 0.5, 5, 0.1, 1, 5, brickTexture);
+          break;
+      }
+    }
+  
+    function createCoins(level) {
+      const coinTexture = createCoinTexture();
+      switch(level) {
+        case 1:
+          createCoin(-7, 0.5, -7, coinTexture);
+          createCoin(7, 0.5, -7, coinTexture);
+          createCoin(7, 0.5, 7, coinTexture);
+          createCoin(-5, 0.5, 2, coinTexture);
+          createCoin(5, 0.5, -2, coinTexture);
+          break;
+        case 2:
+          createCoin(-8, 0.5, -8, coinTexture);
+          createCoin(8, 0.5, -8, coinTexture);
+          createCoin(8, 0.5, 8, coinTexture);
+          createCoin(-8, 0.5, 8, coinTexture);
+          createCoin(0, 0.5, 0, coinTexture);
+          createCoin(-4, 0.5, 4, coinTexture);
+          createCoin(4, 0.5, -4, coinTexture);
+          break;
+        case 3:
+          for (let i = -8; i <= 8; i += 4) {
+            for (let j = -8; j <= 8; j += 4) {
+              if (i !== 0 || j !== 0) {
+                createCoin(i, 0.5, j, coinTexture);
+              }
+            }
+          }
+          break;
+        case 4:
+          for (let i = -7; i <= 7; i += 2) {
+            for (let j = -7; j <= 7; j += 2) {
+              if (Math.abs(i) % 4 !== 0 || Math.abs(j) % 4 !== 0) {
+                createCoin(i, 0.5, j, coinTexture);
+              }
+            }
+          }
+          break;
+        case 5:
+          createCoin(-7, 0.5, -7, coinTexture);
+          createCoin(-7, 0.5, 7, coinTexture);
+          createCoin(7, 0.5, -7, coinTexture);
+          createCoin(7, 0.5, 7, coinTexture);
+          createCoin(-2.5, 0.5, -2.5, coinTexture);
+          createCoin(-2.5, 0.5, 2.5, coinTexture);
+          createCoin(2.5, 0.5, -2.5, coinTexture);
+          createCoin(2.5, 0.5, 2.5, coinTexture);
+          break;
+      }
+      coinsRemaining = coins.length;
+      updateCoinCounter();
+    }
+  
+    function createHoles(level) {
+      const holeGeometry = new THREE.CircleGeometry(0.5, 32);
+      const holeMaterial = new THREE.MeshBasicMaterial({ color: 0x000000 });
+      
+      switch(level) {
+        case 1:
+          createHole(-3, 0.01, -3, holeGeometry, holeMaterial);
+          createHole(3, 0.01, 3, holeGeometry, holeMaterial);
+          break;
+        case 2:
+          createHole(-6, 0.01, 0, holeGeometry, holeMaterial);
+          createHole(6, 0.01, 0, holeGeometry, holeMaterial);
+          createHole(0, 0.01, -6, holeGeometry, holeMaterial);
+          createHole(0, 0.01, 6, holeGeometry, holeMaterial);
+          break;
+        case 3:
+          for (let i = -6; i <= 6; i += 4) {
+            for (let j = -6; j <= 6; j += 4) {
+              if (i !== 0 || j !== 0) {
+                createHole(i, 0.01, j, holeGeometry, holeMaterial);
+              }
+            }
+          }
+          break;
+        case 4:
+          for (let i = -8; i <= 8; i += 4) {
+            for (let j = -8; j <= 8; j += 4) {
+              if (i !== 0 || j !== 0) {
+                createHole(i, 0.01, j, holeGeometry, holeMaterial);
+              }
+            }
+          }
+          createHole(0, 0.01, 0, holeGeometry, holeMaterial);
+          break;
+        case 5:
+          // Many holes for the final level
+          for (let i = -9; i <= 9; i += 3) {
+            for (let j = -9; j <= 9; j += 3) {
+              if ((i !== -9 || j !== -9) && (i !== 9 || j !== -9)) { // Avoid start and end positions
+                createHole(i, 0.01, j, holeGeometry, holeMaterial);
+              }
+            }
+          }
+          break;
+      }
+    }
+  
+    function createHole(x, y, z, geometry, material) {
+      const hole = new THREE.Mesh(geometry, material);
+      hole.position.set(x, y, z);
+      hole.rotation.x = -Math.PI / 2;
+      scene.add(hole);
+      holes.push(hole);
+    }
+  
+    function createWinPlatform(level) {
+      const winPlatformGeometry = new THREE.BoxGeometry(2, 0.1, 2);
+      const winPlatformMaterial = new THREE.MeshPhongMaterial({ 
+        map: createCheckerboardTexture()
+      });
+      const winPlatform = new THREE.Mesh(winPlatformGeometry, winPlatformMaterial);
+      switch(level) {
+        case 1:
+          winPlatform.position.set(-8, 0, 8);
+          break;
+        case 2:
+          winPlatform.position.set(8, 0, -8);
+          break;
+        case 3:
+          winPlatform.position.set(0, 0, 0);
+          break;
+        case 4:
+          winPlatform.position.set(9, 0, 9);
+          break;
+        case 5:
+          winPlatform.position.set(9, 0, -9);
+          break;
+      }
+      winPlatform.receiveShadow = true;
+      scene.add(winPlatform);
+    }
+  
+    function createRainbowTexture() {
+      const canvas = document.createElement('canvas');
+      canvas.width = 256;
+      canvas.height = 256;
+      const context = canvas.getContext('2d');
+  
+      const gradient = context.createLinearGradient(0, 0, 0, 256);
+      gradient.addColorStop(0, 'red');
+      gradient.addColorStop(1/6, 'orange');
+      gradient.addColorStop(2/6, 'yellow');
+      gradient.addColorStop(3/6, 'green');
+      gradient.addColorStop(4/6, 'blue');
+      gradient.addColorStop(5/6, 'indigo');
+      gradient.addColorStop(1, 'violet');
+  
+      context.fillStyle = gradient;
+      context.fillRect(0, 0, 256, 256);
+  
+      const texture = new THREE.CanvasTexture(canvas);
+      return texture;
+    }
+  
+    function createBrickTexture() {
+      const canvas = document.createElement('canvas');
+      canvas.width = 256;
+      canvas.height = 256;
+      const context = canvas.getContext('2d');
+  
+      // Background color (mortar)
+      context.fillStyle = '#CCCCCC';
+      context.fillRect(0, 0, 256, 256);
+  
+      // Brick color
+      context.fillStyle = '#993333';
+  
+      // Draw bricks
+      const brickHeight = 32;
+      const brickWidth = 64;
+      let offsetX = 0;
+  
+      for (let y = 0; y < 256; y += brickHeight) {
+        for (let x = offsetX; x < 256; x += brickWidth) {
+          context.fillRect(x + 1, y + 1, brickWidth - 2, brickHeight - 2);
+        }
+        offsetX = (offsetX === 0) ? -brickWidth / 2 : 0;
+      }
+  
+      const texture = new THREE.CanvasTexture(canvas);
+      texture.wrapS = THREE.RepeatWrapping;
+      texture.wrapT = THREE.RepeatWrapping;
+      texture.repeat.set(1, 1);
+      return texture;
+    }
+  
+    function createGrassTexture() {
+      const canvas = document.createElement('canvas');
+      canvas.width = 256;
+      canvas.height = 256;
+      const context = canvas.getContext('2d');
+  
+      // Base grass color
+      context.fillStyle = '#4CAF50';
+      context.fillRect(0, 0, 256, 256);
+  
+      // Add some variation
+      for (let i = 0; i < 1000; i++) {
+        const x = Math.random() * 256;
+        const y = Math.random() * 256;
+        const size = Math.random() * 4 + 1;
+        context.fillStyle = Math.random() > 0.5 ? '#45a049' : '#5cb860';
+        context.fillRect(x, y, size, size);
+      }
+  
+      // Add some grass blades
+      for (let i = 0; i < 500; i++) {
+        const x = Math.random() * 256;
+        const y = Math.random() * 256;
+        context.strokeStyle = '#66bb6a';
+        context.beginPath();
+        context.moveTo(x, y);
+        context.lineTo(x + Math.random() * 4 - 2, y - Math.random() * 5 - 5);
+        context.stroke();
+      }
+  
+      const texture = new THREE.CanvasTexture(canvas);
+      texture.wrapS = THREE.RepeatWrapping;
+      texture.wrapT = THREE.RepeatWrapping;
+      texture.repeat.set(10, 10);
+      return texture;
+    }
+  
+    function createCoinTexture() {
+      const canvas = document.createElement('canvas');
+      canvas.width = 128;
+      canvas.height = 128;
+      const context = canvas.getContext('2d');
+  
+      // Base gold color
+      context.fillStyle = '#FFD700';
+      context.fillRect(0, 0, 128, 128);
+  
+      // Add some shading
+      const gradient = context.createRadialGradient(64, 64, 0, 64, 64, 64);
+      gradient.addColorStop(0, 'rgba(255, 223, 0, 1)');
+      gradient.addColorStop(1, 'rgba(255, 215, 0, 0.8)');
+      context.fillStyle = gradient;
+      context.fillRect(0, 0, 128, 128);
+  
+      // Add a border
+      context.strokeStyle = '#DAA520';
+      context.lineWidth = 6;
+      context.beginPath();
+      context.arc(64, 64, 60, 0, Math.PI * 2);
+      context.stroke();
+  
+      // Add some detail
+      context.fillStyle = '#DAA520';
+      context.font = 'bold 40px Arial';
+      context.textAlign = 'center';
+      context.textBaseline = 'middle';
+      context.fillText('$', 64, 64);
+  
+      const texture = new THREE.CanvasTexture(canvas);
+      return texture;
+    }
+  
+    function createWall(x, y, z, width, height, depth, texture) {
+      const wallGeometry = new THREE.BoxGeometry(width, height, depth);
+      const wallMaterial = new THREE.MeshPhongMaterial({ map: texture });
+      const wall = new THREE.Mesh(wallGeometry, wallMaterial);
+      wall.position.set(x, y, z);
+      wall.castShadow = true;
+      wall.receiveShadow = true;
+      scene.add(wall);
+      walls.push(wall);
+  
+      // Adjust texture repeat based on wall dimensions
+      if (width > depth) {
+        texture.repeat.set(width, height);
+      } else {
+        texture.repeat.set(depth, height);
+      }
+      texture.needsUpdate = true;
+    }
+  
+    function createCoin(x, y, z, texture) {
+      const coinGeometry = new THREE.CylinderGeometry(0.3, 0.3, 0.05, 32);
+      const coinMaterial = new THREE.MeshPhongMaterial({ 
+        map: texture,
+        side: THREE.DoubleSide
+      });
+      const coin = new THREE.Mesh(coinGeometry, coinMaterial);
+      coin.position.set(x, y, z);
+      coin.rotation.z = Math.PI / 2; // Set the coin on its edge
+      coin.castShadow = true;
+      scene.add(coin);
+      coins.push(coin);
+    }
+  
+    function createCheckerboardTexture() {
+      const size = 4;
+      const data = new Uint8Array(size * size * 3);
+      for (let i = 0; i < size * size; i++) {
+        const x = i % size;
+        const y = Math.floor(i / size);
+        const color = (x + y) % 2 === 0 ? 255 : 0;
+        data[i * 3] = data[i * 3 + 1] = data[i * 3 + 2] = color;
+      }
+      const texture = new THREE.DataTexture(data, size, size, THREE.RGBFormat);
+      texture.magFilter = THREE.NearestFilter;
+      texture.needsUpdate = true;
+      return texture;
+    }
+  
+    function createClouds() {
+      const cloudTexture = createCloudTexture();
+      const cloudMaterial = new THREE.SpriteMaterial({ map: cloudTexture, transparent: true });
+  
+      // Add clouds above the stage
+      for (let i = 0; i < 20; i++) {
+        const cloud = new THREE.Sprite(cloudMaterial);
+        cloud.position.set(
+          Math.random() * 40 - 20,
+          Math.random() * 5 + 5,
+          Math.random() * 40 - 20
+        );
+        const scale = Math.random() * 2 + 1;
+        cloud.scale.set(scale, scale, 1);
+        scene.add(cloud);
+        clouds.push(cloud);
+      }
+  
+      // Add clouds underneath the stage
+      for (let i = 0; i < 30; i++) {
+        const cloud = new THREE.Sprite(cloudMaterial);
+        cloud.position.set(
+          Math.random() * 60 - 30,
+          Math.random() * 5 - 10,
+          Math.random() * 60 - 30
+        );
+        const scale = Math.random() * 3 + 2;
+        cloud.scale.set(scale, scale, 1);
+        scene.add(cloud);
+        clouds.push(cloud);
+      }
+    }
+  
+    function createCloudTexture() {
+      const canvas = document.createElement('canvas');
+      canvas.width = 128;
+      canvas.height = 128;
+      const context = canvas.getContext('2d');
+  
+      context.fillStyle = 'rgba(255, 255, 255, 0)';
+      context.fillRect(0, 0, 128, 128);
+  
+      context.fillStyle = 'rgba(255, 255, 255, 0.8)';
+      context.beginPath();
+      context.arc(64, 64, 32,  0, Math.PI * 2);
+      context.arc(45, 64, 25, 0, Math.PI * 2);
+      context.arc(83, 64, 25, 0, Math.PI * 2);
+      context.fill();
+  
+      const texture = new THREE.CanvasTexture(canvas);
+      return texture;
+    }
+  
+    function onKeyDown(event) {
+      switch (event.code) {
+        case 'KeyW':
+        case 'ArrowUp':
+          moveForward = true;
+          break;
+        case 'KeyS':
+        case 'ArrowDown':
+          moveBackward = true;
+          break;
+        case 'KeyA':
+        case 'ArrowLeft':
+          moveLeft = true;
+          break;
+        case 'KeyD':
+        case 'ArrowRight':
+          moveRight = true;
+          break;
+      }
+    }
+  
+    function onKeyUp(event) {
+      switch (event.code) {
+        case 'KeyW':
+        case 'ArrowUp':
+          moveForward = false;
+          break;
+        case 'KeyS':
+        case 'ArrowDown':
+          moveBackward = false;
+          break;
+        case 'KeyA':
+        case 'ArrowLeft':
+          moveLeft = false;
+          break;
+        case 'KeyD':
+        case 'ArrowRight':
+          moveRight = false;
+          break;
+      }
+    }
+  
+    function handleCollision(position, wall) {
+      const ballRadius = 0.5;
+      const wallBox = new THREE.Box3().setFromObject(wall);
+      const closestPoint = wallBox.clampPoint(position, new THREE.Vector3());
+      const normal = position.clone().sub(closestPoint).normalize();
+      const penetrationDepth = ballRadius - position.distanceTo(closestPoint);
+  
+      if (penetrationDepth > 0) {
+        position.add(normal.multiplyScalar(penetrationDepth));
+        
+        // Project velocity onto the wall plane
+        const dot = velocity.dot(normal);
+        velocity.sub(normal.multiplyScalar(dot));
+      }
+  
+      return position;
+    }
+  
+    function checkCollision(position) {
+      let collided = false;
+  
+      for (let wall of walls) {
+        const wallBox = new THREE.Box3().setFromObject(wall);
+        const sphere = new THREE.Sphere(position, 0.5);
+  
+        if (wallBox.intersectsSphere(sphere)) {
+          position = handleCollision(position, wall);
+          collided = true;
+        }
+      }
+  
+      return { collided, position };
+    }
+  
+    function checkCoinCollision() {
+      const ballRadius = 0.5;
+      for (let i = coins.length - 1; i >= 0; i--) {
+        if (ball.position.distanceTo(coins[i].position) < ballRadius + 0.3) {
+          scene.remove(coins[i]);
+          coins.splice(i, 1);
+          coinsRemaining--;
+          updateCoinCounter();
+          sounds.coinCollect.play();
+        }
+      }
+    }
+  
+    function checkHoleCollision() {
+      const ballRadius = 0.5;
+      for (let hole of holes) {
+        if (ball.position.distanceTo(hole.position) < ballRadius + 0.5) {
+          sounds.fallInHole.play();
+          resetLevel();
+          return true;
+        }
+      }
+      return false;
+    }
+  
+    function resetLevel() {
+      ball.position.set(-9, 0.5, -9);
+      velocity.set(0, 0, 0);
+      loadLevel(currentLevel);
+    }
+  
+    function updateCoinCounter() {
+      document.getElementById('coinCount').textContent = `Coins Remaining: ${coinsRemaining}`;
+    }
+  
+    function checkWinCondition() {
+      let winPosition;
+      switch(currentLevel) {
+        case 1:
+          winPosition = new THREE.Vector3(-8, 0, 8);
+          break;
+        case 2:
+          winPosition = new THREE.Vector3(8, 0, -8);
+          break;
+        case 3:
+          winPosition = new THREE.Vector3(0, 0, 0);
+          break;
+        case 4:
+          winPosition = new THREE.Vector3(9, 0, 9);
+          break;
+        case 5:
+          winPosition = new THREE.Vector3(9, 0, -9);
+          break;
+      }
+      
+      if (ball.position.distanceTo(winPosition) < 1 && coinsRemaining === 0) {
+        if (currentLevel < totalLevels) {
+          currentLevel++;
+          sounds.levelComplete.play();
+          loadLevel(currentLevel);
+        } else if (!gameWon) {
+          gameWon = true;
+          showWinScreen();
+        }
+      }
+    }
+  
+    function showWinScreen() {
+      sounds.backgroundMusic.stop();
+      sounds.winSound.play();
+      
+      // Show win message
+      const winMessage = document.getElementById('winMessage');
+      winMessage.style.display = 'block';
+      setTimeout(() => {
+        winMessage.style.opacity = 1;
+      }, 100);
+  
+      // Create fireworks
+      createFireworks();
+  
+      // Rotate camera around the ball
+      const radius = 10;
+      let angle = 0;
+      function rotateCameraWin() {
+        if (gameWon) {
+          angle += 0.01;
+          camera.position.x = ball.position.x + radius * Math.cos(angle);
+          camera.position.z = ball.position.z + radius * Math.sin(angle);
+          camera.lookAt(ball.position);
+          requestAnimationFrame(rotateCameraWin);
+        }
+      }
+      rotateCameraWin();
+  
+      // Stop the timer
+      clearInterval(timerInterval);
+    }
+  
+    function createFireworks() {
+      const fireworksContainer = document.getElementById('fireworks');
+      for (let i = 0; i < 100; i++) {
+        setTimeout(() => {
+          const firework = document.createElement('div');
+          firework.style.position = 'absolute';
+          firework.style.width = '5px';
+          firework.style.height = '5px';
+          firework.style.borderRadius = '50%';
+          firework.style.backgroundColor = getRandomColor();
+          firework.style.left = Math.random() * 100 + '%';
+          firework.style.top = Math.random() * 100 + '%';
+          fireworksContainer.appendChild(firework);
+  
+          animateFirework(firework);
+        }, Math.random() * 5000);
+      }
+    }
+  
+    function animateFirework(firework) {
+      let opacity = 1;
+      let scale = 1;
+      let frame = 0;
+  
+      function animate() {
+        frame++;
+        opacity -= 0.01;
+        scale += 0.02;
+        firework.style.opacity = opacity;
+        firework.style.transform = `scale(${scale})`;
+  
+        if (frame < 100) {
+          requestAnimationFrame(animate);
+        } else {
+          firework.remove();
+        }
+      }
+  
+      animate();
+    }
+  
+    function getRandomColor() {
+      const letters = '0123456789ABCDEF';
+      let color = '#';
+      for (let i = 0; i < 6; i++) {
+        color += letters[Math.floor(Math.random() * 16)];
+      }
+      return color;
+    }
+  
+    function animate() {
+      requestAnimationFrame(animate);
+  
+      const delta = 0.016;
+      const maxSpeed = 5;
+      const friction = 0.98;
+  
+      acceleration.set(0, 0, 0);
+  
+      if (!gameWon) {
+        if (moveForward) acceleration.z -= 1;
+        if (moveBackward) acceleration.z += 1;
+        if (moveLeft) acceleration.x -= 1;
+        if (moveRight) acceleration.x += 1;
+      }
+    
+        acceleration.normalize().multiplyScalar(20);
+    
+        velocity.add(acceleration.multiplyScalar(delta));
+        velocity.multiplyScalar(friction);
+    
+        if (velocity.length() > maxSpeed) {
+          velocity.normalize().multiplyScalar(maxSpeed);
+        }
+    
+        const newPosition = ball.position.clone().add(velocity.clone().multiplyScalar(delta));
+      
+      
+      const collisionResult = checkCollision(newPosition);
+      if (collisionResult.collided) {
+        ball.position.copy(collisionResult.position);
+      } else {
+        ball.position.copy(newPosition);
+      }
+  
+      // Correct ball rotation
+      const rotationAxis = new THREE.Vector3(velocity.z, 0, -velocity.x).normalize();
+      const rotationAngle = velocity.length() * delta / 0.5;
+      ball.quaternion.premultiply(new THREE.Quaternion().setFromAxisAngle(rotationAxis, rotationAngle));
+  
+      if (!gameWon) {
+        const cameraOffset = new THREE.Vector3(0, 5, 7);
+        camera.position.copy(ball.position).add(cameraOffset);
+        camera.lookAt(ball.position);
+      }
+  
+      coins.forEach(coin => {
+        coin.rotation.y += 0.1; // Horizontal spinning
+      });
+  
+      // Animate clouds
+      clouds.forEach(cloud => {
+        cloud.position.x += 0.01;
+        if (cloud.position.x > 30) {
+          cloud.position.x = -30;
+        }
+      });
+  
+      checkCoinCollision();
+      if (checkHoleCollision()) {
+        return; // Stop further processing if the ball fell into a hole
+      }
+      checkWinCondition();
+  
+      renderer.render(scene, camera);
+    }
+  
+    window.addEventListener('resize', function() {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+  
+    init();
+  </script>
+  </body></html>
