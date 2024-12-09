@@ -1,0 +1,470 @@
+<html><head><base href="/" />
+<title>Inflation Fetish</title>
+<style>
+    body {
+        margin: 0;
+        overflow: hidden;
+        font-family: Arial, sans-serif;
+    }
+    #info {
+        position: fixed;
+        top: 10px;
+        left: 10px;
+        color: white;
+        background: rgba(0,0,0,0.7);
+        padding: 10px;
+        border-radius: 5px;
+    }
+    #gameOver {
+        display: none;
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        color: white;
+        background: rgba(0,0,0,0.9);
+        padding: 20px;
+        border-radius: 10px;
+        text-align: center;
+    }
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body>
+<div id="info">
+    Weight: <span id="weight">100</span> lbs
+    <br>
+    Collect food to grow! Don't get too big!
+    <br>
+    Watch out for zombies after 220 lbs!
+    <br>
+    At 530 lbs, you can eat zombies!
+    <br>
+    At 600 lbs, you can eat buildings and lights!
+</div>
+<div id="gameOver">
+    <span id="gameOverText">Game Over!</span>
+    <br><br>
+    <button onclick="location.reload()">Play Again</button>
+</div>
+<script>
+let scene, camera, renderer, player, foods = [], zombies = [], buildings = [];
+let weight = 100;
+let isGameOver = false;
+let playerSpeed = 0.1;
+let stomachGrowlSound;
+let explosionSound;
+let isSoundPlaying = false;
+let mouseDown = false;
+let mouseX = 0;
+let mouseY = 0;
+let cameraAngle = 0;
+let cameraTilt = 0.5; // Initial camera tilt (in radians)
+
+// Initialize sound
+function initSound() {
+    stomachGrowlSound = new Audio('stomach growl SoundEffectsFactory.mp3');
+    stomachGrowlSound.loop = true;
+    explosionSound = new Audio('Roblox Rocket Explosion Sound.mp3');
+}
+
+// Function to play sound
+function playStomachGrowl() {
+    if (!isSoundPlaying && stomachGrowlSound) {
+        stomachGrowlSound.play()
+            .then(() => {
+                isSoundPlaying = true;
+            })
+            .catch(error => console.error("Error playing sound:", error));
+    }
+}
+
+function createBuilding(x, z) {
+    const buildingHeight = Math.random() * 10 + 10;
+    const buildingGeometry = new THREE.BoxGeometry(5, buildingHeight, 5);
+    const buildingMaterial = new THREE.MeshPhongMaterial({ color: 0x808080 });
+    const building = new THREE.Mesh(buildingGeometry, buildingMaterial);
+    
+    building.position.set(x, buildingHeight/2 - 2, z);
+    
+    const windowGeometry = new THREE.BoxGeometry(0.5, 0.5, 0.1);
+    const windowMaterial = new THREE.MeshPhongMaterial({ color: 0xffff00, emissive: 0xffff00 });
+    
+    for(let i = 0; i < buildingHeight; i += 2) {
+        for(let j = -1; j <= 1; j++) {
+            const window = new THREE.Mesh(windowGeometry, windowMaterial);
+            window.position.set(j*1.5, i - buildingHeight/2, 2.5);
+            building.add(window);
+            
+            const windowBack = window.clone();
+            windowBack.position.z = -2.5;
+            building.add(windowBack);
+        }
+    }
+    
+    scene.add(building);
+    buildings.push(building);
+}
+
+function expandMap(size = 100) {
+    buildings.forEach(building => scene.remove(building));
+    buildings.length = 0;
+    
+    const groundGeometry = new THREE.PlaneGeometry(size, size);
+    const groundMaterial = new THREE.MeshPhongMaterial({ 
+        color: 0x33ff33,
+        side: THREE.DoubleSide
+    });
+    scene.remove(scene.getObjectByName('ground'));
+    const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+    ground.rotation.x = Math.PI / 2;
+    ground.position.y = -2;
+    ground.name = 'ground';
+    scene.add(ground);
+    
+    const buildingCount = size === 100 ? 20 : 40;  
+    for(let i = 0; i < buildingCount; i++) {
+        const x = Math.random() * (size * 0.8) - (size * 0.4);
+        const z = Math.random() * (size * 0.8) - (size * 0.4);
+        createBuilding(x, z);
+    }
+    
+    if(size === 200) {
+        const lightGeometry = new THREE.CylinderGeometry(0.1, 0.1, 5);
+        const lightMaterial = new THREE.MeshPhongMaterial({ color: 0x404040 });
+        const bulbGeometry = new THREE.SphereGeometry(0.3);
+        const bulbMaterial = new THREE.MeshPhongMaterial({ 
+            color: 0xffff99,
+            emissive: 0xffff99
+        });
+        
+        for(let i = 0; i < 30; i++) {
+            const lightPole = new THREE.Mesh(lightGeometry, lightMaterial);
+            const bulb = new THREE.Mesh(bulbGeometry, bulbMaterial);
+            
+            const x = Math.random() * (size * 0.8) - (size * 0.4);
+            const z = Math.random() * (size * 0.8) - (size * 0.4);
+            
+            lightPole.position.set(x, 0.5, z);
+            bulb.position.set(x, 5, z);
+            
+            const light = new THREE.PointLight(0xffff99, 0.5, 10);
+            light.position.copy(bulb.position);
+            
+            scene.add(lightPole);
+            scene.add(bulb);
+            scene.add(light);
+        }
+    }
+}
+
+function init() {
+    initSound();
+    scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x87CEEB); // Light blue sky
+    camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    renderer = new THREE.WebGLRenderer();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.body.appendChild(renderer.domElement);
+
+    const light = new THREE.AmbientLight(0xffffff, 0.5);
+    scene.add(light);
+    const dirLight = new THREE.DirectionalLight(0xffffff, 0.5);
+    dirLight.position.set(0, 10, 0);
+    scene.add(dirLight);
+
+    const geometry = new THREE.SphereGeometry(1, 32, 32);
+    const material = new THREE.MeshPhongMaterial({ color: 0xff9999 });
+    player = new THREE.Mesh(geometry, material);
+    scene.add(player);
+
+    const groundGeometry = new THREE.PlaneGeometry(50, 50);
+    const groundMaterial = new THREE.MeshPhongMaterial({ 
+        color: 0x33ff33,
+        side: THREE.DoubleSide
+    });
+    const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+    ground.rotation.x = Math.PI / 2;
+    ground.position.y = -2;
+    ground.name = 'ground';
+    scene.add(ground);
+
+    camera.position.z = 10;
+    camera.position.y = 5;
+
+    spawnFood();
+}
+
+function spawnZombie() {
+    const zombieGeometry = new THREE.SphereGeometry(1.5, 32, 32);
+    const zombieMaterial = new THREE.MeshPhongMaterial({ color: 0x00ff00 });
+    const zombie = new THREE.Mesh(zombieGeometry, zombieMaterial);
+    
+    const angle = Math.random() * Math.PI * 2;
+    const radius = 25;
+    zombie.position.x = Math.cos(angle) * radius;
+    zombie.position.z = Math.sin(angle) * radius;
+    zombie.position.y = 0;
+    
+    scene.add(zombie);
+    zombies.push(zombie);
+}
+
+function spawnFood() {
+    if (foods.length < 5) {
+        const foodGeometry = new THREE.BoxGeometry(0.5, 0.5, 0.5);
+        const foodMaterial = new THREE.MeshPhongMaterial({ color: 0xff0000 });
+        const food = new THREE.Mesh(foodGeometry, foodMaterial);
+        
+        food.position.x = Math.random() * 40 - 20;
+        food.position.z = Math.random() * 40 - 20;
+        food.position.y = 0;
+        
+        scene.add(food);
+        foods.push(food);
+    }
+}
+
+function updatePlayerSize() {
+    const scale = 1 + (weight - 100) / 100;
+    player.scale.set(scale, scale, scale);
+}
+
+function moveZombies() {
+    zombies.forEach(zombie => {
+        const direction = new THREE.Vector3();
+        direction.subVectors(player.position, zombie.position);
+        direction.normalize();
+        
+        let zombieSpeed = 0.05;
+        if (weight >= 400) {
+            zombieSpeed = 0.03;
+        }
+        
+        zombie.position.x += direction.x * zombieSpeed;
+        zombie.position.z += direction.z * zombieSpeed;
+    });
+}
+
+function checkCollisions() {
+    const playerPosition = player.position;
+    
+    for (let i = foods.length - 1; i >= 0; i--) {
+        const food = foods[i];
+        const distance = playerPosition.distanceTo(food.position);
+        
+        if (distance < (player.scale.x + 0.5)) {
+            scene.remove(food);
+            foods.splice(i, 1);
+            weight += 10;
+            document.getElementById('weight').textContent = weight;
+            updatePlayerSize();
+            
+            // Add sky color change check
+            if (weight >= 200) {
+                scene.background = new THREE.Color(0x000000); // Black sky
+            }
+            
+            spawnFood();
+            
+            if (weight >= 220 && zombies.length === 0) {
+                for (let i = 0; i < 3; i++) {
+                    spawnZombie();
+                }
+            }
+            
+            if (weight >= 300 && zombies.length === 3) {
+                expandMap(100);
+                for (let i = 0; i < 5; i++) {
+                    spawnZombie();
+                }
+            }
+            
+            if (weight >= 400) {
+                playerSpeed = 0.05;
+            }
+
+            if (weight >= 500) {
+                expandMap(200);
+                for (let i = 0; i < 3; i++) {
+                    spawnZombie();
+                }
+                playStomachGrowl();
+            }
+        }
+    }
+    
+    // Check zombie collisions
+    for (let i = zombies.length - 1; i >= 0; i--) {
+        const zombie = zombies[i];
+        const distance = playerPosition.distanceTo(zombie.position);
+        
+        if (distance < (player.scale.x + zombie.scale.x)) {
+            if (weight >= 530) {
+                // Eat the zombie
+                scene.remove(zombie);
+                zombies.splice(i, 1);
+                weight += 20;
+                document.getElementById('weight').textContent = weight;
+                updatePlayerSize();
+            } else {
+                gameOver("The zombies got you!");
+            }
+        }
+    }
+
+    // Check for 1000 lbs limit
+    if (weight >= 1000) {
+        if (explosionSound) {
+            explosionSound.play()
+                .then(() => {
+                    gameOver("You exploded at 1000 lbs!");
+                })
+                .catch(error => console.error("Error playing explosion sound:", error));
+        } else {
+            gameOver("You exploded at 1000 lbs!"); 
+        }
+    }
+
+    // Check building collisions when player is 600+ lbs
+    if (weight >= 600) {
+        for (let i = buildings.length - 1; i >= 0; i--) {
+            const building = buildings[i];
+            const distance = playerPosition.distanceTo(building.position);
+            
+            if (distance < (player.scale.x + building.scale.x)) {
+                // Eat the building
+                scene.remove(building);
+                buildings.splice(i, 1);
+                weight += 30;
+                document.getElementById('weight').textContent = weight;
+                updatePlayerSize();
+                
+                if (explosionSound) {
+                    explosionSound.play()
+                        .catch(error => console.error("Error playing sound:", error));
+                }
+            }
+        }
+        
+        // Check street light collisions
+        for (let i = scene.children.length - 1; i >= 0; i--) {
+            const object = scene.children[i];
+            if (object.type === 'PointLight' || 
+                (object.type === 'Mesh' && 
+                (object.geometry.type === 'CylinderGeometry' || 
+                 object.geometry.type === 'SphereGeometry' && object.material.emissive))) {
+                
+                const distance = playerPosition.distanceTo(object.position);
+                if (distance < player.scale.x + 2) {
+                    // Eat the light pole/bulb/light
+                    scene.remove(object);
+                    weight += 10;
+                    document.getElementById('weight').textContent = weight;
+                    updatePlayerSize();
+                }
+            }
+        }
+    }
+}
+
+function gameOver(message) {
+    isGameOver = true;
+    if (stomachGrowlSound) {
+        stomachGrowlSound.pause();
+        stomachGrowlSound.currentTime = 0;
+    }
+    if (explosionSound) {
+        explosionSound.currentTime = 0;
+    }
+    document.getElementById('gameOverText').textContent = message;
+    document.getElementById('gameOver').style.display = 'block';
+}
+
+function animate() {
+    if (!isGameOver) {
+        requestAnimationFrame(animate);
+        
+        // Calculate movement direction relative to camera angle
+        if (keys.ArrowLeft || keys.ArrowRight || keys.ArrowUp || keys.ArrowDown) {
+            const moveAngle = cameraAngle;
+            
+            // Forward/backward movement
+            if (keys.ArrowUp) {
+                player.position.x -= Math.sin(moveAngle) * playerSpeed;
+                player.position.z -= Math.cos(moveAngle) * playerSpeed;
+            }
+            if (keys.ArrowDown) {
+                player.position.x += Math.sin(moveAngle) * playerSpeed;
+                player.position.z += Math.cos(moveAngle) * playerSpeed;
+            }
+            
+            // Left/right movement
+            if (keys.ArrowLeft) {
+                player.position.x -= Math.sin(moveAngle + Math.PI/2) * playerSpeed;
+                player.position.z -= Math.cos(moveAngle + Math.PI/2) * playerSpeed;
+            }
+            if (keys.ArrowRight) {
+                player.position.x += Math.sin(moveAngle + Math.PI/2) * playerSpeed;
+                player.position.z += Math.cos(moveAngle + Math.PI/2) * playerSpeed;
+            }
+        }
+        
+        // Rotate camera based on key controls
+        if (keys.KeyA) cameraAngle -= 0.03;  // Rotate camera left
+        if (keys.KeyD) cameraAngle += 0.03;  // Rotate camera right
+
+        // Update camera position based on angle
+        const cameraDistance = 10;
+        camera.position.x = player.position.x + Math.sin(cameraAngle) * cameraDistance;
+        camera.position.z = player.position.z + Math.cos(cameraAngle) * cameraDistance;
+        camera.position.y = 5 + cameraTilt * 5;
+        camera.lookAt(player.position);
+
+        if (weight >= 220) {
+            moveZombies();
+        }
+        
+        checkCollisions();
+        renderer.render(scene, camera);
+    }
+}
+
+const keys = {};
+document.addEventListener('keydown', (e) => keys[e.code] = true);
+document.addEventListener('keyup', (e) => keys[e.code] = false);
+document.addEventListener('mousedown', (e) => {
+    mouseDown = true;
+    mouseX = e.clientX;
+    mouseY = e.clientY;
+});
+document.addEventListener('mouseup', () => {
+    mouseDown = false;
+});
+document.addEventListener('mousemove', (e) => {
+    if (mouseDown) {
+        const deltaX = e.clientX - mouseX;
+        const deltaY = e.clientY - mouseY;
+        
+        // Update camera angle based on mouse movement
+        cameraAngle += deltaX * 0.005;
+        cameraTilt += deltaY * 0.005;
+        
+        // Limit the camera tilt to prevent over-rotation
+        cameraTilt = Math.max(0.1, Math.min(1.2, cameraTilt));
+        
+        mouseX = e.clientX;
+        mouseY = e.clientY;
+    }
+});
+
+window.addEventListener('resize', function() {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+init();
+animate();
+</script>
+</body></html>
