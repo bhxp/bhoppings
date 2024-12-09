@@ -1,0 +1,372 @@
+<html><head><base href="https://poop.cum" />
+<title>CRAZY CARS 3D: Reverse Fire Edition</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<style>
+  body { margin: 0; overflow: hidden; }
+  #logo {
+    position: absolute;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: 'Arial Black', sans-serif;
+    font-size: 48px;
+    color: #FF4500;
+    text-shadow: 3px 3px 6px #000000, -2px -2px 4px #FFFFFF;
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0% { transform: translateX(-50%) scale(1); }
+    50% { transform: translateX(-50%) scale(1.1); }
+    100% { transform: translateX(-50%) scale(1); }
+  }
+  #controls {
+    position: absolute;
+    bottom: 20px;
+    width: 100%;
+    text-align: center;
+    color: white;
+    font-family: Arial, sans-serif;
+    font-size: 18px;
+    text-shadow: 2px 2px 4px #000000;
+  }
+  #score, #enemyCount {
+    position: absolute;
+    left: 10px;
+    color: white;
+    font-family: Arial, sans-serif;
+    font-size: 20px;
+    text-shadow: 1px 1px 2px black;
+  }
+  #score { top: 20px; }
+  #enemyCount { top: 50px; }
+</style>
+</head>
+<body>
+<div id="logo">CRAZY CARS 3D</div>
+<div id="controls">WASD - movement, Fire - mouse button</div>
+<div id="score">Score: 0</div>
+<div id="enemyCount">Enemies: 0</div>
+<script>
+let scene, camera, renderer, car, terrain;
+let moveForward = false, moveBackward = false, moveLeft = false, moveRight = false, brake = false;
+let velocity = new THREE.Vector3();
+let enemies = [], bullets = [];
+let score = 0;
+
+const TERRAIN_SIZE = 1000;
+const ENEMY_COUNT = 50;
+const TREE_COUNT = 200;
+
+function init() {
+  scene = new THREE.Scene();
+  camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, TERRAIN_SIZE * 2);
+  
+  renderer = new THREE.WebGLRenderer({ antialias: true });
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setPixelRatio(window.devicePixelRatio > 1 ? 2 : 1);
+  document.body.appendChild(renderer.domElement);
+  
+  createSky();
+
+  const ambientLight = new THREE.AmbientLight(0xcccccc, 0.4);
+  scene.add(ambientLight);
+  
+  const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+  directionalLight.position.set(1, 1, 0).normalize();
+  scene.add(directionalLight);
+
+  createTerrain();
+  createRoads();
+  createTrees();
+
+  car = createCar(0xff0000);
+  car.position.set(0, 1, 0);
+  scene.add(car);
+
+  camera.position.set(0, 5, -10);
+  camera.lookAt(car.position);
+
+  for (let i = 0; i < ENEMY_COUNT; i++) {
+    createEnemy();
+  }
+
+  document.addEventListener('keydown', onKeyDown, false);
+  document.addEventListener('keyup', onKeyUp, false);
+  document.addEventListener('mousedown', onMouseDown, false);
+  window.addEventListener('resize', onWindowResize, false);
+}
+
+function createSky() {
+  scene.background = new THREE.Color(0x87CEEB);  // Light sky blue
+  
+  const skyGeometry = new THREE.SphereGeometry(TERRAIN_SIZE, 32, 32);
+  const skyMaterial = new THREE.ShaderMaterial({
+    uniforms: {
+      topColor: { value: new THREE.Color(0x0077FF) },  // Deeper blue at top
+      bottomColor: { value: new THREE.Color(0x87CEEB) },  // Light blue at horizon
+      offset: { value: 400 },
+      exponent: { value: 0.6 }
+    },
+    vertexShader: `
+      varying vec3 vWorldPosition;
+      void main() {
+        vec4 worldPosition = modelMatrix * vec4(position, 1.0);
+        vWorldPosition = worldPosition.xyz;
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+      }
+    `,
+    fragmentShader: `
+      uniform vec3 topColor;
+      uniform vec3 bottomColor;
+      uniform float offset;
+      uniform float exponent;
+      varying vec3 vWorldPosition;
+      void main() {
+        float h = normalize(vWorldPosition + offset).y;
+        gl_FragColor = vec4(mix(bottomColor, topColor, max(pow(max(h, 0.0), exponent), 0.0)), 1.0);
+      }
+    `,
+    side: THREE.BackSide
+  });
+  
+  const sky = new THREE.Mesh(skyGeometry, skyMaterial);
+  scene.add(sky);
+}
+
+function createTerrain() {
+  const geometry = new THREE.PlaneGeometry(TERRAIN_SIZE, TERRAIN_SIZE, 50, 50);
+  const material = new THREE.MeshPhongMaterial({
+    color: 0x3a9e3a,
+    flatShading: true
+  });
+  terrain = new THREE.Mesh(geometry, material);
+  terrain.rotation.x = -Math.PI / 2;
+  scene.add(terrain);
+}
+
+function createRoads() {
+  const roadGeometry = new THREE.PlaneGeometry(20, TERRAIN_SIZE);
+  const roadMaterial = new THREE.MeshPhongMaterial({color: 0x444444});
+
+  for (let i = -1; i <= 1; i++) {
+    const road = new THREE.Mesh(roadGeometry, roadMaterial);
+    road.rotation.x = -Math.PI / 2;
+    road.position.set(i * 200, 0.1, 0);
+    scene.add(road);
+  }
+
+  const crossRoadGeometry = new THREE.PlaneGeometry(TERRAIN_SIZE, 20);
+  for (let i = -1; i <= 1; i++) {
+    const road = new THREE.Mesh(crossRoadGeometry, roadMaterial);
+    road.rotation.x = -Math.PI / 2;
+    road.position.set(0, 0.1, i * 200);
+    scene.add(road);
+  }
+}
+
+function createTrees() {
+  const treeGeometry = new THREE.ConeGeometry(5, 20, 8);
+  const treeMaterial = new THREE.MeshPhongMaterial({color: 0x228B22});
+  const treeInstances = new THREE.InstancedMesh(treeGeometry, treeMaterial, TREE_COUNT);
+
+  const matrix = new THREE.Matrix4();
+  for (let i = 0; i < TREE_COUNT; i++) {
+    const x = Math.random() * TERRAIN_SIZE - TERRAIN_SIZE / 2;
+    const z = Math.random() * TERRAIN_SIZE - TERRAIN_SIZE / 2;
+    matrix.setPosition(x, 10, z);
+    treeInstances.setMatrixAt(i, matrix);
+  }
+
+  scene.add(treeInstances);
+}
+
+function createCar(color) {
+  const carGroup = new THREE.Group();
+  const carGeometry = new THREE.BoxGeometry(2, 1, 4);
+  const carMaterial = new THREE.MeshPhongMaterial({color: color});
+  const carBody = new THREE.Mesh(carGeometry, carMaterial);
+  carGroup.add(carBody);
+
+  const wheelGeometry = new THREE.CylinderGeometry(0.5, 0.5, 0.4, 16);
+  const wheelMaterial = new THREE.MeshPhongMaterial({color: 0x333333});
+
+  const wheelPositions = [
+    [-1, -0.5, 1.5],
+    [1, -0.5, 1.5],
+    [-1, -0.5, -1.5],
+    [1, -0.5, -1.5]
+  ];
+
+  for (let position of wheelPositions) {
+    const wheel = new THREE.Mesh(wheelGeometry, wheelMaterial);
+    wheel.position.set(...position);
+    wheel.rotation.z = Math.PI / 2;
+    carGroup.add(wheel);
+  }
+
+  return carGroup;
+}
+
+function createEnemy() {
+  const enemy = createCar(0x0000ff);
+  enemy.position.set(
+    Math.random() * TERRAIN_SIZE - TERRAIN_SIZE / 2,
+    1,
+    Math.random() * TERRAIN_SIZE - TERRAIN_SIZE / 2
+  );
+  enemy.userData.velocity = new THREE.Vector3(
+    (Math.random() - 0.5) * 0.5,
+    0,
+    (Math.random() - 0.5) * 0.5
+  );
+  scene.add(enemy);
+  enemies.push(enemy);
+}
+
+function createBullet() {
+  const bullet = new THREE.Mesh(
+    new THREE.SphereGeometry(0.2, 8, 8),
+    new THREE.MeshBasicMaterial({color: 0xffff00})
+  );
+  
+  // Position the bullet at the rear of the car
+  const bulletOffset = new THREE.Vector3(0, 0.5, 2);
+  bulletOffset.applyQuaternion(car.quaternion);
+  bullet.position.copy(car.position).add(bulletOffset);
+
+  // Set bullet velocity to go straight in the opposite direction the car is facing
+  const direction = new THREE.Vector3(0, 0, 1);
+  direction.applyQuaternion(car.quaternion);
+  bullet.velocity = direction.multiplyScalar(2);
+
+  scene.add(bullet);
+  bullets.push(bullet);
+}
+
+function onKeyDown(event) {
+  switch (event.code) {
+    case 'KeyW': moveBackward = true; break;
+    case 'KeyA': moveLeft = true; break;
+    case 'KeyS': moveForward = true; break;
+    case 'KeyD': moveRight = true; break;
+  }
+}
+
+function onKeyUp(event) {
+  switch (event.code) {
+    case 'KeyW': moveBackward = false; break;
+    case 'KeyA': moveLeft = false; break;
+    case 'KeyS': moveForward = false; break;
+    case 'KeyD': moveRight = false; break;
+  }
+}
+
+function onMouseDown(event) {
+  if (event.button === 0) {
+    createBullet();
+  }
+}
+
+function onWindowResize() {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+}
+
+function updateCarPosition() {
+  const acceleration = 0.01;
+  const deceleration = 0.005;
+  const maxSpeed = 0.5;
+  const turnSpeed = 0.03;
+
+  if (moveForward) velocity.z -= acceleration;
+  else if (moveBackward) velocity.z += acceleration;
+  else {
+    if (velocity.z < 0) velocity.z = Math.min(velocity.z + deceleration, 0);
+    if (velocity.z > 0) velocity.z = Math.max(velocity.z - deceleration, 0);
+  }
+
+  if (moveLeft) car.rotation.y += turnSpeed;
+  if (moveRight) car.rotation.y -= turnSpeed;
+
+  velocity.z = Math.max(Math.min(velocity.z, maxSpeed), -maxSpeed);
+
+  car.translateZ(velocity.z);
+
+  // Keep the car within bounds
+  car.position.x = Math.max(Math.min(car.position.x, TERRAIN_SIZE / 2), -TERRAIN_SIZE / 2);
+  car.position.z = Math.max(Math.min(car.position.z, TERRAIN_SIZE / 2), -TERRAIN_SIZE / 2);
+}
+
+function updateCamera() {
+  const idealOffset = new THREE.Vector3(0, 5, -10);
+  idealOffset.applyAxisAngle(new THREE.Vector3(0, 1, 0), car.rotation.y);
+  idealOffset.add(car.position);
+
+  const idealLookat = new THREE.Vector3(0, 0, 5);
+  idealLookat.applyAxisAngle(new THREE.Vector3(0, 1, 0), car.rotation.y);
+  idealLookat.add(car.position);
+
+  camera.position.lerp(idealOffset, 0.1);
+  camera.lookAt(idealLookat);
+}
+
+function updateBullets() {
+  for (let i = bullets.length - 1; i >= 0; i--) {
+    bullets[i].position.add(bullets[i].velocity);
+    
+    if (bullets[i].position.distanceTo(car.position) > 200) {
+      scene.remove(bullets[i]);
+      bullets.splice(i, 1);
+    }
+  }
+}
+
+function updateEnemies() {
+  const halfSize = TERRAIN_SIZE / 2;
+  enemies.forEach(enemy => {
+    enemy.position.add(enemy.userData.velocity);
+    enemy.lookAt(enemy.position.clone().add(enemy.userData.velocity));
+
+    // Bounce off the edges
+    if (Math.abs(enemy.position.x) > halfSize || Math.abs(enemy.position.z) > halfSize) {
+      enemy.userData.velocity.multiplyScalar(-1);
+    }
+  });
+}
+
+function checkCollisions() {
+  for (let i = enemies.length - 1; i >= 0; i--) {
+    for (let j = bullets.length - 1; j >= 0; j--) {
+      if (enemies[i].position.distanceTo(bullets[j].position) < 2) {
+        scene.remove(enemies[i]);
+        enemies.splice(i, 1);
+        scene.remove(bullets[j]);
+        bullets.splice(j, 1);
+        score += 100;
+        document.getElementById('score').innerText = `Score: ${score}`;
+        createEnemy();
+        break;
+      }
+    }
+  }
+}
+
+function animate() {
+  requestAnimationFrame(animate);
+  
+  updateCarPosition();
+  updateCamera();
+  updateBullets();
+  updateEnemies();
+  checkCollisions();
+  
+  document.getElementById('enemyCount').innerText = `Enemies: ${enemies.length}`;
+  
+  renderer.render(scene, camera);
+}
+
+init();
+animate();
+</script>
+</body></html>
