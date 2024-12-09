@@ -1,0 +1,1204 @@
+<html><head><base href="">
+                                <meta charset="UTF-8">
+                                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                                <title>Slot Wars</title>
+                                <style>
+                                    body {
+                                        margin: 0;
+                                        padding: 10px;
+                                        font-family: Arial, sans-serif;
+                                        background-color: #f0f0f0;
+                                        touch-action: manipulation;
+                                        user-select: none;
+                                    }
+                                    h1, h2 {
+                                        text-align: center;
+                                    }
+                                    .header {
+                                        position: relative;
+                                        display: flex;
+                                        align-items: center;
+                                        justify-content: center;
+                                        margin-bottom: 10px;
+                                    }
+                                    .header #shopButton {
+                                        position: absolute;
+                                        right: 10px;
+                                        top: 10px;
+                                        padding: 10px;
+                                        font-size: 16px;
+                                        cursor: pointer;
+                                    }
+                                    .currency {
+                                        text-align: center;
+                                        font-size: 18px;
+                                        margin-bottom: 20px;
+                                    }
+                                    .shop-dropdown {
+                                        display: none;
+                                        position: absolute;
+                                        top: 60px;
+                                        right: 10px;
+                                        background-color: #fff;
+                                        border: 1px solid #cccccc;
+                                        z-index: 1000;
+                                        width: 200px;
+                                    }
+                                    .shop-dropdown ul {
+                                        list-style: none;
+                                        margin: 0;
+                                        padding: 0;
+                                    }
+                                    .shop-dropdown li {
+                                        border-bottom: 1px solid #cccccc;
+                                        position: relative;
+                                    }
+                                    .shop-dropdown li:last-child {
+                                        border-bottom: none;
+                                    }
+                                    .shop-dropdown button {
+                                        width: 100%;
+                                        padding: 10px;
+                                        font-size: 16px;
+                                        cursor: pointer;
+                                        background: none;
+                                        border: none;
+                                        text-align: left;
+                                    }
+                                    .shop-dropdown .dropdown-container > button::after {
+                                        content: ' ▼';
+                                        float: right;
+                                    }
+                                    .shop-dropdown .flower-dropdown {
+                                        display: none;
+                                        position: absolute;
+                                        left: 0;
+                                        top: 100%;
+                                        background-color: #fff;
+                                        border: 1px solid #cccccc;
+                                        width: 100%;
+                                        z-index: 1000;
+                                    }
+                                    .shop-dropdown .flower-dropdown li {
+                                        border-bottom: none;
+                                    }
+                                    .inventory, .enemy-inventory {
+                                        display: grid;
+                                        grid-template-columns: repeat(3, 80px);
+                                        grid-template-rows: repeat(3, 80px);
+                                        gap: 5px;
+                                        justify-content: center;
+                                        margin-bottom: 20px;
+                                    }
+                                    .slot {
+                                        width: 80px;
+                                        height: 80px;
+                                        background-color: #ffffff;
+                                        border: 2px solid #cccccc;
+                                        box-sizing: border-box;
+                                        position: relative;
+                                    }
+                                    .item {
+                                        position: absolute;
+                                        border: 2px solid #b38b00;
+                                        box-sizing: border-box;
+                                        display: flex;
+                                        align-items: center;
+                                        justify-content: center;
+                                        font-weight: bold;
+                                        font-size: 16px;
+                                        top: 0;
+                                        left: 0;
+                                        z-index: 1;
+                                        text-align: center;
+                                        padding: 5px;
+                                    }
+                                    /* Textures for items */
+                                    .item.dagger {
+                                        width: 165px;
+                                        height: 80px;
+                                        background: repeating-linear-gradient(
+                                            45deg,
+                                            #8b4513,
+                                            #8b4513 10px,
+                                            #a0522d 10px,
+                                            #a0522d 20px
+                                        );
+                                    }
+                                    .item.bee {
+                                        width: 80px;
+                                        height: 80px;
+                                        background: linear-gradient(
+                                            45deg,
+                                            #ffff00 25%,
+                                            #000000 25%,
+                                            #000000 50%,
+                                            #ffff00 50%,
+                                            #ffff00 75%,
+                                            #000000 75%,
+                                            #000000 100%
+                                        );
+                                        background-size: 56.57px 56.57px;
+                                    }
+                                    .item.flower {
+                                        width: 80px;
+                                        height: 80px;
+                                        background: radial-gradient(circle at center, #ff69b4, #ff1493);
+                                    }
+                                    .item.rose {
+                                        width: 80px;
+                                        height: 80px;
+                                        background: radial-gradient(circle at center, #ff69b4, #ff1493);
+                                    }
+                                    .item.bloomingRose {
+                                        width: 80px;
+                                        height: 80px;
+                                        background: radial-gradient(circle at center, #ff4500, #ff8c00);
+                                    }
+                                    .item.lily {
+                                        width: 80px;
+                                        height: 80px;
+                                        background: radial-gradient(circle at center, #ffffff, #f0f8ff);
+                                    }
+                                    .item.bloomingLilyPad {
+                                        width: 80px;
+                                        height: 80px;
+                                        background: radial-gradient(circle at center, #add8e6, #008080);
+                                    }
+                                    .item.sword {
+                                        width: 165px;
+                                        height: 80px;
+                                        background: repeating-linear-gradient(
+                                            45deg,
+                                            #d3d3d3,
+                                            #d3d3d3 10px,
+                                            #a9a9a9 10px,
+                                            #a9a9a9 20px
+                                        );
+                                    }
+                                    .item.bow {
+                                        width: 80px;
+                                        height: 80px;
+                                        background: repeating-linear-gradient(
+                                            -45deg,
+                                            #8b4513,
+                                            #8b4513 10px,
+                                            #cd853f 10px,
+                                            #cd853f 20px
+                                        );
+                                    }
+                                    .item.crossbow {
+                                        width: 80px;
+                                        height: 80px;
+                                        background: repeating-linear-gradient(
+                                            -45deg,
+                                            #8b4513,
+                                            #8b4513 5px,
+                                            #cd853f 5px,
+                                            #cd853f 10px
+                                        );
+                                    }
+                                    .item.greatsword {
+                                        width: 165px;
+                                        height: 80px;
+                                        background: repeating-linear-gradient(
+                                            45deg,
+                                            #808080,
+                                            #808080 10px,
+                                            #696969 10px,
+                                            #696969 20px
+                                        );
+                                    }
+                                    .battle {
+                                        text-align: center;
+                                        margin-bottom: 20px;
+                                    }
+                                    .battle button {
+                                        padding: 10px 20px;
+                                        font-size: 16px;
+                                        cursor: pointer;
+                                    }
+                                    .enemy, .player {
+                                        width: 80%;
+                                        height: 30px;
+                                        background-color: #e0e0e0;
+                                        margin: 10px auto;
+                                        border: 2px solid #cccccc;
+                                        position: relative;
+                                    }
+                                    .enemy-health, .player-health {
+                                        height: 100%;
+                                        background-color: #76c7c0;
+                                        width: 100%;
+                                        position: absolute;
+                                        top: 0;
+                                        left: 0;
+                                        transition: width 0.5s;
+                                    }
+                                    .enemy-health.flashing {
+                                        background-color: #00ff00 !important;
+                                    }
+                                    .player-health.flashing {
+                                        background-color: #ff0000 !important;
+                                    }
+                                    /* Attack Animations */
+                                    .item.dagger.attack {
+                                        animation: dagger-attack 0.5s;
+                                    }
+                                    @keyframes dagger-attack {
+                                        0% { transform: rotate(0deg); }
+                                        50% { transform: rotate(-20deg); }
+                                        100% { transform: rotate(0deg); }
+                                    }
+                                    .item.sword.attack {
+                                        animation: sword-attack 0.5s;
+                                    }
+                                    @keyframes sword-attack {
+                                        0% { transform: rotate(0deg); }
+                                        50% { transform: rotate(-30deg); }
+                                        100% { transform: rotate(0deg); }
+                                    }
+                                    .item.greatsword.attack {
+                                        animation: greatsword-attack 0.5s;
+                                    }
+                                    @keyframes greatsword-attack {
+                                        0% { transform: scale(1); }
+                                        50% { transform: scale(1.2); }
+                                        100% { transform: scale(1); }
+                                    }
+                                    .item.bow.attack {
+                                        animation: bow-attack 0.5s;
+                                    }
+                                    @keyframes bow-attack {
+                                        0% { transform: scale(1); }
+                                        50% { transform: scale(1.1); }
+                                        100% { transform: scale(1); }
+                                    }
+                                    .item.crossbow.attack {
+                                        animation: crossbow-attack 0.5s;
+                                    }
+                                    @keyframes crossbow-attack {
+                                        0% { transform: scale(1); }
+                                        50% { transform: scale(1.15); }
+                                        100% { transform: scale(1); }
+                                    }
+                                    .item.bee.attack {
+                                        animation: bee-attack 0.5s;
+                                    }
+                                    @keyframes bee-attack {
+                                        0% { transform: translateX(0px); }
+                                        50% { transform: translateX(-5px); }
+                                        100% { transform: translateX(0px); }
+                                    }
+                                    .item.bloomingRose.attack {
+                                        animation: bloomingRose-attack 0.5s;
+                                    }
+                                    @keyframes bloomingRose-attack {
+                                        0% { transform: scale(1); }
+                                        50% { transform: scale(1.2); }
+                                        100% { transform: scale(1); }
+                                    }
+                                    /* Healing Animation */
+                                    .player-health.healing {
+                                        animation: healing-animation 0.5s;
+                                    }
+                                    @keyframes healing-animation {
+                                        0% { background-color: #76c7c0; }
+                                        50% { background-color: #00ff00; }
+                                        100% { background-color: #76c7c0; }
+                                    }
+                                    /* Bee Using Flower Visualization */
+                                    .item.bee.using-flower::after {
+                                        content: '';
+                                        position: absolute;
+                                        width: 20px;
+                                        height: 20px;
+                                        background-color: var(--flower-color);
+                                        border-radius: 50%;
+                                        top: 5px;
+                                        right: 5px;
+                                    }
+                                </style>
+                            </head>
+                            <body>
+                                <div class="header">
+                                    <h1>Slot Wars</h1>
+                                    <button id="shopButton">Shop</button>
+                                </div>
+                                <div class="currency">Gold: <span id="gold">100</span></div>
+                                <div class="shop-dropdown" id="shopDropdown">
+                                    <ul>
+                                        <li><button id="buyDaggerButton" title="Dagger&#10;Damage: 10&#10;Attack Speed: Medium&#10;Description: A sharp blade for close combat.">Buy Dagger (50 Gold)</button></li>
+                                        <li><button id="buyBeeButton" title="Bee&#10;Damage: 1-2 (with flower)&#10;Attack Speed: Very Fast&#10;Description: A buzzing bee that stings the enemy, dealing poisonous damage.">Buy Bee (30 Gold)</button></li>
+                                        <li>
+                                            <div class="dropdown-container">
+                                                <button id="buyFlowerButton">Buy Flower</button>
+                                                <ul class="flower-dropdown">
+                                                    <li><button id="buyRoseButton" title="Rose&#10;Heals: 10 per second&#10;Description: A beautiful rose that heals the player when a bee is nearby.">Buy Rose (40 Gold)</button></li>
+                                                    <li><button id="buyLilyButton" title="Lily&#10;Effect: Increases attack speed of adjacent weapons.&#10;Description: A white flower that boosts nearby weapons' attack speed.">Buy Lily (30 Gold)</button></li>
+                                                </ul>
+                                            </div>
+                                        </li>
+                                        <li><button id="buySwordButton" title="Sword&#10;Damage: 20&#10;Attack Speed: Slow&#10;Description: A mighty sword that deals heavy damage.">Buy Sword (70 Gold)</button></li>
+                                        <li><button id="buyBowButton" title="Bow&#10;Damage: 8&#10;Attack Speed: Fast&#10;Description: A ranged weapon that strikes enemies swiftly.">Buy Bow (60 Gold)</button></li>
+                                    </ul>
+                                </div>
+                                <div class="inventory" id="inventory">
+                                    <div class="slot" data-row="0" data-col="0"></div>
+                                    <div class="slot" data-row="0" data-col="1"></div>
+                                    <div class="slot" data-row="0" data-col="2"></div>
+                                    <div class="slot" data-row="1" data-col="0"></div>
+                                    <div class="slot" data-row="1" data-col="1"></div>
+                                    <div class="slot" data-row="1" data-col="2"></div>
+                                    <div class="slot" data-row="2" data-col="0"></div>
+                                    <div class="slot" data-row="2" data-col="1"></div>
+                                    <div class="slot" data-row="2" data-col="2"></div>
+                                </div>
+                                <div class="battle">
+                                    <button id="startBattleButton">Start Battle</button>
+                                </div>
+                                <div class="player">
+                                    <div class="player-health" id="playerHealth"></div>
+                                </div>
+                                <div class="enemy">
+                                    <div class="enemy-health" id="enemyHealth"></div>
+                                </div>
+                                <div class="enemy-inventory" id="enemyInventory">
+                                    <div class="slot" data-row="0" data-col="0"></div>
+                                    <div class="slot" data-row="0" data-col="1"></div>
+                                    <div class="slot" data-row="0" data-col="2"></div>
+                                    <div class="slot" data-row="1" data-col="0"></div>
+                                    <div class="slot" data-row="1" data-col="1"></div>
+                                    <div class="slot" data-row="1" data-col="2"></div>
+                                    <div class="slot" data-row="2" data-col="0"></div>
+                                    <div class="slot" data-row="2" data-col="1"></div>
+                                    <div class="slot" data-row="2" data-col="2"></div>
+                                </div>
+                                <script>
+                                    var gold = 100;
+                                    var inventory = [
+                                        [null, null, null],
+                                        [null, null, null],
+                                        [null, null, null]
+                                    ];
+                                    var items = [];
+                                    var battleStarted = false;
+                                    var enemyHealth = 100;
+                                    var enemyMaxHealth = 100;
+                                    var playerHealth = 100;
+                                    var playerMaxHealth = 100;
+                                    var attackInterval;
+                                    var healInterval;
+                                    var currentItem = null;
+                                    var enemyInventory = [
+                                        [null, null, null],
+                                        [null, null, null],
+                                        [null, null, null]
+                                    ];
+                                    var enemyItems = [];
+                                    var battleCount = 0;
+                                
+                                    var shopButton = document.getElementById('shopButton');
+                                    var shopDropdown = document.getElementById('shopDropdown');
+                                    shopButton.addEventListener('click', function(event) {
+                                        event.stopPropagation();
+                                        if (shopDropdown.style.display === 'block') {
+                                            shopDropdown.style.display = 'none';
+                                        } else {
+                                            shopDropdown.style.display = 'block';
+                                        }
+                                    });
+                                    document.addEventListener('click', function() {
+                                        shopDropdown.style.display = 'none';
+                                        closeFlowerDropdown();
+                                    });
+                                    shopDropdown.addEventListener('click', function(event) {
+                                        event.stopPropagation();
+                                    });
+                                    
+                                    var buyFlowerButton = document.getElementById('buyFlowerButton');
+                                    var flowerDropdown = document.querySelector('.flower-dropdown');
+                                    buyFlowerButton.addEventListener('click', function(event) {
+                                        event.stopPropagation();
+                                        if (flowerDropdown.style.display === 'block') {
+                                            flowerDropdown.style.display = 'none';
+                                        } else {
+                                            flowerDropdown.style.display = 'block';
+                                        }
+                                    });
+                                    function closeFlowerDropdown() {
+                                        flowerDropdown.style.display = 'none';
+                                    }
+                                    document.getElementById('buyDaggerButton').addEventListener('click', function() {
+                                        buyItem('dagger');
+                                        shopDropdown.style.display = 'none';
+                                    });
+                                    document.getElementById('buyBeeButton').addEventListener('click', function() {
+                                        buyItem('bee');
+                                        shopDropdown.style.display = 'none';
+                                    });
+                                    document.getElementById('buyRoseButton').addEventListener('click', function() {
+                                        buyItem('rose');
+                                        shopDropdown.style.display = 'none';
+                                    });
+                                    document.getElementById('buyLilyButton').addEventListener('click', function() {
+                                        buyItem('lily');
+                                        shopDropdown.style.display = 'none';
+                                    });
+                                    document.getElementById('buySwordButton').addEventListener('click', function() {
+                                        buyItem('sword');
+                                        shopDropdown.style.display = 'none';
+                                    });
+                                    document.getElementById('buyBowButton').addEventListener('click', function() {
+                                        buyItem('bow');
+                                        shopDropdown.style.display = 'none';
+                                    });
+                                
+                                    function buyItem(itemName) {
+                                        var itemCost = 0;
+                                        if (itemName === 'dagger') {
+                                            itemCost = 50;
+                                        } else if (itemName === 'bee') {
+                                            itemCost = 30;
+                                        } else if (itemName === 'flower') {
+                                            itemCost = 20;
+                                        } else if (itemName === 'rose') {
+                                            itemCost = 40;
+                                        } else if (itemName === 'lily') {
+                                            itemCost = 30;
+                                        } else if (itemName === 'sword') {
+                                            itemCost = 70;
+                                        } else if (itemName === 'bow') {
+                                            itemCost = 60;
+                                        }
+                                        if (gold >= itemCost) {
+                                            gold -= itemCost;
+                                            document.getElementById('gold').textContent = gold;
+                                            currentItem = {
+                                                name: itemName
+                                            };
+                                            alert('Tap on an empty slot to place your ' + itemName + '.');
+                                        } else {
+                                            alert('Not enough gold!');
+                                        }
+                                    }
+                                
+                                    var slots = document.querySelectorAll('.slot');
+                                    slots.forEach(function(slot) {
+                                        slot.addEventListener('click', function() {
+                                            if (currentItem) {
+                                                var row = parseInt(slot.getAttribute('data-row'));
+                                                var col = parseInt(slot.getAttribute('data-col'));
+                                                if (canPlaceItem(currentItem.name, row, col)) {
+                                                    placeItem(currentItem.name, row, col);
+                                                    currentItem = null;
+                                                } else {
+                                                    alert('Cannot place item here.');
+                                                }
+                                            }
+                                        });
+                                    });
+                                
+                                    function canPlaceItem(itemName, row, col) {
+                                        if (itemName === 'dagger') {
+                                            if (col >= 0 && col < 2) {
+                                                if (inventory[row][col] === null && inventory[row][col + 1] === null) {
+                                                    return true;
+                                                }
+                                            }
+                                        } else if (itemName === 'sword') {
+                                            if (col >= 0 && col < 2) {
+                                                var slot1 = inventory[row][col];
+                                                var slot2 = inventory[row][col + 1];
+                                                if ((slot1 === null && slot2 === null) ||
+                                                    (slot1 === 'sword' && slot2 === 'sword')) {
+                                                    return true;
+                                                }
+                                            }
+                                        } else if (itemName === 'bow') {
+                                            if (inventory[row][col] === null || inventory[row][col] === 'bow') {
+                                                return true;
+                                            }
+                                        } else if (itemName === 'rose') {
+                                            if (inventory[row][col] === null || inventory[row][col] === 'rose') {
+                                                return true;
+                                            }
+                                        } else if (itemName === 'lily') {
+                                            if (inventory[row][col] === null || inventory[row][col] === 'lily') {
+                                                return true;
+                                            }
+                                        } else if (inventory[row][col] === null) {
+                                            return true;
+                                        }
+                                        return false;
+                                    }
+                                
+                                    function placeItem(itemName, row, col) {
+                                        var slotElement = document.querySelector('.slot[data-row="' + row + '"][data-col="' + col + '"]');
+                                        if (itemName === 'rose' && inventory[row][col] === 'rose') {
+                                            // Upgrade to Blooming Rose
+                                            for (var i = 0; i < items.length; i++) {
+                                                if (items[i].row === row && items[i].col === col && items[i].name === 'rose') {
+                                                    items[i].element.parentNode.removeChild(items[i].element);
+                                                    items.splice(i, 1);
+                                                    break;
+                                                }
+                                            }
+                                            var itemElement = document.createElement('div');
+                                            itemElement.classList.add('item', 'bloomingRose');
+                                            itemElement.textContent = 'Blooming Rose';
+                                            slotElement.appendChild(itemElement);
+                                            slotElement.style.position = 'relative';
+                                            inventory[row][col] = 'bloomingRose';
+                                            var newItem = {
+                                                name: 'bloomingRose',
+                                                row: row,
+                                                col: col,
+                                                element: itemElement,
+                                                attackCounter: 0
+                                            };
+                                            items.push(newItem);
+                                            itemElement.addEventListener('click', function() {
+                                                showItemStats('bloomingRose');
+                                            });
+                                        } else if (itemName === 'sword' && inventory[row][col] === 'sword' && inventory[row][col + 1] === 'sword') {
+                                            // Upgrade to Greatsword
+                                            for (var i = 0; i < items.length; i++) {
+                                                if (items[i].row === row && items[i].col === col && items[i].name === 'sword') {
+                                                    items[i].element.parentNode.removeChild(items[i].element);
+                                                    items.splice(i, 1);
+                                                    break;
+                                                }
+                                            }
+                                            var itemElement = document.createElement('div');
+                                            itemElement.classList.add('item', 'greatsword');
+                                            itemElement.textContent = 'Greatsword';
+                                            slotElement.appendChild(itemElement);
+                                            slotElement.style.position = 'relative';
+                                            inventory[row][col] = 'greatsword';
+                                            inventory[row][col + 1] = 'greatsword';
+                                            var newItem = {
+                                                name: 'greatsword',
+                                                row: row,
+                                                col: col,
+                                                element: itemElement,
+                                                attackCounter: 0
+                                            };
+                                            items.push(newItem);
+                                            itemElement.addEventListener('click', function() {
+                                                showItemStats('greatsword');
+                                            });
+                                        } else if (itemName === 'lily' && inventory[row][col] === 'lily') {
+                                            // Upgrade to Blooming Lily Pad
+                                            for (var i = 0; i < items.length; i++) {
+                                                if (items[i].row === row && items[i].col === col && items[i].name === 'lily') {
+                                                    items[i].element.parentNode.removeChild(items[i].element);
+                                                    items.splice(i, 1);
+                                                    break;
+                                                }
+                                            }
+                                            var itemElement = document.createElement('div');
+                                            itemElement.classList.add('item', 'bloomingLilyPad');
+                                            itemElement.textContent = 'Blooming Lily Pad';
+                                            slotElement.appendChild(itemElement);
+                                            slotElement.style.position = 'relative';
+                                            inventory[row][col] = 'bloomingLilyPad';
+                                            var newItem = {
+                                                name: 'bloomingLilyPad',
+                                                row: row,
+                                                col: col,
+                                                element: itemElement,
+                                                attackCounter: 0
+                                            };
+                                            items.push(newItem);
+                                            itemElement.addEventListener('click', function() {
+                                                showItemStats('bloomingLilyPad');
+                                            });
+                                        } else if (itemName === 'bow' && inventory[row][col] === 'bow') {
+                                            // Upgrade to Crossbow
+                                            for (var i = 0; i < items.length; i++) {
+                                                if (items[i].row === row && items[i].col === col && items[i].name === 'bow') {
+                                                    items[i].element.parentNode.removeChild(items[i].element);
+                                                    items.splice(i, 1);
+                                                    break;
+                                                }
+                                            }
+                                            var itemElement = document.createElement('div');
+                                            itemElement.classList.add('item', 'crossbow');
+                                            itemElement.textContent = 'Crossbow';
+                                            slotElement.appendChild(itemElement);
+                                            slotElement.style.position = 'relative';
+                                            inventory[row][col] = 'crossbow';
+                                            var newItem = {
+                                                name: 'crossbow',
+                                                row: row,
+                                                col: col,
+                                                element: itemElement,
+                                                attackCounter: 0
+                                            };
+                                            items.push(newItem);
+                                            itemElement.addEventListener('click', function() {
+                                                showItemStats('crossbow');
+                                            });
+                                        } else {
+                                            var itemElement = document.createElement('div');
+                                            itemElement.classList.add('item', itemName);
+                                            itemElement.textContent = itemName.charAt(0).toUpperCase() + itemName.slice(1);
+                                            slotElement.appendChild(itemElement);
+                                            slotElement.style.position = 'relative';
+                                            if (itemName === 'dagger' || itemName === 'sword') {
+                                                inventory[row][col] = itemName;
+                                                inventory[row][col + 1] = itemName;
+                                            } else {
+                                                inventory[row][col] = itemName;
+                                            }
+                                            var newItem = {
+                                                name: itemName,
+                                                row: row,
+                                                col: col,
+                                                element: itemElement,
+                                                attackCounter: 0
+                                            };
+                                            items.push(newItem);
+                                            itemElement.addEventListener('click', function() {
+                                                showItemStats(itemName);
+                                            });
+                                        }
+                                    }
+                                
+                                    function showItemStats(itemName) {
+                                        var stats = '';
+                                        if (itemName === 'dagger') {
+                                            stats = 'Dagger\nDamage: 10\nAttack Speed: Medium\nDescription: A sharp blade for close combat.';
+                                        } else if (itemName === 'bee') {
+                                            stats = 'Bee\nDamage: 1-2 (with flower)\nAttack Speed: Very Fast\nDescription: A buzzing bee that stings the enemy, dealing poisonous damage.';
+                                        } else if (itemName === 'rose') {
+                                            stats = 'Rose\nHeals: 10 per second\nDescription: A beautiful rose that heals the player when a bee is nearby.';
+                                        } else if (itemName === 'lily') {
+                                            stats = 'Lily\nEffect: Increases attack speed of adjacent weapons.\nDescription: A white flower that boosts nearby weapons\' attack speed.';
+                                        } else if (itemName === 'bloomingLilyPad') {
+                                            stats = 'Blooming Lily Pad\nEffect: Greatly increases attack speed of adjacent weapons.\nDescription: An upgraded lily that boosts nearby weapons even more.';
+                                        } else if (itemName === 'sword') {
+                                            stats = 'Sword\nDamage: 20\nAttack Speed: Slow\nDescription: A mighty sword that deals heavy damage.';
+                                        } else if (itemName === 'bow') {
+                                            stats = 'Bow\nDamage: 8\nAttack Speed: Fast\nDescription: A ranged weapon that strikes enemies swiftly.';
+                                        } else if (itemName === 'crossbow') {
+                                            stats = 'Crossbow\nDamage: 16\nAttack Speed: Very Fast\nDescription: An upgraded bow that fires bolts rapidly.';
+                                        } else if (itemName === 'bloomingRose') {
+                                            stats = 'Blooming Rose\nDamage: 15\nHeals: More than rose\nDescription: An upgraded rose that now also deals damage to the enemy and heals the player more.';
+                                        } else if (itemName === 'greatsword') {
+                                            stats = 'Greatsword\nDamage: 50\nAttack Speed: Very Slow\nDescription: An enormous sword that deals massive damage.';
+                                        }
+                                        alert(stats);
+                                    }
+                                
+                                    document.getElementById('startBattleButton').addEventListener('click', function() {
+                                        startBattle();
+                                    });
+                                
+                                    function startBattle() {
+                                        if (battleStarted) return;
+                                        if (items.length === 0) {
+                                            alert('Place at least one item before starting a battle.');
+                                            return;
+                                        }
+                                        battleStarted = true;
+                                        battleCount++;
+                                        var level = Math.floor((battleCount - 1) / 5);
+                                        enemyMaxHealth = 100 + level * 10;
+                                        enemyHealth = enemyMaxHealth;
+                                        document.getElementById('startBattleButton').disabled = true;
+                                        playerHealth = playerMaxHealth;
+                                        updateEnemyHealth();
+                                        updatePlayerHealth();
+                                        generateEnemyInventory();
+                                        attackInterval = setInterval(battleTick, 200);
+                                    }
+                                
+                                    function battleTick() {
+                                        var totalDamageToEnemy = 0;
+                                        var totalDamageToPlayer = 0;
+                                        items.forEach(function(item) {
+                                            if (item.name === 'dagger') {
+                                                item.attackCounter = (item.attackCounter || 0) + 1;
+                                                var attackThreshold = 5;
+                                                attackThreshold -= getAdjacentLilyBonus(item.row, item.col);
+                                                if (item.attackCounter >= attackThreshold) {
+                                                    totalDamageToEnemy += 10;
+                                                    item.attackCounter = 0;
+                                                    triggerItemAnimation(item);
+                                                }
+                                            } else if (item.name === 'sword') {
+                                                item.attackCounter = (item.attackCounter || 0) + 1;
+                                                var attackThreshold = 8;
+                                                attackThreshold -= getAdjacentLilyBonus(item.row, item.col);
+                                                if (item.attackCounter >= attackThreshold) {
+                                                    totalDamageToEnemy += 20;
+                                                    item.attackCounter = 0;
+                                                    triggerItemAnimation(item);
+                                                }
+                                            } else if (item.name === 'greatsword') {
+                                                item.attackCounter = (item.attackCounter || 0) + 1;
+                                                var attackThreshold = 12;
+                                                attackThreshold -= getAdjacentLilyBonus(item.row, item.col);
+                                                if (item.attackCounter >= attackThreshold) {
+                                                    totalDamageToEnemy += 50;
+                                                    item.attackCounter = 0;
+                                                    triggerItemAnimation(item);
+                                                }
+                                            } else if (item.name === 'bow') {
+                                                item.attackCounter = (item.attackCounter || 0) + 1;
+                                                var attackThreshold = 4;
+                                                attackThreshold -= getAdjacentLilyBonus(item.row, item.col);
+                                                if (item.attackCounter >= attackThreshold) {
+                                                    totalDamageToEnemy += 8;
+                                                    item.attackCounter = 0;
+                                                    triggerItemAnimation(item);
+                                                }
+                                            } else if (item.name === 'crossbow') {
+                                                item.attackCounter = (item.attackCounter || 0) + 1;
+                                                var attackThreshold = 3;
+                                                attackThreshold -= getAdjacentLilyBonus(item.row, item.col);
+                                                if (item.attackCounter >= attackThreshold) {
+                                                    totalDamageToEnemy += 16;
+                                                    item.attackCounter = 0;
+                                                    triggerItemAnimation(item);
+                                                }
+                                            } else if (item.name === 'bee') {
+                                                var poisonDamage = isAdjacentToFlower(item.row, item.col) ? 2 : 1;
+                                                totalDamageToEnemy += poisonDamage;
+                                                triggerItemAnimation(item);
+                                                flashHealthbar();
+                                            } else if (item.name === 'bloomingRose') {
+                                                item.attackCounter = (item.attackCounter || 0) + 1;
+                                                if (item.attackCounter >= 5) {
+                                                    totalDamageToEnemy += 15;
+                                                    item.attackCounter = 0;
+                                                    triggerItemAnimation(item);
+                                                }
+                                            }
+                                        });
+                                        enemyItems.forEach(function(item) {
+                                            if (item.name === 'dagger') {
+                                                item.attackCounter = (item.attackCounter || 0) + 1;
+                                                if (item.attackCounter >= 5) {
+                                                    totalDamageToPlayer += 10;
+                                                    item.attackCounter = 0;
+                                                    triggerItemAnimation(item);
+                                                }
+                                            } else if (item.name === 'sword') {
+                                                item.attackCounter = (item.attackCounter || 0) + 1;
+                                                if (item.attackCounter >= 8) {
+                                                    totalDamageToPlayer += 20;
+                                                    item.attackCounter = 0;
+                                                    triggerItemAnimation(item);
+                                                }
+                                            } else if (item.name === 'greatsword') {
+                                                item.attackCounter = (item.attackCounter || 0) + 1;
+                                                if (item.attackCounter >= 12) {
+                                                    totalDamageToPlayer += 50;
+                                                    item.attackCounter = 0;
+                                                    triggerItemAnimation(item);
+                                                }
+                                            } else if (item.name === 'bow') {
+                                                item.attackCounter = (item.attackCounter || 0) + 1;
+                                                if (item.attackCounter >= 4) {
+                                                    totalDamageToPlayer += 8;
+                                                    item.attackCounter = 0;
+                                                    triggerItemAnimation(item);
+                                                }
+                                            } else if (item.name === 'crossbow') {
+                                                item.attackCounter = (item.attackCounter || 0) + 1;
+                                                if (item.attackCounter >= 3) {
+                                                    totalDamageToPlayer += 16;
+                                                    item.attackCounter = 0;
+                                                    triggerItemAnimation(item);
+                                                }
+                                            } else if (item.name === 'bee') {
+                                                var poisonDamage = isEnemyAdjacentToFlower(item.row, item.col) ? 2 : 1;
+                                                totalDamageToPlayer += poisonDamage;
+                                                triggerItemAnimation(item);
+                                                flashPlayerHealthbar();
+                                            }
+                                        });
+                                        enemyHealth -= totalDamageToEnemy;
+                                        playerHealth -= totalDamageToPlayer;
+                                        if (enemyHealth <= 0) {
+                                            enemyHealth = 0;
+                                            updateEnemyHealth();
+                                            clearInterval(attackInterval);
+                                            alert('Enemy defeated!');
+                                            gold += 10;
+                                            document.getElementById('gold').textContent = gold;
+                                            battleStarted = false;
+                                            document.getElementById('startBattleButton').disabled = false;
+                                            clearEnemyInventory();
+                                        } else {
+                                            updateEnemyHealth();
+                                        }
+                                        if (playerHealth <= 0) {
+                                            playerHealth = 0;
+                                            updatePlayerHealth();
+                                            clearInterval(attackInterval);
+                                            alert('You have been defeated!');
+                                            battleStarted = false;
+                                            document.getElementById('startBattleButton').disabled = false;
+                                            clearEnemyInventory();
+                                        } else {
+                                            updatePlayerHealth();
+                                        }
+                                    }
+                                
+                                    function updateEnemyHealth() {
+                                        var healthPercent = (enemyHealth / enemyMaxHealth) * 100;
+                                        document.getElementById('enemyHealth').style.width = healthPercent + '%';
+                                    }
+                                
+                                    function updatePlayerHealth() {
+                                        var healthPercent = (playerHealth / playerMaxHealth) * 100;
+                                        document.getElementById('playerHealth').style.width = healthPercent + '%';
+                                    }
+                                
+                                    function isAdjacentToFlower(row, col) {
+                                        var adjacentPositions = [
+                                            [row - 1, col],
+                                            [row + 1, col],
+                                            [row, col - 1],
+                                            [row, col + 1]
+                                        ];
+                                        for (var i = 0; i < adjacentPositions.length; i++) {
+                                            var newRow = adjacentPositions[i][0];
+                                            var newCol = adjacentPositions[i][1];
+                                            if (newRow >= 0 && newRow < 3 && newCol >= 0 && newCol < 3) {
+                                                if (inventory[newRow][newCol] === 'flower' || inventory[newRow][newCol] === 'rose' || inventory[newRow][newCol] === 'bloomingRose' || inventory[newRow][newCol] === 'lily' || inventory[newRow][newCol] === 'bloomingLilyPad') {
+                                                    return true;
+                                                }
+                                            }
+                                        }
+                                        return false;
+                                    }
+                                    
+                                    function isAdjacentToRose(row, col) {
+                                        var adjacentPositions = [
+                                            [row - 1, col],
+                                            [row + 1, col],
+                                            [row, col - 1],
+                                            [row, col + 1]
+                                        ];
+                                        for (var i = 0; i < adjacentPositions.length; i++) {
+                                            var newRow = adjacentPositions[i][0];
+                                            var newCol = adjacentPositions[i][1];
+                                            if (newRow >= 0 && newRow < 3 && newCol >= 0 && newCol < 3) {
+                                                if (inventory[newRow][newCol] === 'rose' || inventory[newRow][newCol] === 'bloomingRose') {
+                                                    return true;
+                                                }
+                                            }
+                                        }
+                                        return false;
+                                    }
+                                
+                                    function isAdjacentToLily(row, col) {
+                                        var adjacentPositions = [
+                                            [row - 1, col],
+                                            [row + 1, col],
+                                            [row, col - 1],
+                                            [row, col + 1]
+                                        ];
+                                        for (var i = 0; i < adjacentPositions.length; i++) {
+                                            var newRow = adjacentPositions[i][0];
+                                            var newCol = adjacentPositions[i][1];
+                                            if (newRow >= 0 && newRow < 3 && newCol >= 0 && newCol < 3) {
+                                                if (inventory[newRow][newCol] === 'lily' || inventory[newRow][newCol] === 'bloomingLilyPad') {
+                                                    return true;
+                                                }
+                                            }
+                                        }
+                                        return false;
+                                    }
+                                    
+                                    function getAdjacentLilyBonus(row, col) {
+                                        var adjacentPositions = [
+                                            [row - 1, col],
+                                            [row + 1, col],
+                                            [row, col - 1],
+                                            [row, col + 1]
+                                        ];
+                                        var bonus = 0;
+                                        for (var i = 0; i < adjacentPositions.length; i++) {
+                                            var newRow = adjacentPositions[i][0];
+                                            var newCol = adjacentPositions[i][1];
+                                            if (newRow >= 0 && newRow < 3 && newCol >= 0 && newCol < 3) {
+                                                if (inventory[newRow][newCol] === 'lily') {
+                                                    bonus += 1;
+                                                } else if (inventory[newRow][newCol] === 'bloomingLilyPad') {
+                                                    bonus += 2;
+                                                }
+                                            }
+                                        }
+                                        return bonus;
+                                    }
+                                
+                                    function getAdjacentFlowerType(row, col) {
+                                        var adjacentPositions = [
+                                            [row - 1, col],
+                                            [row + 1, col],
+                                            [row, col - 1],
+                                            [row, col + 1]
+                                        ];
+                                        for (var i = 0; i < adjacentPositions.length; i++) {
+                                            var newRow = adjacentPositions[i][0];
+                                            var newCol = adjacentPositions[i][1];
+                                            if (newRow >= 0 && newRow < 3 && newCol >= 0 && newCol < 3) {
+                                                var itemName = inventory[newRow][newCol];
+                                                if (itemName === 'rose' || itemName === 'bloomingRose' || itemName === 'lily' || itemName === 'bloomingLilyPad') {
+                                                    return itemName;
+                                                }
+                                            }
+                                        }
+                                        return null;
+                                    }
+        
+                                    function getFlowerColor(flowerType) {
+                                        var colorMapping = {
+                                            'rose': '#ff1493',
+                                            'bloomingRose': '#ff4500',
+                                            'lily': '#f0f8ff',
+                                            'bloomingLilyPad': '#008080'
+                                        };
+                                        return colorMapping[flowerType] || '#ffffff';
+                                    }
+                                
+                                    function getEnemyAdjacentFlowerType(row, col) {
+                                        var adjacentPositions = [
+                                            [row - 1, col],
+                                            [row + 1, col],
+                                            [row, col - 1],
+                                            [row, col + 1]
+                                        ];
+                                        for (var i = 0; i < adjacentPositions.length; i++) {
+                                            var newRow = adjacentPositions[i][0];
+                                            var newCol = adjacentPositions[i][1];
+                                            if (newRow >= 0 && newRow < 3 && newCol >= 0 && newCol < 3) {
+                                                var itemName = enemyInventory[newRow][newCol];
+                                                if (itemName === 'rose' || itemName === 'bloomingRose' || itemName === 'lily' || itemName === 'bloomingLilyPad') {
+                                                    return itemName;
+                                                }
+                                            }
+                                        }
+                                        return null;
+                                    }
+        
+                                    function triggerHealingAnimation() {
+                                        var healthBar = document.getElementById('playerHealth');
+                                        if (!healthBar.classList.contains('healing')) {
+                                            healthBar.classList.add('healing');
+                                            setTimeout(function() {
+                                                healthBar.classList.remove('healing');
+                                            }, 500);
+                                        }
+                                    }
+                                
+                                    function flashHealthbar() {
+                                        var healthBar = document.getElementById('enemyHealth');
+                                        if (!healthBar.classList.contains('flashing')) {
+                                            healthBar.classList.add('flashing');
+                                            setTimeout(function() {
+                                                healthBar.classList.remove('flashing');
+                                            }, 200);
+                                        }
+                                    }
+                                
+                                    function flashPlayerHealthbar() {
+                                        var healthBar = document.getElementById('playerHealth');
+                                        if (!healthBar.classList.contains('flashing')) {
+                                            healthBar.classList.add('flashing');
+                                            setTimeout(function() {
+                                                healthBar.classList.remove('flashing');
+                                            }, 200);
+                                        }
+                                    }
+                                
+                                    function triggerItemAnimation(item) {
+                                        item.element.classList.add('attack');
+                                        setTimeout(function() {
+                                            item.element.classList.remove('attack');
+                                        }, 500);
+                                    }
+                                
+                                    function generateEnemyInventory() {
+                                        var itemNames = ['dagger', 'bee', 'flower'];
+                                        var level = Math.floor((battleCount - 1) / 5);
+                                        if (level >= 1) {
+                                            itemNames = itemNames.concat(['sword', 'bow']);
+                                        }
+                                        if (level >= 2) {
+                                            itemNames.push('greatsword');
+                                        }
+                                        if (level >= 3) {
+                                            itemNames.push('crossbow');
+                                        }
+                                        var baseProbability = 0.25;
+                                        var adjustedProbability = Math.min(baseProbability + level * 0.03, 0.7);
+                                        for (var row = 0; row < 3; row++) {
+                                            for (var col = 0; col < 3; col++) {
+                                                if (Math.random() < adjustedProbability) {
+                                                    var itemName = itemNames[Math.floor(Math.random() * itemNames.length)];
+                                                    if (canPlaceEnemyItem(itemName, row, col)) {
+                                                        placeEnemyItem(itemName, row, col);
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                
+                                    function canPlaceEnemyItem(itemName, row, col) {
+                                        if (itemName === 'dagger' || itemName === 'sword') {
+                                            if (col >= 0 && col < 2) {
+                                                if (enemyInventory[row][col] === null && enemyInventory[row][col + 1] === null) {
+                                                    return true;
+                                                }
+                                            }
+                                        } else {
+                                            if (enemyInventory[row][col] === null) {
+                                                return true;
+                                            }
+                                        }
+                                        return false;
+                                    }
+                                
+                                    function placeEnemyItem(itemName, row, col) {
+                                        var slotElement = document.querySelector('#enemyInventory .slot[data-row="' + row + '"][data-col="' + col + '"]');
+                                        var itemElement = document.createElement('div');
+                                        itemElement.classList.add('item', itemName);
+                                        itemElement.textContent = itemName.charAt(0).toUpperCase() + itemName.slice(1);
+                                        slotElement.appendChild(itemElement);
+                                        slotElement.style.position = 'relative';
+                                        if (itemName === 'dagger' || itemName === 'sword') {
+                                            enemyInventory[row][col] = itemName;
+                                            enemyInventory[row][col + 1] = itemName;
+                                        } else {
+                                            enemyInventory[row][col] = itemName;
+                                        }
+                                        var newItem = {
+                                            name: itemName,
+                                            row: row,
+                                            col: col,
+                                            element: itemElement,
+                                            attackCounter: 0
+                                        };
+                                        enemyItems.push(newItem);
+                                    }
+                                
+                                    function isEnemyAdjacentToFlower(row, col) {
+                                        var adjacentPositions = [
+                                            [row - 1, col],
+                                            [row + 1, col],
+                                            [row, col - 1],
+                                            [row, col + 1]
+                                        ];
+                                        for (var i = 0; i < adjacentPositions.length; i++) {
+                                            var newRow = adjacentPositions[i][0];
+                                            var newCol = adjacentPositions[i][1];
+                                            if (newRow >= 0 && newRow < 3 && newCol >= 0 && newCol < 3) {
+                                                if (enemyInventory[newRow][newCol] === 'flower' || enemyInventory[newRow][newCol] === 'rose' || enemyInventory[newRow][newCol] === 'bloomingRose' || enemyInventory[newRow][newCol] === 'lily' || enemyInventory[newRow][newCol] === 'bloomingLilyPad') {
+                                                    return true;
+                                                }
+                                            }
+                                        }
+                                        return false;
+                                    }
+        
+                                    function clearEnemyInventory() {
+                                        enemyInventory = [
+                                            [null, null, null],
+                                            [null, null, null],
+                                            [null, null, null]
+                                        ];
+                                        enemyItems = [];
+                                        var enemySlots = document.querySelectorAll('#enemyInventory .slot');
+                                        enemySlots.forEach(function(slot) {
+                                            slot.innerHTML = '';
+                                        });
+                                    }
+                                
+                                    // Healing interval
+                                    healInterval = setInterval(healingTick, 1000);
+                                    
+                                    function healingTick() {
+                                        var totalHealing = 0;
+                                        items.forEach(function(item) {
+                                            if (item.name === 'bee') {
+                                                if (isAdjacentToRose(item.row, item.col)) {
+                                                    totalHealing += 10;
+                                                }
+                                                if (isAdjacentToBloomingRose(item.row, item.col)) {
+                                                    totalHealing += 20;
+                                                }
+                                            }
+                                            if (item.name === 'bloomingRose') {
+                                                totalHealing += 5;
+                                            }
+                                        });
+                                        if (totalHealing > 0 && playerHealth < playerMaxHealth) {
+                                            playerHealth += totalHealing;
+                                            if (playerHealth > playerMaxHealth) {
+                                                playerHealth = playerMaxHealth;
+                                            }
+                                            updatePlayerHealth();
+                                            triggerHealingAnimation();
+                                        }
+                                    }
+                                    
+                                    function isAdjacentToBloomingRose(row, col) {
+                                        var adjacentPositions = [
+                                            [row - 1, col],
+                                            [row + 1, col],
+                                            [row, col - 1],
+                                            [row, col + 1]
+                                        ];
+                                        for (var i = 0; i < adjacentPositions.length; i++) {
+                                            var newRow = adjacentPositions[i][0];
+                                            var newCol = adjacentPositions[i][1];
+                                            if (newRow >= 0 && newRow < 3 && newCol >= 0 && newCol < 3) {
+                                                if (inventory[newRow][newCol] === 'bloomingRose') {
+                                                    return true;
+                                                }
+                                            }
+                                        }
+                                        return false;
+                                    }
+                                
+                                    function updateBeeVisualizations() {
+                                        items.forEach(function(item) {
+                                            if (item.name === 'bee') {
+                                                var flowerType = getAdjacentFlowerType(item.row, item.col);
+                                                if (flowerType) {
+                                                    item.element.classList.add('using-flower');
+                                                    var flowerColor = getFlowerColor(flowerType);
+                                                    item.element.style.setProperty('--flower-color', flowerColor);
+                                                } else {
+                                                    item.element.classList.remove('using-flower');
+                                                    item.element.style.removeProperty('--flower-color');
+                                                }
+                                            }
+                                        });
+                                        enemyItems.forEach(function(item) {
+                                            if (item.name === 'bee') {
+                                                var flowerType = getEnemyAdjacentFlowerType(item.row, item.col);
+                                                if (flowerType) {
+                                                    item.element.classList.add('using-flower');
+                                                    var flowerColor = getFlowerColor(flowerType);
+                                                    item.element.style.setProperty('--flower-color', flowerColor);
+                                                } else {
+                                                    item.element.classList.remove('using-flower');
+                                                    item.element.style.removeProperty('--flower-color');
+                                                }
+                                            }
+                                        });
+                                    }
+                                    
+                                    // Update bee visualizations every 200ms
+                                    setInterval(updateBeeVisualizations, 200);
+                                </script>
+                            </body>
+                        </html>
