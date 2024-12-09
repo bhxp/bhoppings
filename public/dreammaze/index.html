@@ -1,0 +1,1509 @@
+<html><head><base href="." />
+<meta charset="UTF-8">
+<title>LSD Dream Maze</title>
+<style>
+body { margin: 0; overflow: hidden; }
+.loading {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-family: monospace;
+  font-size: 24px;
+  color: #fff;
+  text-shadow: 0 0 10px #f0f;
+  animation: pulse 2s infinite;
+}
+@keyframes pulse {
+  0% { opacity: 0.5; }
+  50% { opacity: 1; }
+  100% { opacity: 0.5; }
+}
+#instructions {
+  position: fixed;
+  bottom: 20px;
+  left: 20px;
+  color: #fff;
+  font-family: monospace;
+  text-shadow: 0 0 5px #f0f;
+  opacity: 0.8;
+}
+#signText {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: #fff;
+  font-family: monospace;
+  font-size: 24px;
+  text-align: center;
+  text-shadow: 0 0 10px #f0f;
+  display: none;
+  background: rgba(0,0,0,0.7);
+  padding: 20px;
+  border-radius: 10px;
+}
+#levelName {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0,0,0,0.7);
+  color: #fff;
+  padding: 10px 20px;
+  border-radius: 5px;
+  font-family: monospace;
+  font-size: 24px;
+  text-align: center;
+  text-shadow: 0 0 10px #f0f;
+  z-index: 1000;
+}
+#weirdMeter {
+  position: fixed;
+  left: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 30px;
+  height: 200px;
+  background: rgba(0, 0, 0, 0.7);
+  border: 2px solid #ff00ff;
+  border-radius: 15px;
+  box-shadow: 0 0 20px #ff00ff;
+  overflow: hidden;
+}
+#weirdMeterFill {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  background: linear-gradient(to top, #ff00ff, #00ffff);
+  animation: weirdMeterAnimation 5s infinite;
+}
+#weirdMeterLabel {
+  position: fixed;
+  left: 20px;
+  top: calc(50% - 120px);
+  color: #fff;
+  font-family: monospace;
+  text-shadow: 0 0 5px #ff00ff;
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  font-size: 12px;
+}
+#astredgeCounter {
+  position: fixed;
+  left: 60px;
+  top: calc(50% - 90px);
+  color: #fff;
+  font-family: monospace;
+  text-shadow: 0 0 5px #ff00ff;
+  font-size: 24px;
+  padding: 5px 10px;
+  background: rgba(0, 0, 0, 0.7);
+  border: 2px solid #ff00ff;
+  border-radius: 5px;
+  box-shadow: 0 0 20px #ff00ff;
+}
+.collected-image {
+    position: fixed;
+    bottom: 20px;
+    width: 50px;
+    height: 50px;
+    z-index: 1000;
+}
+@keyframes weirdMeterAnimation {
+  0% { height: 20%; }
+  20% { height: 80%; }
+  40% { height: 30%; }
+  60% { height: 90%; }
+  80% { height: 10%; }
+  100% { height: 20%; }
+}
+#youtubePlayer {
+    position: absolute;
+    top: -9999px;
+    left: -9999px;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+    pointer-events: none;
+}
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://unpkg.com/three@0.128.0/examples/js/controls/PointerLockControls.js"></script>
+<script>
+// Create YouTube player API script
+var tag = document.createElement('script');
+tag.src = "https://www.youtube.com/iframe_api";
+var firstScriptTag = document.getElementsByTagName('script')[0];
+firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
+// Create YouTube player variable
+var player;
+
+// Initialize YouTube player when API is ready
+function onYouTubeIframeAPIReady() {
+  player = new YT.Player('youtubePlayer', {
+    height: '1',
+    width: '1',
+    videoId: '1FSUr5tpnP0', // Default video for level 1
+    playerVars: {
+      'autoplay': 0,
+      'controls': 0,
+      'loop': 1,
+      'playlist': '1FSUr5tpnP0', // Required for looping - default to level 1 video
+      'disablekb': 1,
+      'fs': 0,
+      'modestbranding': 1,
+      'rel': 0
+    },
+    events: {
+      'onReady': onPlayerReady,
+      'onStateChange': onPlayerStateChange
+    }
+  });
+}
+
+// Start playing video when player is ready
+function onPlayerReady(event) {
+  // Start playing video when player is ready
+  if (currentLevel === 1) {
+    event.target.playVideo();
+    // Set video settings
+    event.target.setVolume(50); // Set volume to 50%
+    event.target.setLoop(true); // Enable looping
+  }
+}
+
+// Function to handle video changes
+function onPlayerStateChange(event) {
+  if (event.data === YT.PlayerState.ENDED) {
+    // This ensures the video keeps looping
+    if (currentLevel === 1) {
+      player.loadVideoById({
+        'videoId': '1FSUr5tpnP0',
+        'startSeconds': 0,
+        'suggestedQuality': 'default'
+      });
+    } else if (currentLevel === 3) {
+      player.loadVideoById({
+        'videoId': 'aotmZZRDLVI',
+        'startSeconds': 0,
+        'suggestedQuality': 'default'
+      });
+    }
+  }
+}
+
+// Function to initialize the game
+function init() {
+  // ... existing init code ...
+  
+  // Start level 1 video when game starts
+  if (player && player.loadVideoById) {
+    player.loadVideoById({
+      'videoId': '1FSUr5tpnP0',
+      'startSeconds': 0,
+      'suggestedQuality': 'default'
+    });
+  }
+}
+
+// Modify portal interaction to handle video changes
+function checkPortalInteraction() {
+  const playerPosition = camera.position;
+  for (const portal of portals) {
+    const dx = playerPosition.x - portal.position.x;
+    const dz = playerPosition.z - portal.position.z;
+    const distance = Math.sqrt(dx * dx + dz * dz);
+    
+    if (distance < 3) {
+      // Stop level 1 video when entering portal
+      if (currentLevel === 1 && player && player.stopVideo) {
+        player.stopVideo();
+      }
+      currentLevel = 2;
+      document.getElementById('levelName').textContent = levelNames[2];
+      // ... rest of portal interaction code ...
+    }
+  }
+}
+
+// Update generateLevel3 function to start correct video
+function generateLevel3() {
+  // Start playing level 3 YouTube video
+  if (player && player.loadVideoById) {
+    player.loadVideoById({
+      'videoId': 'aotmZZRDLVI',
+      'startSeconds': 0,
+      'suggestedQuality': 'default'
+    });
+  }
+  
+  // ... rest of generateLevel3 code ...
+}
+</script>
+</head>
+<body>
+<div id="youtubePlayer"></div>
+<div class="loading">Click to Enter Dream</div>
+<div id="instructions">WASD to move | Mouse to look | ESC to exit | E to interact | H to fly</div>
+<div id="signText"></div>
+<div id="levelName">The Dream Begins</div>
+<div id="weirdMeter"><div id="weirdMeterFill"></div></div>
+<div id="weirdMeterLabel">REALITY COHERENCE</div>
+<div id="astredgeCounter">000</div>
+
+<script>
+let camera, scene, renderer, controls;
+let geometry, material, mesh;
+let moveForward = false;
+let moveBackward = false;
+let moveLeft = false;
+let moveRight = false;
+let prevTime = performance.now();
+const velocity = new THREE.Vector3();
+const direction = new THREE.Vector3();
+const walls = [];
+const signs = [];
+const portals = [];
+const houses = [];
+const eyes = [];
+const chunkSize = 20;
+const loadedChunks = new Set();
+let signDisplayed = false;
+let currentLevel = 1;
+let level3Objects = [];
+const handImages = [];
+const level2Chunks = new Set();
+const level2Objects = [];
+const terrainChunks = [];
+
+let inNightmareMode = false;
+let nightmareEyes = [];
+let fadeOutObjects = [];
+let nightmareCenter = null; // Store position where nightmare was triggered
+let nightmareRadius = 100; // Radius of nightmare effect
+
+const dreamPhrases = [
+    "Reality is but a dream within a dream",
+    "The walls breathe with ancient wisdom",
+    "Time flows like liquid rainbows here",
+    "Your thoughts create the path ahead",
+    "The maze knows your deepest secrets",
+    "Every step changes who you are",
+    "The void whispers eternal truths",
+    "Colors taste like memories here",
+    "Your reflection walks beside you",
+    "Dreams are the shadows of reality",
+    "The stars dance beneath your feet",
+    "Echoes of tomorrow ripple through today",
+    "Your mind is the key to all doors",
+    "The silence speaks in riddles",
+    "Time is just another direction"
+];
+
+const levelNames = {
+  1: "The Dream Begins",
+  2: "The Watching Woods",
+  3: "The Reaching Dark"
+};
+
+// New global variables
+let collectedImages = [];
+const COLLECTIBLE_CHANCE = 0.2; // Increased from 0.02 (2%) to 0.2 (20%)
+let isFlying = false;
+let flyingStartTime = 0;
+const FLYING_DURATION = 3000; // 3 seconds before reset
+
+// New constants
+const CHUNK_RENDER_DISTANCE = 3; // How many chunks to keep loaded in each direction
+const CHUNK_CLEANUP_INTERVAL = 5000; // How often to check for chunks to remove (in ms)
+
+init();
+animate();
+
+// Function to clean up distant chunks
+function cleanupDistantChunks() {
+  const playerChunkX = Math.floor(camera.position.x / (chunkSize * 4));
+  const playerChunkZ = Math.floor(camera.position.z / (chunkSize * 4));
+  
+  // Level 1 cleanup
+  if (currentLevel === 1) {
+    // Remove walls, signs and portals that are too far
+    for (let i = walls.length - 1; i >= 0; i--) {
+      const wall = walls[i];
+      const wallChunkX = Math.floor(wall.position.x / (chunkSize * 4));
+      const wallChunkZ = Math.floor(wall.position.z / (chunkSize * 4));
+      
+      if (Math.abs(wallChunkX - playerChunkX) > CHUNK_RENDER_DISTANCE || 
+          Math.abs(wallChunkZ - playerChunkZ) > CHUNK_RENDER_DISTANCE) {
+        scene.remove(wall);
+        walls.splice(i, 1);
+      }
+    }
+    
+    // Remove distant chunks from loadedChunks set
+    for (let key of loadedChunks) {
+      const [chunkX, chunkZ] = key.split(',').map(Number);
+      if (Math.abs(chunkX - playerChunkX) > CHUNK_RENDER_DISTANCE || 
+          Math.abs(chunkZ - playerChunkZ) > CHUNK_RENDER_DISTANCE) {
+        loadedChunks.delete(key);
+      }
+    }
+  }
+  
+  // Level 2 cleanup
+  else if (currentLevel === 2) {
+    const playerChunkX = Math.floor(camera.position.x / 100);
+    const playerChunkZ = Math.floor(camera.position.z / 100);
+    
+    // Remove distant level 2 objects
+    for (let i = level2Objects.length - 1; i >= 0; i--) {
+      const obj = level2Objects[i];
+      const objChunkX = Math.floor(obj.position.x / 100);
+      const objChunkZ = Math.floor(obj.position.z / 100);
+      
+      if (Math.abs(objChunkX - playerChunkX) > CHUNK_RENDER_DISTANCE || 
+          Math.abs(objChunkZ - playerChunkZ) > CHUNK_RENDER_DISTANCE) {
+        scene.remove(obj);
+        level2Objects.splice(i, 1);
+      }
+    }
+    
+    // Remove distant chunks from level2Chunks set
+    for (let key of level2Chunks) {
+      const [chunkX, chunkZ] = key.split(',').map(Number);
+      if (Math.abs(chunkX - playerChunkX) > CHUNK_RENDER_DISTANCE || 
+          Math.abs(chunkZ - playerChunkZ) > CHUNK_RENDER_DISTANCE) {
+        level2Chunks.delete(key);
+      }
+    }
+  }
+  
+  // Level 3 cleanup
+  else if (currentLevel === 3) {
+    const playerChunkX = Math.floor(camera.position.x / 200);
+    const playerChunkZ = Math.floor(camera.position.z / 200);
+    
+    // Remove distant level 3 objects
+    for (let i = level3Objects.length - 1; i >= 0; i--) {
+      const obj = level3Objects[i];
+      const objChunkX = Math.floor(obj.position.x / 200);
+      const objChunkZ = Math.floor(obj.position.z / 200);
+      
+      // Don't remove the shop
+      if (obj.name === "TheShop") continue;
+      
+      if (Math.abs(objChunkX - playerChunkX) > CHUNK_RENDER_DISTANCE || 
+          Math.abs(objChunkZ - playerChunkZ) > CHUNK_RENDER_DISTANCE) {
+        scene.remove(obj);
+        level3Objects.splice(i, 1);
+      }
+    }
+    
+    // Remove distant chunks from level3Chunks set
+    for (let key of level3Chunks) {
+      const [chunkX, chunkZ] = key.split(',').map(Number);
+      if (Math.abs(chunkX - playerChunkX) > CHUNK_RENDER_DISTANCE || 
+          Math.abs(chunkZ - playerChunkZ) > CHUNK_RENDER_DISTANCE) {
+        level3Chunks.delete(key);
+      }
+    }
+  }
+}
+
+function updateAstredgeCounter() {
+  const counter = document.getElementById('astredgeCounter');
+  const randomNum = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+  counter.textContent = randomNum;
+}
+
+function addCollectedImageToUI(imageInstance) {
+    const img = document.createElement('img');
+    img.src = 'https://i.imgur.com/B7XPT9X.png';
+    img.style.position = 'fixed';
+    img.style.bottom = '20px';
+    img.style.width = '50px';
+    img.style.height = '50px';
+    img.style.left = (20 + collectedImages.length * 60) + 'px'; // Space images 60px apart
+    img.style.zIndex = '1000';
+    document.body.appendChild(img);
+    collectedImages.push(img);
+}
+
+function createHouse(x, y, z) {
+    const group = new THREE.Group();
+    
+    // Base
+    const baseGeometry = new THREE.BoxGeometry(4, 3, 4);
+    const baseMaterial = new THREE.MeshPhongMaterial({ color: 0xcccccc });
+    const base = new THREE.Mesh(baseGeometry, baseMaterial);
+    
+    // Roof
+    const roofGeometry = new THREE.ConeGeometry(3, 2, 4);
+    const roofMaterial = new THREE.MeshPhongMaterial({ color: 0x8b4513 });
+    const roof = new THREE.Mesh(roofGeometry, roofMaterial);
+    roof.position.y = 2.5;
+    
+    group.add(base);
+    group.add(roof);
+    group.position.set(x, y, z);
+    
+    scene.add(group);
+    houses.push(group);
+    return group;
+}
+
+function createPortal(x, z) {
+    const portalGeometry = new THREE.TorusGeometry(2, 0.3, 16, 100);
+    const portalMaterial = new THREE.MeshPhongMaterial({
+        color: 0x9932CC,
+        emissive: 0x4B0082,
+        shininess: 100
+    });
+    const portal = new THREE.Mesh(portalGeometry, portalMaterial);
+    portal.rotation.x = Math.PI / 2;
+    portal.position.set(x, 2, z);
+    scene.add(portal);
+    portals.push(portal);
+    return portal;
+}
+
+function createEye(x, z) {
+    const eyeGeometry = new THREE.PlaneGeometry(3, 3);
+    const eyeTexture = new THREE.TextureLoader().load('https://static.vecteezy.com/system/resources/thumbnails/028/651/832/small/pixel-art-cartoon-eye-icon-png.png');
+    const eyeMaterial = new THREE.MeshBasicMaterial({
+        map: eyeTexture,
+        transparent: true,
+        side: THREE.DoubleSide
+    });
+    const eye = new THREE.Mesh(eyeGeometry, eyeMaterial);
+    const height = getTerrainHeight(x, z);
+    eye.position.set(x, height + 2, z); // Position at terrain height + 2 units
+    scene.add(eye);
+    eyes.push(eye);
+    level2Objects.push(eye);
+    return eye;
+}
+
+function startNightmareMode(triggerEye) {
+    if (inNightmareMode) return;
+    inNightmareMode = true;
+    
+    // Store the center of the nightmare zone
+    nightmareCenter = {
+        x: camera.position.x,
+        z: camera.position.z
+    };
+    
+    // Get all visible objects within nightmare radius of player
+    fadeOutObjects = level2Objects.filter(obj => {
+        const dx = obj.position.x - nightmareCenter.x;
+        const dz = obj.position.z - nightmareCenter.z;
+        return Math.sqrt(dx * dx + dz * dz) < nightmareRadius;
+    });
+    
+    // Start fading them out
+    fadeOutObjects.forEach(obj => {
+        if (obj.material) {
+            obj.material.transparent = true;
+            obj.material.opacity = 1;
+        }
+    });
+    
+    // Remove existing objects in nightmare zone
+    for (let i = level2Objects.length - 1; i >= 0; i--) {
+        const obj = level2Objects[i];
+        const dx = obj.position.x - nightmareCenter.x;
+        const dz = obj.position.z - nightmareCenter.z;
+        if (Math.sqrt(dx * dx + dz * dz) < nightmareRadius) {
+            scene.remove(obj);
+            level2Objects.splice(i, 1);
+        }
+    }
+    
+    // Spawn initial nightmare eyes
+    for (let i = 0; i < 50; i++) {
+        const angle = Math.random() * Math.PI * 2;
+        const dist = 5 + Math.random() * 20;
+        const x = nightmareCenter.x + Math.cos(angle) * dist;
+        const z = nightmareCenter.z + Math.sin(angle) * dist;
+        const height = getTerrainHeight(x, z);
+        
+        const eye = createEye(x, z);
+        eye.position.y = height + 3;
+        nightmareEyes.push(eye);
+    }
+}
+
+function checkPortalInteraction() {
+    const playerPosition = camera.position;
+    for (const portal of portals) {
+        const dx = playerPosition.x - portal.position.x;
+        const dz = playerPosition.z - portal.position.z;
+        const distance = Math.sqrt(dx * dx + dz * dz);
+        
+        if (distance < 3) {
+            // Stop level 1 video when entering portal
+            if (currentLevel === 1 && player && player.stopVideo) {
+                player.stopVideo();
+            }
+            currentLevel = 2;
+            document.getElementById('levelName').textContent = levelNames[2];
+            // Clear existing objects
+            while(walls.length > 0) {
+                const wall = walls.pop();
+                scene.remove(wall);
+            }
+            while(signs.length > 0) {
+                const sign = signs.pop();
+                scene.remove(sign);
+            }
+            while(portals.length > 0) {
+                const portal = portals.pop();
+                scene.remove(portal);
+            }
+            
+            // Generate new terrain
+            generateLevel2();
+            
+            // Move player to new position
+            camera.position.set(0, 2, 0);
+            return;
+        }
+    }
+}
+
+function generateLevel2() {
+    // Clear previous level 2 content
+    while(level2Objects.length > 0) {
+        const obj = level2Objects.pop();
+        scene.remove(obj);
+    }
+    
+    // Generate initial chunks around player
+    for(let x = -1; x <= 1; x++) {
+        for(let z = -1; z <= 1; z++) {
+            generateLevel2Chunk(x, z);
+        }
+    }
+
+    // Add initial eye at the start
+    createEye(5, 5);
+    document.getElementById('levelName').textContent = levelNames[2];
+}
+
+function generateLevel2Chunk(chunkX, chunkZ) {
+    const key = `${chunkX},${chunkZ}`;
+    if (level2Chunks.has(key)) return;
+    
+    const chunkSize = 100; // Size of each chunk
+    const startX = chunkX * chunkSize;
+    const startZ = chunkZ * chunkSize;
+    
+    // Generate terrain for this chunk
+    const terrainGeometry = new THREE.PlaneGeometry(chunkSize, chunkSize, 20, 20);
+    const vertices = terrainGeometry.attributes.position.array;
+    
+    // Create varied terrain height
+    for (let i = 0; i < vertices.length; i += 3) {
+        vertices[i + 1] = Math.sin(vertices[i] * 0.1) * Math.cos(vertices[i + 2] * 0.1) * 5;
+    }
+    
+    const terrainMaterial = new THREE.MeshPhongMaterial({
+        color: 0x44aa44,
+        wireframe: true
+    });
+    const terrain = new THREE.Mesh(terrainGeometry, terrainMaterial);
+    terrain.rotation.x = -Math.PI / 2;
+    terrain.position.set(startX + chunkSize/2, 0, startZ + chunkSize/2);
+    scene.add(terrain);
+    level2Objects.push(terrain);
+    terrainChunks.push(terrain);
+    
+    // Check if chunk center is within nightmare zone
+    const chunkCenterX = startX + chunkSize/2;
+    const chunkCenterZ = startZ + chunkSize/2;
+    const isInNightmareZone = inNightmareMode && nightmareCenter && 
+        Math.sqrt(
+            Math.pow(chunkCenterX - nightmareCenter.x, 2) + 
+            Math.pow(chunkCenterZ - nightmareCenter.z, 2)
+        ) < nightmareRadius;
+    
+    if (isInNightmareZone) {
+        // In nightmare zone, only spawn eyes
+        const eyesPerChunk = 20;
+        for(let i = 0; i < eyesPerChunk; i++) {
+            const x = startX + Math.random() * chunkSize;
+            const z = startZ + Math.random() * chunkSize;
+            const eye = createEye(x, z);
+            nightmareEyes.push(eye);
+        }
+    } else {
+        // Normal generation
+        const housesPerChunk = 10;
+        for(let i = 0; i < housesPerChunk; i++) {
+            const x = startX + Math.random() * chunkSize;
+            const z = startZ + Math.random() * chunkSize;
+            const height = getTerrainHeight(x, z);
+            const house = createHouse(x, height, z);
+            level2Objects.push(house);
+        }
+        
+        // Normal eye spawn chance
+        if (Math.random() < 0.03) {
+            const x = startX + Math.random() * chunkSize;
+            const z = startZ + Math.random() * chunkSize;
+            const eye = createEye(x, z);
+        }
+    }
+
+    level2Chunks.add(key);
+}
+
+// Add function to get terrain height at any position:
+function getTerrainHeight(x, z) {
+    return Math.sin(x * 0.1) * Math.cos(z * 0.1) * 5;
+}
+
+function getRandomDreamPhrase() {
+    return dreamPhrases[Math.floor(Math.random() * dreamPhrases.length)];
+}
+
+function createSign(x, z, text) {
+    const signGeometry = new THREE.BoxGeometry(1, 2, 0.2);
+    const signMaterial = new THREE.MeshPhongMaterial({
+        color: 0xffff00,
+        emissive: 0x444444,
+        shininess: 100
+    });
+    const sign = new THREE.Mesh(signGeometry, signMaterial);
+    sign.position.set(x, 1, z);
+    sign.message = text;
+    scene.add(sign);
+    signs.push(sign);
+    return sign;
+}
+
+function checkSignInteraction() {
+    if (currentLevel === 3) {
+        const playerPosition = camera.position;
+        // Find the shop
+        const shop = scene.getObjectByName("TheShop");
+        if (shop) {
+            const dx = playerPosition.x - shop.position.x;
+            const dz = playerPosition.z - shop.position.z;
+            const distance = Math.sqrt(dx * dx + dz * dz);
+            
+            if (distance < 5) { // Within interaction range
+                // Check if shop menu already exists
+                if (document.getElementById('shopMenu')) return;
+                
+                // Unlock mouse controls
+                controls.unlock();
+                
+                const shopMenu = document.createElement('div');
+                shopMenu.id = 'shopMenu'; // Add ID for checking existence
+                shopMenu.style.position = 'fixed';
+                shopMenu.style.top = '50%';
+                shopMenu.style.left = '50%';
+                shopMenu.style.transform = 'translate(-50%, -50%)';
+                shopMenu.style.background = 'rgba(0, 0, 0, 0.8)';
+                shopMenu.style.padding = '20px';
+                shopMenu.style.borderRadius = '10px';
+                shopMenu.style.color = '#fff';
+                shopMenu.style.fontFamily = 'monospace';
+                shopMenu.style.zIndex = '1000';
+                
+                // Add shop content
+                const title = document.createElement('h2');
+                title.textContent = 'The Shop';
+                title.style.textAlign = 'center';
+                title.style.color = '#ff00ff';
+                shopMenu.appendChild(title);
+                
+                const itemContainer = document.createElement('div');
+                itemContainer.style.marginTop = '20px';
+                
+                const itemName = document.createElement('div');
+                itemName.textContent = `Placeholder - Cost: 3 Coins`;
+                itemContainer.appendChild(itemName);
+                
+                const buyButton = document.createElement('button');
+                buyButton.textContent = 'Buy';
+                buyButton.style.marginTop = '10px';
+                buyButton.style.padding = '5px 15px';
+                buyButton.style.background = '#ff00ff';
+                buyButton.style.border = 'none';
+                buyButton.style.borderRadius = '5px';
+                buyButton.style.color = '#fff';
+                buyButton.style.cursor = 'pointer';
+                
+                buyButton.onclick = function() {
+                    if (collectedImages.length >= 3) {
+                        // Remove 3 coins from UI
+                        for (let i = 0; i < 3; i++) {
+                            const img = collectedImages.pop();
+                            img.remove();
+                        }
+                        
+                        // Create and style alert popup
+                        const popup = document.createElement('div');
+                        popup.style.position = 'fixed';
+                        popup.style.top = '50%';
+                        popup.style.left = '50%';
+                        popup.style.transform = 'translate(-50%, -50%)';
+                        popup.style.background = 'rgba(0, 255, 0, 0.8)';
+                        popup.style.padding = '20px';
+                        popup.style.borderRadius = '10px';
+                        popup.style.color = '#fff';
+                        popup.style.fontFamily = 'monospace';
+                        popup.style.zIndex = '2000';
+                        popup.style.textAlign = 'center';
+                        popup.textContent = 'Item purchased successfully!';
+                        document.body.appendChild(popup);
+                        
+                        // Remove popup after 2 seconds
+                        setTimeout(() => {
+                            popup.remove();
+                        }, 2000);
+                        
+                        document.body.removeChild(shopMenu);
+                    } else {
+                        // Create and style error popup
+                        const popup = document.createElement('div');
+                        popup.style.position = 'fixed';
+                        popup.style.top = '50%';
+                        popup.style.left = '50%';
+                        popup.style.transform = 'translate(-50%, -50%)';
+                        popup.style.background = 'rgba(255, 0, 0, 0.8)';
+                        popup.style.padding = '20px';
+                        popup.style.borderRadius = '10px';
+                        popup.style.color = '#fff';
+                        popup.style.fontFamily = 'monospace';
+                        popup.style.zIndex = '2000';
+                        popup.style.textAlign = 'center';
+                        popup.textContent = 'Not enough Coins! You need 3 Coins.';
+                        document.body.appendChild(popup);
+                        
+                        // Remove popup after 2 seconds
+                        setTimeout(() => {
+                            popup.remove();
+                        }, 2000);
+                    }
+                };
+                
+                itemContainer.appendChild(buyButton);
+                shopMenu.appendChild(itemContainer);
+                
+                // Add close button
+                const closeButton = document.createElement('button');
+                closeButton.textContent = 'Close';
+                closeButton.style.marginTop = '20px';
+                closeButton.style.padding = '5px 15px';
+                closeButton.style.background = '#ff0000';
+                closeButton.style.border = 'none';
+                closeButton.style.borderRadius = '5px';
+                closeButton.style.color = '#fff';
+                closeButton.style.cursor = 'pointer';
+                closeButton.onclick = function() {
+                    document.body.removeChild(shopMenu);
+                    controls.lock(); // Lock controls when closing
+                };
+                shopMenu.appendChild(closeButton);
+                
+                document.body.appendChild(shopMenu);
+                return;
+            }
+        }
+    }
+    
+    if (currentLevel === 2) {
+        const playerPosition = camera.position;
+        for (const eye of eyes) {
+            // Skip the spawn eye
+            if (eye.position.x === 5 && eye.position.z === 5) continue;
+            
+            const dx = playerPosition.x - eye.position.x;
+            const dz = playerPosition.z - eye.position.z;
+            const distance = Math.sqrt(dx * dx + dz * dz);
+            
+            if (distance < 3) {
+                if (Math.random() < 0.33) { // 1/3 chance to go to level 3
+                    currentLevel = 3;
+                    document.getElementById('levelName').textContent = levelNames[3];
+                    generateLevel3();
+                } else {
+                    startNightmareMode(eye);
+                }
+                return;
+            }
+        }
+    }
+    
+    const signText = document.getElementById('signText');
+    if (signDisplayed) {
+        signText.style.display = 'none';
+        signDisplayed = false;
+        return;
+    }
+    
+    const playerPosition = camera.position;
+    for (const sign of signs) {
+        const dx = playerPosition.x - sign.position.x;
+        const dz = playerPosition.z - sign.position.z;
+        const distance = Math.sqrt(dx * dx + dz * dz);
+        
+        if (distance < 3) {
+            signText.textContent = sign.message;
+            signText.style.display = 'block';
+            signDisplayed = true;
+            return;
+        }
+    }
+}
+
+function generateChunk(chunkX, chunkZ) {
+    if (currentLevel !== 1) return;
+    
+    const key = `${chunkX},${chunkZ}`;
+    if (loadedChunks.has(key)) return;
+    
+    const wallHeight = 5;
+    const startX = chunkX * chunkSize * 4;
+    const startZ = chunkZ * chunkSize * 4;
+    
+    // Changed the iteration step to 8 (from 4) to space walls out more
+    for(let x = 0; x < chunkSize; x++) {
+        for(let z = 0; z < chunkSize; z++) {
+            const worldX = startX + x * 8; // Changed from x * 4
+            const worldZ = startZ + z * 8; // Changed from z * 4
+            
+            const dx = worldX - camera.position.x;
+            const dz = worldZ - camera.position.z;
+            const distanceFromPlayer = Math.sqrt(dx * dx + dz * dz);
+            
+            // Reduced wall spawn chance from 0.5 to 0.3 to make them more sparse
+            if(Math.random() > 0.7 && distanceFromPlayer > 5) {
+                const wallGeometry = new THREE.BoxGeometry(2, wallHeight, 2);
+                const wallMaterial = new THREE.MeshPhongMaterial({
+                    color: Math.random() * 0xffffff,
+                    emissive: Math.random() * 0xffffff,
+                    shininess: 100
+                });
+                const wall = new THREE.Mesh(wallGeometry, wallMaterial);
+                wall.position.set(worldX, wallHeight/2, worldZ);
+                scene.add(wall);
+                walls.push(wall);
+                
+                // Adjust sign spawn chance
+                if(Math.random() < 0.15) {
+                    const signOffset = 4; // Increased from 2
+                    const signX = worldX + (Math.random() - 0.5) * signOffset;
+                    const signZ = worldZ + (Math.random() - 0.5) * signOffset;
+                    createSign(signX, signZ, getRandomDreamPhrase());
+                }
+                
+                if(Math.random() < 0.005) {
+                    const portalOffset = 6; // Increased from 3
+                    const portalX = worldX + (Math.random() - 0.5) * portalOffset;
+                    const portalZ = worldZ + (Math.random() - 0.5) * portalOffset;
+                    createPortal(portalX, portalZ);
+                }
+            }
+        }
+    }
+
+    const floorGeometry = new THREE.PlaneGeometry(chunkSize * 4, chunkSize * 4, chunkSize, chunkSize);
+    const floorMaterial = new THREE.MeshPhongMaterial({
+        color: 0x00ff00,
+        wireframe: true,
+        shininess: 100
+    });
+    const floor = new THREE.Mesh(floorGeometry, floorMaterial);
+    floor.rotation.x = -Math.PI / 2;
+    floor.position.set(startX + chunkSize * 2, 0, startZ + chunkSize * 2);
+    scene.add(floor);
+    
+    loadedChunks.add(key);
+}
+
+function checkCollision(position) {
+    const playerRadius = 1;
+    
+    if (currentLevel === 1) {
+        for (const wall of walls) {
+            const dx = position.x - wall.position.x;
+            const dz = position.z - wall.position.z;
+            const distance = Math.sqrt(dx * dx + dz * dz);
+            
+            if (distance < (playerRadius + 1)) {
+                return true;
+            }
+        }
+    } else if (currentLevel === 2) {
+        // Check collision with houses
+        for (const house of houses) {
+            const dx = position.x - house.position.x;
+            const dz = position.z - house.position.z;
+            const distance = Math.sqrt(dx * dx + dz * dz);
+            
+            if (distance < (playerRadius + 2)) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+function init() {
+    scene = new THREE.Scene();
+    camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+
+    renderer = new THREE.WebGLRenderer();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.body.appendChild(renderer.domElement);
+
+    scene.fog = new THREE.FogExp2(0xff00ff, 0.02); // Increased density
+
+    controls = new THREE.PointerLockControls(camera, document.body);
+
+    createSign(0, 5, "It's all an illusion.");
+
+    document.addEventListener('click', function () {
+        controls.lock();
+        document.querySelector('.loading').style.display = 'none';
+    });
+
+    document.getElementById('levelName').textContent = levelNames[1];
+
+    for(let x = -1; x <= 1; x++) {
+        for(let z = -1; z <= 1; z++) {
+            generateChunk(x, z);
+        }
+    }
+
+    const light1 = new THREE.PointLight(0xff00ff, 1, 100);
+    light1.position.set(0, 10, 0);
+    scene.add(light1);
+
+    const light2 = new THREE.PointLight(0x00ffff, 1, 100);
+    light2.position.set(10, 10, 10);
+    scene.add(light2);
+
+    camera.position.y = 2;
+
+    const onKeyDown = function (event) {
+        switch (event.code) {
+            case 'ArrowUp':
+            case 'KeyW':
+                moveForward = true;
+                break;
+            case 'ArrowDown':
+            case 'KeyS':
+                moveBackward = true;
+                break;
+            case 'ArrowLeft':
+            case 'KeyA':
+                moveLeft = true;
+                break;
+            case 'ArrowRight':
+            case 'KeyD':
+                moveRight = true;
+                break;
+            case 'KeyE':
+                checkSignInteraction();
+                checkPortalInteraction();
+                break;
+            case 'KeyH':
+                if (!isFlying) {
+                    isFlying = true;
+                    flyingStartTime = performance.now();
+                }
+                break;
+        }
+    };
+
+    const onKeyUp = function (event) {
+        switch (event.code) {
+            case 'ArrowUp':
+            case 'KeyW':
+                moveForward = false;
+                break;
+            case 'ArrowDown':
+            case 'KeyS':
+                moveBackward = false;
+                break;
+            case 'ArrowLeft':
+            case 'KeyA':
+                moveLeft = false;
+                break;
+            case 'ArrowRight':
+            case 'KeyD':
+                moveRight = false;
+                break;
+        }
+    };
+
+    document.addEventListener('keydown', onKeyDown);
+    document.addEventListener('keyup', onKeyUp);
+
+    window.addEventListener('resize', onWindowResize, false);
+    
+    // Set interval for chunk cleanup
+    setInterval(cleanupDistantChunks, CHUNK_CLEANUP_INTERVAL);
+}
+
+function onWindowResize() {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+}
+
+function animate() {
+    requestAnimationFrame(animate);
+
+    if (controls.isLocked === true) {
+        const time = performance.now();
+        const delta = (time - prevTime) / 1000;
+
+        velocity.x -= velocity.x * 10.0 * delta;
+        velocity.z -= velocity.z * 10.0 * delta;
+
+        direction.z = Number(moveForward) - Number(moveBackward);
+        direction.x = Number(moveRight) - Number(moveLeft);
+        direction.normalize();
+
+        if (moveForward || moveBackward) velocity.z -= direction.z * 200.0 * delta;
+        if (moveLeft || moveRight) velocity.x -= direction.x * 200.0 * delta;
+
+        const oldPosition = camera.position.clone();
+
+        if (isFlying) {
+            const flyingElapsed = performance.now() - flyingStartTime;
+            
+            // Make player float up
+            camera.position.y += delta * 10; // Adjust speed by changing multiplier
+            
+            // Prevent movement while flying by forcing velocity to zero
+            velocity.set(0, 0, 0);
+            
+            // After FLYING_DURATION milliseconds, reset position
+            if (flyingElapsed > FLYING_DURATION) {
+                isFlying = false;
+                camera.position.set(0, 2, 0); // Reset to start position
+                velocity.set(0, 0, 0);
+                
+                // Reset level-specific positions but don't adjust for terrain height
+                // Remove the terrain height check for level 2
+            }
+        }
+
+        else if (currentLevel === 2) {
+            // ... other level 2 code ...
+            
+            // Update player height with smooth transitions ONLY if not flying
+            if (!isFlying) {
+                const targetHeight = getTerrainHeight(camera.position.x, camera.position.z) + 2;
+                const heightDiff = targetHeight - camera.position.y;
+                
+                // Smooth movement up/down slopes
+                if (Math.abs(heightDiff) > 0.1) {
+                    camera.position.y += heightDiff * delta * 5;
+                }
+                
+                // Prevent falling below terrain
+                if (camera.position.y < targetHeight) {
+                    camera.position.y = targetHeight;
+                }
+                
+                // Prevent excessive height
+                const maxHeightAboveTerrain = 4;
+                if (camera.position.y > targetHeight + maxHeightAboveTerrain) {
+                    camera.position.y = targetHeight + maxHeightAboveTerrain;
+                }
+            }
+            
+            // ... rest of level 2 code ...
+        }
+
+        controls.moveRight(-velocity.x * delta);
+        controls.moveForward(-velocity.z * delta);
+        
+        if (checkCollision(camera.position)) {
+            camera.position.copy(oldPosition);
+        }
+
+        if (currentLevel === 1) {
+            // Make walls move chaotically
+            walls.forEach((wall, i) => {
+                // Chaotic movement
+                wall.position.y = 5/2 + Math.sin(time * 0.005 + i) * 3;
+                wall.position.x += Math.sin(time * 0.003 + i * 0.5) * 0.05;
+                wall.position.z += Math.cos(time * 0.003 + i * 0.5) * 0.05;
+                
+                // Chaotic rotation
+                wall.rotation.x = Math.sin(time * 0.002 + i) * 0.2;
+                wall.rotation.y += delta * 2;
+                wall.rotation.z = Math.cos(time * 0.002 + i) * 0.2;
+                
+                // Chaotic scaling
+                const scale = 1 + Math.sin(time * 0.004 + i) * 0.3;
+                wall.scale.set(scale, scale, scale);
+                
+                // Rapidly changing colors with higher saturation
+                wall.material.color.setHSL(
+                    (time * 0.001 + i * 0.1) % 1,
+                    0.9,
+                    0.6
+                );
+                wall.material.emissive.setHSL(
+                    ((time * 0.001 + i * 0.1) + 0.5) % 1,
+                    0.9,
+                    0.3
+                );
+            });
+
+            // Make signs spin and bob
+            signs.forEach((sign, i) => {
+                sign.rotation.y += delta * 3;
+                sign.position.y = 1 + Math.sin(time * 0.01 + i) * 0.5;
+            });
+
+            // Make portals pulse and rotate faster
+            portals.forEach((portal, i) => {
+                portal.rotation.z += delta * 5;
+                const scale = 1 + Math.sin(time * 0.01 + i) * 0.3;
+                portal.scale.set(scale, scale, scale);
+                portal.material.emissive.setHSL(
+                    (time * 0.001 + i * 0.1) % 1,
+                    1,
+                    0.5
+                );
+            });
+
+            // Make floor wave more intensely
+            scene.traverse((object) => {
+                if (object.isMesh && object.geometry instanceof THREE.PlaneGeometry) {
+                    const vertices = object.geometry.attributes.position.array;
+                    for (let i = 0; i < vertices.length; i += 3) {
+                        vertices[i + 2] = Math.sin(time * 0.002 + vertices[i] * 0.05) * 
+                                        Math.cos(time * 0.002 + vertices[i + 1] * 0.05) * 2;
+                    }
+                    object.geometry.attributes.position.needsUpdate = true;
+                }
+            });
+
+            const currentChunkX = Math.floor(camera.position.x / (chunkSize * 4));
+            const currentChunkZ = Math.floor(camera.position.z / (chunkSize * 4));
+
+            for(let x = -1; x <= 1; x++) {
+                for(let z = -1; z <= 1; z++) {
+                    generateChunk(currentChunkX + x, currentChunkZ + z);
+                }
+            }
+        } else if (currentLevel === 2) {
+            const currentChunkX = Math.floor(camera.position.x / 100);
+            const currentChunkZ = Math.floor(camera.position.z / 100);
+
+            for(let x = -1; x <= 1; x++) {
+                for(let z = -1; z <= 1; z++) {
+                    generateLevel2Chunk(currentChunkX + x, currentChunkZ + z);
+                }
+            }
+            
+            // Update player height with smooth transitions
+            const targetHeight = getTerrainHeight(camera.position.x, camera.position.z) + 2;
+            const heightDiff = targetHeight - camera.position.y;
+            
+            // Smooth movement up/down slopes
+            if (!isFlying) {
+                if (Math.abs(heightDiff) > 0.1) {
+                    camera.position.y += heightDiff * delta * 5; // Adjust speed of height changes
+                }
+                
+                // Prevent falling below terrain
+                if (camera.position.y < targetHeight) {
+                    camera.position.y = targetHeight;
+                }
+                
+                // Prevent excessive height
+                const maxHeightAboveTerrain = 4;
+                if (camera.position.y > targetHeight + maxHeightAboveTerrain) {
+                    camera.position.y = targetHeight + maxHeightAboveTerrain;
+                }
+            }
+
+            // Animate houses
+            houses.forEach((house, i) => {
+                house.rotation.y += delta * Math.sin(time * 0.001 + i);
+                house.position.y = getTerrainHeight(house.position.x, house.position.z) + Math.sin(time * 0.001 + i) * 2;
+                house.scale.set(
+                    1 + Math.sin(time * 0.002 + i) * 0.2,
+                    1 + Math.cos(time * 0.002 + i) * 0.2,
+                    1 + Math.sin(time * 0.002 + i) * 0.2
+                );
+            });
+
+            // Animate eyes
+            eyes.forEach(eye => {
+                // Make eye look at player
+                eye.lookAt(camera.position);
+                
+                // Update eye height with terrain
+                const height = getTerrainHeight(eye.position.x, eye.position.z);
+                eye.position.y = height + 3 + Math.sin(time * 0.001) * 0.5; // Slight hovering animation
+                
+                // Add slight swaying motion
+                eye.position.x += Math.sin(time * 0.001) * 0.01;
+                eye.position.z += Math.cos(time * 0.001) * 0.01;
+            });
+
+            if (inNightmareMode) {
+                // Fade out objects
+                fadeOutObjects.forEach(obj => {
+                    if (obj.material && obj.material.opacity > 0) {
+                        obj.material.opacity -= delta;
+                    }
+                });
+                
+                // Shake nightmare eyes violently
+                nightmareEyes.forEach(eye => {
+                    // Rapid shaking
+                    eye.position.x += Math.sin(time * 0.1) * 0.2;
+                    eye.position.y += Math.cos(time * 0.15) * 0.2;
+                    eye.position.z += Math.sin(time * 0.12) * 0.2;
+                    
+                    // Violent rotation
+                    eye.rotation.x += Math.sin(time * 0.05) * 0.1;
+                    eye.rotation.y += Math.cos(time * 0.06) * 0.1;
+                    eye.rotation.z += Math.sin(time * 0.07) * 0.1;
+                    
+                    // Scale pulsing
+                    const scale = 1 + Math.sin(time * 0.1) * 0.2;
+                    eye.scale.set(scale, scale, scale);
+                    
+                    // Make sure eyes still look at player
+                    eye.lookAt(camera.position);
+                });
+                
+                // Make fog darker in nightmare mode
+                scene.fog.color.setRGB(0, 0, 0);
+            }
+        } else if (currentLevel === 3) {
+            const time = performance.now() * 0.001;
+            
+            // Get current chunk coordinates
+            const chunkSize = 200;
+            const currentChunkX = Math.floor(camera.position.x / chunkSize);
+            const currentChunkZ = Math.floor(camera.position.z / chunkSize);
+            
+            // Generate chunks around player
+            for(let x = -2; x <= 2; x++) {
+                for(let z = -2; z <= 2; z++) {
+                    generateLevel3Chunk(currentChunkX + x, currentChunkZ + z);
+                }
+            }
+            
+            // Animate hands
+            handImages.forEach((hand, i) => {
+                hand.position.y = 5 + Math.sin(time + i) * 1;
+                
+                const directionToPlayer = new THREE.Vector3();
+                directionToPlayer.subVectors(camera.position, hand.position);
+                directionToPlayer.y = 0;
+                
+                const angle = Math.atan2(directionToPlayer.x, directionToPlayer.z);
+                hand.rotation.y = angle;
+                hand.rotation.x = Math.PI; // Keep upside down
+            });
+            
+            scene.fog.color.setRGB(0.5, 0.5, 0.5);
+            scene.background = new THREE.Color(0x808080);
+
+            // Add collectible rotation and collection check
+            scene.traverse((object) => {
+                if (object.isCollectible) {
+                    object.rotation.y += delta * 2; // Spin animation
+                    
+                    // Check if player is close enough to collect
+                    const dx = camera.position.x - object.position.x;
+                    const dz = camera.position.z - object.position.z;
+                    const distance = Math.sqrt(dx * dx + dz * dz);
+                    
+                    if (distance < 3) { // Collection distance
+                        scene.remove(object);
+                        const index = level3Objects.indexOf(object);
+                        if (index > -1) {
+                            level3Objects.splice(index, 1);
+                        }
+                        addCollectedImageToUI(object);
+                    }
+                }
+            });
+        } else {
+            // Reset fog to normal for other levels
+            if (currentLevel !== 3) {
+                scene.fog.density = 0.01;
+                scene.fog.color.setHSL((time * 0.0001) % 1, 0.8, 0.5);
+                
+                // Make meter more chaotic in nightmare mode
+                if (inNightmareMode) {
+                    document.getElementById('weirdMeterFill').style.animation = 'weirdMeterAnimation 0.5s infinite';
+                } else {
+                    document.getElementById('weirdMeterFill').style.animation = 'weirdMeterAnimation 5s infinite';
+                }
+            }
+            
+            // Only apply rainbow effects to non-level 3 objects
+            scene.traverse((object) => {
+                if (object.isMesh && object.material) {
+                    object.material.color.setHSL((time * 0.0002 + object.position.x * 0.01) % 1, 0.8, 0.5);
+                    if (currentLevel === 1) {
+                        object.rotation.y += delta * 0.5;
+                    }
+                }
+            });
+        }
+
+        // Update Astredge counter randomly
+        if (Math.random() < 0.1) { // 10% chance to update each frame
+            updateAstredgeCounter();
+        }
+        
+        prevTime = time;
+    }
+
+    renderer.render(scene, camera);
+}
+
+function generateLevel3() {
+    // Start playing level 3 YouTube video
+    if (player && player.loadVideoById) {
+        player.loadVideoById({
+            'videoId': 'aotmZZRDLVI',
+            'startSeconds': 0,
+            'suggestedQuality': 'default'
+        });
+    }
+    
+    // Clear previous level content
+    while(level2Objects.length > 0) {
+        const obj = level2Objects.pop();
+        scene.remove(obj);
+    }
+    
+    // Set grey fog and background for level 3
+    scene.fog = new THREE.FogExp2(0x808080, 0.015);
+    scene.background = new THREE.Color(0x808080);
+    
+    // Create ground chunks system
+    const groundChunkSize = 200;
+    const chunksVisible = 5; // How many chunks visible in each direction
+    
+    for(let x = -chunksVisible; x <= chunksVisible; x++) {
+        for(let z = -chunksVisible; z <= chunksVisible; z++) {
+            generateLevel3Chunk(x, z);
+        }
+    }
+
+    // Add shop near spawn
+    const shopGeometry = new THREE.PlaneGeometry(4, 4); // Reasonable size compared to player
+    const shopTexture = new THREE.TextureLoader().load('https://i.imgur.com/nWilL5j.png');
+    const shopMaterial = new THREE.MeshBasicMaterial({
+        map: shopTexture,
+        transparent: true,
+        side: THREE.DoubleSide
+    });
+    const shop = new THREE.Mesh(shopGeometry, shopMaterial);
+    shop.position.set(8, 2, 8); // Place slightly offset from spawn point
+    shop.rotation.y = -Math.PI / 4; // Angle it slightly towards spawn
+    shop.name = "TheShop"; // Give it a name for potential future interaction
+    scene.add(shop);
+    level3Objects.push(shop);
+    
+    // Reset player position
+    camera.position.set(0, 2, 0);
+    document.getElementById('levelName').textContent = levelNames[3];
+}
+
+// Add new function to generate level 3 chunks:
+const level3Chunks = new Set();
+
+function generateLevel3Chunk(chunkX, chunkZ) {
+    const chunkSize = 200;
+    const key = `${chunkX},${chunkZ}`;
+    if (level3Chunks.has(key)) return;
+    
+    // Create ground chunk
+    const groundTexture = new THREE.TextureLoader().load('https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT3y_rKoBctsRmGk-RIKSgoceJ8EPGozdemPg&s');
+    groundTexture.wrapS = THREE.RepeatWrapping;
+    groundTexture.wrapT = THREE.RepeatWrapping;
+    groundTexture.repeat.set(10, 10);
+    
+    const groundGeometry = new THREE.PlaneGeometry(chunkSize, chunkSize);
+    const groundMaterial = new THREE.MeshBasicMaterial({ 
+        map: groundTexture,
+        side: THREE.DoubleSide
+    });
+    
+    const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+    ground.rotation.x = -Math.PI / 2;
+    ground.position.set(chunkX * chunkSize, 0, chunkZ * chunkSize);
+    scene.add(ground);
+    level3Objects.push(ground);
+    
+    // Add rare collectible spawn
+    if (Math.random() < COLLECTIBLE_CHANCE) {
+        const collectibleGeometry = new THREE.PlaneGeometry(5, 5);
+        const collectibleTexture = new THREE.TextureLoader().load('https://i.imgur.com/B7XPT9X.png');
+        const collectibleMaterial = new THREE.MeshBasicMaterial({
+            map: collectibleTexture,
+            transparent: true,
+            side: THREE.DoubleSide
+        });
+        
+        const collectible = new THREE.Mesh(collectibleGeometry, collectibleMaterial);
+        const x = chunkX * chunkSize + Math.random() * chunkSize;
+        const z = chunkZ * chunkSize + Math.random() * chunkSize;
+        collectible.position.set(x, 2, z); // At ground level
+        collectible.isCollectible = true; // Mark as collectible
+        scene.add(collectible);
+        level3Objects.push(collectible);
+    }
+    
+    // Generate hands in this chunk
+    const handsPerChunk = 40;
+    for(let i = 0; i < handsPerChunk; i++) {
+        const handGeometry = new THREE.PlaneGeometry(10, 20);
+        const handTexture = new THREE.TextureLoader().load('https://static.wikia.nocookie.net/omori/images/6/61/Fear_Hand_(Something_In_the_Dark).gif');
+        handTexture.anisotropy = 1;
+        handTexture.magFilter = THREE.NearestFilter;
+        handTexture.minFilter = THREE.NearestFilter;
+        
+        const handMaterial = new THREE.MeshBasicMaterial({
+            map: handTexture,
+            transparent: true,
+            side: THREE.DoubleSide
+        });
+        
+        const hand = new THREE.Mesh(handGeometry, handMaterial);
+        
+        // Random position within chunk
+        const x = chunkX * chunkSize + Math.random() * chunkSize;
+        const z = chunkZ * chunkSize + Math.random() * chunkSize;
+        hand.position.set(x, 5, z);
+        
+        hand.rotation.x = Math.PI;
+        
+        scene.add(hand);
+        handImages.push(hand);
+        level3Objects.push(hand);
+    }
+    
+    level3Chunks.add(key);
+}
+</script>
+</body>
+</html>
