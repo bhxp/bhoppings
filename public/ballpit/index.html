@@ -1,0 +1,605 @@
+<html><head><base href="https://butt.cum">
+<title>Extreme Fun 3D Interactive TV Room with Ball Pit and Spatial Audio</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cannon.js/0.6.2/cannon.min.js"></script>
+<style>
+  body { margin: 0; overflow: hidden; background-color: #000; font-family: 'Comic Sans MS', cursive, sans-serif; }
+  canvas { width: 100%; height: 100% }
+  #videoElement { display: none; }
+  #controls { position: absolute; bottom: 10px; left: 10px; color: #ff00ff; text-shadow: 2px 2px #00ffff; }
+  #channelSwitcher { position: absolute; top: 10px; right: 10px; background: rgba(255,0,255,0.7); padding: 10px; border-radius: 15px; max-height: 80vh; overflow-y: auto; box-shadow: 0 0 20px #00ffff; }
+  .channel-button { display: block; margin: 5px 0; padding: 10px; background: linear-gradient(45deg, #ff00ff, #00ffff); color: white; border: none; cursor: pointer; width: 100%; text-align: left; font-size: 16px; border-radius: 10px; transition: transform 0.3s, box-shadow 0.3s; }
+  .channel-button:hover { transform: scale(1.05); box-shadow: 0 0 15px #ffffff; }
+  #currentChannel { color: #ffff00; margin-bottom: 10px; font-size: 18px; font-weight: bold; text-shadow: 2px 2px #ff00ff; }
+  #fullscreenButton { position: absolute; bottom: 10px; right: 10px; padding: 10px; background: linear-gradient(45deg, #ff00ff, #00ffff); color: white; border: none; cursor: pointer; border-radius: 50%; width: 60px; height: 60px; font-size: 12px; transition: transform 0.3s; }
+  #fullscreenButton:hover { transform: scale(1.1) rotate(360deg); }
+  #wallpaperControls { position: absolute; top: 10px; left: 10px; background: rgba(255,255,0,0.7); padding: 10px; border-radius: 15px; box-shadow: 0 0 20px #ff00ff; }
+  #wallpaperControls input[type="color"] { width: 50px; height: 50px; border: none; border-radius: 50%; cursor: pointer; }
+  #toggleChannelList { display: block; width: 100%; padding: 10px; background: linear-gradient(45deg, #00ffff, #ff00ff); color: white; border: none; cursor: pointer; margin-bottom: 10px; border-radius: 10px; font-size: 24px; padding: 5px 15px; transition: transform 0.3s; }
+  #toggleChannelList:hover { transform: scale(1.05); }
+  #muteButton { padding: 10px; background: linear-gradient(45deg, #ff00ff, #00ffff); color: white; border: none; cursor: pointer; border-radius: 10px; font-size: 16px; transition: transform 0.3s; }
+  #muteButton:hover { transform: scale(1.05); }
+  @keyframes rainbow {
+    0% { color: red; } 14% { color: orange; } 28% { color: yellow; }
+    42% { color: green; } 57% { color: blue; } 71% { color: indigo; }
+    85% { color: violet; } 100% { color: red; }
+  }
+  .rainbow-text {
+    animation: rainbow 5s infinite;
+  }
+</style>
+</head>
+<body>
+<video id="videoElement" crossorigin="anonymous" playsinline=""></video>
+<div id="controls">
+  <button id="muteButton" class="rainbow-text">Mute/Unmute</button>
+</div>
+<div id="channelSwitcher">
+  <button id="toggleChannelList" class="rainbow-text">🎮</button>
+  <div id="channelList" style="display: none;">
+  <div id="currentChannel" class="rainbow-text">Choose a channel to start watching!</div>
+  <button class="channel-button rainbow-text" data-url="https://mcdn.daserste.de/daserste/de/master.m3u8">Das Erste (Germany)</button>
+  <button class="channel-button rainbow-text" data-url="https://nhkwlive-ojp.akamaized.net/hls/live/2003459/nhkwlive-ojp-en/index.m3u8">NHK World (Japan)</button>
+  <button class="channel-button rainbow-text" data-url="https://d2e1asnsl7br7b.cloudfront.net/7782e205e72f43aeb4a48ec97f66ebbe/index.m3u8">France 24 (English)</button>
+  <button class="channel-button rainbow-text" data-url="https://cdnapi.kaltura.com/p/2503451/sp/250345100/playManifest/entryId/1_gb6tjmle/protocol/https/format/applehttp/a.m3u8">TRT World (Turkey)</button>
+  <button class="channel-button rainbow-text" data-url="https://cbsn-us.cbsnstream.cbsnews.com/out/v1/55a8648e8f134e82a470f83d562deeca/master.m3u8">CBS News (USA)</button>
+  <button class="channel-button rainbow-text" data-url="https://rbmn-live.akamaized.net/hls/live/590964/BoRB-AT/master.m3u8">Red Bull TV</button>
+  <button class="channel-button rainbow-text" data-url="https://live-hls-web-aje.getaj.net/AJE/index.m3u8">Al Jazeera English</button>
+  <button class="channel-button rainbow-text" data-url="https://dwamdstream102.akamaized.net/hls/live/2015525/dwstream102/index.m3u8">DW (English)</button>
+  <button class="channel-button rainbow-text" data-url="https://amg00684-accuweather-accuweather-rokuus-0endj.amagi.tv/playlist.m3u8">AccuWeather Now</button>
+  <button class="channel-button rainbow-text" data-url="https://food-dlvr-ott.akamaized.net/primary/3/def27b3dd6854290bc7f42daa93c65ea/index_15.m3u8">Animal Planet Live</button>
+</div>
+</div>
+<div id="wallpaperControls">
+  <input type="color" id="wallpaperColor" value="#ff00ff">
+</div>
+<button id="fullscreenButton" class="rainbow-text">FULL<br>SCREEN</button>
+<script>
+  // Set up the scene, camera, and renderer
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+  const renderer = new THREE.WebGLRenderer({ antialias: true });
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setClearColor(0x000000);
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  document.body.appendChild(renderer.domElement);
+
+  // Add OrbitControls
+  const controls = new THREE.OrbitControls(camera, renderer.domElement);
+  controls.target.set(0, 1, 0);
+  controls.update();
+
+  // Create room
+  const roomGeometry = new THREE.BoxBufferGeometry(10, 8, 10);
+  const roomMaterial = new THREE.MeshPhongMaterial({
+    color: 0xff00ff,
+    side: THREE.BackSide,
+    shininess: 100,
+    specular: 0x00ffff
+  });
+  const room = new THREE.Mesh(roomGeometry, roomMaterial);
+  room.receiveShadow = true;
+  scene.add(room);
+
+  // Create disco ball
+  function createDiscoBall() {
+    const discoBallGroup = new THREE.Group();
+    
+    const ballGeometry = new THREE.SphereBufferGeometry(0.5, 32, 32);
+    const ballMaterial = new THREE.MeshPhongMaterial({
+      color: 0xffffff,
+      shininess: 100,
+      specular: 0xffffff
+    });
+    const ball = new THREE.Mesh(ballGeometry, ballMaterial);
+    discoBallGroup.add(ball);
+
+    // Add mirror fragments
+    const fragmentGeometry = new THREE.PlaneBufferGeometry(0.1, 0.1);
+    const fragmentMaterial = new THREE.MeshPhongMaterial({
+      color: 0xffffff,
+      shininess: 1000,
+      specular: 0xffffff
+    });
+
+    for (let i = 0; i < 200; i++) {
+      const fragment = new THREE.Mesh(fragmentGeometry, fragmentMaterial);
+      
+      const phi = Math.random() * Math.PI * 2;
+      const theta = Math.random() * Math.PI;
+      fragment.position.setFromSpherical(new THREE.Spherical(0.5, theta, phi));
+      fragment.lookAt(0, 0, 0);
+      
+      discoBallGroup.add(fragment);
+    }
+
+    discoBallGroup.position.set(0, 3.5, 0);
+    return discoBallGroup;
+  }
+
+  const discoBall = createDiscoBall();
+  scene.add(discoBall);
+
+  // Create TV with live stream
+  let tvScreen;
+  let tv;
+  function createTVWithStream() {
+    const tvGroup = new THREE.Group();
+
+    // TV frame
+    const frameGeometry = new THREE.BoxBufferGeometry(6.0, 3.75, 0.2);
+    const frameMaterial = new THREE.MeshPhongMaterial({ 
+      color: 0x00ffff, 
+      shininess: 100, 
+      specular: 0xff00ff,
+      emissive: 0x00ffff,
+      emissiveIntensity: 0.2
+    });
+    const frame = new THREE.Mesh(frameGeometry, frameMaterial);
+    tvGroup.add(frame);
+
+    // TV screen
+    const video = document.getElementById('videoElement');
+    
+    const screenGeometry = new THREE.PlaneBufferGeometry(5.8, 3.55);
+    const screenTexture = new THREE.VideoTexture(video);
+    const screenMaterial = new THREE.MeshBasicMaterial({ map: screenTexture });
+    tvScreen = new THREE.Mesh(screenGeometry, screenMaterial);
+    tvScreen.position.z = 0.11;
+    tvGroup.add(tvScreen);
+
+    // Add pulsating glow effect
+    const glowGeometry = new THREE.BoxBufferGeometry(6.2, 3.95, 0.05);
+    const glowMaterial = new THREE.MeshBasicMaterial({
+      color: 0x00ffff,
+      transparent: true,
+      opacity: 0.5
+    });
+    const glow = new THREE.Mesh(glowGeometry, glowMaterial);
+    glow.position.z = -0.11;
+    tvGroup.add(glow);
+
+    tvGroup.position.set(0, 1, -4.85);
+    return tvGroup;
+  }
+
+  tv = createTVWithStream();
+  scene.add(tv);
+
+  // Add colorful lighting
+  const lights = [];
+  const lightColors = [0xff0000, 0x00ff00, 0x0000ff, 0xffff00, 0xff00ff, 0x00ffff];
+  for (let i = 0; i < 6; i++) {
+    const light = new THREE.PointLight(lightColors[i], 0.5, 10);
+    light.position.set(
+      Math.sin(i / 6 * Math.PI * 2) * 4,
+      3,
+      Math.cos(i / 6 * Math.PI * 2) * 4
+    );
+    scene.add(light);
+    lights.push(light);
+  }
+
+  // Position camera
+  camera.position.set(5, 3, 5);
+
+  // Create art on walls
+  function createArtwork(width, height, position, rotation) {
+    const frameGeometry = new THREE.BoxBufferGeometry(width + 0.1, height + 0.1, 0.1);
+    const frameMaterial = new THREE.MeshPhongMaterial({ color: 0xffff00, shininess: 100, specular: 0x00ffff });
+    const frame = new THREE.Mesh(frameGeometry, frameMaterial);
+
+    const canvasTexture = createCanvasTexture(width * 256, height * 256);
+    const paintingGeometry = new THREE.PlaneBufferGeometry(width, height);
+    const paintingMaterial = new THREE.MeshBasicMaterial({ map: canvasTexture });
+    const painting = new THREE.Mesh(paintingGeometry, paintingMaterial);
+    painting.position.z = 0.06;
+
+    const artGroup = new THREE.Group();
+    artGroup.add(frame);
+    artGroup.add(painting);
+    artGroup.position.copy(position);
+    artGroup.rotation.copy(rotation);
+
+    return artGroup;
+  }
+
+  function createCanvasTexture(width, height) {
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext('2d');
+
+    // Create a psychedelic pattern
+    const gradient = ctx.createLinearGradient(0, 0, width, height);
+    gradient.addColorStop(0, '#ff00ff');
+    gradient.addColorStop(0.5, '#00ffff');
+    gradient.addColorStop(1, '#ffff00');
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, width, height);
+
+    for (let i = 0; i < 50; i++) {
+      ctx.beginPath();
+      ctx.fillStyle = `hsla(${Math.random() * 360}, 100%, 50%, ${Math.random() * 0.5 + 0.5})`;
+      ctx.arc(Math.random() * width, Math.random() * height, Math.random() * 100 + 50, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    return new THREE.CanvasTexture(canvas);
+  }
+
+  // Add larger artworks to the walls
+  const artwork1 = createArtwork(3, 2.25, new THREE.Vector3(-4.95, 2, 0), new THREE.Euler(0, Math.PI / 2, 0));
+  scene.add(artwork1);
+
+  const artwork2 = createArtwork(2.25, 3, new THREE.Vector3(0, 2, 4.95), new THREE.Euler(0, Math.PI, 0));
+  scene.add(artwork2);
+
+  const artwork3= createArtwork(2.7, 1.8, new THREE.Vector3(4.95, 1.8, 2), new THREE.Euler(0, -Math.PI / 2, 0));
+  scene.add(artwork3);
+
+  // Set up physics world
+  const world = new CANNON.World();
+  world.gravity.set(0, -9.82, 0);
+
+  // Create floor
+  const floorShape = new CANNON.Plane();
+  const floorBody = new CANNON.Body({
+    mass: 0,
+    shape: floorShape,
+    position: new CANNON.Vec3(0, -4, 0)
+  });
+  floorBody.quaternion.setFromAxisAngle(new CANNON.Vec3(1, 0, 0), -Math.PI / 2);
+  world.addBody(floorBody);
+
+  // Create walls
+  const wallShape = new CANNON.Plane();
+  const wallBodies = [];
+  for (let i = 0; i < 4; i++) {
+    const wallBody = new CANNON.Body({
+      mass: 0,
+      shape: wallShape
+    });
+    wallBodies.push(wallBody);
+    world.addBody(wallBody);
+  }
+
+  // Position walls
+  wallBodies[0].position.set(0, 0, -5);
+  wallBodies[1].position.set(0, 0, 5);
+  wallBodies[1].quaternion.setFromAxisAngle(new CANNON.Vec3(0, 1, 0), Math.PI);
+  wallBodies[2].position.set(-5, 0, 0);
+  wallBodies[2].quaternion.setFromAxisAngle(new CANNON.Vec3(0, 1, 0), Math.PI / 2);
+  wallBodies[3].position.set(5, 0, 0);
+  wallBodies[3].quaternion.setFromAxisAngle(new CANNON.Vec3(0, 1, 0), -Math.PI / 2);
+
+  // Create even more smaller, numerous colorful balls using instancing
+  const ballsCount = 1000; // Changed from 500 to 1000
+  const ballRadius = 0.2;
+  const ballGeometry = new THREE.SphereBufferGeometry(ballRadius, 16, 16);
+  const ballMaterial = new THREE.MeshPhongMaterial({
+    shininess: 100,
+    specular: 0xffffff
+  });
+  const balls = new THREE.InstancedMesh(ballGeometry, ballMaterial, ballsCount);
+
+  const ballShape = new CANNON.Sphere(ballRadius);
+  const ballBodies = [];
+
+  const ballColors = [0xff0000, 0x00ff00, 0x0000ff, 0xffff00, 0xff00ff, 0x00ffff];
+  const tempColor = new THREE.Color();
+  const tempMatrix = new THREE.Matrix4();
+
+  for (let i = 0; i < ballsCount; i++) { // Now runs 1000 times instead of 500
+    const ballBody = new CANNON.Body({
+      mass: 1,
+      shape: ballShape,
+      position: new CANNON.Vec3(
+        (Math.random() - 0.5) * 8,
+        -3.8 + Math.random() * 7.6,
+        (Math.random() - 0.5) * 8
+      )
+    });
+    world.addBody(ballBody);
+    ballBodies.push(ballBody);
+
+    tempColor.setHex(ballColors[Math.floor(Math.random() * ballColors.length)]);
+    balls.setColorAt(i, tempColor);
+
+    tempMatrix.setPosition(ballBody.position.x, ballBody.position.y, ballBody.position.z);
+    balls.setMatrixAt(i, tempMatrix);
+  }
+
+  scene.add(balls);
+
+  // Implement 3D Spatial Audio
+  const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+  const audioElement = document.getElementById('videoElement');
+  const source = audioContext.createMediaElementSource(audioElement);
+
+  const panner = audioContext.createPanner();
+  panner.panningModel = 'HRTF';
+  panner.distanceModel = 'inverse';
+  panner.refDistance = 1;
+  panner.maxDistance = 10000;
+  panner.rolloffFactor = 1;
+  panner.coneInnerAngle = 360;
+  panner.coneOuterAngle = 0;
+  panner.coneOuterGain = 0;
+
+  panner.setPosition(0, 1, -4.85);  // Set to TV position
+
+  source.connect(panner);
+  panner.connect(audioContext.destination);
+
+  // Update panner position if TV moves
+  function updateAudioPosition() {
+    const tvPosition = tv.position;
+    panner.setPosition(tvPosition.x, tvPosition.y, tvPosition.z);
+  }
+
+  // Animation loop
+  let loadingAngle = 0;
+  const fixedTimeStep = 1.0 / 30.0; // Reduced frequency of physics updates
+  const maxSubSteps = 3;
+  let lastTime;
+
+  function animate(time) {
+    requestAnimationFrame(animate);
+    
+    if (lastTime !== undefined) {
+      const dt = (time - lastTime) / 1000;
+      world.step(fixedTimeStep, dt, maxSubSteps);
+    }
+    lastTime = time;
+
+    // Update ball positions
+    for (let i = 0; i < ballsCount; i++) {
+      tempMatrix.setPosition(ballBodies[i].position.x, ballBodies[i].position.y, ballBodies[i].position.z);
+      balls.setMatrixAt(i, tempMatrix);
+    }
+    balls.instanceMatrix.needsUpdate = true;
+    
+    // Rotate disco ball
+    discoBall.rotation.y += 0.01;
+    
+    // Animate colorful lights
+    const animTime = Date.now() * 0.001;
+    for (let i = 0; i < lights.length; i++) {
+      const light = lights[i];
+      light.intensity = 0.5 + Math.sin(animTime * 2 + i) * 0.3;
+      light.position.y = 3 + Math.sin(animTime * 3 + i) * 0.5;
+    }
+    
+    // Animate loading screen
+    if (tvScreen.material.userData.isLoading) {
+      loadingAngle += 0.1;
+      updateLoadingScreen();
+    }
+    
+    // Animate TV glow
+    const glowMesh = tv.children.find(child => child.material.transparent);
+    if (glowMesh) {
+      glowMesh.material.opacity = 0.3 + Math.sin(animTime * 2) * 0.2;
+    }
+    
+    // Update audio position
+    updateAudioPosition();
+    
+    controls.update();
+    renderer.render(scene, camera);
+  }
+  animate();
+
+  // Handle window resizing
+  window.addEventListener('resize', function() {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    if (isFullscreen) {
+      adjustTVForFullscreen();
+    }
+  }, false);
+
+  // Audio controls
+  const video = document.getElementById('videoElement');
+  const muteButton = document.getElementById('muteButton');
+
+  muteButton.addEventListener('click', function() {
+    video.muted = !video.muted;
+    muteButton.textContent = video.muted ? 'Unmute' : 'Mute';
+  });
+
+  // Channel switching
+  const channelButtons = document.querySelectorAll('.channel-button');
+  const currentChannelDisplay = document.getElementById('currentChannel');
+  
+  function loadChannel(url, channelName) {
+    showLoadingScreen();
+    if (Hls.isSupported()) {
+      const hls = new Hls();
+      hls.loadSource(url);
+      hls.attachMedia(video);
+      hls.on(Hls.Events.MANIFEST_PARSED, function() {
+        video.play();
+      });
+    } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+      video.src = url;
+      video.addEventListener('loadedmetadata', function() {
+        video.play();
+      });
+    }
+    currentChannelDisplay.textContent = `Current: ${channelName}`;
+    
+    video.addEventListener('canplay', function onCanPlay() {
+      hideLoadingScreen();
+      video.removeEventListener('canplay', onCanPlay);
+    });
+  }
+
+  channelButtons.forEach(button => {
+    button.addEventListener('click', function() {
+      loadChannel(this.dataset.url, this.textContent);
+    });
+  });
+
+  // Loading screen functions
+  function showLoadingScreen() {
+    const loadingTexture = createLoadingTexture();
+    tvScreen.material.map = loadingTexture;
+    tvScreen.material.userData.isLoading = true;
+    tvScreen.material.needsUpdate = true;
+  }
+
+  function hideLoadingScreen() {
+    tvScreen.material.map = new THREE.VideoTexture(video);
+    tvScreen.material.userData.isLoading = false;
+    tvScreen.material.needsUpdate = true;
+  }
+
+  function createLoadingTexture() {
+    const canvas = document.createElement('canvas');
+    canvas.width = 512;
+    canvas.height = 512;
+    const ctx = canvas.getContext('2d');
+    
+    // Fill background
+    ctx.fillStyle = 'black';
+    ctx.fillRect(0, 0, 512, 512);
+    
+    // Draw loading text
+    ctx.font = 'bold 48px Comic Sans MS';
+    ctx.fillStyle = 'white';
+    ctx.textAlign = 'center';
+    ctx.fillText('Loading...', 256, 256);
+    
+    return new THREE.CanvasTexture(canvas);
+  }
+
+  function updateLoadingScreen() {
+    const canvas = tvScreen.material.map.image;
+    const ctx = canvas.getContext('2d');
+    
+    // Clear canvas
+    ctx.fillStyle = 'black';
+    ctx.fillRect(0, 0, 512, 512);
+    
+    // Draw loading text
+    ctx.font = 'bold 48px Comic Sans MS';
+    ctx.fillStyle = 'white';
+    ctx.textAlign = 'center';
+    ctx.fillText('Loading...', 256, 256);
+    
+    // Draw spinning rainbow loading indicator
+    const centerX = 256;
+    const centerY = 350;
+    const radius = 50;
+    
+    for (let i = 0; i < 6; i++) {
+      const angle = loadingAngle + i * Math.PI / 3;
+      const x = centerX + Math.cos(angle) * radius;
+      const y = centerY + Math.sin(angle) * radius;
+      
+      ctx.beginPath();
+      ctx.arc(x, y, 10, 0, Math.PI * 2);
+      ctx.fillStyle = `hsl(${i * 60}, 100%, 50%)`;
+      ctx.fill();
+    }
+    
+    tvScreen.material.map.needsUpdate = true;
+  }
+
+  // Fullscreen button
+  const fullscreenButton = document.getElementById('fullscreenButton');
+  let isFullscreen = false;
+  let originalCameraPosition = new THREE.Vector3();
+  let originalControlsTarget = new THREE.Vector3();
+
+  function toggleFullscreen() {
+    if (!isFullscreen) {
+      enterFullscreen();
+    } else {
+      exitFullscreen();
+    }
+  }
+
+  function enterFullscreen() {
+    isFullscreen = true;
+    originalCameraPosition.copy(camera.position);
+    originalControlsTarget.copy(controls.target);
+    
+    // Move camera to face the TV directly
+    camera.position.set(0, 1, -1.5);
+    controls.target.set(0, 1, -4.85);
+    controls.update();
+    
+    adjustTVForFullscreen();
+    
+    if (document.documentElement.requestFullscreen) {
+      document.documentElement.requestFullscreen();
+    }
+  }
+
+  function exitFullscreen() {
+    isFullscreen = false;
+    camera.position.copy(originalCameraPosition);
+    controls.target.copy(originalControlsTarget);
+    controls.update();
+    
+    resetTVPosition();
+    
+    if (document.exitFullscreen) {
+      document.exitFullscreen();
+    }
+  }
+
+  function adjustTVForFullscreen() {
+    const aspect = window.innerWidth / window.innerHeight;
+    const scale = Math.min(window.innerWidth / 5.8, window.innerHeight / 3.55);
+    tv.scale.set(scale / 250, scale / 250, scale / 250);
+    tv.position.set(0, 1, -4.85 + 0.1 * (scale / 250));
+  }
+
+  function resetTVPosition() {
+    tv.scale.set(1, 1, 1);
+    tv.position.set(0, 1, -4.85);
+  }
+
+  fullscreenButton.addEventListener('click', toggleFullscreen);
+
+  document.addEventListener('fullscreenchange', function() {
+    if (!document.fullscreenElement) {
+      exitFullscreen();
+    }
+  });
+
+  // Wallpaper controls
+  const wallpaperColorInput = document.getElementById('wallpaperColor');
+
+  wallpaperColorInput.addEventListener('input', updateWallpaper);
+
+  function updateWallpaper() {
+    const color = wallpaperColorInput.value;
+    room.material.color.setStyle(color);
+    room.material.needsUpdate = true;
+  }
+
+  // Toggle channel list
+  const toggleChannelList = document.getElementById('toggleChannelList');
+  const channelList = document.getElementById('channelList');
+
+  toggleChannelList.addEventListener('click', function() {
+    if (channelList.style.display === 'none') {
+      channelList.style.display = 'block';
+      toggleChannelList.textContent = '🎮';
+    } else {
+      channelList.style.display = 'none';
+      toggleChannelList.textContent = '🎮';
+    }
+  });
+</script>
+
+</body></html>
