@@ -1,0 +1,421 @@
+<html><head><base href="/">
+<title>Townscaper Portal</title>
+<style>
+  body {
+    margin: 0;
+    padding: 0;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: url('/a/ac07469e-f0a3-4c97-a8af-8f18eff1d40c') center/cover no-repeat fixed;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    overflow: hidden;
+  }
+
+  .portal {
+    position: relative;
+    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    padding: 40px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+  }
+
+  .button2 {
+    display: inline-block;
+    transition: all 0.2s ease-in;
+    position: relative;
+    overflow: hidden;
+    z-index: 1;
+    color: #090909;
+    padding: 0.7em 1.7em;
+    cursor: pointer;
+    font-size: 24px;
+    font-weight: 600;
+    border-radius: 0.5em;
+    background: rgba(232, 232, 232, 0.9);
+    border: 1px solid #e8e8e8;
+    box-shadow: 6px 6px 12px rgba(0, 0, 0, 0.4), -6px -6px 12px rgba(255, 255, 255, 0.4);
+    text-decoration: none;
+    letter-spacing: 1px;
+    backdrop-filter: blur(5px);
+  }
+
+  .button2:active {
+    color: #666;
+    box-shadow: inset 4px 4px 12px #c5c5c5, inset -4px -4px 12px #ffffff;
+  }
+
+  .button2:before {
+    content: "";
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%) scaleY(1) scaleX(1.25);
+    top: 100%;
+    width: 140%;
+    height: 180%;
+    background-color: rgba(0, 0, 0, 0.05);
+    border-radius: 50%;
+    display: block;
+    transition: all 0.5s 0.1s cubic-bezier(0.55, 0, 0.1, 1);
+    z-index: -1;
+  }
+
+  .button2:after {
+    content: "";
+    position: absolute;
+    left: 55%;
+    transform: translateX(-50%) scaleY(1) scaleX(1.45);
+    top: 180%;
+    width: 160%;
+    height: 190%;
+    background-color: #4CA1AF;
+    border-radius: 50%;
+    display: block;
+    transition: all 0.5s 0.1s cubic-bezier(0.55, 0, 0.1, 1);
+    z-index: -1;
+  }
+
+  .button2:hover {
+    color: #ffffff;
+    border: 1px solid #4CA1AF;
+    transform: translateY(-3px);
+  }
+
+  .button2:hover:before {
+    top: -35%;
+    background-color: #4CA1AF;
+    transform: translateX(-50%) scaleY(1.3) scaleX(0.8);
+  }
+
+  .button2:hover:after {
+    top: -45%;
+    background-color: #4CA1AF;
+    transform: translateX(-50%) scaleY(1.3) scaleX(0.8);
+  }
+
+  .button {
+    background-color: #ffffff00;
+    color: #fff;
+    width: 12em; /* Made wider for "Info" text */
+    height: 2.9em;
+    border: #3654ff 0.2em solid;
+    border-radius: 11px;
+    text-align: right;
+    transition: all 0.6s ease;
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .button:hover {
+    background-color: #3654ff;
+    cursor: pointer;
+  }
+
+  .button svg {
+    width: 1.6em;
+    margin: -0.2em 0.8em 0;
+    position: absolute;
+    left: 0;
+    display: flex;
+    transition: all 0.6s ease;
+  }
+
+  .button:hover svg {
+    transform: translateX(5px);
+  }
+
+  .text {
+    margin: 0 1.5em;
+  }
+
+  .modal {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(255, 255, 255, 0.95);
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 0 20px rgba(0,0,0,0.2);
+    z-index: 1000;
+    min-width: 300px;
+  }
+
+  .modal h2 {
+    margin-top: 0;
+    color: #333;
+  }
+
+  .modal p {
+    margin: 10px 0;
+    color: #666;
+  }
+
+  .modal button {
+    margin-top: 15px;
+    padding: 8px 16px;
+    background: #3654ff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+
+  .modal-backdrop {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.5);
+    z-index: 999;
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-20px); }
+  }
+
+  .floating-container {
+    animation: float 4s ease-in-out infinite;
+  }
+
+  .wrapper {
+    width: 200px;
+    height: 60px;
+    position: relative;
+    z-index: 1;
+    display: none;
+    margin-top: 20px;
+  }
+
+  .circle {
+    width: 20px;
+    height: 20px;
+    position: absolute;
+    border-radius: 50%;
+    background-color: #fff;
+    left: 15%;
+    transform-origin: 50%;
+    animation: circle7124 .5s alternate infinite ease;
+  }
+
+  @keyframes circle7124 {
+    0% {
+      top: 60px;
+      height: 5px;
+      border-radius: 50px 50px 25px 25px;
+      transform: scaleX(1.7);
+    }
+    40% {
+      height: 20px;
+      border-radius: 50%;
+      transform: scaleX(1);
+    }
+    100% {
+      top: 0%;
+    }
+  }
+
+  .circle:nth-child(2) {
+    left: 45%;
+    animation-delay: .2s;
+  }
+
+  .circle:nth-child(3) {
+    left: auto;
+    right: 15%;
+    animation-delay: .3s;
+  }
+
+  .shadow {
+    width: 20px;
+    height: 4px;
+    border-radius: 50%;
+    background-color: rgba(0,0,0,0.9);
+    position: absolute;
+    top: 62px;
+    transform-origin: 50%;
+    z-index: -1;
+    left: 15%;
+    filter: blur(1px);
+    animation: shadow046 .5s alternate infinite ease;
+  }
+
+  @keyframes shadow046 {
+    0% {
+      transform: scaleX(1.5);
+    }
+    40% {
+      transform: scaleX(1);
+      opacity: .7;
+    }
+    100% {
+      transform: scaleX(.2);
+      opacity: .4;
+    }
+  }
+
+  .shadow:nth-child(4) {
+    left: 45%;
+    animation-delay: .2s
+  }
+
+  .shadow:nth-child(5) {
+    left: auto;
+    right: 15%;
+    animation-delay: .3s;
+  }
+
+  .credit {
+    color: white;
+    font-size: 16px;
+    margin-top: 15px;
+    text-align: center;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+  }
+
+  .corner-text {
+    position: fixed;
+    color: white;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+    padding: 10px;
+    font-size: 14px;
+  }
+
+  .save-money {
+    bottom: 20px;
+    right: 20px;
+    animation: pulse 2s infinite;
+    background: rgba(39, 174, 96, 0.9);
+    border-radius: 5px;
+    padding: 8px 15px;
+  }
+
+  @keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+  }
+</style>
+</head>
+<body>
+  <div class="floating-container">
+    <div class="portal">
+      <a href="https://oskarstalberg.com/Townscaper" class="button2" id="portal-link">
+        Enter Townscaper
+      </a>
+      <div class="wrapper">
+        <div class="circle"></div>
+        <div class="circle"></div>
+        <div class="circle"></div>
+        <div class="shadow"></div>
+        <div class="shadow"></div>
+        <div class="shadow"></div>
+      </div>
+      <div class="credit">BHOPPINGS.DE INC</div>
+    </div>
+  </div>
+
+  <button class="button" id="creditsButton">
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12h15m0 0l-6.75-6.75M19.5 12l-6.75 6.75"></path>
+    </svg>
+    <div class="text">Info</div>
+  </button>
+
+  <div class="modal" id="creditsModal">
+    <h2>Welcome to Townscaper!</h2>
+    <p><strong>About the Game:</strong><br>
+    Townscaper is a creative building game where you can create beautiful, colorful towns with no goal other than to build and enjoy.</p>
+    
+    <p><strong>How to Play:</strong></p>
+    <ul>
+      <li>Left click to place blocks</li>
+      <li>Right click to remove blocks</li>
+      <li>Mouse wheel to change colors</li>
+      <li>Hold middle mouse button to pan</li>
+      <li>Hold right mouse button to rotate</li>
+      <li>Ctrl + Z to undo</li>
+    </ul>
+
+    <p><strong>Tips & Tricks:</strong></p>
+    <ul>
+      <li>Blocks automatically form into houses, arches, and stairs based on their placement</li>
+      <li>Try building in different patterns to discover unique architectural features</li>
+      <li>Experiment with color combinations to create different moods</li>
+      <li>You can build underwater and create floating structures</li>
+    </ul>
+
+    <p><strong>Credits:</strong></p>
+    <p>Developer: Oskar Stålberg<br>
+    Port: BHOPPINGS.DE INC</p>
+    
+    <button onclick="closeModal()">Close</button>
+  </div>
+  <div class="modal-backdrop" id="modalBackdrop"></div>
+
+  <div class="corner-text save-money">BHOPPINGS.DE</div>
+
+  <script>
+    document.querySelector('.portal').addEventListener('mousemove', (e) => {
+      const portal = e.currentTarget;
+      const rect = portal.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      
+      const centerX = rect.width / 2;
+      const centerY = rect.height / 2;
+      
+      const angleX = (y - centerY) / centerY * 10;
+      const angleY = (x - centerX) / centerX * 10;
+      
+      portal.style.transform = `perspective(1000px) rotateX(${-angleX}deg) rotateY(${angleY}deg) scale(1.05)`;
+    });
+
+    document.querySelector('.portal').addEventListener('mouseleave', (e) => {
+      e.currentTarget.style.transform = 'scale(1)';
+    });
+
+    document.getElementById('portal-link').addEventListener('click', function(e) {
+      e.preventDefault();
+      
+      this.style.display = 'none';
+      document.querySelector('.wrapper').style.display = 'block';
+      
+      const credit = document.querySelector('.credit');
+      credit.style.opacity = '1';
+      
+      setTimeout(() => {
+        window.location.href = 'https://oskarstalberg.com/Townscaper';
+      }, 2000);
+    });
+
+    const creditsButton = document.getElementById('creditsButton');
+    const modal = document.getElementById('creditsModal');
+    const modalBackdrop = document.getElementById('modalBackdrop');
+
+    creditsButton.addEventListener('click', () => {
+      modal.style.display = 'block';
+      modalBackdrop.style.display = 'block';
+    });
+
+    function closeModal() {
+      modal.style.display = 'none';
+      modalBackdrop.style.display = 'none';
+    }
+
+    modalBackdrop.addEventListener('click', closeModal);
+  </script>
+</body></html>
