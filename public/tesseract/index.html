@@ -1,0 +1,384 @@
+<html><head><base href="https://.cuboidal-quantum.superposition//quantumsuperposition/"><title>Quantum Superposition: Advanced Artistic Wonder Generator</title>
+<style>
+  body, html {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    font-family: 'Orbitron', sans-serif;
+    background-color: #000;
+    color: #0ff;
+  }
+  #canvas-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+  }
+  #controls {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background-color: rgba(0, 0, 0, 0.7);
+    padding: 20px;
+    border-radius: 10px;
+    z-index: 10;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+  .control-group {
+    margin-bottom: 15px;
+  }
+  label {
+    display: block;
+    margin-bottom: 5px;
+  }
+  input[type="range"], input[type="number"], input[type="color"] {
+    width: 100%;
+    margin-bottom: 10px;
+  }
+  button {
+    background-color: #0ff;
+    color: #000;
+    border: none;
+    padding: 10px 15px;
+    margin: 5px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+  button:hover {
+    background-color: #00f;
+    color: #fff;
+  }
+
+  .shell-mode {
+    background: radial-gradient(circle at center, #2a1b3d, #000);
+  }
+
+  .vajra-mode {
+    background: radial-gradient(circle at center, #4b0082, #000);
+  }
+
+  .control-group.shell-controls {
+    border-top: 1px solid #0ff;
+    padding-top: 15px;
+  }
+
+  .control-group.vajra-controls {
+    border-top: 1px solid #0ff;
+    padding-top: 15px;
+  }
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.3/howler.min.js"></script>
+</head>
+<body>
+<div id="canvas-container"></div>
+<div id="controls">
+  <div class="control-group">
+    <label for="points">Points</label>
+    <input type="range" id="points" min="1000" max="100000" step="1000" value="50000">
+    <input type="number" id="pointsValue" min="1000" max="100000" value="50000">
+  </div>
+  <div class="control-group">
+    <label for="maxDistance">Max Distance</label>
+    <input type="range" id="maxDistance" min="10" max="100" step="1" value="50">
+    <input type="number" id="maxDistanceValue" min="10" max="100" value="50">
+  </div>
+  <div class="control-group">
+    <label for="radius">Radius</label>
+    <input type="range" id="radius" min="1" max="50" step="0.1" value="20">
+    <input type="number" id="radiusValue" min="1" max="50" step="0.1" value="20">
+  </div>
+  <div class="control-group">
+    <label for="radiusVariance">Radius Variance</label>
+    <input type="range" id="radiusVariance" min="0" max="1" step="0.01" value="0.5">
+    <input type="number" id="radiusVarianceValue" min="0" max="1" step="0.01" value="0.5">
+  </div>
+  <div class="control-group">
+    <label for="rotationSpeed">Rotation Speed</label>
+    <input type="range" id="rotationSpeed" min="0" max="0.1" step="0.001" value="0.01">
+    <input type="number" id="rotationSpeedValue" min="0" max="0.1" step="0.001" value="0.01">
+  </div>
+  <div class="control-group">
+    <label for="twistAmount">Twist Amount</label>
+    <input type="range" id="twistAmount" min="0" max="10" step="0.1" value="1">
+    <input type="number" id="twistAmountValue" min="0" max="10" step="0.1" value="1">
+  </div>
+  <div class="control-group">
+    <label for="cameraOrbitSpeed">Camera Orbit Speed</label>
+    <input type="range" id="cameraOrbitSpeed" min="0" max="0.1" step="0.001" value="0.005">
+    <input type="number" id="cameraOrbitSpeedValue" min="0" max="0.1" step="0.001" value="0.005">
+  </div>
+  <div class="control-group">
+    <label for="color1">Color 1</label>
+    <input type="color" id="color1" value="#ff0000">
+  </div>
+  <div class="control-group">
+    <label for="color2">Color 2</label>
+    <input type="color" id="color2" value="#0000ff">
+  </div>
+  <div class="control-group shell-controls">
+    <label for="shellSpiral">Shell Spiral Tightness</label>
+    <input type="range" id="shellSpiral" min="0.1" max="2" step="0.1" value="1">
+    <input type="number" id="shellSpiralValue" min="0.1" max="2" step="0.1" value="1">
+  </div>
+  <div class="control-group shell-controls">
+    <label for="shellHeight">Shell Height</label>
+    <input type="range" id="shellHeight" min="1" max="10" step="0.1" value="5">
+    <input type="number" id="shellHeightValue" min="1" max="10" step="0.1" value="5">
+  </div>
+  <div class="control-group vajra-controls">
+    <label for="vajraPoints">Vajra Points</label>
+    <input type="range" id="vajraPoints" min="3" max="12" step="1" value="5">
+    <input type="number" id="vajraPointsValue" min="3" max="12" value="5">
+  </div>
+  <div class="control-group vajra-controls">
+    <label for="vajraScale">Vajra Scale</label>
+    <input type="range" id="vajraScale" min="0.1" max="2" step="0.1" value="1">
+    <input type="number" id="vajraScaleValue" min="0.1" max="2" step="0.1" value="1">
+  </div>
+  <div class="control-group vajra-controls">
+    <label for="sonicSpeed">Sonic Speed</label>
+    <input type="range" id="sonicSpeed" min="0" max="5" step="0.1" value="1">
+    <input type="number" id="sonicSpeedValue" min="0" max="5" step="0.1" value="1">
+  </div>
+  <div class="control-group">
+    <button id="toggleAudio">Toggle Audio</button>
+    <button id="randomize">Randomize</button>
+    <button id="toggleShellMode">Toggle Shell Mode</button>
+    <button id="toggleVajraMode">Toggle Vajra Mode</button>
+  </div>
+</div>
+
+<script>
+let scene, camera, renderer, particles, sound;
+let isAudioPlaying = false;
+let isShellMode = false;
+let isVajraMode = false;
+
+function init() {
+  scene = new THREE.Scene();
+  camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+  renderer = new THREE.WebGLRenderer({ antialias: true });
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  document.getElementById('canvas-container').appendChild(renderer.domElement);
+
+  createParticles();
+  setupAudio();
+  animate();
+
+  window.addEventListener('resize', onWindowResize, false);
+  setupControlListeners();
+}
+
+function createShellGeometry() {
+  const geometry = new THREE.BufferGeometry();
+  const spiralTightness = parseFloat(document.getElementById('shellSpiral').value);
+  const shellHeight = parseFloat(document.getElementById('shellHeight').value);
+  const particleCount = parseInt(document.getElementById('points').value);
+  
+  const positions = new Float32Array(particleCount * 3);
+  const colors = new Float32Array(particleCount * 3);
+  
+  const color1 = new THREE.Color(document.getElementById('color1').value);
+  const color2 = new THREE.Color(document.getElementById('color2').value);
+
+  for (let i = 0; i < particleCount; i++) {
+    const t = i / particleCount;
+    const theta = 2 * Math.PI * t * 20 * spiralTightness;
+    const radius = 2 * Math.pow(t, 0.5) * shellHeight;
+    const height = t * shellHeight;
+    
+    positions[i * 3] = radius * Math.cos(theta);
+    positions[i * 3 + 1] = height;
+    positions[i * 3 + 2] = radius * Math.sin(theta);
+    
+    const color = new THREE.Color().lerpColors(color1, color2, t);
+    colors[i * 3] = color.r;
+    colors[i * 3 + 1] = color.g;
+    colors[i * 3 + 2] = color.b;
+  }
+
+  geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+  geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+  
+  return geometry;
+}
+
+function createQuantumGeometry() {
+  const geometry = new THREE.BufferGeometry();
+  const particleCount = parseInt(document.getElementById('points').value);
+  const positions = new Float32Array(particleCount * 3);
+  const colors = new Float32Array(particleCount * 3);
+
+  const radius = parseFloat(document.getElementById('radius').value);
+  const radiusVariance = parseFloat(document.getElementById('radiusVariance').value);
+  const color1 = new THREE.Color(document.getElementById('color1').value);
+  const color2 = new THREE.Color(document.getElementById('color2').value);
+
+  for (let i = 0; i < positions.length; i += 3) {
+    const r = radius + (Math.random() - 0.5) * 2 * radius * radiusVariance;
+    const theta = THREE.MathUtils.randFloatSpread(360);
+    const phi = THREE.MathUtils.randFloatSpread(360);
+
+    positions[i] = r * Math.sin(theta) * Math.cos(phi);
+    positions[i + 1] = r * Math.sin(theta) * Math.sin(phi);
+    positions[i + 2] = r * Math.cos(theta);
+
+    const colorFactor = Math.random();
+    const particleColor = new THREE.Color().lerpColors(color1, color2, colorFactor);
+    colors[i] = particleColor.r;
+    colors[i + 1] = particleColor.g;
+    colors[i + 2] = particleColor.b;
+  }
+
+  geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+  geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+  
+  return geometry;
+}
+
+function createParticles() {
+  const geometry = isShellMode ? createShellGeometry() : createQuantumGeometry();
+  const material = new THREE.PointsMaterial({
+    size: 0.1,
+    vertexColors: true,
+    blending: THREE.AdditiveBlending,
+    transparent: true
+  });
+
+  if (particles) scene.remove(particles);
+  particles = new THREE.Points(geometry, material);
+  scene.add(particles);
+}
+
+function animate() {
+  requestAnimationFrame(animate);
+
+  const time = Date.now() * 0.001;
+  const rotationSpeed = parseFloat(document.getElementById('rotationSpeed').value);
+  const twistAmount = parseFloat(document.getElementById('twistAmount').value);
+  const cameraOrbitSpeed = parseFloat(document.getElementById('cameraOrbitSpeed').value);
+
+  particles.rotation.y += rotationSpeed;
+
+  const positions = particles.geometry.attributes.position.array;
+  for (let i = 0; i < positions.length; i += 3) {
+    const x = positions[i];
+    const y = positions[i + 1];
+    const z = positions[i + 2];
+    const distance = Math.sqrt(x * x + y * y + z * z);
+
+    const twist = twistAmount * Math.sin(distance * 0.1 + time);
+    const theta = Math.atan2(y, x) + twist;
+    const phi = Math.acos(z / distance);
+
+    positions[i] = distance * Math.sin(phi) * Math.cos(theta);
+    positions[i + 1] = distance * Math.sin(phi) * Math.sin(theta);
+    positions[i + 2] = distance * Math.cos(phi);
+  }
+
+  particles.geometry.attributes.position.needsUpdate = true;
+
+  camera.position.x = Math.cos(time * cameraOrbitSpeed) * 50;
+  camera.position.z = Math.sin(time * cameraOrbitSpeed) * 50;
+  camera.lookAt(scene.position);
+
+  renderer.render(scene, camera);
+}
+
+function onWindowResize() {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+}
+
+function setupAudio() {
+  sound = new Howl({
+    src: ['https://example.com/quantum_ambient.mp3'],
+    loop: true,
+    volume: 0.5
+  });
+}
+
+function setupControlListeners() {
+  const controls = ['points', 'maxDistance', 'radius', 'radiusVariance', 'rotationSpeed', 
+                   'twistAmount', 'cameraOrbitSpeed', 'shellSpiral', 'shellHeight',
+                   'vajraPoints', 'vajraScale', 'sonicSpeed'];
+  
+  controls.forEach(control => {
+    const slider = document.getElementById(control);
+    const value = document.getElementById(`${control}Value`);
+    if (slider && value) {
+      slider.addEventListener('input', (e) => {
+        value.value = e.target.value;
+        createParticles();
+      });
+      value.addEventListener('input', (e) => {
+        slider.value = e.target.value;
+        createParticles();
+      });
+    }
+  });
+
+  document.getElementById('color1').addEventListener('input', createParticles);
+  document.getElementById('color2').addEventListener('input', createParticles);
+  
+  document.getElementById('toggleAudio').addEventListener('click', () => {
+    if (isAudioPlaying) {
+      sound.pause();
+    } else {
+      sound.play();
+    }
+    isAudioPlaying = !isAudioPlaying;
+  });
+  
+  document.getElementById('randomize').addEventListener('click', randomizeSettings);
+  
+  document.getElementById('toggleShellMode').addEventListener('click', () => {
+    isShellMode = !isShellMode;
+    document.body.classList.toggle('shell-mode');
+    createParticles();
+  });
+
+  document.getElementById('toggleVajraMode').addEventListener('click', () => {
+    isVajraMode = !isVajraMode;
+    document.body.classList.toggle('vajra-mode');
+    createParticles();
+  });
+}
+
+function randomizeSettings() {
+  document.getElementById('points').value = Math.floor(Math.random() * 99000) + 1000;
+  document.getElementById('pointsValue').value = document.getElementById('points').value;
+  document.getElementById('maxDistance').value = Math.floor(Math.random() * 90) + 10;
+  document.getElementById('maxDistanceValue').value = document.getElementById('maxDistance').value;
+  document.getElementById('radius').value = (Math.random() * 49 + 1).toFixed(1);
+  document.getElementById('radiusValue').value = document.getElementById('radius').value;
+  document.getElementById('radiusVariance').value = Math.random().toFixed(2);
+  document.getElementById('radiusVarianceValue').value = document.getElementById('radiusVariance').value;
+  document.getElementById('rotationSpeed').value = (Math.random() * 0.1).toFixed(3);
+  document.getElementById('rotationSpeedValue').value = document.getElementById('rotationSpeed').value;
+  document.getElementById('twistAmount').value = (Math.random() * 10).toFixed(1);
+  document.getElementById('twistAmountValue').value = document.getElementById('twistAmount').value;
+  document.getElementById('cameraOrbitSpeed').value = (Math.random() * 0.1).toFixed(3);
+  document.getElementById('cameraOrbitSpeedValue').value = document.getElementById('cameraOrbitSpeed').value;
+  document.getElementById('vajraPoints').value = Math.floor(Math.random() * 10) + 3;
+  document.getElementById('vajraPointsValue').value = document.getElementById('vajraPoints').value;
+  document.getElementById('vajraScale').value = (Math.random() * 1.9 + 0.1).toFixed(1);
+  document.getElementById('vajraScaleValue').value = document.getElementById('vajraScale').value;
+  document.getElementById('sonicSpeed').value = (Math.random() * 5).toFixed(1);
+  document.getElementById('sonicSpeedValue').value = document.getElementById('sonicSpeed').value;
+  document.getElementById('color1').value = '#' + Math.floor(Math.random()*16777215).toString(16);
+  document.getElementById('color2').value = '#' + Math.floor(Math.random()*16777215).toString(16);
+  
+  createParticles();
+}
+
+init();
+</script>
+</body></html>
