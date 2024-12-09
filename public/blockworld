@@ -1,0 +1,758 @@
+<html><head><base href="."><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Blocky World</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+<style>
+body { margin: 0; overflow: hidden; font-family: 'Comic Sans MS', 'Comic Sans', cursive, 'Arial', sans-serif; }
+#gameContainer { position: relative; width: 100vw; height: 100vh; }
+#chat { 
+    position: absolute; 
+    bottom: 20px; 
+    left: 20px; 
+    width: 300px; 
+    background: rgba(0,0,0,0.5);
+    color: white;
+    padding: 10px;
+    border-radius: 10px;
+}
+#chatInput {
+    width: 100%;
+    padding: 5px;
+    border: none;
+    border-radius: 5px;
+    margin-top: 10px;
+}
+#messages {
+    height: 150px;
+    overflow-y: auto;
+}
+.message {
+    padding: 5px;
+    margin: 5px 0;
+    background: rgba(255,255,255,0.1);
+    border-radius: 5px;
+    animation: fadeIn 0.5s ease-in;
+}
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeOut {
+    from { opacity: 1; transform: translateY(0); }
+    to { opacity: 0; transform: translateY(-10px); }
+}
+#playerList {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: rgba(0,0,0,0.5);
+    color: white;
+    padding: 10px;
+    border-radius: 10px;
+}
+#controls {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    background: rgba(0,0,0,0.5);
+    color: white;
+    padding: 10px;
+    border-radius: 10px;
+}
+#colorPicker {
+    position: absolute;
+    top: 80px;
+    left: 20px;
+    background: rgba(0,0,0,0.5);
+    color: white;
+    padding: 10px;
+    border-radius: 10px;
+    display: flex;
+    gap: 5px;
+    flex-wrap: wrap;
+    width: 150px;
+}
+.color-option {
+    width: 30px;
+    height: 30px;
+    border-radius: 5px;
+    cursor: pointer;
+    border: 2px solid transparent;
+    transition: border-color 0.3s;
+}
+.color-option:hover {
+    border-color: white;
+}
+.speech-bubble {
+    position: absolute;
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 10px;
+    padding: 5px 10px;
+    color: black;
+    font-size: 14px;
+    pointer-events: none;
+    animation: fadeOut 3s ease-in forwards;
+    white-space: nowrap;
+    transform: translateY(-150px);
+}
+.speech-bubble:after {
+    content: '';
+    position: absolute;
+    bottom: -10px;
+    left: 50%;
+    border-width: 10px 10px 0;
+    border-style: solid;
+    border-color: rgba(255, 255, 255, 0.9) transparent;
+}
+#buildControls {
+    position: absolute;
+    left: 20px;
+    top: 150px;
+    background: rgba(0,0,0,0.5);
+    color: white;
+    padding: 10px;
+    border-radius: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+.build-button {
+    padding: 5px 10px;
+    background: rgba(255,255,255,0.2);
+    border: none;
+    color: white;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+.build-button:hover {
+    background: rgba(255,255,255,0.3);
+}
+.build-button.active {
+    background: rgba(255,255,255,0.4);
+}
+</style>
+</head>
+<body>
+<div id="gameContainer">
+    <div id="controls">
+        Use WASD or Arrow Keys to move<br>Press SPACE to jump
+    </div>
+    <div id="colorPicker">
+        <div class="color-option" style="background: #ff0000" data-color="#ff0000"></div>
+        <div class="color-option" style="background: #0008ff" data-color="#0008ff"></div>
+        <div class="color-option" style="background: #6aff00" data-color="#6aff00"></div>
+        <div class="color-option" style="background: #bc4ae7" data-color="#bc4ae7"></div>
+        <div class="color-option" style="background: #ffffff" data-color="#ffffff"></div>
+        <div class="color-option" style="background: #333333" data-color="#333333"></div>
+    </div>
+    <div id="buildControls">
+        <button class="build-button" data-shape="square">Square</button>
+        <button class="build-button" data-shape="rectangle">Rectangle</button>
+        <button class="build-button" data-shape="triangle">Triangle</button>
+        <button class="build-button" data-shape="cylinder">Cylinder</button>
+    </div>
+    <div id="chat">
+        <div id="messages"></div>
+        <input type="text" id="chatInput" placeholder="Type to chat...">
+    </div>
+    <div id="playerList">
+        <h3>bhoppings.de</h3>
+        <ul id="players"></ul>
+    </div>
+</div>
+
+<script>
+// Initialize scene, camera, and renderer first
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+const renderer = new THREE.WebGLRenderer();
+renderer.setSize(window.innerWidth, window.innerHeight);
+
+// Update the renderer settings for better skybox quality
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1;
+renderer.outputEncoding = THREE.sRGBEncoding;
+
+document.getElementById('gameContainer').appendChild(renderer.domElement);
+
+// Load the skybox image
+const skyboxLoader = new THREE.TextureLoader();
+skyboxLoader.load('skybox.png', function(texture) {
+    const rt = new THREE.WebGLCubeRenderTarget(texture.image.height);
+    rt.fromEquirectangularTexture(renderer, texture);
+    scene.background = rt.texture;
+}, undefined, function(err) {
+    console.error('Error loading skybox:', err);
+});
+
+// Initialize socket with a fallback URL
+const socket = io('https://your-server-url.com', {
+    reconnectionAttempts: 5,
+    timeout: 10000,
+    autoConnect: true
+});
+
+// Player limit constants
+const MAX_PLAYERS = 50; // Support up to 50 players
+let playerCount = 0;
+
+// Global variables
+const players = {};
+let localPlayer;
+const moveSpeed = 0.1;
+const keys = {};
+const jumpHeight = 0.75; // 50% of character height (1.5)
+const jumpDuration = 500; // 500ms for full jump cycle
+let isJumping = false;
+let jumpStart = 0;
+let currentPlayerColor = 0x44aa88; // Track current player color
+let buildMode = null;
+const shapes = [];
+
+// Animation state variables
+const animationSpeed = 0.1;
+let walkCycle = 0;
+
+// Load texture with error handling
+const textureLoader = new THREE.TextureLoader();
+let faceTexture;
+
+try {
+    faceTexture = textureLoader.load('face2.png', 
+        // Success callback
+        function(texture) {
+            console.log('Texture loaded successfully');
+            initializeGame(); // Only initialize after texture loads
+        },
+        // Progress callback
+        undefined,
+        // Error callback
+        function(err) {
+            console.error('Error loading texture:', err);
+            // Load a default colored material as fallback
+            faceTexture = null;
+            initializeGame();
+        }
+    );
+} catch(e) {
+    console.error('Error setting up texture loader:', e);
+    faceTexture = null;
+    initializeGame();
+}
+
+function initializeGame() {
+    // Setup ground with texture
+    const groundTextureLoader = new THREE.TextureLoader();
+    groundTextureLoader.load('stud.png', function(texture) {
+        // Make the texture repeat
+        texture.wrapS = THREE.RepeatWrapping;
+        texture.wrapT = THREE.RepeatWrapping;
+        texture.repeat.set(10, 10); // Repeat the texture 10 times in both directions
+        
+        // Create ground with texture
+        const groundGeometry = new THREE.PlaneGeometry(20, 20);
+        const groundMaterial = new THREE.MeshPhongMaterial({ 
+            map: texture,
+            side: THREE.DoubleSide
+        });
+        const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+        ground.rotation.x = Math.PI / 2;
+        ground.position.y = -1;
+        ground.name = "ground";
+        scene.add(ground);
+    }, undefined, function(err) {
+        console.error('Error loading ground texture:', err);
+        // Fallback to original colored ground if texture fails to load
+        const groundGeometry = new THREE.PlaneGeometry(20, 20);
+        const groundMaterial = new THREE.MeshPhongMaterial({ 
+            color: 0x88aa88, 
+            side: THREE.DoubleSide 
+        });
+        const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+        ground.rotation.x = Math.PI / 2;
+        ground.position.y = -1;
+        ground.name = "ground";
+        scene.add(ground);
+    });
+
+    // Setup lights
+    const light = new THREE.AmbientLight(0xffffff, 0.3); // Reduced from 0.6 to 0.3
+    scene.add(light);
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.4); // Reduced from 0.8 to 0.4
+    directionalLight.position.set(0, 10, 5);
+    scene.add(directionalLight);
+
+    // Create local player
+    localPlayer = createBlockyCharacter(currentPlayerColor);
+    scene.add(localPlayer);
+
+    // Setup camera
+    camera.position.z = 5;
+    camera.position.y = 2;
+    camera.lookAt(localPlayer.position);
+
+    // Start animation loop
+    animate();
+}
+
+function createBlockyCharacter(color = 0x44aa88) {
+    const group = new THREE.Group();
+    
+    const bodyGeometry = new THREE.BoxGeometry(1, 1.5, 0.5);
+    const bodyMaterial = new THREE.MeshPhongMaterial({ color: color });
+    const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
+    group.add(body);
+    
+    const headGeometry = new THREE.CylinderGeometry(0.4, 0.4, 0.6, 32);
+    const headMaterial = new THREE.MeshPhongMaterial({ color: color });
+    const head = new THREE.Mesh(headGeometry, headMaterial);
+    head.position.y = 1.05;
+    group.add(head);
+    
+    // Only add face if texture loaded successfully
+    if (faceTexture) {
+        const faceGeometry = new THREE.PlaneGeometry(0.6, 0.6);
+        const faceMaterial = new THREE.MeshBasicMaterial({ 
+            map: faceTexture,
+            transparent: true,
+            side: THREE.DoubleSide 
+        });
+        const face = new THREE.Mesh(faceGeometry, faceMaterial);
+        face.position.z = 0.41;
+        face.position.y = 1.05;
+        group.add(face);
+    }
+    
+    const armGeometry = new THREE.BoxGeometry(0.25, 0.75, 0.25);
+    const leftArm = new THREE.Mesh(armGeometry, bodyMaterial);
+    leftArm.position.set(-0.625, 0, 0);
+    group.add(leftArm);
+    
+    const rightArm = new THREE.Mesh(armGeometry, bodyMaterial);
+    rightArm.position.set(0.625, 0, 0);
+    group.add(rightArm);
+    
+    const legGeometry = new THREE.BoxGeometry(0.25, 0.75, 0.25);
+    const leftLeg = new THREE.Mesh(legGeometry, bodyMaterial);
+    leftLeg.position.set(-0.25, -1.125, 0);
+    group.add(leftLeg);
+    
+    const rightLeg = new THREE.Mesh(legGeometry, bodyMaterial);
+    rightLeg.position.set(0.25, -1.125, 0);
+    group.add(rightLeg);
+    
+    // Store limb references for animation
+    group.userData = {
+        leftArm,
+        rightArm,
+        leftLeg,
+        rightLeg,
+        body,
+        head
+    };
+    
+    return group;
+}
+
+function animateCharacter(character, isMoving, isJumping) {
+    if (!character || !character.userData) return;
+    
+    const { leftArm, rightArm, leftLeg, rightLeg } = character.userData;
+    
+    if (isMoving) {
+        // Walking animation
+        walkCycle += animationSpeed;
+        
+        // Leg animation
+        leftLeg.rotation.x = Math.sin(walkCycle) * 0.5;
+        rightLeg.rotation.x = Math.sin(walkCycle + Math.PI) * 0.5;
+        
+        // Arm animation
+        leftArm.rotation.x = Math.sin(walkCycle + Math.PI) * 0.5;
+        rightArm.rotation.x = Math.sin(walkCycle) * 0.5;
+        
+    } else {
+        // Reset to neutral position when not moving
+        leftLeg.rotation.x = 0;
+        rightLeg.rotation.x = 0;
+        leftArm.rotation.x = 0;
+        rightArm.rotation.x = 0;
+    }
+    
+    if (isJumping) {
+        // Jumping animation
+        leftArm.rotation.x = -0.5;
+        rightArm.rotation.x = -0.5;
+        leftLeg.rotation.x = -0.2;
+        rightLeg.rotation.x = -0.2;
+    }
+}
+
+function createShape(type, position) {
+    let geometry, material, mesh;
+    const color = currentPlayerColor;
+    
+    switch(type) {
+        case 'square':
+            geometry = new THREE.BoxGeometry(1, 1, 1);
+            break;
+        case 'rectangle':
+            geometry = new THREE.BoxGeometry(2, 1, 1);
+            break;
+        case 'triangle':
+            geometry = new THREE.ConeGeometry(1, 1, 3);
+            break;
+        case 'cylinder':
+            geometry = new THREE.CylinderGeometry(0.5, 0.5, 1, 32);
+            break;
+        default:
+            return null;
+    }
+    
+    material = new THREE.MeshPhongMaterial({ color: color });
+    mesh = new THREE.Mesh(geometry, material);
+    mesh.position.copy(position);
+    mesh.position.y = 0.5; // Place on ground
+    
+    scene.add(mesh);
+    shapes.push({
+        mesh: mesh,
+        type: type,
+        color: color
+    });
+    
+    // Emit to other players
+    socket.emit('buildShape', {
+        type: type,
+        position: position,
+        color: '#' + color.toString(16).padStart(6, '0')
+    });
+    
+    return mesh;
+}
+
+// Create speech bubble
+function createSpeechBubble(text, position) {
+    if (!position) return; // Guard against undefined position
+    
+    const bubble = document.createElement('div');
+    bubble.className = 'speech-bubble';
+    bubble.textContent = text;
+    bubble.style.left = position.x + 'px';
+    bubble.style.top = position.y + 'px';
+    document.getElementById('gameContainer').appendChild(bubble);
+    
+    setTimeout(() => {
+        if (bubble && bubble.parentNode) {
+            bubble.remove();
+        }
+    }, 3000);
+}
+
+function get2DPosition(object) {
+    if (!object) return null;
+    
+    const vector = object.position.clone();
+    vector.project(camera);
+    
+    const x = (vector.x * 0.5 + 0.5) * window.innerWidth;
+    const y = (-vector.y * 0.5 + 0.5) * window.innerHeight;
+    
+    return { x, y };
+}
+
+// Event Listeners
+document.addEventListener('keydown', (e) => {
+    keys[e.key.toLowerCase()] = true;
+    
+    // Add jump on space
+    if (e.code === 'Space' && !isJumping) {
+        isJumping = true;
+        jumpStart = Date.now();
+    }
+});
+
+document.addEventListener('keyup', (e) => {
+    keys[e.key.toLowerCase()] = false;
+});
+
+// Click event handling for build mode
+document.querySelectorAll('.build-button').forEach(button => {
+    button.addEventListener('click', (e) => {
+        const shape = e.target.dataset.shape;
+        if (buildMode === shape) {
+            buildMode = null;
+            e.target.classList.remove('active');
+        } else {
+            document.querySelectorAll('.build-button').forEach(btn => 
+                btn.classList.remove('active'));
+            buildMode = shape;
+            e.target.classList.add('active');
+        }
+    });
+});
+
+// Click handler for the renderer
+renderer.domElement.addEventListener('click', (event) => {
+    if (!buildMode) return;
+    
+    // Calculate click position in 3D space
+    const raycaster = new THREE.Raycaster();
+    const mouse = new THREE.Vector2(
+        (event.clientX / window.innerWidth) * 2 - 1,
+        -(event.clientY / window.innerHeight) * 2 + 1
+    );
+    
+    raycaster.setFromCamera(mouse, camera);
+    const intersects = raycaster.intersectObjects([scene.getObjectByName("ground")]);
+    
+    if (intersects.length > 0) {
+        const position = intersects[0].point;
+        createShape(buildMode, position);
+    }
+});
+
+// Socket Events
+socket.on('connect', () => {
+    console.log('Connected to server');
+    addMessage('System', 'Connected to server');
+});
+
+socket.on('playerJoined', (data) => {
+    if (!data || !data.id) return;
+
+    playerCount++;
+    console.log(`Player count: ${playerCount}/${MAX_PLAYERS}`);
+    
+    // Create player with optimized geometry/material sharing
+    const newPlayer = createBlockyCharacter(data.color ? parseInt(data.color.replace('#', '0x')) : 0xff0000);
+    newPlayer.position.set(data.x || 0, data.y || 0, data.z || 0);
+    players[data.id] = newPlayer;
+    scene.add(newPlayer);
+    updatePlayerList();
+    addMessage('System', `Player ${data.id} joined the game (${playerCount}/${MAX_PLAYERS} players)`);
+});
+
+socket.on('playerLeft', (id) => {
+    if (players[id]) {
+        scene.remove(players[id]);
+        delete players[id];
+        playerCount--;
+        updatePlayerList();
+        addMessage('System', `Player ${id} left the game (${playerCount}/${MAX_PLAYERS} players)`);
+    }
+});
+
+socket.on('playerMoved', (data) => {
+    if (players[data.id]) {
+        players[data.id].position.set(data.x, data.y, data.z);
+        players[data.id].rotation.y = data.rotation || 0;
+    }
+});
+
+socket.on('chat', (data) => {
+    if (!data) return;
+    addMessage(data.player, data.message);
+});
+
+// Color change functionality
+document.querySelectorAll('.color-option').forEach(option => {
+    option.addEventListener('click', (e) => {
+        const newColor = e.target.dataset.color;
+        currentPlayerColor = parseInt(newColor.replace('#', '0x'));
+        
+        // Remove old player model
+        if (localPlayer) {
+            scene.remove(localPlayer);
+        }
+        
+        // Create new player model with new color
+        localPlayer = createBlockyCharacter(currentPlayerColor);
+        scene.add(localPlayer);
+        
+        // Emit color change to server
+        socket.emit('colorChange', { color: newColor });
+    });
+});
+
+// New socket event listener for color change
+socket.on('playerColorChanged', (data) => {
+    if (players[data.id]) {
+        // Remove old player model
+        scene.remove(players[data.id]);
+        // Create new player model with new color
+        players[data.id] = createBlockyCharacter(parseInt(data.color.replace('#', '0x')));
+        players[data.id].position.copy(data.position);
+        scene.add(players[data.id]);
+    }
+});
+
+// Chat functionality
+const chatInput = document.getElementById('chatInput');
+const messages = document.getElementById('messages');
+
+function addMessage(player, message) {
+    if (!player || !message) return;
+    
+    const messageDiv = document.createElement('div');
+    messageDiv.className = 'message';
+    messageDiv.textContent = `${player}: ${message}`;
+    messages.appendChild(messageDiv);
+    messages.scrollTop = messages.scrollHeight;
+    
+    if (player === 'You' && localPlayer) {
+        const position = get2DPosition(localPlayer);
+        if (position) {
+            position.y -= 50;
+            createSpeechBubble(message, position);
+        }
+    } else if (players[player]) {
+        const position = get2DPosition(players[player]);
+        if (position) {
+            position.y -= 50;
+            createSpeechBubble(message, position);
+        }
+    }
+}
+
+chatInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter' && chatInput.value.trim()) {
+        const message = chatInput.value.trim();
+        socket.emit('chat', { message: message });
+        addMessage('You', message);
+        chatInput.value = '';
+    }
+});
+
+function updatePlayerList() {
+    const playersList = document.getElementById('players');
+    if (!playersList) return;
+    
+    playersList.innerHTML = `
+        <div style="margin-bottom: 5px;">
+            Players Online: ${playerCount}/${MAX_PLAYERS}
+        </div>
+    `;
+    
+    // Only show first 20 players in list to prevent UI clutter
+    Object.keys(players).slice(0, 20).forEach(id => {
+        const li = document.createElement('li');
+        li.textContent = `Player ${id}`;
+        playersList.appendChild(li);
+    });
+    
+    if (Object.keys(players).length > 20) {
+        const li = document.createElement('li');
+        li.textContent = `...and ${Object.keys(players).length - 20} more`;
+        playersList.appendChild(li);
+    }
+}
+
+// Performance monitoring
+let lastTime = performance.now();
+let frame = 0;
+
+function checkPerformance() {
+    frame++;
+    const time = performance.now();
+    
+    if (time >= lastTime + 1000) {
+        const fps = Math.round((frame * 1000) / (time - lastTime));
+        console.log(`FPS: ${fps} - Active Players: ${playerCount}`);
+        frame = 0;
+        lastTime = time;
+    }
+    
+    requestAnimationFrame(checkPerformance);
+}
+
+checkPerformance();
+
+function animate() {
+    requestAnimationFrame(animate);
+    
+    if (!localPlayer) return;
+
+    // Handle jumping
+    if (isJumping) {
+        const jumpProgress = (Date.now() - jumpStart) / jumpDuration;
+        
+        if (jumpProgress >= 1) {
+            isJumping = false;
+            localPlayer.position.y = 0; // Reset to base height
+        } else {
+            const jumpOffset = Math.sin(jumpProgress * Math.PI) * jumpHeight;
+            localPlayer.position.y = jumpOffset;
+        }
+    }
+    
+    const moveVector = new THREE.Vector3(0, 0, 0);
+    if (keys['arrowleft'] || keys['a']) moveVector.x -= moveSpeed;
+    if (keys['arrowright'] || keys['d']) moveVector.x += moveSpeed;
+    if (keys['arrowup'] || keys['w']) moveVector.z -= moveSpeed;
+    if (keys['arrowdown'] || keys['s']) moveVector.z += moveSpeed;
+
+    const isMoving = moveVector.length() > 0;
+    
+    // Only animate visible players
+    const frustum = new THREE.Frustum();
+    const matrix = new THREE.Matrix4().multiplyMatrices(
+        camera.projectionMatrix,
+        camera.matrixWorldInverse
+    );
+    frustum.setFromProjectionMatrix(matrix);
+
+    // Animate local player
+    animateCharacter(localPlayer, isMoving, isJumping);
+    
+    // Optimize other players' animations
+    Object.entries(players).forEach(([id, player]) => {
+        if (frustum.containsPoint(player.position)) {
+            animateCharacter(player, player.userData.isMoving || false, player.position.y > 0);
+        }
+    });
+
+    if (isMoving) {
+        localPlayer.position.add(moveVector);
+        if (moveVector.x !== 0 || moveVector.z !== 0) {
+            localPlayer.rotation.y = Math.atan2(moveVector.x, moveVector.z);
+        }
+        
+        // Boundary checks
+        localPlayer.position.x = Math.max(-10, Math.min(10, localPlayer.position.x));
+        localPlayer.position.z = Math.max(-10, Math.min(10, localPlayer.position.z));
+        
+        // Update camera
+        camera.position.x = localPlayer.position.x;
+        camera.position.z = localPlayer.position.z + 5;
+        camera.position.y = localPlayer.position.y + 2; // Maintain height
+        camera.lookAt(localPlayer.position);
+        
+        socket.emit('move', {
+            x: localPlayer.position.x,
+            y: localPlayer.position.y,
+            z: localPlayer.position.z,
+            rotation: localPlayer.rotation.y
+        });
+    }
+    
+    renderer.render(scene, camera);
+}
+
+// Window resize handler
+window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+// Socket handlers for syncing builds
+socket.on('shapePlaced', (data) => {
+    const position = new THREE.Vector3(data.position.x, data.position.y, data.position.z);
+    const color = parseInt(data.color.replace('#', '0x'));
+    createShape(data.type, position, color);
+});
+</script>
+</body>
+</html>
