@@ -1,0 +1,1062 @@
+<html><head><base href="." />
+<meta charset="UTF-8" />
+<title>3D Bedroom Explorer</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<style>
+body { margin: 0; }
+canvas { display: block; }
+#instructions {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    color: white;
+    background: rgba(0,0,0,0.5);
+    padding: 10px;
+    border-radius: 5px;
+    font-family: Arial, sans-serif;
+}
+#notification {
+    display: none;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: #2b2b2b;
+    color: white;
+    padding: 20px;
+    border-radius: 5px;
+    text-align: center;
+    font-family: Arial, sans-serif;
+    border: 3px solid #d4a84b;
+    box-shadow: 0 0 0 2px #000 inset;
+    min-width: 300px;
+}
+#notification button {
+    margin: 10px;
+    padding: 8px 25px;
+    cursor: pointer;
+    background: #d4a84b;
+    border: 2px solid #000;
+    color: black;
+    font-weight: bold;
+    border-radius: 3px;
+    transition: all 0.2s;
+}
+#notification button:hover {
+    background: #e8bd60;
+}
+#notification::before {
+    content: "Press E to";
+    display: block;
+    font-size: 14px;
+    color: #d4a84b;
+    margin-bottom: 5px;
+}
+#computerScreen {
+    display: none;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: black;
+    color: white;
+    font-family: 'Courier New', monospace;
+    padding: 20px;
+    box-sizing: border-box;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+}
+#computerScreen p {
+    margin: 0;
+    padding: 10px 0;
+    opacity: 0;
+    transition: opacity 1s;
+}
+#fadeOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: black;
+    opacity: 0;
+    transition: opacity 0.5s;
+    pointer-events: none;
+    z-index: 1000;
+}
+#redFlash {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(255, 0, 0, 0.3);
+    opacity: 0;
+    pointer-events: none;
+    z-index: 999;
+    mix-blend-mode: multiply;
+}
+.flicker {
+    animation: flickerAnimation 0.5s infinite;
+}
+@keyframes flickerAnimation {
+    0% { opacity: 0; }
+    25% { opacity: 0.3; }
+    50% { opacity: 0.1; }
+    75% { opacity: 0.4; }
+    100% { opacity: 0; }
+}
+</style>
+</head>
+<body>
+<div id="instructions">
+    Use WASD to move<br>
+    Mouse to look left/right<br>
+    Space to jump<br>
+    Shift to sprint
+</div>
+<audio id="footsteps" src="concrete-footsteps-6752 (1).mp3" loop></audio>
+<audio id="jumpSound" src="cartoon-jump-6462 (1).mp3"></audio>
+<audio id="doorLockedSound" src="jp_lockedknob08-42735.mp3"></audio>
+<div id="notification">
+    Turn on computer
+</div>
+<div id="computerScreen">
+    <p>Welcome to the system...</p>
+    <p>Initializing...</p>
+    <p>Ready.</p>
+</div>
+<div id="fadeOverlay"></div>
+<div id="redFlash"></div>
+<script>
+let camera, scene, renderer, controls;
+let moveForward = false;
+let moveBackward = false;
+let moveLeft = false;
+let moveRight = false;
+let canJump = false;
+let velocity = new THREE.Vector3();
+let direction = new THREE.Vector3();
+let footsteps = document.getElementById('footsteps');
+let jumpSound = document.getElementById('jumpSound');
+let doorLockedSound = document.getElementById('doorLockedSound');
+
+let isNearComputer = false;
+let isUsingComputer = false;
+let computerPosition = new THREE.Vector3(6, 0.25, -8); // Position of the laptop
+let isSprinting = false;
+let baseSpeed = 0.1;
+let sprintSpeed = 0.2;
+
+let isNearBed = false;
+let isSleeping = false;
+let bedPosition = new THREE.Vector3(-6, -0.75, -7); // Position matches bed creation
+
+// New global variables
+let isDoorLocked = true;
+let isNearDoor = false;
+let doorPosition = new THREE.Vector3(0, 0, 9); // Position of the door
+
+// New cabinet interaction variables
+let isNearCabinet = false;
+let isCabinetOpen = false;
+let hasKey = false;
+let cabinetPosition = new THREE.Vector3(-8, 0, -3); // Position in corner
+let keyPosition = new THREE.Vector3(-8, 0, -3);
+let cabinetMesh;
+let keyMesh;
+
+// New cutscene state variable
+let isInEndCutscene = false;
+
+init();
+function onWindowResize() {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+}
+setupControls();
+animate();
+
+function init() {
+    scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x87CEEB); // Sky blue background
+    camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    
+    renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.shadowMap.enabled = true;
+    document.body.appendChild(renderer.domElement);
+
+    // Enhanced Lighting
+    const ambientLight = new THREE.AmbientLight(0x404040, 0.5);
+    scene.add(ambientLight);
+    
+    const mainLight = new THREE.DirectionalLight(0xffffff, 0.8);
+    mainLight.position.set(5, 10, 5);
+    mainLight.castShadow = true;
+    scene.add(mainLight);
+
+    const windowLight = new THREE.PointLight(0xFFE5B4, 1, 15);
+    windowLight.position.set(-8, 4, -9);
+    scene.add(windowLight);
+
+    // Textured Floor
+    const floorGeometry = new THREE.PlaneGeometry(20, 20);
+    const floorMaterial = new THREE.MeshPhongMaterial({
+        color: 0x966F33,
+        specular: 0x222222,
+        shininess: 25
+    });
+    const floor = new THREE.Mesh(floorGeometry, floorMaterial);
+    floor.rotation.x = -Math.PI / 2;
+    floor.position.y = -2;
+    floor.receiveShadow = true;
+    scene.add(floor);
+
+    // Enhanced Walls
+    createWall(0, 0, -10, 20, 8, 0, 0xE6E6FA); // Back wall
+    createWall(-10, 0, 0, 20, 8, Math.PI/2, 0xE6E6FA); // Left wall
+    createWall(10, 0, 0, 20, 8, Math.PI/2, 0xE6E6FA); // Right wall
+    createWall(0, 0, 10, 20, 8, 0, 0xE6E6FA); // Front wall with door
+
+    // Add Ceiling
+    const ceilingGeometry = new THREE.PlaneGeometry(20, 20);
+    const ceilingMaterial = new THREE.MeshPhongMaterial({
+        color: 0xFFFFFF,
+        side: THREE.DoubleSide
+    });
+    const ceiling = new THREE.Mesh(ceilingGeometry, ceilingMaterial);
+    ceiling.rotation.x = Math.PI / 2;
+    ceiling.position.y = 6;
+    ceiling.receiveShadow = true;
+    scene.add(ceiling);
+
+    // Add Door
+    createDoor(0, 0, 9);
+
+    // Window
+    createWindow(-9, 2, -9.9);
+
+    // Enhanced Bed
+    createBed();
+    
+    // Enhanced Desk
+    createDesk();
+
+    // Add Carpet
+    createCarpet();
+
+    // Add Decorations
+    createDecorations();
+
+    // Create Cabinet
+    createCabinet();
+
+    camera.position.y = 2;
+    camera.position.z = 5;
+
+    window.addEventListener('resize', onWindowResize, false);
+}
+
+function setupControls() {
+    const onMouseMove = (event) => {
+        if (document.pointerLockElement === document.body) {
+            camera.rotation.y -= event.movementX * 0.002;
+        }
+    };
+
+    // Handle clicking on game window
+    renderer.domElement.addEventListener('click', () => {
+        document.body.requestPointerLock();
+    });
+
+    // Add mouse movement and key controls
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('keydown', onKeyDown);
+    document.addEventListener('keyup', onKeyUp);
+}
+
+function onKeyDown(event) {
+    switch (event.code) {
+        case 'KeyW':
+            moveForward = true;
+            if (!footsteps.paused && !moveBackward && !moveLeft && !moveRight) {
+                footsteps.play();
+            }
+            break;
+        case 'KeyS':
+            moveBackward = true;
+            if (!footsteps.paused && !moveForward && !moveLeft && !moveRight) {
+                footsteps.play();
+            }
+            break;
+        case 'KeyA':
+            moveLeft = true;
+            if (!footsteps.paused && !moveForward && !moveBackward && !moveRight) {
+                footsteps.play();
+            }
+            break;
+        case 'KeyD':
+            moveRight = true;
+            if (!footsteps.paused && !moveForward && !moveBackward && !moveLeft) {
+                footsteps.play();
+            }
+            break;
+        case 'Space':
+            if (canJump) {
+                velocity.y = 3;
+                canJump = false;
+                jumpSound.currentTime = 0;
+                jumpSound.play();
+            }
+            break;
+        case 'ShiftLeft':
+            isSprinting = true;
+            break;
+        case 'KeyE':
+            if (isNearComputer && !isUsingComputer) {
+                useComputer();
+            } else if (isNearBed && !isSleeping) {
+                goToSleep();
+            } else if (isNearDoor) {
+                tryOpenDoor();
+            } else if (isNearCabinet) {
+                interactWithCabinet();
+            }
+            break;
+        case 'Escape':
+            if (isUsingComputer) {
+                document.getElementById('computerScreen').style.display = 'none';
+                isUsingComputer = false;
+            }
+            break;
+    }
+}
+
+function onKeyUp(event) {
+    switch (event.code) {
+        case 'KeyW':
+            moveForward = false;
+            if (!moveBackward && !moveLeft && !moveRight) {
+                footsteps.pause();
+                footsteps.currentTime = 0;
+            }
+            break;
+        case 'KeyS':
+            moveBackward = false;
+            if (!moveForward && !moveLeft && !moveRight) {
+                footsteps.pause();
+                footsteps.currentTime = 0;
+            }
+            break;
+        case 'KeyA':
+            moveLeft = false;
+            if (!moveForward && !moveBackward && !moveRight) {
+                footsteps.pause();
+                footsteps.currentTime = 0;
+            }
+            break;
+        case 'KeyD':
+            moveRight = false;
+            if (!moveForward && !moveBackward && !moveLeft) {
+                footsteps.pause();
+                footsteps.currentTime = 0;
+            }
+            break;
+        case 'ShiftLeft':
+            isSprinting = false;
+            break;
+    }
+}
+
+// Add this utility function for smooth animations (used in useComputer and goToSleep)
+function easeInOutCubic(t) {
+    return t < 0.5 
+        ? 4 * t * t * t 
+        : 1 - Math.pow(-2 * t + 2, 3) / 2;
+}
+
+function createDoor(x, y, z) {
+    // Door frame
+    const frameGeometry = new THREE.BoxGeometry(3, 6, 0.3);
+    const frameMaterial = new THREE.MeshPhongMaterial({color: 0x8B4513});
+    const frame = new THREE.Mesh(frameGeometry, frameMaterial);
+    frame.position.set(x, y + 1, z);
+    scene.add(frame);
+
+    // Door
+    const doorGeometry = new THREE.BoxGeometry(2.7, 5.7, 0.2);
+    const doorMaterial = new THREE.MeshPhongMaterial({color: 0xA0522D});
+    const door = new THREE.Mesh(doorGeometry, doorMaterial);
+    door.position.set(x + 1.3, y + 0.85, z);
+    door.rotation.y = Math.PI / 4; // Door slightly open
+    scene.add(door);
+
+    // Doorknob
+    const knobGeometry = new THREE.SphereGeometry(0.1, 32, 32);
+    const knobMaterial = new THREE.MeshPhongMaterial({color: 0xFFD700});
+    const knob = new THREE.Mesh(knobGeometry, knobMaterial);
+    knob.position.set(x + 2.2, y + 1, z + 0.1);
+    scene.add(knob);
+}
+
+function createWindow(x, y, z) {
+    const windowFrame = new THREE.BoxGeometry(3, 3, 0.3);
+    const frameMaterial = new THREE.MeshPhongMaterial({color: 0x4A4A4A});
+    const frame = new THREE.Mesh(windowFrame, frameMaterial);
+    frame.position.set(x, y, z);
+    scene.add(frame);
+
+    const windowGlass = new THREE.PlaneGeometry(2.7, 2.7);
+    const glassMaterial = new THREE.MeshPhongMaterial({
+        color: 0x87CEEB,
+        transparent: true,
+        opacity: 0.3
+    });
+    const glass = new THREE.Mesh(windowGlass, glassMaterial);
+    glass.position.set(x, y, z);
+    scene.add(glass);
+}
+
+function createWall(x, y, z, width, height, rotation, color) {
+    const wallGeometry = new THREE.PlaneGeometry(width, height);
+    const wallMaterial = new THREE.MeshPhongMaterial({
+        color: color,
+        side: THREE.DoubleSide,
+        specular: 0x222222,
+        shininess: 10
+    });
+    const wall = new THREE.Mesh(wallGeometry, wallMaterial);
+    wall.position.set(x, y + height/2 - 2, z);
+    wall.rotation.y = rotation;
+    wall.receiveShadow = true;
+    scene.add(wall);
+}
+
+function createBed() {
+    // Bed frame
+    const bedFrameGeometry = new THREE.BoxGeometry(4.2, 1, 6.2);
+    const bedFrameMaterial = new THREE.MeshPhongMaterial({color: 0x4A3C31});
+    const bedFrame = new THREE.Mesh(bedFrameGeometry, bedFrameMaterial);
+    bedFrame.position.set(-6, -1.5, -7);
+    bedFrame.castShadow = true;
+    scene.add(bedFrame);
+
+    // Mattress
+    const mattressGeometry = new THREE.BoxGeometry(4, 0.5, 6);
+    const mattressMaterial = new THREE.MeshPhongMaterial({color: 0xFFFFFF});
+    const mattress = new THREE.Mesh(mattressGeometry, mattressMaterial);
+    mattress.position.set(-6, -0.75, -7);
+    scene.add(mattress);
+
+    // Pillow
+    const pillowGeometry = new THREE.BoxGeometry(1.5, 0.3, 2);
+    const pillowMaterial = new THREE.MeshPhongMaterial({color: 0xFFFFFF});
+    const pillow = new THREE.Mesh(pillowGeometry, pillowMaterial);
+    pillow.position.set(-6, -0.5, -9);
+    scene.add(pillow);
+
+    // Blanket
+    const blanketGeometry = new THREE.BoxGeometry(3.8, 0.2, 4);
+    const blanketMaterial = new THREE.MeshPhongMaterial({color: 0x4169E1});
+    const blanket = new THREE.Mesh(blanketGeometry, blanketMaterial);
+    blanket.position.set(-6, -0.5, -6);
+    scene.add(blanket);
+}
+
+function createDesk() {
+    // Desk top
+    const deskGeometry = new THREE.BoxGeometry(4, 0.4, 2);
+    const deskMaterial = new THREE.MeshPhongMaterial({
+        color: 0x8B4513,
+        specular: 0x222222,
+        shininess: 30
+    });
+    const desk = new THREE.Mesh(deskGeometry, deskMaterial);
+    desk.position.set(6, 0, -8);
+    desk.castShadow = true;
+    scene.add(desk);
+
+    // Desk legs
+    const legGeometry = new THREE.BoxGeometry(0.2, 2, 0.2);
+    for(let i = 0; i < 4; i++) {
+        const leg = new THREE.Mesh(legGeometry, deskMaterial);
+        const xPos = i < 2 ? 4.5 : 7.5;
+        const zPos = i % 2 === 0 ? -7.1 : -8.9;
+        leg.position.set(xPos, -1, zPos);
+        leg.castShadow = true;
+        scene.add(leg);
+    }
+
+    // Add laptop
+    const laptopBase = new THREE.BoxGeometry(1.5, 0.1, 1);
+    const laptopScreen = new THREE.BoxGeometry(1.5, 1, 0.1);
+    const laptopMaterial = new THREE.MeshPhongMaterial({color: 0x2F4F4F});
+    
+    const base = new THREE.Mesh(laptopBase, laptopMaterial);
+    base.position.set(6, 0.25, -8);
+    scene.add(base);
+
+    const screen = new THREE.Mesh(laptopScreen, laptopMaterial);
+    screen.position.set(6, 0.75, -8.5);
+    screen.rotation.x = -Math.PI/6;
+    scene.add(screen);
+}
+
+function createCarpet() {
+    const carpetGeometry = new THREE.CircleGeometry(3, 32);
+    const carpetMaterial = new THREE.MeshPhongMaterial({
+        color: 0x8B0000,
+        side: THREE.DoubleSide
+    });
+    const carpet = new THREE.Mesh(carpetGeometry, carpetMaterial);
+    carpet.rotation.x = -Math.PI/2;
+    carpet.position.y = -1.99;
+    carpet.position.x = 0;
+    carpet.position.z = 0;
+    scene.add(carpet);
+}
+
+function createDecorations() {
+    // Add a lamp on the desk
+    const lampBaseGeometry = new THREE.CylinderGeometry(0.2, 0.3, 0.5, 12);
+    const lampPoleGeometry = new THREE.CylinderGeometry(0.05, 0.05, 1, 8);
+    const lampShadeGeometry = new THREE.ConeGeometry(0.3, 0.5, 16);
+    const lampMaterial = new THREE.MeshPhongMaterial({color: 0x696969});
+    
+    const lampBase = new THREE.Mesh(lampBaseGeometry, lampMaterial);
+    lampBase.position.set(7, 0.45, -8.5);
+    scene.add(lampBase);
+
+    const lampPole = new THREE.Mesh(lampPoleGeometry, lampMaterial);
+    lampPole.position.set(7, 1, -8.5);
+    scene.add(lampPole);
+
+    const lampShade = new THREE.Mesh(lampShadeGeometry, lampMaterial);
+    lampShade.position.set(7, 1.5, -8.5);
+    scene.add(lampShade);
+
+    // Add a desk light
+    const deskLight = new THREE.PointLight(0xFFDB58, 0.5, 5);
+    deskLight.position.set(7, 1.5, -8.5);
+    scene.add(deskLight);
+}
+
+function createCabinet() {
+    // Cabinet base
+    const cabinetGeometry = new THREE.BoxGeometry(2, 3, 1.5);
+    const cabinetMaterial = new THREE.MeshPhongMaterial({color: 0x8B4513});
+    cabinetMesh = new THREE.Mesh(cabinetGeometry, cabinetMaterial);
+    cabinetMesh.position.copy(cabinetPosition);
+    scene.add(cabinetMesh);
+
+    // Open cabinet (initially hidden)
+    const openCabinetGeometry = new THREE.BoxGeometry(2, 3, 1.5);
+    const openCabinetMaterial = new THREE.MeshPhongMaterial({
+        color: 0x8B4513,
+        side: THREE.DoubleSide
+    });
+    const openCabinet = new THREE.Mesh(openCabinetGeometry, openCabinetMaterial);
+    openCabinet.position.copy(cabinetPosition);
+    openCabinet.visible = false;
+    cabinetMesh.userData.openState = openCabinet;
+    scene.add(openCabinet);
+
+    // Cabinet shelves for open state
+    const shelfGeometry = new THREE.BoxGeometry(2, 0.1, 1.5);
+    const shelfMaterial = new THREE.MeshPhongMaterial({color: 0x6B3E26});
+    for(let i = 0; i < 2; i++) {
+        const shelf = new THREE.Mesh(shelfGeometry, shelfMaterial);
+        shelf.position.set(cabinetPosition.x, cabinetPosition.y - 0.5 + (i * 1.5), cabinetPosition.z);
+        shelf.visible = false;
+        openCabinet.add(shelf);
+    }
+
+    // Cabinet back panel for open state
+    const backPanelGeometry = new THREE.BoxGeometry(2, 3, 0.1);
+    const backPanel = new THREE.Mesh(backPanelGeometry, openCabinetMaterial);
+    backPanel.position.set(cabinetPosition.x, cabinetPosition.y, cabinetPosition.z - 0.7);
+    backPanel.visible = false;
+    openCabinet.add(backPanel);
+
+    // Side panels for open state
+    const sidePanelGeometry = new THREE.BoxGeometry(0.1, 3, 1.5);
+    [-1, 1].forEach(side => {
+        const sidePanel = new THREE.Mesh(sidePanelGeometry, openCabinetMaterial);
+        sidePanel.position.set(cabinetPosition.x + (side * 0.95), cabinetPosition.y, cabinetPosition.z);
+        sidePanel.visible = false;
+        openCabinet.add(sidePanel);
+    });
+
+    // Cabinet door (initially visible)
+    const doorGeometry = new THREE.BoxGeometry(2, 3, 0.1);
+    const doorMaterial = new THREE.MeshPhongMaterial({color: 0x6B3E26});
+    const door = new THREE.Mesh(doorGeometry, doorMaterial);
+    door.position.set(cabinetPosition.x, cabinetPosition.y, cabinetPosition.z + 0.7);
+    cabinetMesh.userData.door = door;
+    scene.add(door);
+
+    // Create key with more detail
+    const keyGroup = new THREE.Group();
+    
+    // Key head (ring)
+    const ringGeometry = new THREE.TorusGeometry(0.15, 0.04, 16, 32);
+    const keyMaterial = new THREE.MeshPhongMaterial({
+        color: 0xFFD700,
+        metalness: 0.7,
+        roughness: 0.3
+    });
+    const ring = new THREE.Mesh(ringGeometry, keyMaterial);
+    keyGroup.add(ring);
+
+    // Key shaft
+    const shaftGeometry = new THREE.CylinderGeometry(0.03, 0.03, 0.4, 8);
+    const shaft = new THREE.Mesh(shaftGeometry, keyMaterial);
+    shaft.rotation.x = Math.PI/2;
+    shaft.position.y = -0.2;
+    keyGroup.add(shaft);
+
+    // Key teeth
+    const teethGeometry = new THREE.BoxGeometry(0.15, 0.08, 0.04);
+    [-0.05, 0, 0.05].forEach((pos, i) => {
+        const tooth = new THREE.Mesh(teethGeometry, keyMaterial);
+        tooth.position.set(pos, -0.4, 0);
+        tooth.scale.set(0.5, 1, 1);
+        keyGroup.add(tooth);
+    });
+
+    keyMesh = keyGroup;
+    keyMesh.position.set(cabinetPosition.x, cabinetPosition.y, cabinetPosition.z);
+    keyMesh.visible = false;
+    scene.add(keyMesh);
+}
+
+// Update the interactWithCabinet function
+function interactWithCabinet() {
+    if (!isCabinetOpen) {
+        // Open cabinet
+        isCabinetOpen = true;
+        cabinetMesh.visible = false;
+        cabinetMesh.userData.door.visible = false;
+        cabinetMesh.userData.openState.visible = true;
+        cabinetMesh.userData.openState.children.forEach(child => child.visible = true);
+        keyMesh.visible = true;
+        keyMesh.position.set(
+            cabinetPosition.x,
+            cabinetPosition.y,
+            cabinetPosition.z - 0.3
+        );
+        document.getElementById('notification').textContent = 'Take Key';
+    } else if (!hasKey) {
+        // Take key
+        hasKey = true;
+        keyMesh.visible = false;
+        document.getElementById('notification').textContent = 'Cabinet';
+    }
+}
+
+function checkComputerDistance() {
+    const distance = camera.position.distanceTo(computerPosition);
+    if (distance < 3 && !isNearComputer && !isUsingComputer) {
+        document.getElementById('notification').style.display = 'block';
+        isNearComputer = true;
+    } else if (distance >= 3 && isNearComputer) {
+        document.getElementById('notification').style.display = 'none';
+        isNearComputer = false;
+    }
+}
+
+function checkBedDistance() {
+    const distance = camera.position.distanceTo(bedPosition);
+    if (distance < 3 && !isNearBed && !isSleeping) {
+        document.getElementById('notification').style.display = 'block';
+        document.getElementById('notification').textContent = 'Sleep';
+        isNearBed = true;
+    } else if ((distance >= 3 && isNearBed) || isSleeping) {
+        document.getElementById('notification').style.display = 'none';
+        isNearBed = false;
+    }
+}
+
+// New function to check door distance
+function checkDoorDistance() {
+    const distance = camera.position.distanceTo(doorPosition);
+    if (distance < 3 && !isNearDoor) {
+        document.getElementById('notification').style.display = 'block';
+        document.getElementById('notification').textContent = 'Open Door';
+        isNearDoor = true;
+    } else if ((distance >= 3 && isNearDoor)) {
+        isNearDoor = false;
+        if (!isNearComputer && !isNearBed) {
+            document.getElementById('notification').style.display = 'none';
+        }
+    }
+}
+
+// New function to check cabinet distance
+function checkCabinetDistance() {
+    const distance = camera.position.distanceTo(cabinetPosition);
+    if (distance < 3 && !isNearCabinet) {
+        document.getElementById('notification').style.display = 'block';
+        document.getElementById('notification').textContent = isCabinetOpen ? 
+            (hasKey ? 'Cabinet' : 'Take Key') : 'Open Cabinet';
+        isNearCabinet = true;
+    } else if (distance >= 3 && isNearCabinet) {
+        if (!isNearComputer && !isNearBed && !isNearDoor) {
+            document.getElementById('notification').style.display = 'none';
+        }
+        isNearCabinet = false;
+    }
+}
+
+function hideNotification() {
+    document.getElementById('notification').style.display = 'none';
+}
+
+function useComputer() {
+    isUsingComputer = true;
+    document.getElementById('notification').style.display = 'none';
+    document.exitPointerLock();
+    
+    // Store original camera position and create animation
+    const startPos = camera.position.clone();
+    const startRot = camera.rotation.clone();
+    const targetPos = new THREE.Vector3(computerPosition.x, computerPosition.y + 0.5, computerPosition.z + 0.5);
+    const targetRot = new THREE.Euler(0, 0, 0);
+    
+    let progress = 0;
+    const animateToComputer = () => {
+        progress += 0.01; // Slower transition
+        if (progress <= 1) {
+            // Use easing function for smoother transition
+            const eased = easeInOutCubic(progress);
+            camera.position.lerpVectors(startPos, targetPos, eased);
+            camera.rotation.x = THREE.MathUtils.lerp(startRot.x, targetRot.x, eased);
+            camera.rotation.y = THREE.MathUtils.lerp(startRot.y, targetRot.y, eased);
+            requestAnimationFrame(animateToComputer);
+        } else {
+            // Show computer screen with fade in
+            const computerScreen = document.getElementById('computerScreen');
+            computerScreen.style.display = 'block';
+            computerScreen.style.opacity = '0';
+            
+            // Fade in computer screen
+            let opacity = 0;
+            const fadeIn = () => {
+                opacity += 0.02;
+                if (opacity <= 1) {
+                    computerScreen.style.opacity = opacity;
+                    requestAnimationFrame(fadeIn);
+                } else {
+                    // Animate text appearing
+                    const paragraphs = document.querySelectorAll('#computerScreen p');
+                    paragraphs.forEach((p, index) => {
+                        setTimeout(() => {
+                            p.style.opacity = '1';
+                        }, index * 1000);
+                    });
+                }
+            };
+            fadeIn();
+        }
+    };
+    
+    animateToComputer();
+}
+
+// Modify the goToSleep function for better animation
+function goToSleep() {
+    const fadeOverlay = document.getElementById('fadeOverlay');
+    if (!fadeOverlay) {
+        console.error('Fade overlay element not found');
+        return;
+    }
+
+    isSleeping = true;
+    document.getElementById('notification').style.display = 'none';
+    document.exitPointerLock();
+    
+    const startPos = camera.position.clone();
+    const startRot = camera.rotation.clone();
+    const targetPos = new THREE.Vector3(bedPosition.x, bedPosition.y + 1, bedPosition.z);
+    const targetRot = new THREE.Euler(-Math.PI/2, 0, 0);
+    
+    let progress = 0;
+    const animateToBed = () => {
+        progress += 0.008; // Slower animation
+        if (progress <= 1) {
+            const eased = easeInOutCubic(progress);
+            
+            // Add slight arc to movement
+            const heightOffset = Math.sin(progress * Math.PI) * 0.5;
+            const currentPos = new THREE.Vector3();
+            currentPos.lerpVectors(startPos, targetPos, eased);
+            currentPos.y += heightOffset;
+            
+            camera.position.copy(currentPos);
+            camera.rotation.x = THREE.MathUtils.lerp(startRot.x, targetRot.x, eased);
+            camera.rotation.y = THREE.MathUtils.lerp(startRot.y, targetRot.y, eased);
+            
+            // Fade to black with delayed start
+            const fadeProgress = Math.max(0, (progress - 0.5) * 2);
+            const opacity = easeInOutCubic(fadeProgress);
+            fadeOverlay.style.opacity = opacity.toString();
+            
+            requestAnimationFrame(animateToBed);
+        }
+    };
+    animateToBed();
+}
+
+// Add tryOpenDoor function
+function tryOpenDoor() {
+    if (isDoorLocked && !hasKey) {
+        // Play door locked sound
+        doorLockedSound.currentTime = 0;
+        doorLockedSound.play();
+        
+        const notification = document.getElementById('notification');
+        notification.textContent = "The door is locked...";
+        notification.style.color = "#ff4444";
+        
+        // Reset notification after 2 seconds
+        setTimeout(() => {
+            if (isNearDoor) {
+                notification.textContent = "Open Door";
+                notification.style.color = "white";
+            } else {
+                notification.style.display = 'none';
+            }
+        }, 2000);
+    } else if (hasKey && !isInEndCutscene) {
+        startEndCutscene();
+    }
+}
+
+// Add new function for the end cutscene
+function startEndCutscene() {
+    isInEndCutscene = true;
+    document.exitPointerLock();
+    const redFlash = document.getElementById('redFlash');
+    
+    // Store original camera position and ensure looking at door
+    const startPos = camera.position.clone();
+    
+    // Enhanced timeline with more dramatic movements and better pacing
+    const timeline = [
+        { // Initial position - dramatic pause looking at door
+            pos: startPos.clone(),
+            rot: new THREE.Euler(0, Math.PI, 0),
+            duration: 1000
+        },
+        { // Initial shock - violent knockback
+            pos: new THREE.Vector3(startPos.x, startPos.y + 0.5, startPos.z - 1),
+            rot: new THREE.Euler(0, Math.PI, 0),
+            duration: 100,
+            shake: true,
+            shakeIntensity: 0.2
+        },
+        { // Hard landing on ground
+            pos: new THREE.Vector3(startPos.x, startPos.y - 0.5, startPos.z - 3),
+            rot: new THREE.Euler(-Math.PI/12, Math.PI, 0),
+            duration: 200,
+            shake: true,
+            shakeIntensity: 0.15
+        },
+        { // Disoriented pause
+            pos: new THREE.Vector3(startPos.x, startPos.y - 0.5, startPos.z - 3),
+            rot: new THREE.Euler(-Math.PI/12, Math.PI, 0),
+            duration: 800
+        },
+        { // Panicked look left with head tilt
+            pos: new THREE.Vector3(startPos.x - 0.2, startPos.y - 0.5, startPos.z - 3),
+            rot: new THREE.Euler(-Math.PI/12, Math.PI + Math.PI/2, Math.PI/24),
+            duration: 300
+        },
+        { // Quick look right with opposite tilt
+            pos: new THREE.Vector3(startPos.x + 0.2, startPos.y - 0.5, startPos.z - 3),
+            rot: new THREE.Euler(-Math.PI/12, Math.PI - Math.PI/2, -Math.PI/24),
+            duration: 300
+        },
+        { // Terrified look back at door
+            pos: new THREE.Vector3(startPos.x, startPos.y - 0.5, startPos.z - 3),
+            rot: new THREE.Euler(-Math.PI/12, Math.PI, 0),
+            duration: 800
+        }
+    ];
+
+    let currentStep = 0;
+    let stepProgress = 0;
+    let stepStart = {
+        pos: camera.position.clone(),
+        rot: camera.rotation.clone()
+    };
+
+    // Create more menacing shadow figure with particle effects
+    const shadowGeometry = new THREE.BoxGeometry(3, 5, 1);
+    const shadowMaterial = new THREE.MeshBasicMaterial({ 
+        color: 0x000000,
+        transparent: true,
+        opacity: 0.9
+    });
+    const shadowFigure = new THREE.Mesh(shadowGeometry, shadowMaterial);
+    shadowFigure.position.set(0, 2, 9);
+    
+    // Add smoky effect around shadow figure
+    const smokeParticles = new THREE.Group();
+    for(let i = 0; i < 20; i++) {
+        const particle = new THREE.Mesh(
+            new THREE.SphereGeometry(0.2),
+            new THREE.MeshBasicMaterial({
+                color: 0x000000,
+                transparent: true,
+                opacity: 0.3
+            })
+        );
+        particle.position.set(
+            (Math.random() - 0.5) * 2,
+            (Math.random() - 0.5) * 4,
+            (Math.random() - 0.5) * 2
+        );
+        smokeParticles.add(particle);
+    }
+    shadowFigure.add(smokeParticles);
+    scene.add(shadowFigure);
+
+    // Enhanced red flash effect
+    redFlash.classList.add('flicker');
+    redFlash.style.animation = 'flickerAnimation 0.3s infinite';
+
+    function addCameraShake(pos, intensity = 0.1) {
+        return new THREE.Vector3(
+            pos.x + (Math.random() - 0.5) * intensity,
+            pos.y + (Math.random() - 0.5) * intensity,
+            pos.z + (Math.random() - 0.5) * intensity
+        );
+    }
+
+    function updateSmokeEffect() {
+        smokeParticles.children.forEach(particle => {
+            particle.position.x += (Math.random() - 0.5) * 0.1;
+            particle.position.y += (Math.random() - 0.5) * 0.1;
+            particle.position.z += (Math.random() - 0.5) * 0.1;
+            particle.material.opacity = 0.3 + Math.sin(Date.now() * 0.005) * 0.2;
+        });
+    }
+
+    function animateCutscene() {
+        updateSmokeEffect();
+
+        if (currentStep >= timeline.length) {
+            // Enhanced final jump scare
+            const targetPos = camera.position.clone();
+            shadowFigure.position.lerp(targetPos, 0.2);
+            shadowFigure.scale.multiplyScalar(1.04);
+            shadowFigure.rotation.y += 0.1;
+            
+            // Increase red flash intensity
+            redFlash.style.opacity = Math.min(1, shadowFigure.scale.x * 0.2);
+            
+            if (shadowFigure.position.distanceTo(camera.position) < 0.8) {
+                // Dramatic ending
+                redFlash.style.opacity = '1';
+                document.getElementById('fadeOverlay').style.opacity = '1';
+                
+                // Violent camera shake
+                camera.position.copy(addCameraShake(camera.position, 0.3));
+                
+                setTimeout(() => {
+                    redFlash.classList.remove('flicker');
+                    redFlash.style.opacity = '0';
+                    scene.remove(shadowFigure);
+                }, 300);
+                return;
+            }
+        } else {
+            const step = timeline[currentStep];
+            stepProgress += 16 / step.duration;
+
+            if (stepProgress >= 1) {
+                stepProgress = 0;
+                currentStep++;
+                if (currentStep < timeline.length) {
+                    stepStart.pos = camera.position.clone();
+                    stepStart.rot = camera.rotation.clone();
+                }
+            } else {
+                const eased = easeInOutCubic(stepProgress);
+                let newPos = new THREE.Vector3();
+                newPos.lerpVectors(stepStart.pos, step.pos, eased);
+                
+                if (step.shake) {
+                    newPos = addCameraShake(newPos, step.shakeIntensity || 0.1);
+                }
+                
+                camera.position.copy(newPos);
+                camera.rotation.x = THREE.MathUtils.lerp(stepStart.rot.x, step.rot.x, eased);
+                camera.rotation.y = THREE.MathUtils.lerp(stepStart.rot.y, step.rot.y, eased);
+                camera.rotation.z = THREE.MathUtils.lerp(stepStart.rot.z, step.rot.z, eased);
+            }
+        }
+        
+        requestAnimationFrame(animateCutscene);
+    }
+
+    // Add initial dramatic pause before starting
+    setTimeout(() => {
+        // Initial door creak or dramatic sound could be added here
+        animateCutscene();
+    }, 500);
+}
+
+// Modify the animate function to respect cutscene state
+function animate() {
+    requestAnimationFrame(animate);
+    
+    if (!isUsingComputer && !isSleeping && !isInEndCutscene) {
+        direction.z = Number(moveBackward) - Number(moveForward);
+        direction.x = Number(moveRight) - Number(moveLeft);
+        direction.normalize();
+
+        const moveSpeed = isSprinting ? sprintSpeed : baseSpeed;
+        const nextX = camera.position.x + direction.x * moveSpeed * Math.cos(camera.rotation.y) + 
+                      direction.z * moveSpeed * Math.sin(camera.rotation.y);
+        const nextZ = camera.position.z + direction.z * moveSpeed * Math.cos(camera.rotation.y) - 
+                      direction.x * moveSpeed * Math.sin(camera.rotation.y);
+
+        // Check room boundaries (adding 1 unit buffer from walls)
+        if (nextX > -9 && nextX < 9) {
+            camera.position.x = nextX;
+        }
+        if (nextZ > -9 && nextZ < 9) {
+            camera.position.z = nextZ;
+        }
+
+        velocity.y -= 0.1;
+        camera.position.y += velocity.y * 0.01;
+
+        if(camera.position.y < 2) {
+            velocity.y = 0;
+            camera.position.y = 2;
+            canJump = true;
+        }
+        
+        // Limit maximum height
+        if(camera.position.y > 5) {
+            camera.position.y = 5;
+            velocity.y = 0;
+        }
+        
+        checkComputerDistance();
+        checkBedDistance();
+        checkDoorDistance();
+        checkCabinetDistance(); // Add this line
+    }
+
+    renderer.render(scene, camera);
+}
+</script>
+</body>
+</html>
