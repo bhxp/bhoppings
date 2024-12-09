@@ -1,54 +1,139 @@
 const express = require('express');
 const path = require('path');
+const fetch = require('node-fetch'); // Make sure node-fetch is installed
+const admin = require('firebase-admin');
+
+// Initialize Firebase Admin SDK
+const serviceAccount = require('./firebase.json'); // Replace with your service account file path
+
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount),
+  databaseURL: 'https://your-database-name.firebaseio.com', // Replace with your Firebase Realtime Database URL
+});
+
+const db = admin.database();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-const binId = '67359ccaad19ca34f8c9de30'; // Replace with your actual bin ID
-const apiKey = '$2a$10$PdE8DlpdPuENmEfETNioOOROSZ8bMS7wVMiNa7YN415QGW907Fwwm'; // Replace with your JSONBin API key
-
-async function updateCounter() {
+// Helper function to get the entire database
+async function getDatabase() {
   try {
-    // Fetch current count from JSONBin
-      const response = await fetch(`https://api.jsonbin.io/v3/b/${binId}/latest`, {
-        headers: {
-          'X-Master-Key': apiKey,
-          }
-        });
-        const data = await response.json();
-        let count = data.record.visitCount;
-        // Increment the counter
-        count += 1;
-        // Update the count in JSONBin
-        await fetch(`https://api.jsonbin.io/v3/b/${binId}`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-Master-Key': apiKey,
-          },
-          body: JSON.stringify({ visitCount: count })
-      });
+    const snapshot = await db.ref('/').once('value');
+    return snapshot.val();
   } catch (error) {
-    console.error('Error updating counter:', error);
+    console.error('Error retrieving database:', error);
+    return null;
   }
 }
-app.use((req, res, next) => {
-  if (req.path === '/') {
-    updateCounter();
+
+// Helper function to get a specific key from the database
+async function getKey(key) {
+  try {
+    const snapshot = await db.ref(key).once('value');
+    return snapshot.val() || null;
+  } catch (error) {
+    console.error('Error retrieving key:', error);
+    return null;
   }
-  next();
-});
+}
 
+// Helper function to write a specific key to the database
+async function writeKey(key, value) {
+  try {
+    await db.ref(key).set(value);
+    return value;
+  } catch (error) {
+    console.error('Error writing key:', error);
+    return null;
+  }
+}
+
+app.use(express.json()); // Middleware to parse JSON requests
 app.use(express.static(path.join(__dirname, 'public')));
-
 
 // Redirect /tango to /tangini
 app.get('/tango', (req, res) => {
   res.redirect('/tangini');
 });
 
+// Route to increment "test" property in Firebase Realtime Database
+app.get('/test', async (req, res) => {
+  try {
+    // Check if "test" exists in Firebase
+    const testValue = await getKey('test');
+    
+    let newTestValue;
+    
+    if (testValue === null) {
+      // If "test" doesn't exist, create it with value 1
+      newTestValue = 1;
+    } else {
+      // Increment the "test" value
+      newTestValue = testValue + 1;
+    }
+
+    // Write the updated value of "test" to Firebase
+    const updatedValue = await writeKey('test', newTestValue);
+
+    if (updatedValue !== null) {
+      res.status(200).json({ test: updatedValue });
+    } else {
+      res.status(500).send('Error updating the test property');
+    }
+  } catch (error) {
+    console.error('Error processing /test request:', error);
+    res.status(500).send('Internal server error');
+  }
+});
+
+// Example routes for reading and writing data to Firebase
+// Route to get the entire database
+app.get('/database', async (req, res) => {
+  try {
+    const data = await getDatabase();
+    res.status(200).json(data);
+  } catch (error) {
+    res.status(500).send('Error retrieving the database');
+  }
+});
+
+// Route to get a specific key from the database
+app.get('/key/:key', async (req, res) => {
+  const { key } = req.params;
+  try {
+    const value = await getKey(key);
+    if (value !== null) {
+      res.status(200).json({ [key]: value });
+    } else {
+      res.status(404).send(`Key "${key}" not found`);
+    }
+  } catch (error) {
+    res.status(500).send('Error retrieving the key');
+  }
+});
+
+// Route to write a new key to the database
+app.post('/key', async (req, res) => {
+  const { key, value } = req.body;
+  try {
+    if (key && value !== undefined) {
+      const result = await writeKey(key, value);
+      if (result !== null) {
+        res.status(200).json({ [key]: result });
+      } else {
+        res.status(500).send('Error writing the key');
+      }
+    } else {
+      res.status(400).send('Invalid key or value');
+    }
+  } catch (error) {
+    res.status(500).send('Error writing the key');
+  }
+});
+
 app.get('/', (req, res) => {
-  updateCounter();
+  res.sendFile(path.join(__dirname, 'public/index.html'));
 });
 
 // 404 handler
