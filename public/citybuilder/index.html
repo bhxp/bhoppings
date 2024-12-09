@@ -1,0 +1,354 @@
+<html><head><base href="/" />
+<title>Fractal City Builder</title>
+<style>
+  body { margin: 0; overflow: hidden; }
+  canvas { width: 100vw; height: 100vh; display: block; }
+  #ui {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: rgba(0,0,0,0.7);
+    padding: 15px;
+    border-radius: 8px;
+    color: white;
+    font-family: Arial, sans-serif;
+    transform-origin: right top;
+    transition: transform 0.3s ease;
+  }
+  .collapsed {
+    transform: scale(0);
+  }
+  .control {
+    margin: 10px 0;
+  }
+  label { display: block; margin-bottom: 5px; }
+  canvas { cursor: grab; }
+  canvas:active { cursor: grabbing; }
+  #toggleUI {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1000;
+    background: rgba(0,0,0,0.7);
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  .section-header {
+    font-weight: bold;
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid rgba(255,255,255,0.3);
+  }
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/simplex-noise/2.4.0/simplex-noise.min.js"></script>
+</head>
+<body>
+
+<button id="toggleUI">≡</button>
+<div id="ui">
+  <div class="section-header">Buildings</div>
+  <div class="control">
+    <label>Building Density</label>
+    <input type="range" id="density" min="0" max="100" value="50">
+  </div>
+  <div class="control">
+    <label>Building Height</label>
+    <input type="range" id="height" min="0" max="100" value="70">
+  </div>
+  <div class="control">
+    <label>Building Width</label>
+    <input type="range" id="width" min="1" max="5" step="0.1" value="1">
+  </div>
+  <div class="control">
+    <label>Building Spacing</label>
+    <input type="range" id="spacing" min="1" max="3" step="0.1" value="1.5">
+  </div>
+  <div class="control">
+    <label>Noise Scale</label>
+    <input type="range" id="noiseScale" min="0.01" max="0.5" step="0.01" value="0.1">
+  </div>
+  
+  <div class="section-header">Environment</div>
+  <div class="control">
+    <label>Time of Day</label>
+    <input type="range" id="timeOfDay" min="0" max="24" value="12">
+  </div>
+  <div class="control">
+    <label>Terrain Height</label>
+    <input type="range" id="terrainHeight" min="0" max="50" value="10">
+  </div>
+  <div class="control">
+    <label>Terrain Roughness</label>
+    <input type="range" id="terrainRoughness" min="0.1" max="2" step="0.1" value="1">
+  </div>
+  <div class="control">
+    <label>Sky Color</label>
+    <input type="color" id="skyColor" value="#87CEEB">
+  </div>
+</div>
+
+<script>
+// Initialize Three.js scene
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setSize(window.innerWidth, window.innerHeight);
+document.body.appendChild(renderer.domElement);
+
+// City generation parameters
+let GRID_SIZE = 50;
+let MAX_HEIGHT = 100;
+let BUILDING_WIDTH = 1;
+let BUILDING_SPACING = 1.5;
+let NOISE_SCALE = 0.1;
+let TERRAIN_HEIGHT = 10;
+let TERRAIN_ROUGHNESS = 1;
+const simplex = new SimplexNoise();
+
+// Mouse controls
+let isDragging = false;
+let isScrollDragging = false;
+let previousMousePosition = { x: 0, y: 0 };
+let cameraAngle = { x: 0, y: 0 };
+let cameraDistance = 75;
+let targetPosition = new THREE.Vector3(0, 0, 0);
+let panSpeed = 0.1;
+
+// Skybox
+function createSkybox() {
+    const geometryBox = new THREE.BoxGeometry(1000, 1000, 1000);
+    const materialBox = new THREE.MeshBasicMaterial({
+        color: 0x87CEEB,
+        side: THREE.BackSide
+    });
+    return new THREE.Mesh(geometryBox, materialBox);
+}
+
+// Terrain generation
+function generateTerrain() {
+    const geometry = new THREE.PlaneGeometry(GRID_SIZE * BUILDING_SPACING * 2, GRID_SIZE * BUILDING_SPACING * 2, 128, 128);
+    geometry.rotateX(-Math.PI / 2);
+    
+    const positions = geometry.attributes.position.array;
+    for(let i = 0; i < positions.length; i += 3) {
+        const x = positions[i];
+        const z = positions[i + 2];
+        positions[i + 1] = simplex.noise2D(x * TERRAIN_ROUGHNESS * 0.01, z * TERRAIN_ROUGHNESS * 0.01) * TERRAIN_HEIGHT;
+    }
+    
+    const material = new THREE.MeshPhongMaterial({
+        color: 0x3b7d3b,
+        shininess: 0
+    });
+    
+    return new THREE.Mesh(geometry, material);
+}
+
+// Create city grid
+function generateCity() {
+    const buildings = new THREE.Group();
+    
+    for(let x = -GRID_SIZE/2; x < GRID_SIZE/2; x++) {
+        for(let z = -GRID_SIZE/2; z < GRID_SIZE/2; z++) {
+            const noise = simplex.noise2D(x * NOISE_SCALE, z * NOISE_SCALE);
+            if(noise > 0.2) {
+                const height = (noise + 1) * MAX_HEIGHT * 0.5;
+                const geometry = new THREE.BoxGeometry(BUILDING_WIDTH, height, BUILDING_WIDTH);
+                const material = new THREE.MeshPhongMaterial({
+                    color: 0x808080,
+                    specular: 0x111111,
+                    shininess: 30
+                });
+                const building = new THREE.Mesh(geometry, material);
+                const terrainHeight = simplex.noise2D(x * BUILDING_SPACING * TERRAIN_ROUGHNESS * 0.01, 
+                                                    z * BUILDING_SPACING * TERRAIN_ROUGHNESS * 0.01) * TERRAIN_HEIGHT;
+                building.position.set(x * BUILDING_SPACING, height/2 + terrainHeight, z * BUILDING_SPACING);
+                buildings.add(building);
+            }
+        }
+    }
+    return buildings;
+}
+
+// Lighting
+const ambientLight = new THREE.AmbientLight(0x404040);
+scene.add(ambientLight);
+
+const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+directionalLight.position.set(100, 100, 50);
+scene.add(directionalLight);
+
+// Add skybox
+let skybox = createSkybox();
+scene.add(skybox);
+
+// Add terrain
+let terrain = generateTerrain();
+scene.add(terrain);
+
+// Add city to scene
+let city = generateCity();
+scene.add(city);
+
+// Camera position
+camera.position.set(50, 50, 50);
+camera.lookAt(targetPosition);
+
+// Mouse event handlers
+function onMouseDown(event) {
+    if (event.button === 0) {
+        isDragging = true;
+    } else if (event.button === 1) {
+        isScrollDragging = true;
+    }
+    previousMousePosition = {
+        x: event.clientX,
+        y: event.clientY
+    };
+}
+
+function onMouseMove(event) {
+    const deltaMove = {
+        x: event.clientX - previousMousePosition.x,
+        y: event.clientY - previousMousePosition.y
+    };
+
+    if (isDragging) {
+        cameraAngle.x += deltaMove.x * 0.005;
+        cameraAngle.y = Math.max(-Math.PI/2, Math.min(Math.PI/2, cameraAngle.y + deltaMove.y * 0.005));
+    } else if (isScrollDragging) {
+        const right = new THREE.Vector3();
+        const up = new THREE.Vector3();
+        camera.matrix.extractBasis(right, up, new THREE.Vector3());
+        
+        targetPosition.addScaledVector(right, -deltaMove.x * panSpeed);
+        targetPosition.addScaledVector(up, deltaMove.y * panSpeed);
+    }
+
+    previousMousePosition = {
+        x: event.clientX,
+        y: event.clientY
+    };
+}
+
+function onMouseUp(event) {
+    if (event.button === 0) {
+        isDragging = false;
+    } else if (event.button === 1) {
+        isScrollDragging = false;
+    }
+}
+
+function onWheel(event) {
+    const zoomSpeed = 0.1;
+    cameraDistance = Math.max(10, Math.min(200, cameraDistance + event.deltaY * zoomSpeed));
+}
+
+// Animation loop
+function animate() {
+    requestAnimationFrame(animate);
+    
+    camera.position.x = targetPosition.x + cameraDistance * Math.cos(cameraAngle.y) * Math.cos(cameraAngle.x);
+    camera.position.z = targetPosition.z + cameraDistance * Math.cos(cameraAngle.y) * Math.sin(cameraAngle.x);
+    camera.position.y = targetPosition.y + cameraDistance * Math.sin(cameraAngle.y);
+    camera.lookAt(targetPosition);
+    
+    renderer.render(scene, camera);
+}
+
+// UI Toggle
+document.getElementById('toggleUI').addEventListener('click', () => {
+    const ui = document.getElementById('ui');
+    ui.classList.toggle('collapsed');
+});
+
+// Event listeners
+document.addEventListener('mousedown', onMouseDown);
+document.addEventListener('mousemove', onMouseMove);
+document.addEventListener('mouseup', onMouseUp);
+document.addEventListener('wheel', onWheel);
+
+// Handle window resize
+window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+// UI Controls
+document.getElementById('density').addEventListener('input', (e) => {
+    scene.remove(city);
+    GRID_SIZE = 30 + (e.target.value * 0.5);
+    city = generateCity();
+    scene.add(city);
+});
+
+document.getElementById('height').addEventListener('input', (e) => {
+    MAX_HEIGHT = 50 + (e.target.value * 1.5);
+    scene.remove(city);
+    city = generateCity();
+    scene.add(city);
+});
+
+document.getElementById('timeOfDay').addEventListener('input', (e) => {
+    const hour = parseFloat(e.target.value);
+    const intensity = Math.sin((hour - 6) * Math.PI / 12);
+    directionalLight.intensity = Math.max(0, intensity);
+    const temp = 1 + Math.sin((hour - 12) * Math.PI / 12) * 0.2;
+    directionalLight.color.setHSL(0.1, 0.7, temp);
+});
+
+document.getElementById('width').addEventListener('input', (e) => {
+    BUILDING_WIDTH = parseFloat(e.target.value);
+    scene.remove(city);
+    city = generateCity();
+    scene.add(city);
+});
+
+document.getElementById('spacing').addEventListener('input', (e) => {
+    BUILDING_SPACING = parseFloat(e.target.value);
+    scene.remove(city);
+    city = generateCity();
+    scene.add(city);
+});
+
+document.getElementById('noiseScale').addEventListener('input', (e) => {
+    NOISE_SCALE = parseFloat(e.target.value);
+    scene.remove(city);
+    city = generateCity();
+    scene.add(city);
+});
+
+document.getElementById('terrainHeight').addEventListener('input', (e) => {
+    TERRAIN_HEIGHT = parseFloat(e.target.value);
+    scene.remove(terrain);
+    scene.remove(city);
+    terrain = generateTerrain();
+    city = generateCity();
+    scene.add(terrain);
+    scene.add(city);
+});
+
+document.getElementById('terrainRoughness').addEventListener('input', (e) => {
+    TERRAIN_ROUGHNESS = parseFloat(e.target.value);
+    scene.remove(terrain);
+    scene.remove(city);
+    terrain = generateTerrain();
+    city = generateCity();
+    scene.add(terrain);
+    scene.add(city);
+});
+
+document.getElementById('skyColor').addEventListener('input', (e) => {
+    skybox.material.color.set(e.target.value);
+});
+
+// Start animation
+animate();
+</script>
+</body>
+</html>
