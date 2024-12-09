@@ -1,0 +1,512 @@
+<html><head><base href="." /><title>Super Monkey Roll 3D</title><script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/cannon.js/0.6.2/cannon.min.js"></script><style>
+body { margin: 0; overflow: hidden; }
+canvas { width: 100%; height: 100%; }
+#info {
+    position: absolute;
+    top: 10px;
+    width: 100%;
+    text-align: center;
+    color: white;
+    font-family: Arial;
+    font-size: 18px;
+    text-shadow: 1px 1px 1px black;
+    z-index: 100;
+}
+#fallText {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: red;
+    font-family: Arial;
+    font-size: 48px;
+    font-weight: bold;
+    text-shadow: 2px 2px 4px black;
+    display: none;
+    z-index: 100;
+}
+#startText {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: yellow;
+    font-family: Arial;
+    font-size: 72px;
+    font-weight: bold;
+    text-shadow: 2px 2px 4px black;
+    z-index: 100;
+}
+#score {
+    position: absolute;
+    top: 50px;
+    width: 100%;
+    text-align: center;
+    color: yellow;
+    font-family: Arial;
+    font-size: 24px;
+    text-shadow: 1px 1px 1px black;
+    z-index: 100;
+}
+#winText {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: gold;
+    font-family: Arial;
+    font-size: 72px;
+    font-weight: bold;
+    text-shadow: 2px 2px 4px black;
+    display: none;
+    z-index: 100;
+}
+</style></head><body>
+<div id="info">Super Monkey Roll 3D<br>Use WASD to move the monkey ball!</div>
+<div id="fallText">FALL OUT!</div>
+<div id="startText">READY?</div>
+<div id="score">Bananas: 0</div>
+<div id="winText">GOAL!</div>
+<script>
+let collectSound, fallSound;
+let totalBananas = 0;
+let doorLocked = true;
+
+// Add this function to initialize audio after user interaction
+function initAudio() {
+    collectSound = new Audio('/00155 (0x02FE).wav');
+    collectSound.volume = 0.3;
+    fallSound = new Audio('/00056 (0x0209).wav');
+}
+
+// Initialize Three.js
+const scene = new THREE.Scene();
+
+// Add background texture
+const loader = new THREE.TextureLoader();
+const texture = loader.load('https://i.imgur.com/Fv2yjdw.png');
+texture.mapping = THREE.EquirectangularReflectionMapping;
+scene.background = texture;
+
+const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+const renderer = new THREE.WebGLRenderer();
+renderer.setSize(window.innerWidth, window.innerHeight);
+document.body.appendChild(renderer.domElement);
+
+// Initialize Cannon.js physics
+const world = new CANNON.World();
+world.gravity.set(0, -9.82, 0);
+world.broadphase = new CANNON.NaiveBroadphase();
+
+// Create transparent ball
+const ballRadius = 0.5;
+const ballGeometry = new THREE.SphereGeometry(ballRadius, 32, 32);
+const ballMaterial = new THREE.MeshPhongMaterial({
+    color: 0xffffff,
+    transparent: true,
+    opacity: 0.3,
+    specular: 0x444444,
+    shininess: 30
+});
+const ball = new THREE.Mesh(ballGeometry, ballMaterial);
+
+// Create monkey
+const monkeyGeometry = new THREE.BoxGeometry(0.3, 0.3, 0.3);
+const monkeyMaterial = new THREE.MeshPhongMaterial({ color: 0x8B4513 });
+const monkey = new THREE.Mesh(monkeyGeometry, monkeyMaterial);
+ball.add(monkey);
+
+// Create monkey features
+const headGeometry = new THREE.SphereGeometry(0.15, 16, 16);
+const headMaterial = new THREE.MeshPhongMaterial({ color: 0x8B4513 });
+const head = new THREE.Mesh(headGeometry, headMaterial);
+head.position.y = 0.1;
+monkey.add(head);
+
+// Eyes
+const eyeGeometry = new THREE.SphereGeometry(0.03, 8, 8);
+const eyeMaterial = new THREE.MeshPhongMaterial({ color: 0x000000 });
+const leftEye = new THREE.Mesh(eyeGeometry, eyeMaterial);
+const rightEye = new THREE.Mesh(eyeGeometry, eyeMaterial);
+leftEye.position.set(-0.06, 0.15, 0.1);
+rightEye.position.set(0.06, 0.15, 0.1);
+monkey.add(leftEye);
+monkey.add(rightEye);
+
+// Ears
+const earGeometry = new THREE.SphereGeometry(0.06, 8, 8);
+const earMaterial = new THREE.MeshPhongMaterial({ color: 0x8B4513 });
+const leftEar = new THREE.Mesh(earGeometry, earMaterial);
+const rightEar = new THREE.Mesh(earGeometry, earMaterial);
+leftEar.position.set(-0.15, 0.2, 0);
+rightEar.position.set(0.15, 0.2, 0);
+monkey.add(leftEar);
+monkey.add(rightEar);
+
+scene.add(ball);
+
+// Create goal gate
+const goalGateGeometry = new THREE.BoxGeometry(2, 3, 0.5);
+const goalGateMaterial = new THREE.MeshPhongMaterial({ 
+    color: 0xFFD700,
+    emissive: 0x444400,
+    emissiveIntensity: 0
+});
+const goalGate = new THREE.Mesh(goalGateGeometry, goalGateMaterial);
+goalGate.position.set(4, -0.5, 4); // Changed position to bring it closer
+scene.add(goalGate);
+
+// Add door indicator lights
+const doorLightGeometry = new THREE.SphereGeometry(0.2, 16, 16);
+const redLightMaterial = new THREE.MeshPhongMaterial({ 
+    color: 0xff0000,
+    emissive: 0xff0000,
+    emissiveIntensity: 0.5
+});
+const greenLightMaterial = new THREE.MeshPhongMaterial({ 
+    color: 0x00ff00,
+    emissive: 0x00ff00,
+    emissiveIntensity: 0.5
+});
+const doorLight = new THREE.Mesh(doorLightGeometry, redLightMaterial);
+doorLight.position.set(0, 1.8, 0);
+goalGate.add(doorLight);
+
+// Create physics body for ball
+const ballShape = new CANNON.Sphere(ballRadius);
+const ballBody = new CANNON.Body({
+    mass: 1,
+    shape: ballShape,
+    position: new CANNON.Vec3(2, 0, 0),
+    linearDamping: 0.3,
+    angularDamping: 0.3
+});
+world.addBody(ballBody);
+
+// Create banana geometry and material
+const bananaGeometry = new THREE.TorusGeometry(0.15, 0.05, 16, 16, Math.PI);
+const bananaMaterial = new THREE.MeshPhongMaterial({ color: 0xFFFF00 });
+
+// Array to store bananas
+const bananas = [];
+let bananaCount = 0;
+const scoreElement = document.getElementById('score');
+const winTextElement = document.getElementById('winText');
+
+// Level tracking
+let currentLevel = 1;
+let transitioning = false;
+
+// Function to create a banana
+function createBanana(x, z) {
+    const banana = new THREE.Mesh(bananaGeometry, bananaMaterial);
+    banana.position.set(x * 2, -1, z * 2);
+    banana.rotation.x = Math.PI / 2;
+    scene.add(banana);
+    bananas.push({
+        mesh: banana,
+        collected: false
+    });
+    totalBananas++;
+}
+
+// Create tile function with modified colors
+function createTile(x, z, isHole) {
+    if (!isHole) {
+        const tileGeometry = new THREE.BoxGeometry(2, 1, 2);
+        const tileMaterial = new THREE.MeshPhongMaterial({ 
+            color: ((x + z) % 2 === 0) ? 0x2E8B57 : 0x228B22 // Sea Green and Forest Green
+        });
+        const tile = new THREE.Mesh(tileGeometry, tileMaterial);
+        tile.position.set(x * 2, -2, z * 2);
+        scene.add(tile);
+
+        // Add banana with 50% chance if it's a tile
+        if (Math.random() < 0.5) {
+            createBanana(x, z);
+        }
+
+        // Physics for tile
+        const tileShape = new CANNON.Box(new CANNON.Vec3(1, 0.5, 1));
+        const tileBody = new CANNON.Body({
+            mass: 0,
+            shape: tileShape,
+            position: new CANNON.Vec3(x * 2, -2, z * 2)
+        });
+        world.addBody(tileBody);
+    }
+}
+
+// Generate new level layouts
+function generateNewLevel(level) {
+    const size = Math.min(5 + Math.floor(level / 2), 8); // Increase size with level
+    const layout = [];
+    
+    for (let z = 0; z < size; z++) {
+        const row = [];
+        for (let x = 0; x < size; x++) {
+            const holeChance = Math.min(0.2 + (level * 0.05), 0.4);
+            row.push(Math.random() > holeChance ? 1 : 0);
+        }
+        layout[z] = row;
+    }
+    
+    layout[0][0] = 1; // Start area
+    layout[size - 1][size - 1] = 1; // End area
+    
+    return layout;
+}
+
+// Create course layout (1 for tile, 0 for hole)
+const courseLayout = generateNewLevel(currentLevel);
+
+// Generate initial course
+for (let z = 0; z < courseLayout.length; z++) {
+    for (let x = 0; x < courseLayout[z].length; x++) {
+        createTile(x - 2, z - 2, courseLayout[z][x] === 0);
+    }
+}
+
+// Add lighting
+const ambientLight = new THREE.AmbientLight(0x404040);
+scene.add(ambientLight);
+const light = new THREE.DirectionalLight(0xffffff, 1);
+light.position.set(10, 20, 10);
+scene.add(light);
+
+// Position camera
+camera.position.set(0, 10, 10);
+camera.lookAt(0, 0, 0);
+
+// Game state
+let gameStarted = false;
+let gameWon = false;
+const startTextElement = document.getElementById('startText');
+
+// Movement controls
+const moveForce = 15;
+const keys = { w: false, a: false, s: false, d: false };
+document.addEventListener('keydown', (e) => {
+    if (gameStarted && !gameWon) {
+        keys[e.key] = true;
+    }
+});
+document.addEventListener('keyup', (e) => keys[e.key] = false);
+
+// Fall out text handling
+let fallTextVisible = false;
+const fallTextElement = document.getElementById('fallText');
+const resetBall = () => {
+    ballBody.position.set(2, 0, 0);
+    ballBody.velocity.setZero();
+    ballBody.angularVelocity.setZero();
+    setTimeout(() => {
+        fallTextElement.style.display = 'none';
+        fallTextVisible = false;
+    }, 2000);
+};
+
+// Start game sequence
+const startGame = () => {
+    // Initialize audio on first user interaction
+    initAudio();
+    
+    startTextElement.textContent = 'READY?';
+    setTimeout(() => {
+        startTextElement.textContent = 'GO!';
+        setTimeout(() => {
+            startTextElement.style.display = 'none';
+            gameStarted = true;
+        }, 1000);
+    }, 1000);
+};
+
+// Function to play sound with error handling
+function playSound(sound) {
+    if (sound) {
+        sound.play().catch(error => {
+            console.log("Audio playback failed:", error);
+        });
+    }
+}
+
+// Check banana collection
+function checkBananaCollection() {
+    bananas.forEach(banana => {
+        if (!banana.collected) {
+            const distance = ball.position.distanceTo(banana.mesh.position);
+            if (distance < 1) {
+                banana.collected = true;
+                banana.mesh.visible = false;
+                bananaCount++;
+                scoreElement.textContent = `Bananas: ${bananaCount}/${totalBananas}`;
+                if (collectSound) {
+                    collectSound.currentTime = 0;
+                    playSound(collectSound);
+                }
+                
+                // Check if all bananas are collected
+                if (bananaCount === totalBananas) {
+                    doorLocked = false;
+                    doorLight.material = greenLightMaterial;
+                    // Add unlock effect
+                    goalGate.material.emissiveIntensity = 0.5;
+                    const unlockFlash = () => {
+                        goalGate.scale.x = 1.1;
+                        goalGate.scale.y = 1.1;
+                        goalGate.scale.z = 1.1;
+                        setTimeout(() => {
+                            goalGate.scale.set(1, 1, 1);
+                        }, 200);
+                    };
+                    unlockFlash();
+                }
+            }
+        }
+    });
+}
+
+// Modify the checkGoal function to check if door is unlocked
+function checkGoal() {
+    const distanceToGoal = ball.position.distanceTo(goalGate.position);
+    if (distanceToGoal < 2 && !gameWon && !transitioning) {
+        if (!doorLocked) {
+            transitioning = true;
+            winTextElement.style.display = 'block';
+            winTextElement.textContent = `LEVEL ${currentLevel} COMPLETE!`;
+            if (collectSound) {
+                playSound(collectSound);
+            }
+            
+            // Start ascension animation
+            const ascensionAnimation = () => {
+                ballBody.position.y += 0.1;
+                ballBody.velocity.setZero();
+                ballBody.angularVelocity.setZero();
+                
+                if (ballBody.position.y < 10) {
+                    requestAnimationFrame(ascensionAnimation);
+                } else {
+                    // Start next level
+                    currentLevel++;
+                    setTimeout(() => {
+                        // Reset position and counters
+                        ballBody.position.set(2, 0, 0);
+                        bananaCount = 0;
+                        totalBananas = 0;
+                        doorLocked = true;
+                        
+                        // Clear existing bananas
+                        bananas.forEach(banana => {
+                            scene.remove(banana.mesh);
+                        });
+                        bananas.length = 0;
+                        
+                        // Generate new course layout for next level
+                        const newCourseLayout = generateNewLevel(currentLevel);
+                        
+                        // Remove old course tiles
+                        const tilesToRemove = scene.children.filter(
+                            child => child.isMesh && child !== ball && child !== goalGate
+                        );
+                        tilesToRemove.forEach(tile => scene.remove(tile));
+                        
+                        // Remove old physics bodies
+                        while(world.bodies.length > 1) {
+                            world.removeBody(world.bodies[1]);
+                        }
+                        
+                        // Generate new course
+                        for (let z = 0; z < newCourseLayout.length; z++) {
+                            for (let x = 0; x < newCourseLayout[z].length; x++) {
+                                createTile(x - 2, z - 2, newCourseLayout[z][x] === 0);
+                            }
+                        }
+                        
+                        // Reset door state
+                        doorLight.material = redLightMaterial;
+                        goalGate.material.emissiveIntensity = 0;
+                        scoreElement.textContent = `Bananas: 0/${totalBananas}`;
+                        
+                        winTextElement.style.display = 'none';
+                        transitioning = false;
+                    }, 1000);
+                }
+            };
+            
+            ascensionAnimation();
+        } else {
+            // Show "Collect all bananas!" message
+            winTextElement.style.display = 'block';
+            winTextElement.textContent = `Collect all bananas!`;
+            setTimeout(() => {
+                winTextElement.style.display = 'none';
+            }, 1500);
+        }
+    }
+}
+
+// Modify the animate function to handle the goal gate position for new levels
+function animate() {
+    requestAnimationFrame(animate);
+    
+    world.step(1/60);
+    
+    if (gameStarted && !transitioning) {
+        const force = new CANNON.Vec3();
+        if (keys.w) force.z -= moveForce;
+        if (keys.s) force.z += moveForce;
+        if (keys.a) force.x -= moveForce;
+        if (keys.d) force.x += moveForce;
+        ballBody.applyForce(force, ballBody.position);
+        
+        // Update goal gate position based on current level size
+        const levelSize = Math.min(5 + Math.floor(currentLevel / 2), 8);
+        goalGate.position.set((levelSize - 3) * 2, -0.5, (levelSize - 3) * 2);
+        
+        // Rotate bananas
+        bananas.forEach(banana => {
+            if (!banana.collected) {
+                banana.mesh.rotation.y += 0.02;
+            }
+        });
+        
+        checkBananaCollection();
+        checkGoal();
+    }
+    
+    ball.position.copy(ballBody.position);
+    ball.quaternion.copy(ballBody.quaternion);
+    
+    if (ballBody.position.y < -10 && !fallTextVisible && !transitioning) {
+        fallTextElement.style.display = 'block';
+        fallTextVisible = true;
+        if (fallSound) {
+            fallSound.currentTime = 0;
+            playSound(fallSound);
+        }
+        resetBall();
+    }
+    
+    camera.position.x = ballBody.position.x;
+    camera.position.y = ballBody.position.y + 5;
+    camera.position.z = ballBody.position.z + 10;
+    camera.lookAt(ball.position);
+    
+    goalGate.rotation.y += 0.01;
+    
+    renderer.render(scene, camera);
+}
+
+// Handle window resize
+window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+// Start the game sequence after a short delay
+setTimeout(startGame, 500);
+
+animate();
+</script></body></html>
