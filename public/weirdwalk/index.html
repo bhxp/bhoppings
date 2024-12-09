@@ -1,0 +1,1932 @@
+<html><head><base href=".">
+<meta charset="utf-8"/>
+<title>Weird Walk!</title>
+<style>
+    body { 
+        margin: 0;
+        overflow: hidden;
+        font-family: Arial, sans-serif;
+    }
+    #instructions {
+        position: fixed;
+        top: 20px;
+        left: 20px;
+        color: white;
+        background: rgba(0,0,0,0.7);
+        padding: 15px;
+        border-radius: 5px;
+        z-index: 100;
+        line-height: 1.4;
+        max-width: 300px;
+        border: 1px solid rgba(255,215,0,0.3);
+    }
+    #instructions-toggle {
+        display: block;
+        color: #FFD700;
+        cursor: pointer;
+        margin-top: 10px;
+        text-align: center;
+    }
+    #instructions-toggle:hover {
+        color: white;
+    }
+    #title-screen {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: black;
+        color: white;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+        z-index: 200;
+        transition: opacity 1s;
+    }
+    #title {
+        font-size: 48px;
+        margin-bottom: 20px;
+    }
+    #caption span {
+        opacity: 0;
+        transition: opacity 0.5s;
+    }
+    .door-text {
+        position: absolute;
+        color: white;
+        font-size: 18px;
+        text-align: center;
+        width: 100%;
+        z-index: 100;
+    }
+    #room-position {
+        position: fixed;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        color: white;
+        background: rgba(0,0,0,0.5);
+        padding: 10px;
+        border-radius: 5px;
+        z-index: 100;
+    }
+    #loading-screen {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: black;
+        color: white;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 300;
+        font-size: 24px;
+    }
+    #key-display {
+        position: fixed;
+        top: 65px; 
+        left: 50%;
+        transform: translateX(-50%);
+        color: #FFD700; 
+        background: rgba(0,0,0,0.5);
+        padding: 10px;
+        border-radius: 5px;
+        z-index: 100;
+    }
+    #shop-button {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: rgba(0,0,0,0.5);
+        color: #FFD700;
+        padding: 10px 20px;
+        border: 2px solid #FFD700;
+        border-radius: 5px;
+        cursor: pointer;
+        z-index: 100;
+    }
+    #map-button {
+        position: fixed;
+        top: 65px; /* Adjust as needed */
+        right: 20px;
+        background: rgba(0,0,0,0.5);
+        color: #FFD700;
+        padding: 10px 20px;
+        border: 2px solid #FFD700;
+        border-radius: 5px;
+        cursor: pointer;
+        z-index: 100;
+    }
+    
+    #settings-button {
+        position: fixed;
+        top: 110px; /* Position under map button */
+        right: 20px;
+        background: rgba(0,0,0,0.5);
+        color: #FFD700;
+        padding: 10px 20px;
+        border: 2px solid #FFD700;
+        border-radius: 5px;
+        cursor: pointer;
+        z-index: 100;
+    }
+
+    #settings-modal {
+        display: none;
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: rgba(0,0,0,0.9);
+        color: white;
+        padding: 20px;
+        border: 2px solid #FFD700;
+        border-radius: 10px;
+        z-index: 150;
+    }
+
+    .settings-item {
+        margin: 15px 0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    #settings-modal h2 {
+        color: #FFD700;
+        margin-bottom: 20px;
+        text-align: center;
+    }
+
+    #settings-modal button {
+        background: #FFD700;
+        color: black;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 5px;
+        cursor: pointer;
+        margin-top: 15px;
+        width: 100%;
+    }
+
+    #settings-modal input[type="range"] {
+        width: 150px;
+    }
+
+    #settings-modal input[type="checkbox"] {
+        width: 20px;
+        height: 20px;
+        cursor: pointer;
+    }
+
+    #settings-modal label {
+        margin-right: 10px;
+        color: #FFD700;
+    }
+    #shop-modal {
+        display: none;
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: rgba(0,0,0,0.9);
+        color: white;
+        padding: 20px;
+        border: 2px solid #FFD700;
+        border-radius: 10px;
+        z-index: 150;
+    }
+    #shop-tabs {
+        display: flex;
+        margin-bottom: 10px;
+    }
+    .shop-tab {
+        flex: 1;
+        background: rgba(0,0,0,0.5);
+        color: #FFD700;
+        padding: 10px;
+        border: 2px solid #FFD700;
+        border-radius: 5px 5px 0 0;
+        cursor: pointer;
+        text-align: center;
+    }
+    .shop-tab.active {
+        background: #FFD700;
+        color: black;
+    }
+    #shop-content > div {
+        display: none;
+    }
+    #shop-content > div.active {
+        display: block;
+    }
+    #travel-menu {
+        display: none;
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: rgba(0,0,0,0.9);
+        color: white;
+        padding: 20px;
+        border: 2px solid #FFD700;
+        border-radius: 10px;
+        z-index: 150;
+    }
+    #travel-menu input {
+        background: rgba(255,215,0,0.1);
+        border: 1px solid #FFD700;
+        color: white;
+        padding: 5px;
+        margin: 5px;
+    }
+    #travel-menu button {
+        background: #FFD700;
+        color: black;
+        border: none;
+        padding: 5px 10px;
+        border-radius: 3px;
+        cursor: pointer;
+        margin: 5px;
+    }
+    #travel-menu div {
+        margin: 10px 0;
+    }
+    #travel-menu label {
+        display: inline-block;
+        width: 100px;
+    }
+    .upgrades-section {
+        margin-top: 20px;
+        padding-top: 20px;
+        border-top: 1px solid #FFD700;
+    }
+    .shop-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start; 
+        padding: 10px;
+        border-bottom: 1px solid #FFD700;
+        margin-bottom: 10px;
+    }
+    .upgrade-boxes {
+        margin-top: 5px; 
+        display: flex;
+        gap: 10px;
+        margin: 10px 0;
+    }
+    .upgrade-box {
+        width: 40px;
+        height: 40px;
+        border: 1px solid #FFD700;
+        background: rgba(255,215,0,0.1);
+    }
+    #inventory {
+        position: fixed;
+        bottom: 20px;
+        left: 20px;
+        display: flex;
+        gap: 10px;
+        z-index: 100;
+    }
+    .inventory-slot {
+        width: 50px;
+        height: 50px;
+        background: rgba(0,0,0,0.5);
+        border: 2px solid #FFD700;
+        border-radius: 5px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        color: white;
+    }
+    .inventory-slot.selected {
+        background: rgba(255,215,0,0.2);
+    }
+    #shop-modal {
+        min-width: 300px;
+    }
+    .shop-item button {
+        background: #FFD700;
+        color: black;
+        border: none;
+        padding: 5px 10px;
+        border-radius: 3px;
+        cursor: pointer;
+    }
+    #status-message {
+        position: fixed;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(0,0,0,0.8);
+        color: white;
+        padding: 10px 20px;
+        border-radius: 5px;
+        z-index: 400; /* Higher than loading screen */
+        display: none;
+        text-align: center;
+    }
+    /* Map UI */
+    #map-ui {
+        display: none; /* Hidden by default */
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.95);
+        z-index: 500; /* Above other elements */
+        overflow: hidden;
+    }
+    /* Map Container */
+    #map-container {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 4000px; /* Adjust as needed */
+        height: 4000px; /* Adjust as needed */
+        cursor: grab;
+        transform: translate(0px, 0px);
+    }
+    /* Room Boxes */
+    #map-ui .room-box {
+        position: absolute;
+        width: 40px; /* Adjusted size to fit more boxes */
+        height: 40px;
+        border: 1px solid #333;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 10px;
+        color: white;
+        background-size: cover;
+        background-repeat: no-repeat;
+        background-position: center;
+        background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent background */
+    }
+    /* Close Map Button */
+    #close-map-button {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: #FFD700;
+        color: black;
+        padding: 5px 10px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+    }
+    #death-screen {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: black;
+        color: white;
+        z-index: 1000;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+    }
+    #death-screen h1 {
+        font-size: 48px;
+        margin-bottom: 20px;
+    }
+    #death-screen button {
+        font-size: 24px;
+        padding: 10px 20px;
+        cursor: pointer;
+    }
+    /* Key Master button styling */
+    #key-master-button {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        background: rgba(0,0,0,0.5);
+        color: #FFD700;
+        padding: 20px 30px; /* Increased padding */
+        font-size: 24px;     /* Increased font size */
+        border: 2px solid #FFD700;
+        border-radius: 5px;
+        cursor: pointer;
+        z-index: 100;
+    }
+    /* Key Master modal styling */
+    #key-master-modal {
+        display: none;
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: rgba(0,0,0,0.9);
+        color: white;
+        padding: 20px;
+        border: 2px solid #FFD700;
+        border-radius: 10px;
+        z-index: 150;
+    }
+    #key-master-modal input {
+        background: rgba(255,215,0,0.1);
+        border: 1px solid #FFD700;
+        color: white;
+        padding: 5px;
+        margin: 5px;
+    }
+    #key-master-modal button {
+        background: #FFD700;
+        color: black;
+        border: none;
+        padding: 5px 10px;
+        border-radius: 3px;
+        cursor: pointer;
+        margin: 5px;
+    }
+    #key-master-modal p {
+        margin-top: 10px;
+    }
+    /* Joystick Styles */
+    .joystick-container {
+        position: fixed;
+        bottom: 100px;
+        width: 120px;
+        height: 120px;
+        background: rgba(255,255,255,0.2);
+        border-radius: 50%;
+        display: none; /* Hidden by default, shown on mobile */
+        touch-action: none;
+        z-index: 1000;
+    }
+    #movement-joystick {
+        left: 20px;
+    }
+    #camera-joystick {
+        right: 20px;
+    }
+    .joystick-knob {
+        position: absolute;
+        width: 50px;
+        height: 50px;
+        background: rgba(255,215,0,0.5);
+        border: 2px solid #FFD700;
+        border-radius: 50%;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        pointer-events: none;
+    }
+    #mobile-jump-button {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        width: 80px;
+        height: 80px;
+        background: rgba(255,215,0,0.3);
+        border: 2px solid #FFD700;
+        border-radius: 50%;
+        color: white;
+        font-size: 18px;
+        display: none; /* Hidden by default, shown on mobile */
+        z-index: 1000;
+        touch-action: none;
+    }
+    /* Add to existing CSS */
+    #fullscreen-button {
+        background: #FFD700;
+        color: black;
+        border: none;
+        padding: 5px 10px;
+        border-radius: 5px;
+        cursor: pointer;
+    }
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body>
+<div id="loading-screen">
+    <div id="loading-text">Loading...</div>
+</div>
+<div id="title-screen">
+    <div id="title">Weird Walk!</div>
+    <div id="caption">
+        <span>Find</span> <span>the</span> <span>keys</span> <span>and</span> <span>bring</span> <span>them</span> <span>back</span> <span>to</span> <span>the</span> <span>key</span> <span>master.</span>
+    </div>
+    <div id="caption" style="margin-top: 20px;">
+        <span>Inspired</span> <span>by</span> <span>GreenSkull</span> <span>AI</span>
+    </div>
+</div>
+<div id="instructions">
+    Movement Controls:<br>
+    • WASD: Walk around<br>
+    • Arrow Keys: Look around<br>
+    • Space: Jump<br><br>
+    Item Controls:<br>
+    • E: Use selected item<br>
+    • Numbers 1-5: Select item slot<br><br>
+    Game Tips:<br>
+    • Walk into doors to explore new rooms<br>
+    • Collect golden keys to buy items<br>
+    • Return to room (0,0) to visit the Key Master
+    <div id="instructions-toggle">/\</div>
+</div>
+<div id="room-position"></div>
+<div id="key-display">Keys: 0</div>
+<button id="shop-button">Shop</button>
+<button id="map-button">Map</button>
+<button id="settings-button">Settings</button>
+<button id="key-master-button" style="display: none;">Open Key Master Menu</button>
+<div id="inventory">
+    <div class="inventory-slot" data-slot="0"></div>
+    <div class="inventory-slot" data-slot="1"></div>
+    <div class="inventory-slot" data-slot="2"></div>
+    <div class="inventory-slot" data-slot="3"></div>
+    <div class="inventory-slot" data-slot="4"></div>
+</div>
+<div id="settings-modal">
+    <h2>Settings</h2>
+    <div class="settings-item">
+        <label for="ui-scale">UI Scale:</label>
+        <input type="range" id="ui-scale" min="50" max="150" value="100">
+    </div>
+    <div class="settings-item">
+        <label for="play-sfx">Play SFX:</label>
+        <input type="checkbox" id="play-sfx" checked>
+    </div>
+    <div class="settings-item">
+        <label for="show-instructions">Show Instructions:</label>
+        <input type="checkbox" id="show-instructions" checked>
+    </div>
+    <div class="settings-item">
+        <label for="fov">FOV:</label>
+        <input type="range" id="fov" min="60" max="120" value="75">
+    </div>
+    <div class="settings-item">
+        <label for="pointer-lock">Pointer Lock:</label>
+        <input type="checkbox" id="pointer-lock">
+    </div>
+    <div class="settings-item">
+        <label for="fullscreen">Fullscreen:</label>
+        <button id="fullscreen-button">Toggle Fullscreen</button>
+    </div>
+    <button onclick="closeSettings()">Close</button>
+</div>
+<div id="shop-modal">
+    <h2>Shop</h2>
+    <div id="shop-tabs">
+        <button class="shop-tab" onclick="showShopTab('items')">Items</button>
+        <button class="shop-tab" onclick="showShopTab('upgrades')">Upgrades</button>
+    </div>
+    <div id="shop-content">
+        <div id="shop-items" class="active">
+            <div class="shop-item">
+                <span>Key Magnet (10 keys)</span>
+                <button onclick="buyItem('keyMagnet', 10)">Buy</button>
+            </div>
+            <div class="shop-item">
+                <span>Travel Stone (25 keys)</span>
+                <button onclick="buyItem('travelStone', 25)">Buy</button>
+            </div>
+            <div class="shop-item">
+                <span>Speed Boost (15 keys)</span>
+                <button onclick="buyItem('speedBoost', 15)">Buy</button>
+            </div>
+            <div class="shop-item">
+                <span>Shield (20 keys)</span>
+                <button onclick="buyItem('shield', 20)">Buy</button>
+            </div>
+        </div>
+        <div id="shop-upgrades" style="display:none;">
+            <div class="shop-item">
+                <span>Pickup Radius (5 keys)</span>
+                <button onclick="buyUpgrade('pickupRadius')">Upgrade</button>
+            </div>
+            <div class="upgrade-boxes">
+                <div class="upgrade-box pickup-radius"></div>
+                <div class="upgrade-box pickup-radius"></div>
+                <div class="upgrade-box pickup-radius"></div>
+                <div class="upgrade-box pickup-radius"></div>
+                <div class="upgrade-box pickup-radius"></div>
+            </div>
+            <div class="shop-item">
+                <span>Speed (5 keys)</span>
+                <button onclick="buyUpgrade('speed')">Upgrade</button>
+            </div>
+            <div class="upgrade-boxes">
+                <div class="upgrade-box"></div>
+                <div class="upgrade-box"></div>
+                <div class="upgrade-box"></div>
+                <div class="upgrade-box"></div>
+                <div class="upgrade-box"></div>
+            </div>
+        </div>
+    </div>
+    <button onclick="closeShop()">Close</button>
+</div>
+<div id="key-master-modal" style="display: none;">
+    <h2>Key Master</h2>
+    <p>You can donate keys to the Key Master.</p>
+    <div>
+        <label for="donation-amount">Amount of keys to donate:</label>
+        <input type="number" id="donation-amount" min="1">
+    </div>
+    <button onclick="donateKeys()">Donate</button>
+    <button onclick="closeKeyMaster()">Close</button>
+    <p id="key-master-status"></p>
+</div>
+<div id="travel-menu">
+    <h2>Travel Menu</h2>
+    <div>
+        <label for="travel-x">X coordinate:</label>
+        <input type="number" id="travel-x">
+    </div>
+    <div>
+        <label for="travel-y">Y coordinate:</label>
+        <input type="number" id="travel-y">
+    </div>
+    <button onclick="executeTravel()">Travel</button>
+    <button onclick="closeTravelMenu()">Cancel</button>
+    <button onclick="setToSaveRoom()">Set to Save Room</button>
+</div>
+<div id="map-ui">
+    <div id="map-container">
+        <!-- Map grid will be generated here -->
+    </div>
+    <button id="close-map-button">Close Map</button>
+</div>
+<div id="status-message"></div>
+<div id="death-screen">
+    <h1>You Died</h1>
+    <button id="respawn-button">Respawn</button>
+</div>
+<div id="movement-joystick" class="joystick-container">
+    <div class="joystick-knob"></div>
+</div>
+<div id="camera-joystick" class="joystick-container">
+    <div class="joystick-knob"></div>
+</div>
+<button id="mobile-jump-button">JUMP</button>
+<script>
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+const renderer = new THREE.WebGLRenderer();
+renderer.setSize(window.innerWidth, window.innerHeight);
+document.body.appendChild(renderer.domElement);
+
+const roomWidth = 20;
+const roomHeight = 10;
+const roomDepth = 20;
+
+const textureLoader = new THREE.TextureLoader();
+
+const roomPrompts = {};
+roomPrompts['0,0'] = "A alien weird universe";
+
+const roomData = {};  
+let currentRoomPrompt = "A alien weird universe";
+let imagesLoaded = 0;
+const totalImages = 5; 
+
+let playerFrozen = true; // Start frozen
+let speedUpgradeLevel = 0;
+let pickupRadiusLevel = 0;
+const BASE_SPEED = 0.15;
+const BASE_PICKUP_RADIUS = 1;
+const turnSpeed = 0.03;
+
+let speed = BASE_SPEED * (1 + speedUpgradeLevel);
+
+let lookUp = false;
+let lookDown = false;
+const maxPitch = Math.PI / 4; // 45 degrees in radians
+
+function showStatusMessage(message) {
+    const statusEl = document.getElementById('status-message');
+    statusEl.textContent = message;
+    statusEl.style.display = 'block';
+}
+
+function hideStatusMessage() {
+    document.getElementById('status-message').style.display = 'none';
+}
+
+function checkAllImagesLoaded() {
+    imagesLoaded++;
+    if (imagesLoaded === totalImages) {
+        document.getElementById('loading-screen').style.display = 'none';
+        playerFrozen = false;
+        hideStatusMessage();
+    }
+}
+
+const roomTextures = {};
+
+function loadRoomTextures(roomPrompt) {
+    document.getElementById('loading-screen').style.display = 'flex'; 
+    playerFrozen = true;
+    showStatusMessage('Loading new room...');
+    imagesLoaded = 0; 
+    
+    const wallTexture = textureLoader.load('https://image.pollinations.ai/prompt/the%20wall%20texture%20to%20' + encodeURIComponent(roomPrompt), checkAllImagesLoaded);
+    const floorTexture = textureLoader.load('https://image.pollinations.ai/prompt/the%20floor%20to%20' + encodeURIComponent(roomPrompt), checkAllImagesLoaded);
+    const ceilingTexture = textureLoader.load('https://image.pollinations.ai/prompt/the%20ceiling%20to%20' + encodeURIComponent(roomPrompt), checkAllImagesLoaded);
+    const doorTexture1 = textureLoader.load('https://image.pollinations.ai/prompt/a%20door%20to%20' + encodeURIComponent(roomPrompt), checkAllImagesLoaded);
+    const doorTexture2 = textureLoader.load('https://image.pollinations.ai/prompt/another%20door%20to%20' + encodeURIComponent(roomPrompt), checkAllImagesLoaded);
+    
+    return {
+        wall: wallTexture,
+        floor: floorTexture,
+        ceiling: ceilingTexture,
+        door1: doorTexture1,
+        door2: doorTexture2
+    };
+}
+
+roomTextures['0,0'] = loadRoomTextures("A alien weird universe");
+
+let playerKeys = 0;
+let currentKeys = [];
+let isJumping = false;
+let yVelocity = 0;
+const GRAVITY = -0.1;
+const JUMP_POWER = 1.2;
+const FLOOR_HEIGHT = 2;
+
+const keyGeometry = new THREE.SphereGeometry(0.3);
+const keyMaterial = new THREE.MeshPhongMaterial({color: 0xFFD700});
+const landmineGeometry = new THREE.CylinderGeometry(0.4, 0.4, 0.2, 32);
+const landmineMaterial = new THREE.MeshPhongMaterial({ color: 0xff0000 });
+let currentLandmines = [];
+let lastSavePosition = { x: 0, y: 0 };
+
+let inventory = new Array(5).fill(null);
+let selectedSlot = 0;
+let activeKeyMagnet = false;
+
+let isDragging = false;
+const mapOffset = { x: 0, y: 0 };
+const dragStart = { x: 0, y: 0 };
+
+const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+
+function playKeyCollectSound() {
+    if (!playSfx) return;
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+    
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+    
+    oscillator.type = 'sine';
+    oscillator.frequency.value = 523.25; // C5 note
+    
+    gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.1);
+    
+    oscillator.start();
+    oscillator.stop(audioContext.currentTime + 0.1);
+}
+
+function playSaveRoomSound() {
+    if (!playSfx) return;
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+
+    oscillator.type = 'triangle'; // Different waveform for a distinctive sound
+    oscillator.frequency.value = 880; // A5 note
+
+    gainNode.gain.setValueAtTime(0.5, audioContext.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.5);
+
+    oscillator.start();
+    oscillator.stop(audioContext.currentTime + 0.5);
+}
+
+function flashScreenGold() {
+    const flashDiv = document.createElement('div');
+    flashDiv.style.position = 'fixed';
+    flashDiv.style.top = '0';
+    flashDiv.style.left = '0';
+    flashDiv.style.width = '100%';
+    flashDiv.style.height = '100%';
+    flashDiv.style.backgroundColor = 'rgba(255, 215, 0, 0.5)';
+    flashDiv.style.zIndex = '1000';
+    document.body.appendChild(flashDiv);
+
+    setTimeout(() => {
+        flashDiv.style.transition = 'opacity 1s';
+        flashDiv.style.opacity = '0';
+        setTimeout(() => {
+            document.body.removeChild(flashDiv);
+        }, 1000);
+    }, 100);
+}
+
+function updateKeyDisplay() {
+    const keyDisplay = document.getElementById('key-display');
+    keyDisplay.textContent = `Keys: ${playerKeys}`;
+}
+
+function spawnKey() {
+    const roomKey = `${roomPosition.x},${roomPosition.y}`;
+    if (!roomData[roomKey]) {
+        roomData[roomKey] = {
+            keyPositions: [], 
+            visited: false
+        };
+    }
+    if (!roomData[roomKey].visited) {
+        const numberOfKeys = 2 + Math.floor(Math.random() * 5);
+        for (let i = 0; i < numberOfKeys; i++) {
+            const isFloorKey = Math.random() < 0.5;
+            roomData[roomKey].keyPositions.push({
+                x: (Math.random() - 0.5) * (roomWidth - 4),
+                y: isFloorKey ? 1 : (2 + (Math.random() * 4)),
+                z: (Math.random() - 0.5) * (roomDepth - 4)
+            });
+        }
+        roomData[roomKey].visited = true;
+    }
+    currentKeys.forEach(key => scene.remove(key));
+    currentKeys = [];
+    roomData[roomKey].keyPositions.forEach(pos => {
+        const key = new THREE.Mesh(keyGeometry, keyMaterial);
+        key.position.set(pos.x, pos.y, pos.z);
+        scene.add(key);
+        currentKeys.push(key);
+    });
+}
+
+function spawnLandmines() {
+    const roomKey = `${roomPosition.x},${roomPosition.y}`;
+    if (!roomData[roomKey].landminePositions) {
+        roomData[roomKey].landminePositions = [];
+        const numberOfLandmines = Math.floor(Math.random() * 3); // Up to 2 landmines per room
+        for (let i = 0; i < numberOfLandmines; i++) {
+            roomData[roomKey].landminePositions.push({
+                x: (Math.random() - 0.5) * (roomWidth - 4),
+                y: 0.1,
+                z: (Math.random() - 0.5) * (roomDepth - 4)
+            });
+        }
+    }
+
+    currentLandmines.forEach(mine => scene.remove(mine));
+    currentLandmines = [];
+
+    roomData[roomKey].landminePositions.forEach(pos => {
+        const mine = new THREE.Mesh(landmineGeometry, landmineMaterial);
+        mine.position.set(pos.x, pos.y, pos.z);
+        scene.add(mine);
+        currentLandmines.push(mine);
+    });
+}
+
+function triggerDeath() {
+    playerFrozen = true;
+    document.getElementById('death-screen').style.display = 'flex';
+}
+
+document.getElementById('respawn-button').addEventListener('click', () => {
+    document.getElementById('death-screen').style.display = 'none';
+    playerFrozen = false;
+    enterRoomAtPosition(lastSavePosition.x, lastSavePosition.y);
+});
+
+function enterRoomAtPosition(x, y) {
+    currentKeys.forEach(key => scene.remove(key));
+    currentKeys = [];
+    currentLandmines.forEach(mine => scene.remove(mine));
+    currentLandmines = [];
+
+    roomPosition.x = x;
+    roomPosition.y = y;
+
+    loadRoom();
+
+    spawnKey();
+    spawnLandmines();
+
+    camera.position.set(0, FLOOR_HEIGHT, 0);
+    document.getElementById('room-position').textContent = `Room (${roomPosition.x}, ${roomPosition.y})`;
+}
+
+function loadRoom() {
+    const roomKey = `${roomPosition.x},${roomPosition.y}`;
+    if (!roomPrompts[roomKey]) {
+        currentRoomPrompt = generateRandomRoomPrompt();
+        roomPrompts[roomKey] = currentRoomPrompt;
+        playerFrozen = true;
+        showStatusMessage('Loading new room...');
+        roomTextures[roomKey] = loadRoomTextures(currentRoomPrompt);
+    } else {
+        currentRoomPrompt = roomPrompts[roomKey];
+        if (!roomTextures[roomKey]) {
+            playerFrozen = true;
+            showStatusMessage('Loading new room...');
+            roomTextures[roomKey] = loadRoomTextures(currentRoomPrompt);
+        }
+    }
+
+    if (roomTextures[roomKey]) {
+        updateRoomMaterials(roomTextures[roomKey]);
+    }
+    updateRoomDisplay();
+    if (isSaveRoom()) {
+        lastSavePosition = { x: roomPosition.x, y: roomPosition.y };
+        playSaveRoomSound();
+        flashScreenGold();
+    }
+}
+
+function isSaveRoom() {
+    return (roomPosition.x % 20 === 0 && roomPosition.y % 20 === 0);
+}
+
+function generateRandomRoomPrompt() {
+    if (isSaveRoom()) {
+        return "A shimmering golden sanctuary";
+    } else {
+        const prompts = [
+            "A mystical enchanted forest",
+            "An underwater coral reef",  
+            "The surface of Mars",
+            "Inside a futuristic space station",
+            "A haunted abandoned mansion",
+            "A crystal cave filled with gems",
+            "An ancient Egyptian temple",
+            "A steampunk workshop",
+            "A medieval blacksmith shop",
+            "An alien bazaar",
+            "A frozen arctic wasteland",
+            "A volcanic chamber",
+            "A mysterious library",
+            "A neon cyberpunk street",
+            "The inside of a giant clock",
+            "A laundromat for enchanted talking clothes",
+            "A bouncy castle made entirely of clouds in the sky",
+            "Inside the refrigerator of a very paranoid squirrel",
+            "An overgrown jungle gym for extremely competitive fairies",
+            "A 24/7 donut shop that serves exclusively to ghosts",
+            "The bottom of a giant’s coffee mug, mid-sip",
+            "A spaceship piloted by very organized ducks",
+            "The floor of a wizard’s messy bathroom, with sentient soap",
+            "An alien karaoke bar where everyone sings out of key",
+            "The waiting room for reincarnation, with a really long line",
+            "A medieval jousting arena, but everyone’s riding rubber chickens",
+            "A cat-operated taxi service for woodland creatures",
+            "A disco ball factory run by disco-loving robots",
+            "The inner workings of a time-traveling vending machine",
+            "A theme park for pet rocks, with rock-sized roller coasters"
+        ];
+        return prompts[Math.floor(Math.random() * prompts.length)];
+    }
+}
+
+function updateRoomMaterials(textures) { 
+    frontWall.material = new THREE.MeshPhongMaterial({ map: textures.wall });
+    backWall.material = new THREE.MeshPhongMaterial({ map: textures.wall }); 
+    leftWall.material = new THREE.MeshPhongMaterial({ map: textures.wall });
+    rightWall.material = new THREE.MeshPhongMaterial({ map: textures.wall });
+    floor.material = new THREE.MeshPhongMaterial({ map: textures.floor });
+    ceiling.material = new THREE.MeshPhongMaterial({ map: textures.ceiling });
+    frontDoor.material = new THREE.MeshPhongMaterial({ map: textures.door1 });  
+    backDoor.material = new THREE.MeshPhongMaterial({ map: textures.door2 });
+    leftDoor.material = new THREE.MeshPhongMaterial({ map: textures.door1 });
+    rightDoor.material = new THREE.MeshPhongMaterial({ map: textures.door2 });
+}
+
+const wallGeometry = new THREE.PlaneGeometry(roomWidth, roomHeight);
+const floorGeometry = new THREE.PlaneGeometry(roomWidth, roomDepth);
+const doorGeometry = new THREE.BoxGeometry(4, 8, 0.2);
+const floor = new THREE.Mesh(floorGeometry);
+floor.rotation.x = -Math.PI / 2;
+scene.add(floor);
+
+const ceilingMaterial = new THREE.MeshPhongMaterial({ color: 0x87CEEB });
+const ceiling = new THREE.Mesh(floorGeometry, ceilingMaterial);
+ceiling.rotation.x = Math.PI / 2;
+ceiling.position.y = roomHeight;
+scene.add(ceiling);
+
+const frontWall = new THREE.Mesh(wallGeometry); 
+frontWall.position.z = -roomDepth / 2;
+frontWall.position.y = roomHeight / 2;
+scene.add(frontWall);
+
+const backWall = new THREE.Mesh(wallGeometry);
+backWall.position.z = roomDepth / 2;
+backWall.position.y = roomHeight / 2;
+backWall.rotation.y = Math.PI;
+scene.add(backWall);
+
+const leftWall = new THREE.Mesh(wallGeometry);
+leftWall.position.x = -roomWidth / 2;
+leftWall.position.y = roomHeight / 2;
+leftWall.rotation.y = Math.PI / 2;
+scene.add(leftWall);
+
+const rightWall = new THREE.Mesh(wallGeometry);
+rightWall.position.x = roomWidth / 2; 
+rightWall.position.y = roomHeight / 2;
+rightWall.rotation.y = -Math.PI / 2;
+scene.add(rightWall);
+
+const frontDoor = new THREE.Mesh(doorGeometry);
+frontDoor.position.z = -roomDepth / 2 + 0.1;
+frontDoor.position.y = 4;
+scene.add(frontDoor);
+
+const backDoor = new THREE.Mesh(doorGeometry);
+backDoor.position.z = roomDepth / 2 - 0.1;
+backDoor.position.y = 4;
+backDoor.rotation.y = Math.PI;
+scene.add(backDoor);
+
+const leftDoor = new THREE.Mesh(doorGeometry);
+leftDoor.position.x = -roomWidth / 2 + 0.1;
+leftDoor.position.y = 4;
+leftDoor.rotation.y = Math.PI / 2;
+scene.add(leftDoor);
+
+const rightDoor = new THREE.Mesh(doorGeometry);  
+rightDoor.position.x = roomWidth / 2 - 0.1;
+rightDoor.position.y = 4;
+rightDoor.rotation.y = -Math.PI / 2; 
+scene.add(rightDoor);
+
+updateRoomMaterials(roomTextures['0,0']);
+
+const light = new THREE.PointLight(0xffffff, 1, 100);
+light.position.set(0, roomHeight / 2 - 1, 0);
+scene.add(light);
+const ambientLight = new THREE.AmbientLight(0x404040);
+scene.add(ambientLight);
+
+camera.position.y = FLOOR_HEIGHT;
+camera.rotation.order = 'YXZ';
+
+let moveForward = false;
+let moveBackward = false;
+let moveLeft = false;
+let moveRight = false;
+let turnLeft = false;
+let turnRight = false;
+const velocity = new THREE.Vector3();
+const direction = new THREE.Vector3();
+
+let roomPosition = {x: 0, y: 0};
+const visitedRooms = [];
+
+document.addEventListener('keydown', onKeyDown);
+document.addEventListener('keyup', onKeyUp);
+document.getElementById('shop-button').addEventListener('click', openShop);
+document.getElementById('settings-button').addEventListener('click', openSettings);
+document.getElementById('map-button').addEventListener('click', openMap);
+document.getElementById('close-map-button').addEventListener('click', closeMap);
+document.getElementById('key-master-button').addEventListener('click', openKeyMaster);
+document.getElementById('fullscreen-button').addEventListener('click', toggleFullscreen);
+
+// Fullscreen functionality
+function toggleFullscreen() {
+    if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(err => {
+            alert(`Error attempting to enable fullscreen: ${err.message}`);
+        });
+    } else {
+        document.exitFullscreen();
+    }
+}
+
+// Fullscreen change listener
+document.addEventListener('fullscreenchange', () => {
+    const button = document.getElementById('fullscreen-button');
+    button.textContent = document.fullscreenElement ? 'Exit Fullscreen' : 'Enter Fullscreen';
+});
+
+// Initialize pointer lock status
+let isPointerLocked = false;
+let pendingPointerLock = false;  // Control pointer lock after settings
+
+// Function to request pointer lock
+function requestPointerLock() {
+    if (!isPointerLocked) {
+        document.body.requestPointerLock();
+    } else {
+        document.exitPointerLock();
+    }
+}
+
+// Add event listener for pointer lock status changes
+document.addEventListener('pointerlockchange', () => {
+    const pointerLockCheckbox = document.getElementById('pointer-lock');
+    isPointerLocked = document.pointerLockElement === document.body;
+    pointerLockCheckbox.checked = isPointerLocked; // Sync checkbox status
+});
+
+// Update camera rotation based on mouse movement
+document.addEventListener('mousemove', (event) => {
+    if (isPointerLocked) {
+        const sensitivity = 0.002;
+        camera.rotation.y -= event.movementX * sensitivity;
+        camera.rotation.x -= event.movementY * sensitivity;
+        // Clamp pitch rotation
+        camera.rotation.x = Math.max(-maxPitch, Math.min(maxPitch, camera.rotation.x));
+    }
+});
+
+// Add event listener for pointer lock toggle in settings
+document.getElementById('pointer-lock').addEventListener('change', (event) => {
+    if (event.target.checked) {
+        pendingPointerLock = true;  // Set pending pointer lock
+    } else {
+        document.exitPointerLock();
+    }
+});
+
+// Mobile detection
+function isMobile() {
+    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+}
+
+// Show joysticks and jump button if on mobile
+if (isMobile()) {
+    document.querySelectorAll('.joystick-container').forEach(el => el.style.display = 'block');
+    document.getElementById('mobile-jump-button').style.display = 'block';
+}
+
+// Joystick handling
+function handleJoystick(joystickEl, knobEl, callback) {
+    let touchId = null;
+    let startX, startY;
+    const maxDistance = 35;
+
+    function updateKnobPosition(x, y) {
+        const dx = x - startX;
+        const dy = y - startY;
+        const distance = Math.min(Math.sqrt(dx * dx + dy * dy), maxDistance);
+        const angle = Math.atan2(dy, dx);
+        
+        const newX = distance * Math.cos(angle);
+        const newY = distance * Math.sin(angle);
+        
+        knobEl.style.transform = `translate(calc(-50% + ${newX}px), calc(-50% + ${newY}px))`;
+        callback(newX / maxDistance, newY / maxDistance);
+    }
+
+    joystickEl.addEventListener('touchstart', (e) => {
+        if (touchId === null) {
+            const touch = e.touches[0];
+            touchId = touch.identifier;
+            const rect = joystickEl.getBoundingClientRect();
+            startX = touch.clientX - rect.left;
+            startY = touch.clientY - rect.top;
+        }
+    });
+
+    joystickEl.addEventListener('touchmove', (e) => {
+        e.preventDefault();
+        for (let i = 0; i < e.touches.length; i++) {
+            const touch = e.touches[i];
+            if (touch.identifier === touchId) {
+                const rect = joystickEl.getBoundingClientRect();
+                const x = touch.clientX - rect.left;
+                const y = touch.clientY - rect.top;
+                updateKnobPosition(x, y);
+                break;
+            }
+        }
+    });
+
+    function resetKnob() {
+        touchId = null;
+        knobEl.style.transform = 'translate(-50%, -50%)';
+        callback(0, 0);
+    }
+
+    joystickEl.addEventListener('touchend', (e) => {
+        for (let i = 0; i < e.changedTouches.length; i++) {
+            if (e.changedTouches[i].identifier === touchId) {
+                resetKnob();
+                break;
+            }
+        }
+    });
+
+    joystickEl.addEventListener('touchcancel', (e) => {
+        for (let i = 0; i < e.changedTouches.length; i++) {
+            if (e.changedTouches[i].identifier === touchId) {
+                resetKnob();
+                break;
+            }
+        }
+    });
+}
+
+// Add jump button handler
+document.getElementById('mobile-jump-button').addEventListener('touchstart', (e) => {
+    e.preventDefault();
+    if (!isJumping) {
+        yVelocity = JUMP_POWER;
+        isJumping = true;
+    }
+});
+
+// Initialize joysticks
+const movementJoystick = document.getElementById('movement-joystick');
+const cameraJoystick = document.getElementById('camera-joystick');
+
+handleJoystick(
+    movementJoystick, 
+    movementJoystick.querySelector('.joystick-knob'),
+    (x, y) => {
+        moveForward = y < -0.5;
+        moveBackward = y > 0.5;
+        moveLeft = x < -0.5;
+        moveRight = x > 0.5;
+    }
+);
+
+handleJoystick(
+    cameraJoystick,
+    cameraJoystick.querySelector('.joystick-knob'),
+    (x, y) => {
+        turnLeft = x > 0.3;
+        turnRight = x < -0.3;
+        lookUp = y < -0.3;
+        lookDown = y > 0.3;
+    }
+);
+
+function onKeyDown(event) {
+    switch (event.code) {
+        case 'KeyW':
+            moveForward = true;
+            break;
+        case 'KeyS':
+            moveBackward = true;
+            break;
+        case 'KeyA':
+            moveLeft = true;
+            break;
+        case 'KeyD':
+            moveRight = true;
+            break;
+        case 'ArrowLeft':
+            turnRight = true;
+            break;
+        case 'ArrowRight':
+            turnLeft = true;
+            break;
+        case 'ArrowUp':
+            lookUp = true;
+            break;
+        case 'ArrowDown':
+            lookDown = true;
+            break;
+        case 'Space':
+            if (!isJumping) {
+                yVelocity = JUMP_POWER;
+                isJumping = true;
+            }
+            break;
+        case 'KeyE':
+            useSelectedItem();
+            break;
+        case 'Digit1':
+        case 'Digit2':  
+        case 'Digit3':
+        case 'Digit4':
+        case 'Digit5':
+            selectedSlot = parseInt(event.code.slice(-1)) - 1;
+            updateInventoryDisplay();
+            break;
+    }
+}
+
+function onKeyUp(event) {
+    switch (event.code) {
+        case 'KeyW':
+            moveForward = false;
+            break;
+        case 'KeyS':
+            moveBackward = false;
+            break;
+        case 'KeyA':
+            moveLeft = false;
+            break;
+        case 'KeyD':
+            moveRight = false;
+            break;
+        case 'ArrowLeft':
+            turnRight = false;
+            break;
+        case 'ArrowRight':
+            turnLeft = false;
+            break;
+        case 'ArrowUp':
+            lookUp = false;
+            break;
+        case 'ArrowDown':
+            lookDown = false;
+            break;
+    }
+}
+
+function updateRoomDisplay() {
+    document.getElementById('room-position').textContent = `Room (${roomPosition.x}, ${roomPosition.y})`;
+
+    if (roomPosition.x === 0 && roomPosition.y === 0) {
+        document.getElementById('key-master-button').style.display = 'block';
+    } else {
+        document.getElementById('key-master-button').style.display = 'none';
+    }
+}
+
+function animate() {
+    requestAnimationFrame(animate);
+
+    yVelocity += GRAVITY;
+    camera.position.y += yVelocity;
+    
+    if (camera.position.y <= FLOOR_HEIGHT) {
+        camera.position.y = FLOOR_HEIGHT;
+        yVelocity = 0;
+        isJumping = false;
+    }
+
+    if (!playerFrozen) {
+        const pickupRadius = BASE_PICKUP_RADIUS * (1 + pickupRadiusLevel);
+        for (let i = currentKeys.length - 1; i >= 0; i--) {
+            const key = currentKeys[i];
+            const keyDistance = new THREE.Vector2(
+                camera.position.x - key.position.x,
+                camera.position.z - key.position.z
+            ).length();
+            
+            if (keyDistance < pickupRadius) {
+                scene.remove(key);
+                currentKeys.splice(i, 1);
+                const roomKey = `${roomPosition.x},${roomPosition.y}`;
+                roomData[roomKey].keyPositions.splice(i, 1);
+                playerKeys++;
+                updateKeyDisplay();
+                playKeyCollectSound();
+            } else {
+                key.rotation.y += 0.02;  
+            }
+        }
+
+        currentLandmines.forEach((mine, index) => {
+            const dx = camera.position.x - mine.position.x;
+            const dz = camera.position.z - mine.position.z;
+            const distance = Math.sqrt(dx * dx + dz * dz);
+            if (distance < 0.6) {
+                triggerDeath();
+                scene.remove(mine);
+                currentLandmines.splice(index, 1);
+                roomData[`${roomPosition.x},${roomPosition.y}`].landminePositions.splice(index, 1);
+            }
+        });
+
+        direction.set(
+            Number(moveRight) - Number(moveLeft),
+            0,
+            Number(moveBackward) - Number(moveForward)
+        );
+
+        const yaw = camera.rotation.y;
+        const yawQuaternion = new THREE.Quaternion();
+        yawQuaternion.setFromAxisAngle(new THREE.Vector3(0, 1, 0), yaw);
+
+        direction.applyQuaternion(yawQuaternion);
+        direction.normalize();
+        
+        const frameVelocity = direction.multiplyScalar(speed);
+        velocity.lerp(frameVelocity, 0.2);
+        
+        const nextPosition = camera.position.clone().add(velocity);
+        if (Math.abs(nextPosition.x) < roomWidth / 2 - 1 &&
+            Math.abs(nextPosition.z) < roomDepth / 2 - 1) {
+            camera.position.add(velocity);
+        }
+
+        const doorCollisionThreshold = 2;
+        if (camera.position.z < -roomDepth / 2 + doorCollisionThreshold &&
+            Math.abs(camera.position.x) < 2) {
+            enterNewRoom(0, 1); 
+        } else if (camera.position.z > roomDepth / 2 - doorCollisionThreshold &&
+            Math.abs(camera.position.x) < 2) {
+            enterNewRoom(0, -1); 
+        } else if (camera.position.x < -roomWidth / 2 + doorCollisionThreshold &&
+            Math.abs(camera.position.z) < 2) {
+            enterNewRoom(-1, 0); 
+        } else if (camera.position.x > roomWidth / 2 - doorCollisionThreshold &&
+            Math.abs(camera.position.z) < 2) {
+            enterNewRoom(1, 0); 
+        }
+
+        camera.rotation.y -= turnLeft ? turnSpeed : turnRight ? -turnSpeed : 0;
+
+        // Update camera pitch
+        camera.rotation.x += lookUp ? turnSpeed : lookDown ? -turnSpeed : 0;
+
+        // Clamp camera pitch to between -maxPitch and maxPitch
+        if (camera.rotation.x > maxPitch) camera.rotation.x = maxPitch;
+        if (camera.rotation.x < -maxPitch) camera.rotation.x = -maxPitch;
+    }
+
+    if (activeKeyMagnet) {
+        currentKeys.forEach(key => {
+            const directionToPlayer = new THREE.Vector3().subVectors(camera.position, key.position);
+            key.position.add(directionToPlayer.normalize().multiplyScalar(0.1));
+        });
+    }
+
+    renderer.render(scene, camera);
+}
+
+function openShop() {
+    document.getElementById('shop-modal').style.display = 'block';
+    showShopTab('items'); // Set default tab to Items
+}
+
+function closeShop() {
+    document.getElementById('shop-modal').style.display = 'none';
+}
+
+function openMap() {
+    document.getElementById('map-ui').style.display = 'block';
+    generateMap();
+    centerMapOnCurrentRoom();
+    playerFrozen = true;
+}
+
+function closeMap() {
+    document.getElementById('map-ui').style.display = 'none';
+    document.getElementById('map-container').innerHTML = ''; // Clear the map
+    playerFrozen = false;
+}
+
+function showShopTab(tab) {
+    const itemsTab = document.getElementById('shop-items');
+    const upgradesTab = document.getElementById('shop-upgrades');
+    const itemsButton = document.querySelector('.shop-tab[onclick="showShopTab(\'items\')"]');
+    const upgradesButton = document.querySelector('.shop-tab[onclick="showShopTab(\'upgrades\')"]');
+
+    if (tab === 'items') {
+        itemsTab.style.display = 'block';
+        upgradesTab.style.display = 'none';
+        itemsButton.classList.add('active');
+        upgradesButton.classList.remove('active');
+    } else if (tab === 'upgrades') {
+        itemsTab.style.display = 'none';
+        upgradesTab.style.display = 'block';
+        itemsButton.classList.remove('active');
+        upgradesButton.classList.add('active');
+    }
+}
+
+function generateMap() {
+    const mapContainer = document.getElementById('map-container');
+    mapContainer.innerHTML = ''; // Clear previous content
+
+    const minX = roomPosition.x - 20;
+    const maxX = roomPosition.x + 20;
+    const minY = roomPosition.y - 20;
+    const maxY = roomPosition.y + 20;
+
+    for (let x = minX; x <= maxX; x++) {
+        for (let y = minY; y <= maxY; y++) {
+            const roomKey = `${x},${y}`;
+            const roomDiv = document.createElement('div');
+            roomDiv.textContent = `(${x}, ${y})`;
+            roomDiv.classList.add('room-box');
+            roomDiv.style.left = `${(x * 45) + 2000}px`; // Adjust scaling and offset as needed
+            roomDiv.style.top = `${(-y * 45) + 2000}px`;
+
+            if (x === 0 && y === 0) {
+                const iconUrl = 'https://image.pollinations.ai/prompt/' + encodeURIComponent('Make an icon for "A alien weird universe"');
+                roomDiv.style.backgroundImage = `url(${iconUrl})`;
+                roomDiv.style.backgroundColor = ''; // Remove background color if needed
+            } else if (roomPrompts[roomKey]) {
+                roomDiv.style.backgroundColor = 'green'; // Discovered room
+            } else {
+                roomDiv.style.backgroundColor = 'red'; // Undiscovered room
+            }
+
+            // Highlight current room
+            if (x === roomPosition.x && y === roomPosition.y) {
+                roomDiv.style.border = '2px solid yellow';
+            }
+
+            mapContainer.appendChild(roomDiv);
+        }
+    }
+}
+
+function centerMapOnCurrentRoom() {
+    const x = roomPosition.x;
+    const y = roomPosition.y;
+
+    mapOffset.x = window.innerWidth / 2 - ((x * 60) + 25 + 2000); // Adjust scaling and offset as needed
+    mapOffset.y = window.innerHeight / 2 - ((-y * 60) + 25 + 2000);
+
+    const mapContainer = document.getElementById('map-container');
+    mapContainer.style.transform = `translate(${mapOffset.x}px, ${mapOffset.y}px)`;
+}
+
+// Map dragging functionality
+const mapContainer = document.getElementById('map-container');
+mapContainer.addEventListener('mousedown', function(event) {
+    isDragging = true;
+    dragStart.x = event.clientX - mapOffset.x;
+    dragStart.y = event.clientY - mapOffset.y;
+    mapContainer.style.cursor = 'grabbing';
+});
+
+document.addEventListener('mousemove', function(event) {
+    if (isDragging) {
+        mapOffset.x = event.clientX - dragStart.x;
+        mapOffset.y = event.clientY - dragStart.y;
+        mapContainer.style.transform = `translate(${mapOffset.x}px, ${mapOffset.y}px)`;
+    }
+});
+
+document.addEventListener('mouseup', function() {
+    isDragging = false;
+    mapContainer.style.cursor = 'grab';
+});
+
+function executeTravel() {
+    const x = parseInt(document.getElementById('travel-x').value);
+    const y = parseInt(document.getElementById('travel-y').value);
+    
+    if (!isNaN(x) && !isNaN(y)) {
+        const dx = x - roomPosition.x;
+        const dy = y - roomPosition.y;
+        enterNewRoom(dx, dy);
+        closeTravelMenu();
+        inventory[selectedSlot] = null;
+        updateInventoryDisplay();
+    }
+}
+
+function buyItem(itemId, price) {
+    if (playerKeys >= price) {
+        const emptySlot = inventory.findIndex(slot => slot === null);
+        if (emptySlot !== -1) {
+            inventory[emptySlot] = itemId;
+            playerKeys -= price;
+            updateKeyDisplay();
+            updateInventoryDisplay();
+            closeShop();
+        } else {
+            alert('Inventory full!');
+        }
+    } else {
+        alert('Not enough keys!');
+    }
+}
+
+function buyUpgrade(type) {
+    if (type === 'speed') {
+        const cost = 5;
+        if (playerKeys >= cost && speedUpgradeLevel < 5) {
+            playerKeys -= cost;
+            speedUpgradeLevel++;
+            updateKeyDisplay();
+            speed = BASE_SPEED * (1 + speedUpgradeLevel);
+            
+            const boxes = document.querySelectorAll('.upgrade-box:not(.pickup-radius)');
+            for (let i = 0; i < speedUpgradeLevel; i++) {
+                boxes[i].style.background = 'rgba(255,215,0,0.5)';
+            }
+        } else {
+            alert('Not enough keys or max level reached!');
+        }
+    } else if (type === 'pickupRadius') {
+        const cost = 5;
+        if (playerKeys >= cost && pickupRadiusLevel < 5) {
+            playerKeys -= cost;
+            pickupRadiusLevel++;
+            updateKeyDisplay();
+            
+            const boxes = document.querySelectorAll('.upgrade-box.pickup-radius');
+            for (let i = 0; i < pickupRadiusLevel; i++) {
+                boxes[i].style.background = 'rgba(255,215,0,0.5)';
+            }
+        } else {
+            alert('Not enough keys or max level reached!');
+        }
+    }
+}
+
+function updateInventoryDisplay() {
+    const slots = document.querySelectorAll('.inventory-slot');
+    slots.forEach((slot, index) => {
+        slot.textContent = inventory[index] || '';
+        slot.className = `inventory-slot${index === selectedSlot ? ' selected' : ''}`;
+    });
+}
+
+function useSelectedItem() {
+    const item = inventory[selectedSlot];
+    if (item === 'keyMagnet') {
+        activeKeyMagnet = true;
+        playerFrozen = true;
+        showStatusMessage('Key Magnet Active');
+        setTimeout(() => {
+            activeKeyMagnet = false;
+            playerFrozen = false;
+            inventory[selectedSlot] = null;
+            updateInventoryDisplay();
+            hideStatusMessage();
+        }, 5000);
+    } else if (item === 'travelStone') {
+        showTravelMenu();
+        setToSaveRoom();
+    } else if (item === 'speedBoost') {
+        activateSpeedBoost();
+        inventory[selectedSlot] = null;
+        updateInventoryDisplay();
+    } else if (item === 'shield') {
+        activateShield();
+        inventory[selectedSlot] = null;
+        updateInventoryDisplay();
+    }
+}
+
+function activateSpeedBoost() {
+    showStatusMessage('Speed Boost Active');
+    const originalSpeed = speed;
+    speed *= 2; // Double the speed
+    setTimeout(() => {
+        speed = originalSpeed;
+        hideStatusMessage();
+    }, 5000); // Lasts for 5 seconds
+}
+
+let shieldActive = false;
+
+function activateShield() {
+    shieldActive = true;
+    showStatusMessage('Shield Active');
+    setTimeout(() => {
+        shieldActive = false;
+        hideStatusMessage();
+    }, 10000); // Lasts for 10 seconds
+}
+
+// Modify triggerDeath function to account for shield
+function triggerDeath() {
+    if (shieldActive) {
+        shieldActive = false;
+        hideStatusMessage();
+    } else {
+        playerFrozen = true;
+        document.getElementById('death-screen').style.display = 'flex';
+    }
+}
+
+function enterNewRoom(dx, dy) {
+    currentKeys.forEach(key => scene.remove(key));
+    currentKeys = [];
+    currentLandmines.forEach(mine => scene.remove(mine));
+    currentLandmines = [];
+
+    roomPosition.x += dx;
+    roomPosition.y += dy;
+
+    loadRoom();
+
+    spawnKey();
+    spawnLandmines();
+
+    camera.position.set(0, FLOOR_HEIGHT, 0);
+    document.getElementById('room-position').textContent = `Room (${roomPosition.x}, ${roomPosition.y})`;
+}
+
+window.addEventListener('resize', onWindowResize, false);
+
+function onWindowResize() {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+}
+
+const titleScreen = document.getElementById('title-screen');
+const captionSpans = document.querySelectorAll('#caption span');
+
+let delay = 0;
+captionSpans.forEach(span => {
+    setTimeout(() => span.style.opacity = 1, delay);
+    delay += 500;
+});
+
+setTimeout(() => titleScreen.style.opacity = 0, delay + 1000);
+setTimeout(() => {
+    titleScreen.style.opacity = 0;
+    titleScreen.style.display = 'none';
+    enterRoomAtPosition(0, 0); // Set starting room position to (0, 0)
+}, delay + 2000);
+
+showStatusMessage('Loading initial room...');
+updateInventoryDisplay();
+animate();
+
+function openKeyMaster() {
+    document.getElementById('key-master-modal').style.display = 'block';
+}
+
+function closeKeyMaster() {
+    document.getElementById('key-master-modal').style.display = 'none';
+}
+
+let keysDonated = 0;
+let playerLevel = 1;
+
+function donateKeys() {
+    const input = document.getElementById('donation-amount');
+    const amount = parseInt(input.value);
+
+    if (isNaN(amount) || amount <= 0) {
+        alert('Please enter a valid amount of keys to donate.');
+        return;
+    }
+
+    if (playerKeys >= amount) {
+        playerKeys -= amount;
+        keysDonated += amount;
+        updateKeyDisplay();
+
+        document.getElementById('key-master-status').textContent = `You have donated ${keysDonated} keys.`;
+
+        if (keysDonated >= 200) {
+            levelUp();
+            keysDonated -= 200; // Reset after leveling up
+            document.getElementById('key-master-status').textContent = `You have leveled up! Your new level is ${playerLevel}. Keys donated towards next level: ${keysDonated}`;
+        }
+    } else {
+        alert('You do not have enough keys to donate.');
+    }
+}
+
+function levelUp() {
+    playerLevel += 1;
+    alert(`Congratulations! You have leveled up to level ${playerLevel}!`);
+}
+
+function showTravelMenu() {
+    playerFrozen = true;
+    document.getElementById('travel-menu').style.display = 'block';
+}
+
+function closeTravelMenu() {
+    playerFrozen = false;
+    document.getElementById('travel-menu').style.display = 'none';
+}
+
+function setToSaveRoom() {
+    document.getElementById('travel-x').value = lastSavePosition.x;
+    document.getElementById('travel-y').value = lastSavePosition.y;
+}
+
+function openSettings() {
+    document.getElementById('settings-modal').style.display = 'block';
+    playerFrozen = true;
+}
+
+function closeSettings() {
+    document.getElementById('settings-modal').style.display = 'none';
+    playerFrozen = false;
+
+    if (pendingPointerLock) {
+        requestPointerLock();
+        pendingPointerLock = false;  // Reset pending status
+    }
+}
+
+// Instructions toggle functionality
+const instructionsToggle = document.getElementById('instructions-toggle');
+instructionsToggle.addEventListener('click', () => {
+    const instructions = document.getElementById('instructions');
+    if (instructions.style.display === 'none') {
+        instructions.style.display = 'block';
+        instructionsToggle.textContent = '/\\';
+    } else {
+        instructions.style.display = 'none';
+        instructionsToggle.textContent = '\\/';
+    }
+});
+
+document.getElementById('play-sfx').addEventListener('change', (e) => {
+    playSfx = e.target.checked;
+});
+
+document.getElementById('show-instructions').addEventListener('change', (e) => {
+    showInstructions = e.target.checked;
+    document.getElementById('instructions').style.display = showInstructions ? 'block' : 'none';
+    if (showInstructions) {
+        showStatusMessage('Instructions displayed.');
+    }
+});
+
+document.getElementById('fov').addEventListener('input', (e) => {
+    const fov = parseInt(e.target.value);
+    camera.fov = fov;
+    camera.updateProjectionMatrix();
+});
+
+const uiScaleSlider = document.getElementById('ui-scale'); 
+let playSfx = true;  // Already exists but let's make sure it's set to true
+let showInstructions = true;
+const scalableElements = [
+    '#instructions',
+    '#room-position',
+    '#key-display',
+    '#shop-button',
+    '#map-button',
+    '#inventory .inventory-slot',
+    '#key-master-button',
+    '#shop-modal',
+    '#key-master-modal',
+    '#travel-menu',
+    '#status-message',
+    '.joystick-container',
+    '#mobile-jump-button'
+];
+
+uiScaleSlider.addEventListener('input', (e) => {
+    uiScale = e.target.value / 100;
+    updateUIScale();
+});
+
+function updateUIScale() {
+    const root = document.documentElement;
+    root.style.setProperty('--ui-scale', uiScale);
+    
+    // Add base y positions for elements that need vertical scaling
+    const yPositions = {
+        '#key-display': 65,
+        '#map-button': 65,
+        '#settings-button': 110
+    };
+    
+    scalableElements.forEach(selector => {
+        const elements = document.querySelectorAll(selector);
+        elements.forEach(el => {
+            const originalFontSize = window.getComputedStyle(el).getPropertyValue('--original-font-size') || '16px';
+            const originalPadding = window.getComputedStyle(el).getPropertyValue('--original-padding') || '10px';
+            
+            // Scale font size
+            const baseFontSize = parseInt(originalFontSize);
+            el.style.fontSize = `${baseFontSize * uiScale}px`;
+            
+            // Scale padding
+            const basePadding = parseInt(originalPadding);
+            el.style.padding = `${basePadding * uiScale}px`;
+            
+            // Scale Y position if defined
+            if (yPositions[selector]) {
+                el.style.top = `${yPositions[selector] * uiScale}px`;
+            }
+            
+            // Scale width and height for specific elements
+            if (selector === '#inventory .inventory-slot') {
+                el.style.width = `${50 * uiScale}px`;
+                el.style.height = `${50 * uiScale}px`;
+            }
+            if (selector === '.joystick-container') {
+                el.style.width = `${120 * uiScale}px`;
+                el.style.height = `${120 * uiScale}px`;
+            }
+            if (selector === '#mobile-jump-button') {
+                el.style.width = `${80 * uiScale}px`;
+                el.style.height = `${80 * uiScale}px`;
+            }
+        });
+    });
+}
+
+// Store original sizes when the page loads
+window.addEventListener('load', () => {
+    scalableElements.forEach(selector => {
+        const elements = document.querySelectorAll(selector);
+        elements.forEach(el => {
+            const style = window.getComputedStyle(el);
+            el.style.setProperty('--original-font-size', style.fontSize);
+            el.style.setProperty('--original-padding', style.padding);
+        });
+    });
+});
+</script>
+</body></html>
