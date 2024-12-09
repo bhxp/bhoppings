@@ -1,0 +1,811 @@
+<html><head><base href="https://threejs.org/"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@300;400;500&display=swap">
+<style>
+    body, html {
+        margin: 0;
+        padding: 0;
+        font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
+        background-color: #f5f5f7;
+        color: #1d1d1f;
+        height: 100%;
+        overflow: hidden;
+    }
+    .container {
+        display: flex;
+        height: 100vh;
+    }
+    #stage-area {
+        flex: 2;
+        position: relative;
+        background-color: #ffffff;
+        border-radius: 20px;
+        margin: 20px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        overflow: hidden;
+    }
+    #renderer-container {
+        width: 100%;
+        height: 100%;
+    }
+    .controls-wrapper {
+        flex: 1;
+        background-color: #ffffff;
+        border-radius: 20px;
+        margin: 20px 20px 20px 0;
+        padding: 30px;
+        overflow-y: auto;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    }
+    .controls-content {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+    #controls-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 20px;
+    }
+    .control-group {
+        margin-bottom: 15px;
+    }
+    h1, h2 {
+        color: #1d1d1f;
+        font-weight: 500;
+        margin-bottom: 15px;
+    }
+    h1 {
+        font-size: 24px;
+    }
+    h2 {
+        font-size: 18px;
+    }
+    label {
+        display: block;
+        margin-bottom: 5px;
+        color: #86868b;
+        font-size: 14px;
+        font-weight: 500;
+    }
+    .custom-range {
+        -webkit-appearance: none;
+        width: 100%;
+        height: 4px;
+        border-radius: 2px;
+        background: #e0e0e0;
+        outline: none;
+        opacity: 0.7;
+        transition: opacity .2s;
+    }
+    .custom-range::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background: #0071e3;
+        cursor: pointer;
+        box-shadow: 0 0 5px rgba(0,0,0,0.2);
+    }
+    .custom-range::-moz-range-thumb {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background: #0071e3;
+        cursor: pointer;
+        box-shadow: 0 0 5px rgba(0,0,0,0.2);
+    }
+    input[type="color"] {
+        -webkit-appearance: none;
+        border: none;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        cursor: pointer;
+        background-color: transparent;
+    }
+    input[type="color"]::-webkit-color-swatch-wrapper {
+        padding: 0;
+    }
+    input[type="color"]::-webkit-color-swatch {
+        border: none;
+        border-radius: 50%;
+        box-shadow: 0 0 0 2px #ffffff, 0 0 0 3px #86868b;
+    }
+    button {
+        background-color: #0071e3;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 20px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+    button:hover {
+        background-color: #0077ed;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    .tooltip {
+        position: relative;
+        display: inline-block;
+        margin-left: 5px;
+        cursor: help;
+    }
+    .tooltip .tooltiptext {
+        visibility: hidden;
+        width: 200px;
+        background-color: #1d1d1f;
+        color: #ffffff;
+        text-align: center;
+        border-radius: 10px;
+        padding: 10px;
+        position: absolute;
+        z-index: 1;
+        bottom: 125%;
+        left: 50%;
+        margin-left: -100px;
+        opacity: 0;
+        transition: opacity 0.3s;
+        font-size: 12px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+    }
+    .tooltip:hover .tooltiptext {
+        visibility: visible;
+        opacity: 1;
+    }
+    #preset-buttons {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-bottom: 20px;
+    }
+    .preset-button {
+        background-color: #f5f5f7;
+        color: #1d1d1f;
+        border: 1px solid #d2d2d7;
+        font-size: 14px;
+        padding: 8px 16px;
+        border-radius: 20px;
+    }
+    .preset-button:hover {
+        background-color: #e8e8ed;
+    }
+    .value-display {
+        display: inline-block;
+        width: 40px;
+        text-align: right;
+        margin-left: 10px;
+        font-size: 14px;
+        color: #1d1d1f;
+        font-weight: 500;
+    }
+    #animation-controls {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 15px;
+        background-color: #f5f5f7;
+        padding: 15px;
+        border-radius: 15px;
+    }
+    #animation-speed {
+        width: 120px;
+    }
+    .control-buttons {
+        display: flex;
+        gap: 15px;
+        margin-top: 20px;
+    }
+    .hidden {
+        display: none;
+    }
+    #light-controls {
+        position: absolute;
+        top: 20px;
+        left: 20px;
+        background-color: rgba(255, 255, 255, 0.9);
+        padding: 15px;
+        border-radius: 15px;
+        font-size: 14px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    }
+    #light-controls input {
+        width: 100px;
+    }
+    .switch {
+        position: relative;
+        display: inline-block;
+        width: 50px;
+        height: 24px;
+    }
+    .switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+    .slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #ccc;
+        transition: .4s;
+        border-radius: 24px;
+    }
+    .slider:before {
+        position: absolute;
+        content: "";
+        height: 20px;
+        width: 20px;
+        left: 2px;
+        bottom: 2px;
+        background-color: white;
+        transition: .4s;
+        border-radius: 50%;
+    }
+    input:checked + .slider {
+        background-color: #0071e3;
+    }
+    input:checked + .slider:before {
+        transform: translateX(26px);
+    }
+</style>
+</head>
+<body>
+    <div class="container">
+        <div id="stage-area">
+            <div id="renderer-container"></div>
+            <div id="light-controls">
+                <label for="light-x">Light X: <input type="range" id="light-x" min="-5" max="5" step="0.1" value="0"></label>
+                <label for="light-y">Light Y: <input type="range" id="light-y" min="-5" max="5" step="0.1" value="5"></label>
+                <label for="light-z">Light Z: <input type="range" id="light-z" min="-5" max="5" step="0.1" value="5"></label>
+            </div>
+        </div>
+        <div class="controls-wrapper">
+            <h1>Creature Creator</h1>
+            <div class="controls-content">
+                <div id="preset-buttons"></div>
+                <div id="animation-controls">
+                    <button id="toggleAnimation">Pause</button>
+                    <div>
+                        <label for="animation-speed">Speed: <input type="range" id="animation-speed" min="0.1" max="2" step="0.1" value="1"></label>
+                    </div>
+                </div>
+                <div class="control-buttons">
+                    <button id="generateCode">Export Code</button>
+                    <button id="randomize">Randomize</button>
+                    <button id="saveCreature">Save</button>
+                    <input type="file" id="loadCreature" class="hidden" accept=".json">
+                    <button id="loadCreatureBtn">Load</button>
+                </div>
+                <div id="controls-container"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/simplex-noise/2.4.0/simplex-noise.min.js"></script>
+    <script>
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        const container = document.getElementById('renderer-container');
+        renderer.setSize(container.clientWidth, container.clientHeight);
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        container.appendChild(renderer.domElement);
+
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.25;
+        controls.enableZoom = true;
+
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+        scene.add(ambientLight);
+
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
+        directionalLight.position.set(5, 5, 5);
+        directionalLight.castShadow = true;
+        directionalLight.shadow.mapSize.width = 1024;
+        directionalLight.shadow.mapSize.height = 1024;
+        directionalLight.shadow.camera.near = 1;
+        directionalLight.shadow.camera.far = 20;
+        scene.add(directionalLight);
+
+        const lightBoxGeometry = new THREE.BoxGeometry(0.5, 0.5, 0.5);
+        const lightBoxMaterial = new THREE.MeshBasicMaterial({ color: 0xffff00 });
+        const lightBox = new THREE.Mesh(lightBoxGeometry, lightBoxMaterial);
+        scene.add(lightBox);
+
+        const planeGeometry = new THREE.PlaneGeometry(20, 20);
+        const planeMaterial = new THREE.MeshStandardMaterial({ color: 0xcccccc });
+        const plane = new THREE.Mesh(planeGeometry, planeMaterial);
+        plane.rotation.x = -Math.PI / 2;
+        plane.position.y = -2;
+        plane.receiveShadow = true;
+        scene.add(plane);
+
+        let creature;
+
+        camera.position.z = 5;
+
+        const params = {
+            bodySize: { value: 1, min: 0.5, max: 2, step: 0.1, tooltip: "Controls the overall size of the creature's body" },
+            bodyColor: { value: 0x3cb371, tooltip: "Sets the main color of the creature" },
+            limbCount: { value: 4, min: 1, max: 8, step: 1, tooltip: "Determines how many limbs the creature has" },
+            limbLength: { value: 1, min: 0.5, max: 2, step: 0.1, tooltip: "Adjusts the length of the creature's limbs" },
+            limbThickness: { value: 0.2, min: 0.1, max: 0.5, step: 0.05, tooltip: "Controls how thick the creature's limbs are" },
+            eyeCount: { value: 2, min: 1, max: 8, step: 1, tooltip: "Sets the number of eyes on the creature" },
+            eyeSize: { value: 0.2, min: 0.1, max: 0.5, step: 0.05, tooltip: "Adjusts the size of the creature's eyes" },
+            mouthSize: { value: 0.5, min: 0.2, max: 1, step: 0.1, tooltip: "Controls the size of the creature's mouth" },
+            textureComplexity: { value: 0.5, min: 0, max: 2, step: 0.1, tooltip: "Affects the complexity of the creature's skin texture" },
+            spikiness: { value: 0, min: 0, max: 1, step: 0.1, tooltip: "Determines how spiky the creature is" },
+            tailLength: { value: 0, min: 0, max: 2, step: 0.1, tooltip: "Sets the length of the creature's tail" },
+            wingsEnabled: { value: false, tooltip: "Toggles wings on or off" },
+            wingSpan: { value: 1, min: 0.5, max: 2, step: 0.1, tooltip: "Controls the size of the creature's wings" },
+        };
+
+        const simplex = new SimplexNoise();
+        let animationSpeed = 1;
+        let isAnimating = true;
+
+        function createCreature() {
+            if (creature) scene.remove(creature);
+            creature = new THREE.Group();
+
+            const bodyGeometry = new THREE.SphereGeometry(params.bodySize.value, 32, 32);
+            const bodyMaterial = new THREE.MeshStandardMaterial({
+                color: params.bodyColor.value,
+                roughness: 0.7,
+                metalness: 0.3,
+                flatShading: true
+            });
+            const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
+            body.castShadow = true;
+            creature.add(body);
+
+            for (let i = 0; i < params.limbCount.value; i++) {
+                const limb = createLimb();
+                const angle = (i / params.limbCount.value) * Math.PI * 2;
+                limb.position.set(
+                    Math.cos(angle) * params.bodySize.value,
+                    Math.sin(angle) * params.bodySize.value,
+                    0
+                );
+                limb.lookAt(new THREE.Vector3(0, 0, 0));
+                creature.add(limb);
+            }
+
+            for (let i = 0; i < params.eyeCount.value; i++) {
+                const eye = createEye();
+                const angle = (i / params.eyeCount.value) * Math.PI * 2;
+                eye.position.set(
+                    Math.cos(angle) * params.bodySize.value * 0.8,
+                    Math.sin(angle) * params.bodySize.value * 0.8,
+                    params.bodySize.value * 0.6
+                );
+                creature.add(eye);
+            }
+
+            const mouth = createMouth();
+            mouth.position.set(0, -params.bodySize.value * 0.5, params.bodySize.value * 0.7);
+            creature.add(mouth);
+
+            if (params.spikiness.value > 0) {
+                const spikeCount = Math.floor(params.spikiness.value * 50);
+                for (let i = 0; i < spikeCount; i++) {
+                    const spike = createSpike();
+                    const phi = Math.acos(-1 + (2 * i) / spikeCount);
+                    const theta = Math.sqrt(spikeCount * Math.PI) * phi;
+                    spike.position.setFromSpherical(new THREE.Spherical(params.bodySize.value, phi, theta));
+                    spike.lookAt(new THREE.Vector3(0, 0, 0));
+                    creature.add(spike);
+                }
+            }
+
+            if (params.tailLength.value > 0) {
+                const tail = createTail();
+                tail.position.set(0, 0, -params.bodySize.value);
+                creature.add(tail);
+            }
+
+            if (params.wingsEnabled.value) {
+                const leftWing = createWing();
+                leftWing.position.set(params.bodySize.value, 0, 0);
+                creature.add(leftWing);
+
+                const rightWing = createWing();
+                rightWing.position.set(-params.bodySize.value, 0, 0);
+                rightWing.rotation.y = Math.PI;
+                creature.add(rightWing);
+            }
+
+            scene.add(creature);
+            fitCreatureToScreen();
+        }
+
+        function createLimb() {
+            const geometry = new THREE.CylinderGeometry(
+                params.limbThickness.value,
+                params.limbThickness.value * 0.5,
+                params.limbLength.value,
+                8
+            );
+            const material = new THREE.MeshStandardMaterial({
+                color: params.bodyColor.value,
+                roughness: 0.7,
+                metalness: 0.3,
+                flatShading: true
+            });
+            const limb = new THREE.Mesh(geometry, material);
+            limb.castShadow = true;
+            limb.rotation.x = Math.PI / 2;
+            limb.position.y = -params.limbLength.value / 2;
+            return limb;
+        }
+
+        function createEye() {
+            const geometry = new THREE.SphereGeometry(params.eyeSize.value, 16, 16);
+            const material = new THREE.MeshPhongMaterial({
+                color: 0xffffff,
+                shininess: 100,
+            });
+            const eye = new THREE.Mesh(geometry, material);
+            eye.castShadow = true;
+
+            const pupilGeometry = new THREE.SphereGeometry(params.eyeSize.value * 0.5, 16, 16);
+            const pupilMaterial = new THREE.MeshPhongMaterial({
+                color: 0x000000,
+                shininess: 100,
+            });
+            const pupil = new THREE.Mesh(pupilGeometry, pupilMaterial);
+            pupil.position.z = params.eyeSize.value * 0.5;
+            eye.add(pupil);
+
+            return eye;
+        }
+
+        function createMouth() {
+            const geometry = new THREE.SphereGeometry(params.mouthSize.value, 32, 32, 0, Math.PI * 2, 0, Math.PI * 0.5);
+            const material = new THREE.MeshPhongMaterial({
+                color: 0xff0000,
+                side: THREE.DoubleSide,
+                shininess: 30,
+            });
+            const mouth = new THREE.Mesh(geometry, material);
+            mouth.castShadow = true;
+            return mouth;
+        }
+
+        function createSpike() {
+            const geometry = new THREE.ConeGeometry(params.bodySize.value * 0.1, params.bodySize.value * 0.3, 8);
+            const material = new THREE.MeshStandardMaterial({
+                color: params.bodyColor.value,
+                roughness: 0.7,
+                metalness: 0.3,
+                flatShading: true
+            });
+            const spike = new THREE.Mesh(geometry, material);
+            spike.castShadow = true;
+            return spike;
+        }
+
+        function createTail() {
+            const curve = new THREE.CatmullRomCurve3([
+                new THREE.Vector3(0, 0, 0),
+                new THREE.Vector3(0, -params.tailLength.value * 0.5, -params.tailLength.value * 0.5),
+                new THREE.Vector3(0, 0, -params.tailLength.value)
+            ]);
+            const geometry = new THREE.TubeGeometry(curve, 20, params.limbThickness.value, 8, false);
+            const material = new THREE.MeshStandardMaterial({
+                color: params.bodyColor.value,
+                roughness: 0.7,
+                metalness: 0.3,
+                flatShading: true
+            });
+            const tail = new THREE.Mesh(geometry, material);
+            tail.castShadow = true;
+            return tail;
+        }
+
+        function createWing() {
+            const shape = new THREE.Shape();
+            shape.moveTo(0, 0);
+            shape.quadraticCurveTo(params.wingSpan.value * 0.5, params.wingSpan.value * 0.5, params.wingSpan.value, 0);
+            shape.quadraticCurveTo(params.wingSpan.value * 0.5, -params.wingSpan.value * 0.25, 0, 0);
+
+            const geometry = new THREE.ShapeGeometry(shape);
+            const material = new THREE.MeshStandardMaterial({
+                color: params.bodyColor.value,
+                side: THREE.DoubleSide,
+                transparent: true,
+                opacity: 0.7,
+                roughness: 0.7,
+                metalness: 0.3,
+            });
+            const wing = new THREE.Mesh(geometry, material);
+            wing.castShadow = true;
+            return wing;
+        }
+
+        function updateCreature() {
+            if (!creature || !isAnimating) return;
+
+            const time = performance.now() * 0.001 * animationSpeed;
+
+            const bodyGeometry = creature.children[0].geometry;
+            if (bodyGeometry.isBufferGeometry) {
+                const positionAttribute = bodyGeometry.getAttribute('position');
+                const vertex = new THREE.Vector3();
+                for (let i = 0; i < positionAttribute.count; i++) {
+                    vertex.fromBufferAttribute(positionAttribute, i);
+                    const noise = simplex.noise3D(
+                        vertex.x * params.textureComplexity.value,
+                        vertex.y * params.textureComplexity.value,
+                        vertex.z * params.textureComplexity.value + time
+                    ) * 0.1;
+                    vertex.normalize().multiplyScalar(params.bodySize.value * (1 + noise));
+                    positionAttribute.setXYZ(i, vertex.x, vertex.y, vertex.z);
+                }
+                positionAttribute.needsUpdate = true;
+                bodyGeometry.computeVertexNormals();
+            }
+
+            for (let i = 1; i <= params.limbCount.value; i++) {
+                const limb = creature.children[i];
+                limb.rotation.x = Math.sin(time * 2 + i) * 0.2 + Math.PI / 2;
+            }
+
+            for (let i = params.limbCount.value + 1; i <= params.limbCount.value + params.eyeCount.value; i++) {
+                const eye = creature.children[i];
+                eye.children[0].position.x = Math.sin(time * 3 + i) * 0.05;
+                eye.children[0].position.y = Math.cos(time * 3 + i) * 0.05;
+            }
+
+            const mouth = creature.children[params.limbCount.value + params.eyeCount.value + 1];
+            mouth.scale.y = 1 + Math.sin(time * 4) * 0.1;
+
+            if (params.wingsEnabled.value) {
+                const leftWing = creature.children[creature.children.length - 2];
+                const rightWing = creature.children[creature.children.length - 1];
+                leftWing.rotation.z = Math.sin(time * 5) * 0.2;
+                rightWing.rotation.z = -Math.sin(time * 5) * 0.2;
+            }
+
+            lightBox.position.copy(directionalLight.position);
+        }
+
+        function fitCreatureToScreen() {
+            if (!creature) return;
+            
+            const box = new THREE.Box3().setFromObject(creature);
+            const size = box.getSize(new THREE.Vector3());
+            const center = box.getCenter(new THREE.Vector3());
+            
+            const maxDim = Math.max(size.x, size.y, size.z);
+            const fov = camera.fov * (Math.PI / 180);
+            let cameraZ = Math.abs(maxDim / 2 / Math.tan(fov / 2));
+            
+            cameraZ *= 1.5; // Zoom out a bit more
+            
+            camera.position.set(center.x, center.y, center.z + cameraZ);
+            camera.lookAt(center);
+            
+            const minZ = box.min.z;
+            const cameraToFarEdge = (minZ < 0) ? -minZ + cameraZ : cameraZ - minZ;
+            
+            camera.far = cameraToFarEdge * 3;
+            camera.updateProjectionMatrix();
+            
+            if (controls) {
+                controls.target.copy(center);
+                controls.maxDistance = cameraToFarEdge * 2;
+                controls.update();
+            }
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            updateCreature();
+            controls.update();
+            renderer.render(scene, camera);
+        }
+
+        function setupControls() {
+            const container = document.getElementById('controls-container');
+            container.innerHTML = '';
+
+            for (const [key, config] of Object.entries(params)) {
+                const div = document.createElement('div');
+                div.className = 'control-group';
+                
+                const label = document.createElement('label');
+                const labelText = key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
+                label.innerHTML = `${labelText} <span class="tooltip">ℹ️<span class="tooltiptext">${config.tooltip}</span></span>`;
+                div.appendChild(label);
+
+                if (key === 'bodyColor') {
+                    const input = document.createElement('input');
+                    input.type = 'color';
+                    input.value = '#' + config.value.toString(16).padStart(6, '0');
+                    input.addEventListener('input', (e) => {
+                        config.value = parseInt(e.target.value.substr(1), 16);
+                        createCreature();
+                    });
+                    div.appendChild(input);
+                } else if (key === 'wingsEnabled') {
+                    const label = document.createElement('label');
+                    label.className = 'switch';
+                    const input = document.createElement('input');
+                    input.type = 'checkbox';
+                    input.checked = config.value;
+                    const slider = document.createElement('span');
+                    slider.className = 'slider';
+                    label.appendChild(input);
+                    label.appendChild(slider);
+                    input.addEventListener('change', (e) => {
+                        config.value = e.target.checked;
+                        createCreature();
+                    });
+                    div.appendChild(label);
+                } else {
+                    const input = document.createElement('input');
+                    input.type = 'range';
+                    input.className = 'custom-range';
+                    input.min = config.min;
+                    input.max = config.max;
+                    input.step = config.step;
+                    input.value = config.value;
+                    input.addEventListener('input', (e) => {
+                        config.value = parseFloat(e.target.value);
+                        createCreature();
+                        valueDisplay.textContent = config.value.toFixed(2);
+                    });
+                    div.appendChild(input);
+
+                    const valueDisplay = document.createElement('span');
+                    valueDisplay.className = 'value-display';
+                    valueDisplay.textContent = config.value.toFixed(2);
+                    div.appendChild(valueDisplay);
+                }
+
+                container.appendChild(div);
+            }
+        }
+
+        function randomizeParams() {
+            for (const [key, config] of Object.entries(params)) {
+                if (key === 'bodyColor') {
+                    config.value = Math.floor(Math.random() * 16777215);
+                } else if (key === 'wingsEnabled') {
+                    config.value = Math.random() < 0.5;
+                } else {
+                    config.value = Math.random() * (config.max - config.min) + config.min;
+                    if (config.step === 1) {
+                        config.value = Math.round(config.value);
+                    } else {
+                        config.value = parseFloat(config.value.toFixed(2));
+                    }
+                }
+            }
+            setupControls();
+            createCreature();
+        }
+
+        function saveCreature() {
+            const creatureData = JSON.stringify(params);
+            const blob = new Blob([creatureData], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'creature.json';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function loadCreature(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const loadedParams = JSON.parse(e.target.result);
+                    for (const [key, value] of Object.entries(loadedParams)) {
+                        if (params[key]) {
+                            params[key].value = value.value;
+                        }
+                    }
+                    setupControls();
+                    createCreature();
+                };
+                reader.readAsText(file);
+            }
+        }
+
+        function setupPresetButtons() {
+            const presets = [
+                { name: 'Alien', params: { bodySize: 1.2, bodyColor: 0x00ff00, limbCount: 6, eyeCount: 3, spikiness: 0.8, tailLength: 1.5, wingsEnabled: true } },
+                { name: 'Cute', params: { bodySize: 0.8, body: 0xff9999, limbCount: 4, eyeCount: 2, eyeSize: 0.3, mouthSize: 0.3, spikiness: 0, tailLength: 0.5, wingsEnabled: false } },
+                { name: 'Monster', params: { bodySize: 1.5, bodyColor: 0x8b4513, limbCount: 8, eyeCount: 1, eyeSize: 0.4, mouthSize: 0.8, spikiness: 1, tailLength: 2, wingsEnabled: false } },
+            ];
+
+            const presetContainer = document.getElementById('preset-buttons');
+            presets.forEach(preset => {
+                const button = document.createElement('button');
+                button.className = 'preset-button';
+                button.textContent = preset.name;
+                button.addEventListener('click', () => {
+                    for (const [key, value] of Object.entries(preset.params)) {
+                        if (params[key]) {
+                            params[key].value = value;
+                        }
+                    }
+                    setupControls();
+                    createCreature();
+                });
+                presetContainer.appendChild(button);
+            });
+        }
+
+        function generateCode() {
+            let code = `const params = ${JSON.stringify(params, null, 2)};\n\n`;
+            code += `function createCreature() {\n  // Your creature creation code here\n}\n\n`;
+            code += `createCreature();`;
+
+            const blob = new Blob([code], { type: 'text/javascript' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'creature_code.js';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function init() {
+            setupControls();
+            setupPresetButtons();
+            createCreature();
+            animate();
+
+            window.addEventListener('resize', () => {
+                camera.aspect = container.clientWidth / container.clientHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(container.clientWidth, container.clientHeight);
+                fitCreatureToScreen();
+            });
+
+            document.getElementById('randomize').addEventListener('click', randomizeParams);
+            document.getElementById('saveCreature').addEventListener('click', saveCreature);
+            document.getElementById('loadCreatureBtn').addEventListener('click', () => document.getElementById('loadCreature').click());
+            document.getElementById('loadCreature').addEventListener('change', loadCreature);
+            document.getElementById('generateCode').addEventListener('click', generateCode);
+
+            document.getElementById('toggleAnimation').addEventListener('click', (e) => {
+                isAnimating = !isAnimating;
+                e.target.textContent = isAnimating ? 'Pause' : 'Resume';
+            });
+
+            document.getElementById('animation-speed').addEventListener('input', (e) => {
+                animationSpeed = parseFloat(e.target.value);
+            });
+
+            document.getElementById('light-x').addEventListener('input', updateLightPosition);
+            document.getElementById('light-y').addEventListener('input', updateLightPosition);
+            document.getElementById('light-z').addEventListener('input', updateLightPosition);
+        }
+
+        function updateLightPosition() {
+            const x = parseFloat(document.getElementById('light-x').value);
+            const y = parseFloat(document.getElementById('light-y').value);
+            const z = parseFloat(document.getElementById('light-z').value);
+            directionalLight.position.set(x, y, z);
+        }
+
+        init();
+    </script>
+</body>
+</html>
