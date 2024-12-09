@@ -1,0 +1,1184 @@
+<html>
+<head>
+  <base href="Off-Road Truck Simulator" />
+  <meta charset="utf-8" />
+  <title>OffRoad</title>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+    }
+
+    canvas {
+      display: block;
+    }
+
+    #instructions {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      color: white;
+      background-color: rgba(0, 0, 0, 0.5);
+      padding: 10px;
+      border-radius: 5px;
+      font-family: Arial, sans-serif;
+      z-index: 2;
+    }
+
+    #gui-container {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      z-index: 3;
+    }
+
+    #reset-button,
+    #reset-truck-button {
+      position: absolute;
+      bottom: 10px;
+      z-index: 4;
+      padding: 10px 20px;
+      font-size: 16px;
+      font-family: Arial, sans-serif;
+      background-color: #ff5555;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      opacity: 0.8;
+    }
+
+    #reset-button {
+      right: 10px;
+    }
+
+    #reset-truck-button {
+      right: 160px;
+    }
+
+    #reset-button:hover,
+    #reset-truck-button:hover {
+      opacity: 1;
+    }
+
+    /* Preset Buttons Styles */
+    #preset-buttons {
+      position: absolute;
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 5;
+      display: flex;
+      gap: 10px;
+    }
+
+    .preset-button {
+      padding: 10px 15px;
+      font-size: 14px;
+      font-family: Arial, sans-serif;
+      background-color: #5555ff;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      opacity: 0.8;
+    }
+
+    .preset-button:hover {
+      opacity: 1;
+    }
+
+    .preset-button.active {
+      background-color: #2222cc;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="instructions">
+    Use Arrow keys or WASD to control the off-road truck<br />
+    W/Up: Accelerate, S/Down: Brake/Reverse<br />
+    A/Left: Turn Left, D/Right: Turn Right
+  </div>
+  <div id="preset-buttons">
+    <button class="preset-button" data-preset="Off-Roader">Off-Roader</button>
+    <button class="preset-button" data-preset="Monster Truck">
+      Monster Truck
+    </button>
+    <button class="preset-button" data-preset="Pickup Truck">
+      Pickup Truck
+    </button>
+    <button class="preset-button" data-preset="Rally Car">Rally Car</button>
+    <button class="preset-button" data-preset="Shopping Cart">Shopping Cart</button>
+  </div>
+  <div id="gui-container"></div>
+  <button id="reset-button">Reset Settings</button>
+  <button id="reset-truck-button">Reset Truck</button>
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://unpkg.com/three@0.168.0/build/three.module.js",
+        "three/addons/": "https://unpkg.com/three@0.168.0/examples/jsm/",
+        "cannon-es": "https://cdn.jsdelivr.net/npm/cannon-es@0.20.0/dist/cannon-es.js",
+        "cannon-es-debugger": "https://unpkg.com/cannon-es-debugger@1.0.0/dist/cannon-es-debugger.js",
+        "dat.gui": "https://unpkg.com/dat.gui@0.7.7/build/dat.gui.module.js"
+      }
+    }
+  </script>
+  <script type="module">
+    import * as dat from "dat.gui";
+    import * as THREE from "three";
+    import * as CANNON from "cannon-es";
+    import CannonDebugger from "cannon-es-debugger";
+
+    // Presets for different trucks
+    const presets = {
+      "Off-Roader": {
+        debug: false,
+
+        chassisWidth: 3.5,
+        chassisHeight: 1,
+        chassisLength: 7,
+        chassisMass: 1500,
+
+        wheelRadius: 1,
+        wheelWidth: 1,
+
+        suspensionStiffness: 5,
+        suspensionRestLength: 1.5,
+
+        maxSteerVal: 0.6,
+        maxForce: 2000,
+
+        cameraDistance: 20,
+        cameraHeight: 10,
+
+        axleWidth: 2.2,
+        frontAxlePosition: 3.0,
+        rearAxlePosition: -3.0,
+
+        truckColor: "#ff0000",
+
+        cabWidthFactor: 1,
+        cabHeightFactor: 1.5,
+        cabLengthFactor: 0.65,
+        cabOffsetX: 0,
+        cabOffsetY: 0,
+        cabOffsetZ: -1.2,
+      },
+      "Monster Truck": {
+        debug: false,
+
+        chassisWidth: 4,
+        chassisHeight: 1.5,
+        chassisLength: 8,
+        chassisMass: 3000,
+
+        wheelRadius: 2,
+        wheelWidth: 2,
+
+        suspensionStiffness: 5,
+        suspensionRestLength: 3,
+
+        maxSteerVal: 0.5,
+        maxForce: 4000,
+
+        cameraDistance: 30,
+        cameraHeight: 15,
+
+        axleWidth: 3,
+        frontAxlePosition: 3.5,
+        rearAxlePosition: -3,
+
+        truckColor: "#00ffff",
+
+        cabWidthFactor: 0.9,
+        cabHeightFactor: 1,
+        cabLengthFactor: 0.28,
+        cabOffsetX: 0,
+        cabOffsetY: 0,
+        cabOffsetZ: 0.3,
+      },
+      "Pickup Truck": {
+        debug: false,
+
+        chassisWidth: 4,
+        chassisHeight: 1.2,
+        chassisLength: 8,
+        chassisMass: 2000,
+
+        wheelRadius: 0.9,
+        wheelWidth: 0.6,
+
+        suspensionStiffness: 8,
+        suspensionRestLength: 1.4,
+
+        maxSteerVal: 0.7,
+        maxForce: 2500,
+
+        cameraDistance: 18,
+        cameraHeight: 8,
+
+        axleWidth: 2.0,
+        frontAxlePosition: 3,
+        rearAxlePosition: -2.5,
+
+        truckColor: "#ffffff",
+
+        cabWidthFactor: 0.9,
+        cabHeightFactor: 1.2,
+        cabLengthFactor: 0.28,
+        cabOffsetX: 0,
+        cabOffsetY: 0,
+        cabOffsetZ: 0.5,
+      },
+      "Rally Car": {
+        debug: false,
+
+        chassisWidth: 2.5,
+        chassisHeight: 0.8,
+        chassisLength: 5,
+        chassisMass: 1200,
+
+        wheelRadius: 0.5,
+        wheelWidth: 0.5,
+
+        suspensionStiffness: 40,
+        suspensionRestLength: 0.5,
+
+        maxSteerVal: 0.8,
+        maxForce: 4000,
+
+        cameraDistance: 15,
+        cameraHeight: 5,
+
+        axleWidth: 1.3,
+        frontAxlePosition: 1.8,
+        rearAxlePosition: -1.8,
+
+        truckColor: "#ffff00",
+
+        cabWidthFactor: 0.85,
+        cabHeightFactor: 0.75,
+        cabLengthFactor: 0.5,
+        cabOffsetX: 0,
+        cabOffsetY: 0,
+        cabOffsetZ: -0.4,
+      },
+      "Shopping Cart": {
+        debug: false,
+
+        chassisWidth: 0.8,
+        chassisHeight: 0.5,
+        chassisLength: 1.2,
+        chassisMass: 30,
+
+        wheelRadius: 0.02,
+        wheelWidth: 0.05,
+
+        suspensionStiffness: 50,
+        suspensionRestLength: 0.6,
+
+        maxSteerVal: 1.0,
+        maxForce: 50,
+
+        cameraDistance: 5,
+        cameraHeight: 2,
+
+        axleWidth: 0.4,
+        frontAxlePosition: 0.6,
+        rearAxlePosition: -0.6,
+
+        truckColor: "#999999",
+
+        cabWidthFactor: 0,
+        cabHeightFactor: 0,
+        cabLengthFactor: 0,
+        cabOffsetX: 0,
+        cabOffsetY: 0,
+        cabOffsetZ: 0,
+      },
+    };
+
+    // Default Settings (Load from localStorage or use default preset)
+    let settings;
+    let selectedPreset = localStorage.getItem("selectedPreset") || "Off-Roader";
+
+    if (localStorage.getItem("truckSettings")) {
+      try {
+        const storedSettings = JSON.parse(localStorage.getItem("truckSettings"));
+        settings = { ...presets[selectedPreset], ...storedSettings };
+      } catch (e) {
+        settings = { ...presets[selectedPreset] };
+      }
+    } else {
+      settings = { ...presets[selectedPreset] };
+    }
+
+    // Save settings to localStorage
+    function saveSettings() {
+      localStorage.setItem("truckSettings", JSON.stringify(settings));
+      localStorage.setItem("selectedPreset", selectedPreset);
+    }
+
+    // Initialize variables
+    const debugMeshes = [];
+
+    // Create a Three.js scene
+    const scene = new THREE.Scene();
+
+    // Create gradient sky background
+    const canvas = document.createElement("canvas");
+    canvas.width = 16;
+    canvas.height = 256;
+    const context = canvas.getContext("2d");
+    const gradient = context.createLinearGradient(0, 0, 0, 256);
+    gradient.addColorStop(0.0, "#13547a"); // Top color
+    gradient.addColorStop(1.0, "#80d0c7"); // Bottom color
+    context.fillStyle = gradient;
+    context.fillRect(0, 0, 16, 256);
+
+    const skyTexture = new THREE.CanvasTexture(canvas);
+    skyTexture.magFilter = THREE.LinearFilter;
+    skyTexture.minFilter = THREE.LinearFilter;
+
+    scene.background = skyTexture;
+
+    const camera = new THREE.PerspectiveCamera(
+      60,
+      window.innerWidth / window.innerHeight,
+      0.1,
+      1000
+    );
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.physicallyCorrectLights = true;
+    renderer.outputEncoding = THREE.sRGBEncoding;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.0;
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.body.appendChild(renderer.domElement);
+
+    // Lights
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
+    scene.add(ambientLight);
+
+    const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 0.6);
+    hemiLight.position.set(0, 50, 0);
+    scene.add(hemiLight);
+
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 1.0);
+    directionalLight.position.set(20, 50, -10);
+    directionalLight.castShadow = true;
+    directionalLight.shadow.mapSize.width = 4096;
+    directionalLight.shadow.mapSize.height = 4096;
+    directionalLight.shadow.camera.left = -100;
+    directionalLight.shadow.camera.right = 100;
+    directionalLight.shadow.camera.top = 100;
+    directionalLight.shadow.camera.bottom = -100;
+    directionalLight.shadow.camera.near = 0.5;
+    directionalLight.shadow.camera.far = 500;
+    scene.add(directionalLight);
+
+    // Physics World
+    const world = new CANNON.World();
+    world.broadphase = new CANNON.NaiveBroadphase();
+    world.gravity.set(0, -9.8, 0);
+    world.solver.iterations = 10;
+
+    const cannonDebugger = new CannonDebugger(scene, world, {
+      onInit(body, mesh) {
+        debugMeshes.push(mesh);
+        mesh.visible = settings.debug;
+      },
+    });
+
+    // Materials
+    const groundMaterial = new CANNON.Material("groundMaterial");
+    const wheelMaterial = new CANNON.Material("wheelMaterial");
+    const chassisMaterial = new CANNON.Material("chassisMaterial");
+
+    const wheelGroundContactMaterial = new CANNON.ContactMaterial(
+      wheelMaterial,
+      groundMaterial,
+      { friction: 0.9, restitution: 0, contactEquationStiffness: 1000 }
+    );
+    world.addContactMaterial(wheelGroundContactMaterial);
+
+    // Ground Body and Mesh
+    const groundBody = new CANNON.Body({ mass: 0, material: groundMaterial });
+    const groundShape = new CANNON.Plane();
+    groundBody.addShape(groundShape);
+    groundBody.quaternion.setFromEuler(-Math.PI / 2, 0, 0);
+    world.addBody(groundBody);
+
+    const groundGeometry = new THREE.PlaneGeometry(500, 500, 50, 50);
+    groundGeometry.rotateX(-Math.PI / 2);
+    const groundMaterialMesh = new THREE.MeshStandardMaterial({
+      color: 0x337733,
+      roughness: 0.9,
+      metalness: 0.1,
+    });
+    const groundMesh = new THREE.Mesh(groundGeometry, groundMaterialMesh);
+    groundMesh.receiveShadow = true;
+    scene.add(groundMesh);
+
+    // Rocks (Spheres)
+    for (let i = 0; i < 150; i++) {
+      let isBig = Math.random() < 0.33;
+      let radius;
+      if (isBig) {
+        radius = (Math.random() * 2 + 1) * 3;
+      } else {
+        radius = Math.random() * 2 + 1;
+      }
+      let posX = Math.random() * 100 - 50;
+      let posZ = Math.random() * 100 - 50;
+      let posY = -(2 / 3) * radius;
+
+      const sphereBody = new CANNON.Body({
+        mass: 0,
+        material: groundMaterial,
+      });
+      const sphereShape = new CANNON.Sphere(radius);
+      sphereBody.addShape(sphereShape);
+      sphereBody.position.set(posX, posY, posZ);
+      world.addBody(sphereBody);
+
+      const sphereGeometry = new THREE.SphereGeometry(
+        radius,
+        32,
+        16,
+        0,
+        Math.PI * 2,
+        0,
+        Math.PI / 3
+      );
+      const sphereMaterialMesh = new THREE.MeshStandardMaterial({
+        color: 0x555555,
+        roughness: 0.8,
+        metalness: 0.2,
+      });
+      const sphereMesh = new THREE.Mesh(sphereGeometry, sphereMaterialMesh);
+      sphereMesh.position.set(posX, posY, posZ);
+      sphereMesh.castShadow = true;
+      sphereMesh.receiveShadow = true;
+      scene.add(sphereMesh);
+    }
+
+    // GUI Setup
+    const gui = new dat.GUI({ autoPlace: false });
+    document.getElementById("gui-container").appendChild(gui.domElement);
+
+    // Remove Preset Selection from GUI
+    // Move debug and color controllers to top level
+    gui
+      .add(settings, "debug")
+      .name("Debug")
+      .onChange((value) => {
+        debugMeshes.forEach((mesh) => {
+          mesh.visible = value;
+        });
+        saveSettings();
+      });
+
+    const colorController = gui
+      .addColor(settings, "truckColor")
+      .name("Truck Color")
+      .onChange(() => {
+        updateVehicleColor();
+        saveSettings();
+      });
+
+    const chassisFolder = gui.addFolder("Chassis");
+    chassisFolder
+      .add(settings, "chassisWidth", 1, 5, 0.1)
+      .name("Width")
+      .onChange(() => {
+        updateVehicleInPlace();
+        saveSettings();
+      });
+    chassisFolder
+      .add(settings, "chassisHeight", 0.5, 3, 0.1)
+      .name("Height")
+      .onChange(() => {
+        updateVehicleInPlace();
+        saveSettings();
+      });
+    chassisFolder
+      .add(settings, "chassisLength", 3, 10, 0.1)
+      .name("Length")
+      .onChange(() => {
+        updateVehicleInPlace();
+        saveSettings();
+      });
+    chassisFolder
+      .add(settings, "chassisMass", 500, 5000, 100)
+      .name("Mass")
+      .onChange(() => {
+        updateVehicleInPlace();
+        saveSettings();
+      });
+
+    const cabFolder = gui.addFolder("Cab");
+    cabFolder
+      .add(settings, "cabWidthFactor", 0, 1.5, 0.01)
+      .name("Width Factor")
+      .onChange(() => {
+        updateVehicleInPlace();
+        saveSettings();
+      });
+    cabFolder
+      .add(settings, "cabHeightFactor", 0, 2.0, 0.01)
+      .name("Height Factor")
+      .onChange(() => {
+        updateVehicleInPlace();
+        saveSettings();
+      });
+    cabFolder
+      .add(settings, "cabLengthFactor", 0, 0.8, 0.01)
+      .name("Length Factor")
+      .onChange(() => {
+        updateVehicleInPlace();
+        saveSettings();
+      });
+    cabFolder
+      .add(settings, "cabOffsetX", -5, 5, 0.1)
+      .name("Offset X")
+      .onChange(() => {
+        updateVehicleInPlace();
+        saveSettings();
+      });
+    cabFolder
+      .add(settings, "cabOffsetY", -2, 5, 0.1)
+      .name("Offset Y")
+      .onChange(() => {
+        updateVehicleInPlace();
+        saveSettings();
+      });
+    cabFolder
+      .add(settings, "cabOffsetZ", -5, 5, 0.1)
+      .name("Offset Z")
+      .onChange(() => {
+        updateVehicleInPlace();
+        saveSettings();
+      });
+
+    const wheelFolder = gui.addFolder("Wheels");
+    wheelFolder
+      .add(settings, "wheelRadius", 0.02, 3, 0.02)
+      .name("Radius")
+      .onChange(() => {
+        updateVehicleInPlace();
+        saveSettings();
+      });
+    wheelFolder
+      .add(settings, "wheelWidth", 0.01, 2, 0.02)
+      .name("Width")
+      .onChange(() => {
+        updateVehicleInPlace();
+        saveSettings();
+      });
+
+    const suspensionFolder = gui.addFolder("Suspension");
+    suspensionFolder
+      .add(settings, "suspensionStiffness", 5, 50, 1)
+      .name("Stiffness")
+      .onChange(() => {
+        updateVehicleInPlace();
+        saveSettings();
+      });
+    suspensionFolder
+      .add(settings, "suspensionRestLength", 0.1, 5, 0.1)
+      .name("Rest Length")
+      .onChange(() => {
+        updateVehicleInPlace();
+        saveSettings();
+      });
+
+    const controlsFolder = gui.addFolder("Controls");
+    controlsFolder
+      .add(settings, "maxSteerVal", 0, 1, 0.1)
+      .name("Max Steering")
+      .onChange(() => {
+        saveSettings();
+      });
+    controlsFolder
+      .add(settings, "maxForce", 50, 5000, 100)
+      .name("Max Force")
+      .onChange(() => {
+        saveSettings();
+      });
+
+    const axleFolder = gui.addFolder("Axles");
+    axleFolder
+      .add(settings, "axleWidth", 0.4, 5, 0.1)
+      .name("Axle Width")
+      .onChange(() => {
+        updateVehicleInPlace();
+        saveSettings();
+      });
+    axleFolder
+      .add(settings, "frontAxlePosition", -5, 5, 0.1)
+      .name("Front Axle Pos")
+      .onChange(() => {
+        updateVehicleInPlace();
+        saveSettings();
+      });
+    axleFolder
+      .add(settings, "rearAxlePosition", -5, 5, 0.1)
+      .name("Rear Axle Pos")
+      .onChange(() => {
+        updateVehicleInPlace();
+        saveSettings();
+      });
+
+    const cameraFolder = gui.addFolder("Camera");
+    cameraFolder
+      .add(settings, "cameraDistance", 2, 50, 1)
+      .name("Distance")
+      .onChange(() => {
+        saveSettings();
+      });
+    cameraFolder
+      .add(settings, "cameraHeight", 2, 20, 1)
+      .name("Height")
+      .onChange(() => {
+        saveSettings();
+      });
+
+    // Initialize Vehicle
+    let chassisBody, chassisMesh, vehicle, wheelMeshes;
+
+    function createVehicle() {
+      // Chassis Body and Mesh
+      const chassisShape = new CANNON.Box(
+        new CANNON.Vec3(
+          settings.chassisWidth / 2,
+          settings.chassisHeight / 2,
+          settings.chassisLength / 2
+        )
+      );
+      chassisBody = new CANNON.Body({
+        mass: settings.chassisMass,
+        material: chassisMaterial,
+      });
+      chassisBody.addShape(chassisShape);
+      chassisBody.position.set(0, 5, 0);
+      chassisBody.angularDamping = 0.5;
+      world.addBody(chassisBody);
+
+      // Chassis Mesh (Truck Body)
+      const chassisMaterialMesh = new THREE.MeshStandardMaterial({
+        color: settings.truckColor,
+        roughness: 0.5,
+        metalness: 0.5,
+      });
+      chassisMesh = new THREE.Mesh(
+        new THREE.BoxGeometry(
+          settings.chassisWidth,
+          settings.chassisHeight,
+          settings.chassisLength
+        ),
+        chassisMaterialMesh
+      );
+      chassisMesh.castShadow = true;
+      scene.add(chassisMesh);
+
+      // Cab Mesh
+      const cab = createCab();
+      cab.name = "cab";
+      chassisMesh.add(cab);
+
+      // Vehicle and Wheels
+      vehicle = new CANNON.RaycastVehicle({
+        chassisBody: chassisBody,
+        indexRightAxis: 0,
+        indexUpAxis: 1,
+        indexForwardAxis: 2,
+      });
+
+      const wheelOptions = {
+        radius: settings.wheelRadius,
+        directionLocal: new CANNON.Vec3(0, -1, 0),
+        suspensionStiffness: settings.suspensionStiffness,
+        suspensionRestLength: settings.suspensionRestLength,
+        frictionSlip: 5,
+        dampingRelaxation: 4,
+        dampingCompression: 4,
+        maxSuspensionForce: 100000,
+        rollInfluence: 0.01,
+        axleLocal: new CANNON.Vec3(-1, 0, 0),
+        chassisConnectionPointLocal: new CANNON.Vec3(),
+        maxSuspensionTravel: 3.0,
+        customSlidingRotationalSpeed: -30,
+        useCustomSlidingRotationalSpeed: true,
+      };
+
+      // Front Left Wheel
+      wheelOptions.chassisConnectionPointLocal.set(
+        settings.axleWidth,
+        0,
+        settings.frontAxlePosition
+      );
+      vehicle.addWheel(wheelOptions);
+
+      // Front Right Wheel
+      wheelOptions.chassisConnectionPointLocal.set(
+        -settings.axleWidth,
+        0,
+        settings.frontAxlePosition
+      );
+      vehicle.addWheel(wheelOptions);
+
+      // Rear Left Wheel
+      wheelOptions.chassisConnectionPointLocal.set(
+        settings.axleWidth,
+        0,
+        settings.rearAxlePosition
+      );
+      vehicle.addWheel(wheelOptions);
+
+      // Rear Right Wheel
+      wheelOptions.chassisConnectionPointLocal.set(
+        -settings.axleWidth,
+        0,
+        settings.rearAxlePosition
+      );
+      vehicle.addWheel(wheelOptions);
+
+      vehicle.addToWorld(world);
+
+      wheelMeshes = [];
+      vehicle.wheelInfos.forEach((wheel) => {
+        const wheelGeometry = new THREE.CylinderGeometry(
+          wheel.radius,
+          wheel.radius,
+          settings.wheelWidth,
+          32
+        );
+        wheelGeometry.rotateZ(Math.PI / 2);
+        const wheelMaterialMesh = new THREE.MeshStandardMaterial({
+          color: 0x444444,
+          roughness: 0.8,
+          metalness: 0.2,
+        });
+        const wheelMesh = new THREE.Mesh(wheelGeometry, wheelMaterialMesh);
+        wheelMesh.castShadow = true;
+
+        // Treads
+        const treadMaterial = new THREE.MeshStandardMaterial({
+          color: 0x444444,
+          roughness: 0.9,
+          metalness: 0.1,
+        });
+        const treadGeometry = new THREE.BoxGeometry(
+          0.1,
+          settings.wheelWidth,
+          ((wheel.radius * 2 * Math.PI) / 20) * 0.7
+        );
+        const treads = new THREE.Group();
+        for (let i = 0; i < 20; i++) {
+          const tread = new THREE.Mesh(treadGeometry, treadMaterial);
+          const angle = (i / 20) * Math.PI * 2;
+          tread.position.y = wheel.radius * Math.cos(angle);
+          tread.position.z = wheel.radius * Math.sin(angle);
+          tread.rotation.x = angle;
+          tread.rotation.z = Math.PI / 2;
+          treads.add(tread);
+        }
+        wheelMesh.add(treads);
+
+        scene.add(wheelMesh);
+        wheelMeshes.push(wheelMesh);
+      });
+    }
+
+    function createCab() {
+      const cabGroup = new THREE.Group();
+
+      const cabWidth = settings.chassisWidth * settings.cabWidthFactor;
+      const cabHeight = settings.chassisHeight * settings.cabHeightFactor;
+      const cabLength = settings.chassisLength * settings.cabLengthFactor;
+
+      if (cabWidth > 0 && cabHeight > 0 && cabLength > 0) {
+        // Cab Mesh
+        const cabGeometry = new THREE.BoxGeometry(
+          cabWidth,
+          cabHeight,
+          cabLength
+        );
+        const cabMaterialMesh = new THREE.MeshStandardMaterial({
+          color: settings.truckColor,
+          roughness: 0.5,
+          metalness: 0.5,
+        });
+        const cabMesh = new THREE.Mesh(cabGeometry, cabMaterialMesh);
+        cabMesh.position.set(
+          settings.cabOffsetX,
+          settings.chassisHeight / 2 + cabHeight / 2 + settings.cabOffsetY,
+          settings.cabOffsetZ
+        );
+        cabMesh.castShadow = true;
+        cabGroup.add(cabMesh);
+
+        // Windshield
+        const windshieldGeometry = new THREE.PlaneGeometry(cabWidth, cabHeight);
+        const windshieldMaterial = new THREE.MeshStandardMaterial({
+          color: 0x88ccff,
+          roughness: 0.1,
+          metalness: 0.0,
+          transparent: true,
+          opacity: 0.5,
+          side: THREE.DoubleSide,
+        });
+        const windshieldMesh = new THREE.Mesh(
+          windshieldGeometry,
+          windshieldMaterial
+        );
+        windshieldMesh.name = "windshield";
+        var parent = new THREE.Object3D();
+        parent.add(windshieldMesh);
+        parent.position.set(0, cabHeight / 2, cabLength / 2);
+        parent.rotation.x = -Math.PI / 12;
+        windshieldMesh.position.set(0, -cabHeight / 2, 0);
+        cabMesh.add(parent);
+
+        // Headlights
+        const lightGeometry = new THREE.BoxGeometry(0.4, 0.2, 0.2);
+        const lightMaterial = new THREE.MeshStandardMaterial({
+          color: 0xffff00,
+          emissive: 0xffff00,
+          emissiveIntensity: 1,
+        });
+        for (let i = -1; i <= 1; i += 2) {
+          const lightMesh = new THREE.Mesh(lightGeometry, lightMaterial);
+          lightMesh.position.set(
+            i * (cabWidth / 4),
+            cabHeight / 2,
+            cabLength / 2 + 0.1
+          );
+          cabMesh.add(lightMesh);
+        }
+      }
+
+      return cabGroup;
+    }
+
+    function updateVehicleColor() {
+      if (chassisMesh.material) {
+        chassisMesh.material.color.set(settings.truckColor);
+      }
+      // Update cab color
+      chassisMesh.traverse((child) => {
+        if (child.material && child !== chassisMesh) {
+          if (child.name !== "windshield")
+            child.material.color.set(settings.truckColor);
+        }
+      });
+    }
+
+    function updateVehicleInPlace() {
+      // Update chassis mass
+      chassisBody.mass = settings.chassisMass;
+      chassisBody.updateMassProperties();
+
+      // Update chassis shape
+      const newChassisShape = new CANNON.Box(
+        new CANNON.Vec3(
+          settings.chassisWidth / 2,
+          settings.chassisHeight / 2,
+          settings.chassisLength / 2
+        )
+      );
+      chassisBody.shapes = [];
+      chassisBody.addShape(newChassisShape);
+
+      // Update chassis mesh geometry
+      chassisMesh.geometry.dispose();
+      chassisMesh.geometry = new THREE.BoxGeometry(
+        settings.chassisWidth,
+        settings.chassisHeight,
+        settings.chassisLength
+      );
+
+      // Remove old cab and create new one
+      chassisMesh.remove(chassisMesh.getObjectByName("cab"));
+      const cab = createCab();
+      cab.name = "cab";
+      chassisMesh.add(cab);
+
+      // Update wheelInfos
+      vehicle.wheelInfos.forEach((wheel, index) => {
+        // Update wheel radius
+        wheel.radius = settings.wheelRadius;
+        wheel.suspensionStiffness = settings.suspensionStiffness;
+        wheel.suspensionRestLength = settings.suspensionRestLength;
+
+        // Update connection points
+        if (index === 0) {
+          // Front Left
+          wheel.chassisConnectionPointLocal.set(
+            settings.axleWidth,
+            0,
+            settings.frontAxlePosition
+          );
+        } else if (index === 1) {
+          // Front Right
+          wheel.chassisConnectionPointLocal.set(
+            -settings.axleWidth,
+            0,
+            settings.frontAxlePosition
+          );
+        } else if (index === 2) {
+          // Rear Left
+          wheel.chassisConnectionPointLocal.set(
+            settings.axleWidth,
+            0,
+            settings.rearAxlePosition
+          );
+        } else if (index === 3) {
+          // Rear Right
+          wheel.chassisConnectionPointLocal.set(
+            -settings.axleWidth,
+            0,
+            settings.rearAxlePosition
+          );
+        }
+      });
+
+      // Update wheel meshes
+      wheelMeshes.forEach((wheelMesh, index) => {
+        wheelMesh.geometry.dispose();
+        const wheelGeometry = new THREE.CylinderGeometry(
+          settings.wheelRadius,
+          settings.wheelRadius,
+          settings.wheelWidth,
+          32
+        );
+        wheelGeometry.rotateZ(Math.PI / 2);
+        wheelMesh.geometry = wheelGeometry;
+
+        // Update treads
+        const treads = wheelMesh.children.find(
+          (child) => child.type === "Group"
+        );
+        if (treads) {
+          treads.children.forEach((child) => {
+            child.geometry.dispose();
+          });
+          treads.clear();
+          const treadMaterial = new THREE.MeshStandardMaterial({
+            color: 0x111111,
+            roughness: 0.9,
+            metalness: 0.1,
+          });
+          const treadGeometry = new THREE.BoxGeometry(
+            0.1,
+            settings.wheelWidth,
+            ((settings.wheelRadius * 2 * Math.PI) / 20) * 0.7
+          );
+          for (let i = 0; i < 20; i++) {
+            const tread = new THREE.Mesh(treadGeometry, treadMaterial);
+            const angle = (i / 20) * Math.PI * 2;
+            tread.position.y = settings.wheelRadius * Math.cos(angle);
+            tread.position.z = settings.wheelRadius * Math.sin(angle);
+            tread.rotation.x = angle;
+            tread.rotation.z = Math.PI / 2;
+            treads.add(tread);
+          }
+        }
+      });
+
+      // Update vehicle color
+      updateVehicleColor();
+    }
+
+    function updateVisuals() {
+      chassisMesh.position.copy(chassisBody.position);
+      chassisMesh.quaternion.copy(chassisBody.quaternion);
+
+      for (let i = 0; i < vehicle.wheelInfos.length; i++) {
+        vehicle.updateWheelTransform(i);
+        const t = vehicle.wheelInfos[i].worldTransform;
+        wheelMeshes[i].position.copy(t.position);
+        wheelMeshes[i].quaternion.copy(t.quaternion);
+      }
+    }
+
+    function resetTruck() {
+      // Reset chassis body position, velocity, and rotation
+      chassisBody.position.set(0, 5, 0);
+      chassisBody.velocity.set(0, 0, 0);
+      chassisBody.angularVelocity.set(0, 0, 0);
+      chassisBody.quaternion.set(0, 0, 0, 1);
+
+      // Reset control inputs
+      forward = 0;
+      turn = 0;
+    }
+
+    // Controls
+    let forward = 0;
+    let turn = 0;
+
+    document.addEventListener("keydown", (event) => {
+      switch (event.key) {
+        case "ArrowUp":
+        case "w":
+          forward = -settings.maxForce;
+          break;
+        case "ArrowDown":
+        case "s":
+          forward = settings.maxForce;
+          break;
+        case "ArrowLeft":
+        case "a":
+          turn = settings.maxSteerVal;
+          break;
+        case "ArrowRight":
+        case "d":
+          turn = -settings.maxSteerVal;
+          break;
+      }
+    });
+
+    document.addEventListener("keyup", (event) => {
+      switch (event.key) {
+        case "ArrowUp":
+        case "w":
+        case "ArrowDown":
+        case "s":
+          forward = 0;
+          break;
+        case "ArrowLeft":
+        case "a":
+        case "ArrowRight":
+        case "d":
+          turn = 0;
+          break;
+      }
+    });
+
+    // Preset Button Event Listeners
+    const presetButtons = document.querySelectorAll(".preset-button");
+
+    function updatePresetButtons() {
+      presetButtons.forEach((btn) => {
+        if (btn.dataset.preset === selectedPreset) {
+          btn.classList.add("active");
+        } else {
+          btn.classList.remove("active");
+        }
+      });
+    }
+
+    presetButtons.forEach((button) => {
+      button.addEventListener("click", () => {
+        selectedPreset = button.dataset.preset;
+        Object.assign(settings, presets[selectedPreset]);
+        saveSettings();
+
+        // Update GUI controllers
+        gui.__controllers.forEach((controller) => controller.updateDisplay());
+        for (let folderName in gui.__folders) {
+          gui.__folders[folderName].__controllers.forEach((controller) =>
+            controller.updateDisplay()
+          );
+        }
+
+        // Update vehicle in place
+        updateVehicleInPlace();
+        // Removed resetTruck() to keep the car's position
+        updatePresetButtons();
+      });
+    });
+
+    // Initialize preset buttons' active state
+    updatePresetButtons();
+
+    // Reset Settings Button
+    document.getElementById("reset-button").addEventListener("click", () => {
+      // Reset settings to selected preset
+      Object.assign(settings, presets[selectedPreset]);
+      saveSettings();
+
+      // Update GUI controllers
+      gui.__controllers.forEach((controller) => controller.updateDisplay());
+      for (let folderName in gui.__folders) {
+        gui.__folders[folderName].__controllers.forEach((controller) =>
+          controller.updateDisplay()
+        );
+      }
+
+      // Update vehicle in place
+      updateVehicleInPlace();
+    });
+
+    // Reset Truck Button
+    document
+      .getElementById("reset-truck-button")
+      .addEventListener("click", () => {
+        resetTruck();
+      });
+
+    // Handle Window Resize
+    window.addEventListener("resize", onWindowResize);
+    function onWindowResize() {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    }
+
+    onWindowResize();
+
+    createVehicle();
+
+    // Animation Loop
+    const timeStep = 1 / 60;
+    let lastTime = Date.now();
+
+    function animate(time) {
+      requestAnimationFrame(animate);
+      if (lastTime !== undefined) {
+        const delta = (time - lastTime) / 1000;
+
+        vehicle.setSteeringValue(turn, 0);
+        vehicle.setSteeringValue(turn, 1);
+
+        for (let i = 0; i < vehicle.wheelInfos.length; i++) {
+          vehicle.applyEngineForce(forward, i);
+        }
+
+        world.step(timeStep, delta, 3);
+        updateVisuals();
+
+        // Camera follows the car at a fixed elevation and vertical angle
+        const carPosition = chassisMesh.position.clone();
+        const cameraDistance = settings.cameraDistance;
+        const cameraHeight = settings.cameraHeight;
+        const cameraOffset = new THREE.Vector3(
+          0,
+          cameraHeight,
+          cameraDistance
+        );
+
+        const cameraPosition = carPosition.clone().add(cameraOffset);
+        camera.position.lerp(cameraPosition, 0.1);
+        camera.lookAt(
+          new THREE.Vector3(carPosition.x, carPosition.y + 2, carPosition.z)
+        );
+      }
+
+      if (settings.debug) {
+        cannonDebugger.update();
+      }
+      renderer.render(scene, camera);
+      lastTime = time;
+    }
+    animate(Date.now());
+  </script>
+</body>
+</html>
