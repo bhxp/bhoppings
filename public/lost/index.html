@@ -1,0 +1,1202 @@
+<html><head><base href="/">
+<title>lost</title>
+<style>
+    body { margin: 0; }
+    canvas { width: 100%; height: 100%; display: block; }
+    #instructions {
+        position: absolute;
+        bottom: 10px;
+        left: 10px;
+        color: white;
+        background: rgba(0,0,0,0.5);
+        padding: 10px;
+        border-radius: 5px;
+        font-family: Arial, sans-serif;
+    }
+    #mobileToggle {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        background: rgba(0,0,0,0.5);
+        color: white;
+        padding: 10px;
+        border-radius: 5px;
+        cursor: pointer;
+        z-index: 1000;
+    }
+    #joystick {
+        position: absolute;
+        bottom: 20px;
+        left: 20px;
+        width: 120px;
+        height: 120px;
+        background: rgba(0,0,0,0.5);
+        border: 2px solid rgba(255,255,255,0.3);
+        border-radius: 50%;
+        display: none;
+        touch-action: none;
+    }
+    #joystickKnob {
+        position: absolute;
+        width: 50px;
+        height: 50px;
+        background: rgba(255,255,255,0.7);
+        border-radius: 50%;
+        top: 35px;
+        left: 35px;
+        touch-action: none;
+    }
+    #jumpButton {
+        position: absolute;
+        bottom: 20px;
+        right: 20px;
+        width: 80px;
+        height: 80px;
+        background: rgba(0,0,0,0.7);
+        border: 2px solid rgba(255,255,255,0.5);
+        border-radius: 50%;
+        color: white;
+        font-size: 24px;
+        display: none;
+        justify-content: center;
+        align-items: center;
+        cursor: pointer;
+        user-select: none;
+        touch-action: manipulation;
+    }
+    #jumpButton:active {
+        background: rgba(0,0,0,0.9);
+        transform: scale(0.95);
+    }
+    #timer {
+        position: absolute;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        font-family: Arial, sans-serif;
+        font-size: 24px;
+        color: white;
+        background: rgba(0,0,0,0.5);
+        padding: 10px 20px;
+        border-radius: 5px;
+        z-index: 1000;
+    }
+    #hungerBar {
+        position: absolute;
+        left: 20px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 30px;
+        height: 300px;
+        background: rgba(0, 0, 0, 0.5);
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        border-radius: 15px;
+        overflow: hidden;
+    }
+    #hungerFill {
+        position: absolute;
+        bottom: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(to top, #ff6b6b, #ff8787);
+        transition: height 1s linear;
+    }
+    * {
+        user-select: none;
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+    }
+</style>
+</head>
+<body>
+<div id="instructions">
+    WASD to move<br>
+    Mouse to look around<br>
+    Spacebar to jump
+</div>
+<div id="mobileToggle">Mobile Toggle</div>
+<div id="joystick"><div id="joystickKnob"></div></div>
+<div id="jumpButton">↑</div>
+<div id="timer">01:00</div>
+<div id="hungerBar">
+    <div id="hungerFill"></div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+    // Check if Three.js is loaded properly
+    if (typeof THREE === 'undefined') {
+        console.error('Three.js failed to load');
+    }
+</script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/PointerLockControls.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/LuminosityShader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/PixelShader.js"></script>
+
+<script>
+let audioPlayer = null; // Added for audio player
+let fogDensity = 0.0025;
+let fogColor = new THREE.Color(0x333333);
+let fogTime = 0;
+
+let steakSprites = [];
+const STEAK_COUNT = 50; // Number of steaks to spawn
+const STEAK_ROTATION_SPEED = 2; // Rotation speed in radians per second
+
+let hungerLevel = 100;
+let hungerInterval;
+const HUNGER_DURATION = 300; // 5 minutes in seconds
+
+let isSpawningSquares = false; // Added for square spawning
+let isGameFrozen = false; // Added for game freeze state
+
+// Function to setup audio
+function setupAudio() {
+    if (audioPlayer) {
+        return; // Already setup
+    }
+    
+    audioPlayer = new Audio('OMORI OST - 135 Calm.mp3');
+    audioPlayer.loop = true;
+    
+    // Add error handling
+    audioPlayer.addEventListener('error', (e) => {
+        console.error('Audio error:', e);
+    });
+    
+    // Try to play on setup, but expect it might fail due to no user interaction
+    audioPlayer.play().catch(error => {
+        console.log("Auto-play failed (expected) - waiting for user interaction");
+    });
+}
+
+function tryPlayAudio() {
+    if (audioPlayer) {
+        audioPlayer.play().catch(error => {
+            console.log("Audio playback failed:", error);
+        });
+    }
+}
+
+let camera, scene, renderer, controls;
+let composer;
+let buildings = [];
+let playerRadius = 1; // Collision radius for the player
+let moveForward = false;
+let moveBackward = false;
+let moveLeft = false;
+let moveRight = false;
+let canJump = true; // Track if player can jump
+let isRunning = false;
+let isMobileMode = false;
+let joystickTouch = null;
+let joystickPosition = { x: 0, y: 0 };
+let textureLoader;
+let spacing = 250; // Define spacing as a global variable
+
+const JUMP_FORCE = 25; // Reduced from 35 to 25 for lower jumps
+const GRAVITY = -75; // Reduced from -100 to -75 for lower gravity
+let velocity = new THREE.Vector3();
+let playerOnGround = true;
+
+let verticalVelocity = 0;
+const TERMINAL_VELOCITY = -75; // Reduced from -100 to -75 to match the new gravity scale
+let isGrounded = true;
+
+let prevTime = performance.now();
+const direction = new THREE.Vector3();
+
+let timeRemaining = 60;
+let isRedTimer = false;
+let timerInterval;
+
+// New global variables for boost mechanic
+let isBoostActive = false;
+const NORMAL_SPEED = 8;        // Normal walking speed
+const JUMP_WALK_SPEED = 15;    // New speed when jumping but not running
+const RUN_SPEED = 25;          // Normal running speed  
+const BOOST_SPEED = 40;        // Boosted speed when running + jumping
+
+// Updated skull enemy speed definition
+let skullEnemySpeed = NORMAL_SPEED + 3; // Reduced from NORMAL_SPEED + 5 to NORMAL_SPEED + 3
+
+let skullEnemy = null;
+
+// New function for spawning infinite squares
+function spawnInfiniteSquares() {
+    if (!isSpawningSquares) return;
+    
+    function addSquares() {
+        for (let i = 0; i < 1000; i++) { // Add 1000 squares per frame
+            const geometry = new THREE.BoxGeometry(1, 1, 1);
+            const material = new THREE.MeshBasicMaterial({ 
+                transparent: true, 
+                opacity: 0 
+            });
+            const cube = new THREE.Mesh(geometry, material);
+            cube.position.set(
+                Math.random() * 1000 - 500,
+                Math.random() * 1000 - 500,
+                Math.random() * 1000 - 500
+            );
+            scene.add(cube);
+        }
+        
+        if (isSpawningSquares) {
+            requestAnimationFrame(addSquares);
+        }
+    }
+    
+    addSquares();
+}
+
+function createSteakSprites() {
+    const steakTexture = textureLoader.load('IMG_5889.webp');
+    const steakMaterial = new THREE.SpriteMaterial({ 
+        map: steakTexture,
+        transparent: true
+    });
+    
+    for(let i = 0; i < STEAK_COUNT; i++) {
+        // Create a container for the sprite to enable 3D rotation
+        const steakContainer = new THREE.Object3D();
+        
+        const steak = new THREE.Sprite(steakMaterial);
+        steak.scale.set(10, 10, 1);
+        
+        // Add sprite to container
+        steakContainer.add(steak);
+        
+        // Random position within current building grid
+        const randomX = camera.position.x + (Math.random() - 0.5) * spacing * 8;
+        const randomZ = camera.position.z + (Math.random() - 0.5) * spacing * 8;
+        
+        steakContainer.position.set(randomX, 2, randomZ);
+        
+        scene.add(steakContainer);
+        steakSprites.push(steakContainer);
+    }
+}
+
+function startHungerTimer() {
+    clearInterval(hungerInterval);
+    hungerLevel = 100;
+    const hungerFill = document.getElementById('hungerFill');
+    
+    const decrementAmount = 100 / HUNGER_DURATION; // How much to decrease per second
+    
+    hungerInterval = setInterval(() => {
+        if (isGameFrozen) {
+            clearInterval(hungerInterval);
+            return;
+        }
+        
+        hungerLevel -= decrementAmount;
+        hungerFill.style.height = hungerLevel + '%';
+        
+        // If hunger reaches 0
+        if (hungerLevel <= 0) {
+            clearInterval(hungerInterval);
+            isGameFrozen = true; // Freeze the game
+            isSpawningSquares = true; // Start spawning squares
+            spawnInfiniteSquares();
+            // Remove controls
+            if (controls.isLocked) {
+                controls.unlock();
+            }
+            controls.disconnect();
+        }
+    }, 1000);
+}
+
+function collectSteak(steak) {
+    // Remove the steak
+    scene.remove(steak);
+    steakSprites = steakSprites.filter(s => s !== steak);
+    
+    // Calculate how much hunger to restore (15 seconds worth)
+    // 300 seconds = 100% hunger
+    // 15 seconds = 5% hunger
+    hungerLevel = Math.min(100, hungerLevel + 5); // Restore 5% hunger (15 seconds worth)
+    document.getElementById('hungerFill').style.height = hungerLevel + '%';
+}
+
+init();
+startHungerTimer();
+startTimer();
+animate();
+
+function startTimer() {
+    clearInterval(timerInterval);
+    timeRemaining = 60;
+    const timerElement = document.getElementById('timer');
+    
+    // Initialize audio if not already done
+    if (!audioPlayer) {
+        setupAudio();
+    } else {
+        // If audio exists but isn't playing, try to play it
+        if (audioPlayer.paused) {
+            tryPlayAudio();
+        }
+    }
+    
+    timerInterval = setInterval(() => {
+        // Add check for isGameFrozen
+        if (isGameFrozen) {
+            clearInterval(timerInterval);
+            return;
+        }
+
+        timeRemaining--;
+        
+        const minutes = Math.floor(timeRemaining / 60);
+        const seconds = timeRemaining % 60;
+        
+        timerElement.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        
+        if (timeRemaining <= 0) {
+            isRedTimer = !isRedTimer;
+            timerElement.style.color = isRedTimer ? 'red' : 'white';
+            timeRemaining = 60;
+            
+            if (audioPlayer) {
+                if (isRedTimer) {
+                    audioPlayer.volume = 0; // Mute
+                } else {
+                    audioPlayer.volume = 1; // Unmute
+                    if (audioPlayer.paused) {
+                        tryPlayAudio();
+                    }
+                }
+            }
+            
+            // Handle skull enemy based on timer color
+            if (isRedTimer) {
+                createSkullEnemy();
+            } else {
+                removeSkullEnemy();
+            }
+        }
+    }, 1000);
+}
+
+function createSkullEnemy() {
+    if (skullEnemy) return; // Don't create if already exists
+    
+    const skullTexture = textureLoader.load('IMG_5887.webp');
+    const skullMaterial = new THREE.SpriteMaterial({ 
+        map: skullTexture,
+        transparent: true,
+        color: 0xffffff
+    });
+    
+    skullEnemy = new THREE.Sprite(skullMaterial);
+    skullEnemy.scale.set(10, 10, 1); // Reduced from 20 to 10 to make it smaller
+    
+    // Spawn far from player
+    const spawnDistance = 80;
+    const spawnAngle = Math.random() * Math.PI * 2;
+    const spawnOffset = new THREE.Vector3(
+        Math.cos(spawnAngle) * spawnDistance,
+        0,
+        Math.sin(spawnAngle) * spawnDistance
+    );
+    
+    skullEnemy.position.copy(camera.position).add(spawnOffset);
+    skullEnemy.position.y = camera.position.y;
+    
+    scene.add(skullEnemy);
+}
+
+function removeSkullEnemy() {
+    if (skullEnemy) {
+        scene.remove(skullEnemy);
+        if (skullEnemy.material) {
+            skullEnemy.material.dispose();
+        }
+        skullEnemy = null;
+    }
+}
+
+function findSafeSpawnPosition() {
+    const minDistance = 20; // Minimum distance from buildings
+    let attempts = 0;
+    const maxAttempts = 100;
+    
+    while (attempts < maxAttempts) {
+        const testPosition = new THREE.Vector3(
+            (Math.random() - 0.5) * spacing,
+            2,
+            (Math.random() - 0.5) * spacing
+        );
+        
+        let isSafe = true;
+        for (let building of buildings) {
+            const distance = testPosition.distanceTo(building.position);
+            if (distance < minDistance) {
+                isSafe = false;
+                break;
+            }
+        }
+        
+        if (isSafe) {
+            return testPosition;
+        }
+        
+        attempts++;
+    }
+    
+    return new THREE.Vector3(0, 2, spacing);
+}
+
+function createBuildingMaterial() {
+    const buildingTexture = textureLoader.load('IMG_5883.jpeg');
+    buildingTexture.wrapS = THREE.RepeatWrapping;
+    buildingTexture.wrapT = THREE.RepeatWrapping;
+    buildingTexture.repeat.set(2, 3);
+    
+    return new THREE.MeshPhongMaterial({ 
+        map: buildingTexture,
+        roughness: 0.8,
+        metalness: 0.2
+    });
+}
+
+// Updated function to create ladders
+function createLadder(building, buildingWidth, buildingHeight) {
+    const ladderWidth = 10;
+    const ladderDepth = 2;
+    
+    const ladderGeometry = new THREE.BoxGeometry(ladderWidth, buildingHeight, ladderDepth);
+    
+    const ladderMaterial = new THREE.MeshPhongMaterial({ 
+        transparent: true,
+        opacity: 0.8
+    });
+    
+    const ladder = new THREE.Mesh(ladderGeometry, ladderMaterial);
+    
+    let topPosition;
+    const side = Math.floor(Math.random() * 4);
+    
+    switch(side) {
+        case 0: 
+            ladder.position.set(
+                building.position.x,
+                building.position.y,
+                building.position.z + (buildingWidth/2 + ladderDepth/2)
+            );
+            topPosition = new THREE.Vector3(
+                building.position.x,
+                buildingHeight,
+                building.position.z + (buildingWidth/2 + ladderDepth/2)
+            );
+            break;
+        case 1: 
+            ladder.position.set(
+                building.position.x + (buildingWidth/2 + ladderDepth/2),
+                building.position.y,
+                building.position.z
+            );
+            ladder.rotation.y = Math.PI/2;
+            topPosition = new THREE.Vector3(
+                building.position.x + (buildingWidth/2 + ladderDepth/2),
+                buildingHeight,
+                building.position.z
+            );
+            break;
+        case 2: 
+            ladder.position.set(
+                building.position.x,
+                building.position.y,
+                building.position.z - (buildingWidth/2 + ladderDepth/2)
+            );
+            topPosition = new THREE.Vector3(
+                building.position.x,
+                buildingHeight,
+                building.position.z - (buildingWidth/2 + ladderDepth/2)
+            );
+            break;
+        case 3: 
+            ladder.position.set(
+                building.position.x - (buildingWidth/2 + ladderDepth/2),
+                building.position.y,
+                building.position.z
+            );
+            ladder.rotation.y = Math.PI/2;
+            topPosition = new THREE.Vector3(
+                building.position.x - (buildingWidth/2 + ladderDepth/2),
+                buildingHeight,
+                building.position.z
+            );
+            break;
+    }
+    
+    scene.add(ladder);
+    
+    const boundingBox = new THREE.Box3();
+    boundingBox.setFromObject(ladder);
+    boundingBox.expandByScalar(2);
+    
+    return {
+        mesh: ladder,
+        topPosition: topPosition,
+        boundingBox: boundingBox,
+        buildingRef: building 
+    };
+}
+
+// Updated checkLadderCollision function
+function checkLadderCollision() {
+    const playerBoundingBox = new THREE.Box3().setFromPoints([camera.position]);
+    playerBoundingBox.expandByScalar(2);
+
+    for (let ladder of ladders) {
+        if (playerBoundingBox.intersectsBox(ladder.boundingBox)) {
+            // Get the player's height relative to the ladder
+            const playerHeightOnLadder = camera.position.y;
+            const ladderHeight = ladder.mesh.geometry.parameters.height;
+            
+            // Don't interact if touching the top of the ladder
+            if (playerHeightOnLadder > ladder.mesh.position.y + ladderHeight - 5) {
+                continue;
+            }
+
+            // Calculate direction from player to ladder
+            const directionToLadder = new THREE.Vector3();
+            directionToLadder.subVectors(ladder.mesh.position, camera.position);
+            directionToLadder.y = 0; // Only consider horizontal direction
+            
+            // Calculate the dot product between player's forward direction and direction to ladder
+            const forward = new THREE.Vector3(0, 0, -1);
+            forward.applyQuaternion(camera.quaternion);
+            forward.y = 0;
+            forward.normalize();
+            
+            const dot = forward.dot(directionToLadder.normalize());
+            
+            // If player is facing the ladder (dot product > 0), start climbing
+            if (dot > 0.3) { // Threshold value to determine if facing ladder
+                // Set a constant upward velocity
+                camera.position.y += 2; // Increased upward movement speed
+                verticalVelocity = 0; // Cancel gravity effect
+                velocity.y = 0;
+                isGrounded = false;
+                playerOnGround = false;
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+function onWindowResize() {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    composer.setSize(window.innerWidth, window.innerHeight);
+    
+    const pixelPass = composer.passes.find(pass => pass.uniforms && pass.uniforms.pixelSize);
+    if (pixelPass) {
+        pixelPass.uniforms.resolution.value.set(window.innerWidth, window.innerHeight);
+    }
+}
+
+function updateFog(delta) {
+    fogTime += delta;
+    
+    // Make fog density pulse slightly over time
+    const baseDensity = 0.0025;
+    const densityVariation = 0.001;
+    fogDensity = baseDensity + Math.sin(fogTime * 0.5) * densityVariation;
+    
+    // Update fog density
+    scene.fog.density = fogDensity;
+    
+    // Slightly vary fog color
+    const baseColor = new THREE.Color(0x333333);
+    const r = baseColor.r + Math.sin(fogTime * 0.3) * 0.1;
+    const g = baseColor.g + Math.sin(fogTime * 0.5) * 0.1;
+    const b = baseColor.b + Math.sin(fogTime * 0.7) * 0.1;
+    
+    scene.fog.color.setRGB(r, g, b);
+    scene.background = scene.fog.color; // Match background to fog color
+}
+
+function init() {
+    scene = new THREE.Scene();
+    scene.fog = new THREE.FogExp2(0x333333, 0.0025); // Darker color, adjusted density
+
+    camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 1, 1000);
+    const safePosition = findSafeSpawnPosition();
+    camera.position.copy(safePosition);
+
+    renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(window.devicePixelRatio);
+    renderer.setClearColor(scene.fog.color); // Match clear color to fog
+    document.body.appendChild(renderer.domElement);
+
+    composer = new THREE.EffectComposer(renderer);
+    composer.addPass(new THREE.RenderPass(scene, camera));
+
+    const luminosityPass = new THREE.ShaderPass(THREE.LuminosityShader);
+    composer.addPass(luminosityPass);
+
+    const pixelPass = new THREE.ShaderPass(THREE.PixelShader);
+    pixelPass.uniforms.resolution.value = new THREE.Vector2(window.innerWidth, window.innerHeight);
+    pixelPass.uniforms.pixelSize.value = 4;
+    composer.addPass(pixelPass);
+
+    textureLoader = new THREE.TextureLoader();
+    
+    const groundGeometry = new THREE.PlaneGeometry(5000, 5000);
+    const groundTexture = textureLoader.load('IMG_5885.jpeg', 
+        // Success callback
+        function(texture) {
+            texture.wrapS = THREE.RepeatWrapping;
+            texture.wrapT = THREE.RepeatWrapping;
+            texture.repeat.set(500, 500);
+            texture.needsUpdate = true;
+            ground.material.needsUpdate = true;
+        },
+        // Progress callback
+        undefined,
+        // Error callback
+        function(err) {
+            console.error('Error loading ground texture:', err);
+            // Fallback material if texture fails to load
+            ground.material = new THREE.MeshPhongMaterial({ 
+                color: 0x333333,
+                roughness: 0.8,
+                metalness: 0.2
+            });
+        }
+    );
+
+    const groundMaterial = new THREE.MeshPhongMaterial({ 
+        map: groundTexture,
+        roughness: 0.8,
+        metalness: 0.2
+    });
+
+    const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+    ground.rotation.x = -Math.PI / 2;
+    scene.add(ground);
+
+    const buildingHeights = [200, 250, 300, 350, 400];
+    const buildingWidths = [75, 100, 125, 150];
+
+    for(let i = -5; i < 5; i++) {
+        for(let j = -5; j < 5; j++) {
+            const height = buildingHeights[Math.floor(Math.random() * buildingHeights.length)];
+            const width = buildingWidths[Math.floor(Math.random() * buildingWidths.length)];
+            const offsetX = (Math.random() - 0.5) * 20;
+            const offsetZ = (Math.random() - 0.5) * 20;
+            
+            const cityGeometry = new THREE.BoxGeometry(width, height, width);
+            const cityMaterial = createBuildingMaterial();
+            
+            const building = new THREE.Mesh(cityGeometry, cityMaterial);
+            building.position.set(
+                i * spacing + offsetX, 
+                height / 2, 
+                j * spacing + offsetZ
+            );
+            scene.add(building);
+            buildings.push({
+                mesh: building,
+                width: width,
+                depth: width,
+                position: building.position
+            });
+        }
+    }
+
+    const ambientLight = new THREE.AmbientLight(0x666666);
+    scene.add(ambientLight);
+
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
+    directionalLight.position.set(1, 1, 1);
+    scene.add(directionalLight);
+
+    controls = new THREE.PointerLockControls(camera, document.body);
+    controls.mouseSensitivity = 0.3; // Default is 0.002
+
+    const mobileToggle = document.getElementById('mobileToggle');
+    const instructions = document.getElementById('instructions');
+    const joystick = document.getElementById('joystick');
+    const jumpButton = document.getElementById('jumpButton');
+
+    mobileToggle.addEventListener('click', () => {
+        isMobileMode = !isMobileMode;
+        instructions.style.display = isMobileMode ? 'none' : 'block';
+        joystick.style.display = isMobileMode ? 'block' : 'none';
+        jumpButton.style.display = isMobileMode ? 'flex' : 'none';
+
+        if (isMobileMode) {
+            document.addEventListener('touchmove', handleTouchCamera, { passive: false });
+            document.addEventListener('touchstart', initTouchCamera, { passive: false });
+            if (controls.isLocked) {
+                controls.unlock();
+            }
+        } else {
+            document.removeEventListener('touchmove', handleTouchCamera);
+            document.removeEventListener('touchstart', initTouchCamera);
+            const knob = document.getElementById('joystickKnob');
+            knob.style.transform = 'translate(0px, 0px)';
+            joystickPosition.x = 0;
+            joystickPosition.y = 0;
+            moveForward = moveBackward = moveLeft = moveRight = false;
+            controls.connect();
+        }
+    });
+
+    joystick.addEventListener('touchstart', handleJoystickStart, { passive: false });
+    joystick.addEventListener('touchmove', handleJoystickMove, { passive: false });
+    joystick.addEventListener('touchend', handleJoystickEnd, { passive: false });
+
+    jumpButton.addEventListener('touchstart', handleJump, { passive: false });
+    jumpButton.addEventListener('mousedown', handleJump, { passive: false });
+
+    document.addEventListener('click', function() {
+        if (!isMobileMode && controls && !controls.isLocked) {
+            controls.lock();
+            tryPlayAudio(); // Try to play audio when user clicks
+        }
+    });
+
+    // Add touch handler for mobile
+    document.addEventListener('touchstart', function() {
+        tryPlayAudio(); // Try to play audio on touch
+    }, { once: true });
+
+    document.addEventListener('keydown', onKeyDown);
+    document.addEventListener('keyup', onKeyUp);
+    window.addEventListener('resize', onWindowResize, false);
+
+    // Create steak sprites
+    createSteakSprites();
+}
+
+let lastTouchX = 0;
+let lastTouchY = 0;
+
+function handleJump(e) {
+    if (isGameFrozen) return;
+    e.preventDefault();
+    if (playerOnGround) {
+        velocity.y = JUMP_FORCE;
+        playerOnGround = false;
+    }
+}
+
+function initTouchCamera(e) {
+    e.preventDefault();
+    if (!isTargetJoystickOrSprintButton(e)) {
+        const touch = e.touches[0];
+        lastTouchX = touch.pageX;
+        lastTouchY = touch.pageY;
+    }
+}
+
+function handleTouchCamera(e) {
+    e.preventDefault();
+    if (e.touches.length >= 1) {
+        const cameraTouches = Array.from(e.touches).filter(touch => {
+            const target = touch.target;
+            const joystickArea = document.getElementById('joystick');
+            return !(target === joystickArea || joystickArea.contains(target));
+        });
+
+        if (cameraTouches.length > 0) {
+            const touch = cameraTouches[0];
+            if (typeof lastTouchX !== 'undefined' && typeof lastTouchY !== 'undefined') {
+                const movementX = touch.pageX - lastTouchX;
+                const movementY = touch.pageY - lastTouchY;
+
+                const euler = new THREE.Euler(0, 0, 0, 'YXZ');
+                euler.setFromQuaternion(camera.quaternion);
+                
+                // Increased sensitivity here from 0.002 to 0.004
+                euler.y -= movementX * 0.004;
+                euler.x = Math.max(-Math.PI/2, Math.min(Math.PI/2, 
+                    euler.x - movementY * 0.004));
+                
+                camera.quaternion.setFromEuler(euler);
+            }
+            
+            lastTouchX = touch.pageX;
+            lastTouchY = touch.pageY;
+        }
+    }
+}
+
+function handleJoystickStart(e) {
+    if (isGameFrozen) return;
+    e.preventDefault();
+    const touch = e.changedTouches[0];
+    const joystickArea = document.getElementById('joystick');
+    if (touch.target === joystickArea || joystickArea.contains(touch.target)) {
+        joystickTouch = {
+            identifier: touch.identifier,
+            target: touch.target
+        };
+        joystickPosition.x = 0;
+        joystickPosition.y = 0;
+    }
+}
+
+function handleJoystickMove(e) {
+    if (isGameFrozen) return;
+    e.preventDefault();
+    if (!joystickTouch) return;
+    
+    const touch = Array.from(e.touches).find(t => t.identifier === joystickTouch.identifier);
+    if (!touch) return;
+
+    const joystickRect = document.getElementById('joystick').getBoundingClientRect();
+    const centerX = joystickRect.left + (joystickRect.width / 2);
+    const centerY = joystickRect.top + (joystickRect.height / 2);
+
+    const maxDistance = 35;
+    let dx = touch.pageX - centerX;
+    let dy = touch.pageY - centerY;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    
+    if (distance > maxDistance) {
+        dx = (dx / distance) * maxDistance;
+        dy = (dy / distance) * maxDistance;
+    }
+
+    const knob = document.getElementById('joystickKnob');
+    knob.style.transform = `translate(${dx}px, ${dy}px)`;
+    
+    joystickPosition.x = dx / maxDistance;
+    joystickPosition.y = dy / maxDistance;
+    
+    const deadzone = 0.2;
+    moveForward = joystickPosition.y < -deadzone;
+    moveBackward = joystickPosition.y > deadzone;
+    moveLeft = joystickPosition.x < -deadzone;
+    moveRight = joystickPosition.x > deadzone;
+}
+
+function isTargetJoystickOrSprintButton(e) {
+    const target = e.touches[0].target;
+    const joystickArea = document.getElementById('joystick');
+    const jumpButton = document.getElementById('jumpButton');
+    return target === joystickArea || joystickArea.contains(target) || target === jumpButton;
+}
+
+function handleJoystickEnd(e) {
+    if (isGameFrozen) return;
+    e.preventDefault();
+    joystickTouch = null;
+    const knob = document.getElementById('joystickKnob');
+    knob.style.transform = 'translate(0px, 0px)';
+    joystickPosition.x = 0;
+    joystickPosition.y = 0;
+    moveForward = moveBackward = moveLeft = moveRight = false;
+}
+
+function onKeyDown(event) {
+    if (isMobileMode || !controls.isLocked || isGameFrozen) return;
+    
+    switch(event.code) {
+        case 'KeyW':
+        case 'ArrowUp':
+            moveForward = true;
+            break;
+        case 'KeyS':
+        case 'ArrowDown':
+            moveBackward = true;
+            break;
+        case 'KeyA':
+        case 'ArrowLeft':
+            moveLeft = true;
+            break;
+        case 'KeyD':
+        case 'ArrowRight':
+            moveRight = true;
+            break;
+        case 'ShiftLeft':
+            isRunning = true;
+            break;
+        case 'Space':
+            if (playerOnGround) {
+                velocity.y = JUMP_FORCE;
+                playerOnGround = false;
+            }
+            break;
+    }
+}
+
+function onKeyUp(event) {
+    if (isMobileMode || !controls.isLocked || isGameFrozen) return;
+    
+    switch(event.code) {
+        case 'KeyW':
+        case 'ArrowUp':
+            moveForward = false;
+            break;
+        case 'KeyS':
+        case 'ArrowDown':
+            moveBackward = false;
+            break;
+        case 'KeyA':
+        case 'ArrowLeft':
+            moveLeft = false;
+            break;
+        case 'KeyD':
+        case 'ArrowRight':
+            moveRight = false;
+            break;
+        case 'ShiftLeft':
+            isRunning = false;
+            break;
+    }
+}
+
+function checkCollision(newPosition) {
+    for (let building of buildings) {
+        const halfWidth = building.width / 2;
+        const halfDepth = building.depth / 2;
+        const buildingHeight = building.mesh.geometry.parameters.height;
+        
+        // Check horizontal collision
+        const horizontalCollision = 
+            newPosition.x + playerRadius > building.position.x - halfWidth &&
+            newPosition.x - playerRadius < building.position.x + halfWidth &&
+            newPosition.z + playerRadius > building.position.z - halfDepth &&
+            newPosition.z - playerRadius < building.position.z + halfDepth;
+
+        // If there's a horizontal collision and we're not on top of the building
+        if (horizontalCollision && newPosition.y < buildingHeight - 1) {  // Added small buffer
+            return true;
+        }
+    }
+    return false;
+}
+
+function animate() {
+    requestAnimationFrame(animate);
+    
+    // If game is frozen, don't update anything
+    if (isGameFrozen) {
+        return;
+    }
+
+    const time = performance.now();
+    const delta = (time - prevTime) / 1000;
+
+    // Apply gravity
+    velocity.y += GRAVITY * delta;
+    
+    if (controls.isLocked || isMobileMode) {
+        // Reset movement direction
+        direction.x = 0;
+        direction.z = 0;
+
+        // Get movement direction based on keys
+        if (moveForward) direction.z = -1;
+        if (moveBackward) direction.z = 1;
+        if (moveLeft) direction.x = -1;
+        if (moveRight) direction.x = 1;
+        direction.normalize();
+
+        // Check if running and jumping for boost
+        isBoostActive = isRunning && !playerOnGround;
+        
+        // Calculate speed based on boost status
+        let speed;
+        if (isBoostActive) {
+            speed = BOOST_SPEED;
+        } else if (!playerOnGround) {  // If jumping but not running
+            speed = JUMP_WALK_SPEED;
+        } else {
+            speed = isRunning ? RUN_SPEED : NORMAL_SPEED;
+        }
+        
+        // Move player based on direction and delta time
+        const moveVector = new THREE.Vector3();
+        moveVector.x = direction.x;
+        moveVector.z = direction.z;
+        moveVector.normalize();
+        moveVector.multiplyScalar(speed * delta);
+        moveVector.applyQuaternion(camera.quaternion);
+
+        // Test new position before moving
+        const newPosition = camera.position.clone().add(moveVector);
+        
+        if (!checkCollision(newPosition)) {
+            camera.position.add(moveVector);
+        }
+    }
+
+    // Ground and building collision check
+    camera.position.y += velocity.y * delta;
+    
+    let onSurface = false; // Track if we're on any surface (ground or building)
+    
+    // Check building collisions first
+    for (let building of buildings) {
+        const halfWidth = building.width / 2;
+        const halfDepth = building.depth / 2;
+        const buildingHeight = building.mesh.geometry.parameters.height;
+        
+        // Check if player is above building
+        if (camera.position.x + playerRadius > building.position.x - halfWidth &&
+            camera.position.x - playerRadius < building.position.x + halfWidth &&
+            camera.position.z + playerRadius > building.position.z - halfDepth &&
+            camera.position.z - playerRadius < building.position.z + halfDepth) {
+            
+            // Only snap to building top if falling onto it
+            const heightThreshold = 0.5; // Thin collision threshold
+            if (Math.abs(camera.position.y - buildingHeight) <= heightThreshold && velocity.y <= 0) {
+                camera.position.y = buildingHeight;
+                velocity.y = 0;
+                playerOnGround = true;
+                onSurface = true;
+            }
+            // Add this check to allow jumping off buildings
+            else if (camera.position.y > buildingHeight) {
+                onSurface = false;
+                playerOnGround = false;
+            }
+        }
+    }
+
+    // Ground collision check (remains the same)
+    if (!onSurface) {  // Only check ground if not on a building
+        if (camera.position.y <= 2) {
+            camera.position.y = 2;
+            velocity.y = 0;
+            playerOnGround = true;
+        }
+    }
+
+    // Check for and generate new buildings based on player position
+    if (time % 1000 < 16) { // Check roughly every second
+        generateNewBuildings();
+    }
+
+    // Updated steak rotation animation
+    steakSprites.forEach(steakContainer => {
+        // Rotate around Y axis for horizontal spinning
+        steakContainer.rotation.y += STEAK_ROTATION_SPEED * delta;
+    });
+
+    // Handle skull enemy movement
+    if (skullEnemy && isRedTimer) {
+        // Calculate direction to player
+        const directionToPlayer = new THREE.Vector3();
+        directionToPlayer.subVectors(camera.position, skullEnemy.position);
+        directionToPlayer.y = 0; // Keep skull at same height as player
+        directionToPlayer.normalize();
+        
+        // Move skull towards player
+        const moveDistance = skullEnemySpeed * delta;
+        skullEnemy.position.add(directionToPlayer.multiplyScalar(moveDistance));
+        
+        // Update skull height to match player but keep sprite vertical
+        skullEnemy.position.y = camera.position.y;
+        
+        // Remove rotation to keep sprite upright
+        skullEnemy.material.rotation = 0;
+
+        // Check collision distance between player and skull
+        const distanceToSkull = camera.position.distanceTo(skullEnemy.position);
+        const collisionThreshold = 10; // Adjust this value to change how close the skull needs to be
+        
+        if (distanceToSkull < collisionThreshold) {
+            isGameFrozen = true; // Freeze the game
+            // Remove controls
+            if (controls.isLocked) {
+                controls.unlock();
+            }
+            controls.disconnect();
+        }
+    }
+
+    // Check for steak collection
+    steakSprites.forEach((steakContainer, index) => {
+        const distance = camera.position.distanceTo(steakContainer.position);
+        if (distance < 5) { // Collection distance
+            collectSteak(steakContainer);
+        }
+    });
+
+    // Add fog update
+    updateFog(delta);
+    
+    prevTime = time;
+    composer.render();
+
+    // Check if spawning squares
+    if (isSpawningSquares) {
+        spawnInfiniteSquares();
+    }
+}
+
+function generateNewBuildings() {
+    // Clean up far buildings to prevent memory issues
+    buildings = buildings.filter(building => {
+        if (Math.abs(building.position.x - camera.position.x) > spacing * 7 ||
+            Math.abs(building.position.z - camera.position.z) > spacing * 7) {
+            scene.remove(building.mesh);
+            building.mesh.geometry.dispose();
+            building.mesh.material.dispose();
+            return false;
+        }
+        return true;
+    });
+
+    const playerPos = camera.position;
+    const buildingHeights = [200, 250, 300, 350, 400];
+    const buildingWidths = [75, 100, 125, 150];
+
+    const gridX = Math.floor(playerPos.x / spacing);
+    const gridZ = Math.floor(playerPos.z / spacing);
+
+    // Generate new buildings in a grid around player
+    for(let i = -5; i < 5; i++) {
+        for(let j = -5; j < 5; j++) {
+            const height = buildingHeights[Math.floor(Math.random() * buildingHeights.length)];
+            const width = buildingWidths[Math.floor(Math.random() * buildingWidths.length)];
+            const offsetX = (Math.random() - 0.5) * 20;
+            const offsetZ = (Math.random() - 0.5) * 20;
+            
+            const x = (gridX + i) * spacing + offsetX;
+            const z = (gridZ + j) * spacing + offsetZ;
+            
+            // Check if building already exists in this area
+            const buildingExists = buildings.some(building => 
+                Math.abs(building.position.x - x) < spacing / 2 && 
+                Math.abs(building.position.z - z) < spacing / 2
+            );
+
+            if(!buildingExists) {
+                const cityGeometry = new THREE.BoxGeometry(width, height, width);
+                const cityMaterial = createBuildingMaterial();
+                const building = new THREE.Mesh(cityGeometry, cityMaterial);
+                building.position.set(x, height / 2, z);
+                scene.add(building);
+                buildings.push({
+                    mesh: building,
+                    width: width,
+                    depth: width,
+                    position: building.position
+                });
+            }
+        }
+    }
+}
+</script>
+</body>
+</html>
