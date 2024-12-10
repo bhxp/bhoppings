@@ -1,0 +1,641 @@
+<html><head><base href="">
+<title>Piss Clicker</title>
+<style>
+body {
+    background: #f0f0f0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    font-family: Arial, sans-serif;
+    overflow: hidden;
+}
+
+#character {
+    cursor: pointer;
+    transition: transform 0.1s;
+    position: relative;
+}
+
+#character:active {
+    transform: scale(0.95);
+}
+
+#stats {
+    font-size: 24px;
+    margin: 20px;
+    text-align: center;
+}
+
+.puddle {
+    position: absolute;
+    opacity: 0;
+    transition: opacity 2s;
+}
+
+.pee-stream {
+    position: absolute;
+    left: 50%;
+    top: 70%;
+    width: 10px;
+    height: 0;
+    background: rgba(255, 255, 0, 0.5);
+    transform-origin: top;
+    animation: streamGrow 0.5s ease-out;
+}
+
+@keyframes streamGrow {
+    from {
+        height: 0;
+    }
+    to {
+        height: 50px;
+    }
+}
+
+.pee-animation {
+    animation: peeDrip 1s ease-out;
+}
+
+@keyframes peeDrip {
+    0% { transform: translateY(0) scale(0); }
+    50% { transform: translateY(20px) scale(1); }
+    100% { transform: translateY(40px) scale(1.5); }
+}
+
+.shiver-animation {
+    animation: shiver 0.5s infinite;
+}
+
+@keyframes shiver {
+    0% { transform: translate(0, 0); }
+    25% { transform: translate(-2px, 2px); }
+    50% { transform: translate(2px, -2px); }
+    75% { transform: translate(-2px, -2px); }
+    100% { transform: translate(0, 0); }
+}
+
+#upgrades {
+    margin-top: 20px;
+    padding: 10px;
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+}
+
+.upgrade-btn {
+    margin: 5px;
+    padding: 10px;
+    background: #ffd700;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.upgrade-btn:hover {
+    background: #ffed4a;
+}
+
+#pissNuke {
+    background: #ff4444;
+    color: white;
+}
+
+#pissNuke:hover {
+    background: #ff6666;
+}
+
+#shiver {
+    background: #44b3ff;
+    color: white;
+}
+
+#shiver:hover {
+    background: #66c3ff;
+}
+
+.nuke-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(255, 255, 0, 0.3);
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 2s;
+    z-index: 1000;
+}
+
+.nuke-flash {
+    animation: nukeFlash 2s forwards;
+}
+
+@keyframes nukeFlash {
+    0% { opacity: 0; }
+    50% { opacity: 1; }
+    100% { opacity: 0; }
+}
+
+.wet-pants {
+    animation: wetPants 0.5s forwards;
+}
+
+@keyframes wetPants {
+    from {
+        fill: #4169E1;
+    }
+    to {
+        fill: #1E3F8B;
+    }
+}
+
+/* New animation styles */
+@keyframes jumpAndPee {
+    0% { transform: translateY(0); }
+    25% { transform: translateY(-20px); }
+    50% { transform: translateY(0); }
+    75% { transform: translateY(-10px); }
+    100% { transform: translateY(0); }
+}
+
+.jump-pee {
+    animation: jumpAndPee 0.8s ease-in-out;
+}
+
+@keyframes rainbowPee {
+    0% { background: rgba(255, 0, 0, 0.5); }
+    20% { background: rgba(255, 165, 0, 0.5); }
+    40% { background: rgba(255, 255, 0, 0.5); }
+    60% { background: rgba(0, 255, 0, 0.5); }
+    80% { background: rgba(0, 0, 255, 0.5); }
+    100% { background: rgba(255, 0, 0, 0.5); }
+}
+
+.rainbow-pee {
+    animation: rainbowPee 2s infinite !important;
+}
+
+@keyframes spinPuddle {
+    0% { transform: scale(1) rotate(0deg); }
+    50% { transform: scale(1.5) rotate(180deg); }
+    100% { transform: scale(1) rotate(360deg); }
+}
+
+.spin-puddle {
+    animation: spinPuddle 1s ease-out !important;
+}
+
+@keyframes crazyFace {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.2); }
+    100% { transform: scale(1); }
+}
+
+.crazy-eyes {
+    animation: crazyFace 0.5s infinite;
+}
+
+@keyframes wetPantsEnhanced {
+    0% { fill: #4169E1; }
+    50% { fill: #1E3F8B; }
+    75% { fill: #152D66; }
+    100% { fill: #0B1833; }
+}
+
+.wet-pants {
+    animation: wetPantsEnhanced 1s forwards;
+}
+
+@keyframes nukeFlashEnhanced {
+    0% { opacity: 0; background: rgba(255, 255, 0, 0.3); }
+    25% { opacity: 1; background: rgba(255, 0, 0, 0.3); }
+    50% { opacity: 1; background: rgba(255, 255, 0, 0.5); }
+    75% { opacity: 1; background: rgba(255, 165, 0, 0.3); }
+    100% { opacity: 0; background: rgba(255, 255, 0, 0.3); }
+}
+
+.nuke-flash {
+    animation: nukeFlashEnhanced 2s forwards;
+}
+
+@keyframes urgencyShake {
+    0% { transform: translate(0, 0) rotate(0deg); }
+    25% { transform: translate(-3px, 1px) rotate(-1deg); }
+    50% { transform: translate(3px, -1px) rotate(1deg); }
+    75% { transform: translate(-3px, -1px) rotate(-1deg); }
+    100% { transform: translate(0, 0) rotate(0deg); }
+}
+
+.urgent-shake {
+    animation: urgencyShake 0.3s infinite;
+}
+
+#holdPissTimer {
+    font-size: 32px;
+    color: #8a2be2;
+    margin: 10px;
+    display: none;
+    text-shadow: 0 0 5px rgba(138, 43, 226, 0.5);
+    font-weight: bold;
+}
+
+.progress-container {
+    width: 200px;
+    height: 20px;
+    background: #f0f0f0;
+    border-radius: 10px;
+    margin: 10px;
+    display: none;
+    border: 2px solid #8a2be2;
+    box-shadow: 0 0 5px rgba(138, 43, 226, 0.5);
+}
+
+#urgencyMeter {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, #44b3ff, #ff4444);
+    border-radius: 10px;
+    transition: width 0.3s ease-in-out;
+}
+</style>
+</head>
+<body>
+    <div id="stats">
+        <div>Pee Points: <span id="points">0</span></div>
+        <div>Pee Per Click: <span id="peePerClick">1</span></div>
+        <div id="holdPissTimer">30</div>
+        <div class="progress-container">
+            <div id="urgencyMeter"></div>
+        </div>
+    </div>
+
+    <svg id="character" width="200" height="300" viewBox="0 0 200 300">
+        <circle cx="100" cy="70" r="40" fill="#FFD700"/> <!-- Head -->
+        <rect id="pants" x="60" y="110" width="80" height="120" fill="#4169E1"/> <!-- Body -->
+        <rect id="leftLeg" x="60" y="230" width="30" height="70" fill="#4169E1"/> <!-- Left leg -->
+        <rect id="rightLeg" x="110" y="230" width="30" height="70" fill="#4169E1"/> <!-- Right leg -->
+        <circle cx="85" cy="60" r="5" fill="black"/> <!-- Left eye -->
+        <circle cx="115" cy="60" r="5" fill="black"/> <!-- Right eye -->
+        <path id="mouth" d="M80 85 Q100 95 120 85" stroke="black" fill="none"/> <!-- Mouth -->
+    </svg>
+
+    <div id="upgrades">
+        <button class="upgrade-btn" id="clickUpgrade">
+            Upgrade Pee Power (Cost: 10 points)
+        </button>
+        <button class="upgrade-btn" id="pissNuke">
+            Piss Nuke (Cost: 1000 points)
+        </button>
+        <button class="upgrade-btn" id="shiver">
+            Shiver (Cost: 50 points)
+        </button>
+    </div>
+
+    <div class="nuke-overlay" id="nukeOverlay"></div>
+
+    <script>
+        let points = 0;
+        let peePerClick = 1;
+        let upgradeCount = 0;
+        let upgradeCost = 10;
+        let nukeMultiplier = 1;
+        let shiverMultiplier = 1;
+        let shiverTimeout = null;
+        let holdPissGameActive = false;
+        let holdPissTimer = null;
+        let urgencyLevel = 0;
+        let baseReward = 500;
+        let holdPissInterval = null;
+        let isHoldingPiss = false;
+        let holdPissTimeoutId = null;
+        let baseEarnings = 1; // Base earnings multiplier
+
+        const faces = [
+            {
+                eyes: [
+                    { cx: "85", cy: "60", r: "5" }, // Normal eyes
+                    { cx: "115", cy: "60", r: "5" }
+                ],
+                mouth: "M80 85 Q100 95 120 85" // Normal smile
+            },
+            {
+                eyes: [
+                    { cx: "85", cy: "60", r: "7" }, // Big surprised eyes
+                    { cx: "115", cy: "60", r: "7" }
+                ],
+                mouth: "M80 85 Q100 105 120 85" // Big smile
+            },
+            {
+                eyes: [
+                    { cx: "85", cy: "60", r: "3" }, // Squinted eyes
+                    { cx: "115", cy: "60", r: "3" }
+                ],
+                mouth: "M80 90 Q100 80 120 90" // Reverse smile
+            },
+            {
+                eyes: [
+                    { cx: "85", cy: "60", r: "5", ry: "2" }, // Flat eyes
+                    { cx: "115", cy: "60", r: "5", ry: "2" }
+                ],
+                mouth: "M80 85 L120 85" // Flat mouth
+            },
+            {
+                eyes: [
+                    { cx: "85", cy: "60", r: "4" }, // Dizzy eyes with spiral effect
+                    { cx: "115", cy: "60", r: "4" }
+                ],
+                mouth: "M80 85 Q100 100 120 85" // Wide open mouth
+            }
+        ];
+
+        function changeFace() {
+            const face = faces[Math.floor(Math.random() * faces.length)];
+            const leftEye = document.querySelector('circle[cx="85"]');
+            const rightEye = document.querySelector('circle[cx="115"]');
+            const mouth = document.getElementById('mouth');
+            
+            // Update eyes
+            Object.entries(face.eyes[0]).forEach(([attr, value]) => {
+                leftEye.setAttribute(attr, value);
+            });
+            Object.entries(face.eyes[1]).forEach(([attr, value]) => {
+                rightEye.setAttribute(attr, value);
+            });
+            
+            // Update mouth
+            mouth.setAttribute('d', face.mouth);
+            
+            // Reset face after 500ms
+            setTimeout(() => {
+                leftEye.setAttribute('cx', '85');
+                leftEye.setAttribute('cy', '60');
+                leftEye.setAttribute('r', '5');
+                rightEye.setAttribute('cx', '115');
+                rightEye.setAttribute('cy', '60');
+                rightEye.setAttribute('r', '5');
+                mouth.setAttribute('d', 'M80 85 Q100 95 120 85');
+            }, 500);
+        }
+
+        const character = document.getElementById('character');
+        const pointsDisplay = document.getElementById('points');
+        const peePerClickDisplay = document.getElementById('peePerClick');
+        const clickUpgradeBtn = document.getElementById('clickUpgrade');
+        const pissNukeBtn = document.getElementById('pissNuke');
+        const shiverBtn = document.getElementById('shiver');
+        const nukeOverlay = document.getElementById('nukeOverlay');
+        const pants = document.getElementById('pants');
+        const leftLeg = document.getElementById('leftLeg');
+        const rightLeg = document.getElementById('rightLeg');
+        const timerDisplay = document.getElementById('holdPissTimer');
+        const progressContainer = document.querySelector('.progress-container');
+        const urgencyMeter = document.getElementById('urgencyMeter');
+
+        function createPeeStream() {
+            const stream = document.createElement('div');
+            stream.classList.add('pee-stream');
+            
+            if (nukeMultiplier > 1) {
+                stream.classList.add('rainbow-pee');
+            }
+            
+            character.appendChild(stream);
+            
+            setTimeout(() => {
+                stream.remove();
+            }, 500);
+        }
+
+        function createPuddle(x, y) {
+            const puddle = document.createElement('div');
+            puddle.classList.add('puddle');
+            puddle.style.left = `${x - 25}px`;
+            puddle.style.top = `${y + 150}px`;
+            
+            const puddleSvg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+            puddleSvg.setAttribute("width", "50");
+            puddleSvg.setAttribute("height", "50");
+            
+            const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+            circle.setAttribute("cx", "25");
+            circle.setAttribute("cy", "25");
+            circle.setAttribute("r", "20");
+            circle.setAttribute("fill", "yellow");
+            circle.style.opacity = "0.3";
+            
+            puddleSvg.appendChild(circle);
+            puddle.appendChild(puddleSvg);
+            document.body.appendChild(puddle);
+            
+            if (nukeMultiplier > 1) {
+                puddle.classList.add('spin-puddle');
+            } else {
+                puddle.classList.add('pee-animation');
+            }
+            
+            puddle.style.opacity = '1';
+            
+            setTimeout(() => {
+                puddle.style.opacity = '0';
+                setTimeout(() => puddle.remove(), 2000);
+            }, 1000);
+        }
+
+        function wetPants() {
+            pants.classList.add('wet-pants');
+            leftLeg.classList.add('wet-pants');
+            rightLeg.classList.add('wet-pants');
+            
+            setTimeout(() => {
+                pants.classList.remove('wet-pants');
+                leftLeg.classList.remove('wet-pants');
+                rightLeg.classList.remove('wet-pants');
+            }, 2000);
+        }
+
+        function activateNuke() {
+            nukeOverlay.classList.add('nuke-flash');
+            setTimeout(() => {
+                nukeOverlay.classList.remove('nuke-flash');
+            }, 2000);
+        }
+
+        function activateShiver() {
+            character.classList.add('shiver-animation');
+            shiverMultiplier = 2;
+            shiverBtn.disabled = true;
+            shiverBtn.textContent = "Shiver Active!";
+            
+            if (shiverTimeout) {
+                clearTimeout(shiverTimeout);
+            }
+            
+            shiverTimeout = setTimeout(() => {
+                character.classList.remove('shiver-animation');
+                shiverMultiplier = 1;
+                shiverBtn.disabled = false;
+                shiverBtn.textContent = "Shiver (Cost: 50 points)";
+            }, 300000); // 5 minutes
+        }
+
+        function initiateHoldPissChallenge() {
+            if (holdPissGameActive) return; // Only start if not already in a game
+            
+            holdPissGameActive = true;
+            isHoldingPiss = false;
+            urgencyLevel = 0;
+            
+            // Disable other buttons during game
+            clickUpgradeBtn.disabled = true;
+            pissNukeBtn.disabled = true;
+            shiverBtn.disabled = true;
+            
+            // Show timer and progress
+            timerDisplay.style.display = 'block';
+            progressContainer.style.display = 'block';
+            
+            let timeLeft = 30;
+            character.classList.add('urgent-shake');
+            
+            alert('Quick! Hold the piss! Click and hold to resist!');
+            
+            holdPissTimer = setInterval(() => {
+                timeLeft--;
+                timerDisplay.textContent = timeLeft;
+                
+                if (!isHoldingPiss) {
+                    urgencyLevel += 5; // Increase faster if not holding
+                } else {
+                    urgencyLevel += 1; // Increase slower while holding
+                }
+                
+                urgencyLevel = Math.min(100, urgencyLevel);
+                urgencyMeter.style.width = `${100 - urgencyLevel}%`;
+                
+                if (urgencyLevel >= 100) {
+                    endHoldPissGame(false);
+                }
+                
+                if (timeLeft <= 0) {
+                    endHoldPissGame(true);
+                }
+            }, 1000);
+        }
+
+        character.addEventListener('click', (e) => {
+            if (holdPissGameActive) {
+                isHoldingPiss = true;
+                return;
+            }
+            
+            points += peePerClick * nukeMultiplier * shiverMultiplier * baseEarnings;
+            pointsDisplay.textContent = points;
+            
+            const rect = character.getBoundingClientRect();
+            createPuddle(rect.left + rect.width/2, rect.top + rect.height);
+            createPeeStream();
+            wetPants();
+            
+            // Add face change here
+            changeFace();
+            
+            // New animations
+            character.classList.add('jump-pee');
+            setTimeout(() => {
+                character.classList.remove('jump-pee');
+            }, 800);
+        });
+
+        document.addEventListener('mouseup', () => {
+            if (holdPissGameActive) {
+                isHoldingPiss = false;
+            }
+        });
+
+        clickUpgradeBtn.addEventListener('click', () => {
+            if (points >= upgradeCost) {
+                points -= upgradeCost;
+                peePerClick++;
+                upgradeCount++;
+                upgradeCost = Math.floor(10 * Math.pow(1.5, upgradeCount));
+                
+                pointsDisplay.textContent = points;
+                peePerClickDisplay.textContent = peePerClick;
+                clickUpgradeBtn.textContent = `Upgrade Pee Power (Cost: ${upgradeCost} points)`;
+            }
+        });
+
+        pissNukeBtn.addEventListener('click', () => {
+            if (points >= 1000) {
+                points -= 1000;
+                pointsDisplay.textContent = points;
+                nukeMultiplier = 10;
+                activateNuke();
+                pissNukeBtn.disabled = true;
+                pissNukeBtn.textContent = "Piss Nuke Active!";
+            }
+        });
+
+        shiverBtn.addEventListener('click', () => {
+            if (points >= 50) {
+                points -= 50;
+                pointsDisplay.textContent = points;
+                activateShiver();
+            }
+        });
+
+        function startRandomHoldPissGame() {
+            // Generate random time between 1-5 minutes (60000-300000 ms)
+            const randomTime = Math.floor(Math.random() * (300000 - 60000) + 60000);
+            
+            setTimeout(() => {
+                initiateHoldPissChallenge();
+                
+                // Set up the next game after this one ends
+                setTimeout(() => {
+                    startRandomHoldPissGame();
+                }, 2000); // Wait 2 seconds after game ends before starting next timer
+            }, randomTime);
+        }
+
+        function endHoldPissGame(success) {
+            clearInterval(holdPissTimer);
+            holdPissGameActive = false;
+            isHoldingPiss = false;
+            
+            // Re-enable buttons
+            clickUpgradeBtn.disabled = false;
+            pissNukeBtn.disabled = false;
+            shiverBtn.disabled = false;
+            
+            // Hide timer and progress
+            timerDisplay.style.display = 'none';
+            progressContainer.style.display = 'none';
+            
+            // Remove shaking animation
+            character.classList.remove('urgent-shake');
+            
+            if (success) {
+                alert('Congratulations! You held it in! 5x earnings for the next minute!');
+                baseEarnings = 5;
+                setTimeout(() => {
+                    baseEarnings = 1;
+                }, 60000); // Return to normal after 1 minute
+            } else {
+                alert('You couldn\'t hold it! Half earnings for the next minute!');
+                baseEarnings = 0.5;
+                setTimeout(() => {
+                    baseEarnings = 1;
+                }, 60000); // Return to normal after 1 minute
+            }
+            
+            // Reset urgency meter
+            urgencyLevel = 0;
+            urgencyMeter.style.width = '100%';
+        }
+
+        // Start the random hold piss game timer when the page loads
+        startRandomHoldPissGame();
+    </script>
+</body>
+</html>
