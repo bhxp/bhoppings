@@ -1,0 +1,1412 @@
+<html><head><base href="https://px.fun/"><title>PX.funtitle>
+<style>
+body, html {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overflow: hidden;
+  font-family: Arial, sans-serif;
+  background: #1c1c1c;
+  color: #e0e0e0;
+}
+#game-container {
+  width: 100%;
+  height: 100%;
+  image-rendering: pixelated;
+}
+#toolbar, #controls {
+  position: absolute;
+  background: rgba(51, 51, 51, 0.8);
+  padding: 10px;
+  border-radius: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+#toolbar {
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  flex-direction: column;
+}
+#controls {
+  top: 50%;
+  left: 10px;
+  transform: translateY(-50%);
+  flex-direction: column;
+}
+.element, .control, .tool {
+  width: 30px;
+  height: 30px;
+  margin: 5px;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: transform 0.1s;
+  position: relative;
+}
+.element:hover, .control:hover, .tool:hover {
+  transform: scale(1.1);
+}
+.element-container, .control-container, .tool-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 0 5px;
+}
+.element-title, .control-title, .tool-title {
+  font-size: 12px;
+  margin-top: 5px;
+  text-align: center;
+}
+.control-container {
+  flex-direction: row;
+  align-items: center;
+}
+.control-title {
+  margin-top: 0;
+  margin-left: 10px;
+}
+#sand { background: #c2b280; }
+#water { background: #4fc3f7; }
+#fire { background: #ff5722; }
+#wood { background: #795548; }
+#metal { background: #9e9e9e; }
+#ice { background: #e3f2fd; }
+#lava { background: linear-gradient(#ff9800, #ff5722); }
+#copper { background: #b87333; }
+#acid { background: #32cd32; }
+#salt { background: #ffffff; }
+#steel { background: #71797E; }
+#carbonated-water { background: linear-gradient(#4fc3f7, #b3e5fc); }
+#oil { background: #8B4513; }
+#co2 { background: #A9A9A9; }
+#oxygen { background: #87CEEB; }
+#hydrogen { background: #FFFAF0; }
+#smoke { background: #808080; }
+#stone { background: #696969; }
+#plasma { background: #8A2BE2; }
+#insulator { background: repeating-linear-gradient(45deg, #FF69B4, #FF69B4 5px, #FFB6C1 5px, #FFB6C1 10px); }
+#sawdust { background: #DEB887; }
+#saltwater { background: #b0e0e6; }
+#rust { background: #8B4513; }
+#virus { background: #800080; }
+#virus-dormant { background: #4B0082; }
+#virus-dead { background: #483D8B; }
+#plant { background: #228B22; }
+#flower { background: linear-gradient(#228B22, #FF69B4); }
+#gunpowder { background: #36454F; }
+#sludge { background: #4a4a4a; }
+#heat { background: linear-gradient(45deg, #ff0000, #ffff00); }
+#cool { background: linear-gradient(45deg, #00ffff, #0000ff); }
+#erase { background: #ff69b4; }
+#thermometer { background: linear-gradient(to right, #4169E1, #FF0000); }
+#normal-toggle { background: #4CAF50; }
+#thermal-toggle { background: linear-gradient(45deg, #00f, #f00); }
+.control.active, .tool.active {
+  box-shadow: 0 0 0 2px #fff;
+}
+#info-panel {
+  position: absolute;
+  bottom: 10px;
+  left: 10px;
+  background: rgba(51, 51, 51, 0.8);
+  padding: 10px;
+  border-radius: 10px;
+  max-width: 300px;
+  font-size: 0.8em;
+}
+#tabs {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 10px;
+}
+.tab {
+  padding: 5px 10px;
+  margin: 0 5px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+.tab:hover, .tab.active {
+  background: rgba(255, 255, 255, 0.3);
+}
+.elements-row {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+#brush-size {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: rgba(51, 51, 51, 0.8);
+  padding: 10px;
+  border-radius: 10px;
+  font-size: 0.8em;
+}
+#thermal-legend {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  background: rgba(51, 51, 51, 0.8);
+  padding: 10px;
+  border-radius: 10px;
+  display: none;
+}
+#thermal-gradient {
+  width: 20px;
+  height: 200px;
+  background: linear-gradient(to top, #000080, #0000ff, #00ffff, #00ff00, #ffff00, #ff0000, #ff00ff);
+  margin-right: 10px;
+}
+#thermal-labels {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 200px;
+}
+#hover-info {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  background: rgba(51, 51, 51, 0.8);
+  padding: 10px;
+  border-radius: 10px;
+  font-size: 0.8em;
+  pointer-events: none;
+}
+#pause-button {
+  position: absolute;
+  top: 10px;
+  right: 120px;
+  background: rgba(51, 51, 51, 0.8);
+  padding: 10px;
+  border-radius: 10px;
+  font-size: 0.8em;
+  cursor: pointer;
+}
+</style></head>
+<body>
+<canvas id="game-container"></canvas>
+<div id="toolbar">
+  <div id="tabs">
+    <div class="tab active" data-category="liquids">Liquids</div>
+    <div class="tab" data-category="solids">Solids</div>
+    <div class="tab" data-category="gases">Gases</div>
+    <div class="tab" data-category="energy">Energy</div>
+    <div class="tab" data-category="living">Living</div>
+    <div class="tab" data-category="tools">Tools</div>
+  </div>
+  <div class="elements-row" data-category="liquids">
+    <div class="element-container">
+      <div class="element" id="water"></div>
+      <div class="element-title">Water</div>
+    </div>
+    <div class="element-container">
+      <div class="element" id="lava"></div>
+      <div class="element-title">Lava</div>
+    </div>
+    <div class="element-container">
+      <div class="element" id="acid"></div>
+      <div class="element-title">Acid</div>
+    </div>
+    <div class="element-container">
+      <div class="element" id="carbonated-water"></div>
+      <div class="element-title">Carbonated Water</div>
+    </div>
+    <div class="element-container">
+      <div class="element" id="oil"></div>
+      <div class="element-title">Oil</div>
+    </div>
+    <div class="element-container">
+      <div class="element" id="saltwater"></div>
+      <div class="element-title">Saltwater</div>
+    </div>
+    <div class="element-container">
+      <div class="element" id="sludge"></div>
+      <div class="element-title">Sludge</div>
+    </div>
+  </div>
+  <div class="elements-row" data-category="solids" style="display: none;">
+    <div class="element-container">
+      <div class="element" id="sand"></div>
+      <div class="element-title">Sand</div>
+    </div>
+    <div class="element-container">
+      <div class="element" id="wood"></div>
+      <div class="element-title">Wood</div>
+    </div>
+    <div class="element-container">
+      <div class="element" id="metal"></div>
+      <div class="element-title">Metal</div>
+    </div>
+    <div class="element-container">
+      <div class="element" id="copper"></div>
+      <div class="element-title">Copper</div>
+    </div>
+    <div class="element-container">
+      <div class="element" id="steel"></div>
+      <div class="element-title">Steel</div>
+    </div>
+    <div class="element-container">
+      <div class="element" id="ice"></div>
+      <div class="element-title">Ice</div>
+    </div>
+    <div class="element-container">
+      <div class="element" id="salt"></div>
+      <div class="element-title">Salt</div>
+    </div>
+    <div class="element-container">
+      <div class="element" id="stone"></div>
+      <div class="element-title">Stone</div>
+    </div>
+    <div class="element-container">
+      <div class="element" id="insulator"></div>
+      <div class="element-title">Insulator</div>
+    </div>
+    <div class="element-container">
+      <div class="element" id="sawdust"></div>
+      <div class="element-title">Sawdust</div>
+    </div>
+    <div class="element-container">
+      <div class="element" id="rust"></div>
+      <div class="element-title">Rust</div>
+    </div>
+    <div class="element-container">
+      <div class="element" id="gunpowder"></div>
+      <div class="element-title">Gunpowder</div>
+    </div>
+  </div>
+  <div class="elements-row" data-category="gases" style="display: none;">
+    <div class="element-container">
+      <div class="element" id="co2"></div>
+      <div class="element-title">CO2</div>
+    </div>
+    <div class="element-container">
+      <div class="element" id="oxygen"></div>
+      <div class="element-title">Oxygen</div>
+    </div>
+    <div class="element-container">
+      <div class="element" id="hydrogen"></div>
+      <div class="element-title">Hydrogen</div>
+    </div>
+    <div class="element-container">
+      <div class="element" id="smoke"></div>
+      <div class="element-title">Smoke</div>
+    </div>
+    <div class="element-container">
+      <div class="element" id="plasma"></div>
+      <div class="element-title">Plasma</div>
+    </div>
+  </div>
+  <div class="elements-row" data-category="energy" style="display: none;">
+    <div class="element-container">
+      <div class="element" id="fire"></div>
+      <div class="element-title">Fire</div>
+    </div>
+  </div>
+  <div class="elements-row" data-category="living" style="display: none;">
+    <div class="element-container">
+      <div class="element" id="virus"></div>
+      <div class="element-title">Virus</div>
+    </div>
+    <div class="element-container">
+      <div class="element" id="virus-dormant"></div>
+      <div class="element-title">Dormant Virus</div>
+    </div>
+    <div class="element-container">
+      <div class="element" id="virus-dead"></div>
+      <div class="element-title">Dead Virus</div>
+    </div>
+    <div class="element-container">
+      <div class="element" id="plant"></div>
+      <div class="element-title">Plant</div>
+    </div>
+    <div class="element-container">
+      <div class="element" id="flower"></div>
+      <div class="element-title">Flower</div>
+    </div>
+  </div>
+  <div class="elements-row" data-category="tools" style="display: none;">
+    <div class="tool-container">
+      <div class="tool" id="heat"></div>
+      <div class="tool-title">Heat</div>
+    </div>
+    <div class="tool-container">
+      <div class="tool" id="cool"></div>
+      <div class="tool-title">Cool</div>
+    </div>
+    <div class="tool-container">
+      <div class="tool" id="erase"></div>
+      <div class="tool-title">Erase</div>
+    </div>
+    <div class="tool-container">
+      <div class="tool" id="thermometer"></div>
+      <div class="tool-title">Thermometer</div>
+    </div>
+  </div>
+</div>
+<div id="controls">
+  <div class="control-container">
+    <div class="control active" id="normal-toggle"></div>
+    <div class="control-title">Normal View</div>
+  </div>
+  <div class="control-container">
+    <div class="control" id="thermal-toggle"></div>
+    <div class="control-title">Thermal View</div>
+  </div>
+</div>
+<div id="info-panel">
+  <h3>PX.fun Sandbox - Bhoppings.de</h3>
+</div>
+<div id="brush-size">Brush Size: <span id="brush-size-value">3</span></div>
+<div id="thermal-legend">
+  <div style="display: flex;">
+    <div id="thermal-gradient"></div>
+    <div id="thermal-labels">
+      <span>1500°C</span>
+      <span>1000°C</span>
+      <span>500°C</span>
+      <span>0°C</span>
+      <span>-500°C</span>
+    </div>
+  </div>
+</div>
+<div id="hover-info"></div>
+<div id="pause-button">Pause (SPACE)</div>
+
+<script>
+const canvas = document.getElementById('game-container');
+const ctx = canvas.getContext('2d');
+const elements = document.querySelectorAll('.element');
+const tools = document.querySelectorAll('.tool');
+const normalToggle = document.getElementById('normal-toggle');
+const thermalToggle = document.getElementById('thermal-toggle');
+const tabs = document.querySelectorAll('.tab');
+const brushSizeValue = document.getElementById('brush-size-value');
+const thermalLegend = document.getElementById('thermal-legend');
+const hover= document.getElementById('hover-info');
+const pauseButton = document.getElementById('pause-button');
+let selectedElement = null;
+let selectedTool = null;
+const width = 400;
+const height = 300;
+let grid = new Uint8Array(width * height);
+let heat = new Float32Array(width * height);
+let virusTimer = new Uint16Array(width * height);
+let plantGrowth = new Uint8Array(width * height);
+let flowerGrowth = new Uint8Array(width * height);
+let sludgeViscosity = new Float32Array(width * height);
+let thermalView = false;
+let brushSize = 3;
+let isPaused = false;
+
+const EMPTY = 0, SAND = 1, WATER = 2, FIRE = 3, WOOD = 4, METAL = 5, ICE = 6, LAVA = 7, ROCK = 8, STEAM = 9, COPPER = 10, ACID = 11, SALT = 12, SALTWATER = 13, STEEL = 14, CARBONATED_WATER = 15, OIL = 16, CO2 = 17, OXYGEN = 18, HYDROGEN = 19, SMOKE = 20, STONE = 21, PLASMA = 22, INSULATOR = 23, SAWDUST = 24, RUST = 25, THERMOMETER = 26, VIRUS = 27, VIRUS_DORMANT = 28, VIRUS_DEAD = 29, PLANT = 30, FLOWER = 31, GUNPOWDER = 32, SLUDGE = 33;
+
+// Define densities for liquids and powders (higher value means denser)
+const DENSITIES = {
+  [LAVA]: 10,
+  [ACID]: 9,
+  [SALTWATER]: 8,
+  [WATER]: 7,
+  [OIL]: 6,
+  [CARBONATED_WATER]: 5,
+  [SAND]: 4,
+  [GUNPOWDER]: 3,
+  [SAWDUST]: 2,
+  [SLUDGE]: 8.5
+};
+
+elements.forEach(element => {
+  element.addEventListener('click', () => {
+    selectedElement = element.id;
+    selectedTool = null;
+    tools.forEach(tool => tool.classList.remove('active'));
+  });
+});
+
+tools.forEach(tool => {
+  tool.addEventListener('click', () => {
+    selectedTool = tool.id;
+    selectedElement = null;
+    tools.forEach(t => t.classList.remove('active'));
+    tool.classList.add('active');
+  });
+});
+
+normalToggle.addEventListener('click', () => {
+  thermalView = false;
+  normalToggle.classList.add('active');
+  thermalToggle.classList.remove('active');
+  thermalLegend.style.display = 'none';
+});
+
+thermalToggle.addEventListener('click', () => {
+  thermalView = true;
+  thermalToggle.classList.add('active');
+  normalToggle.classList.remove('active');
+  thermalLegend.style.display = 'block';
+});
+
+tabs.forEach(tab => {
+  tab.addEventListener('click', () => {
+    tabs.forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    const category = tab.dataset.category;
+    document.querySelectorAll('.elements-row').forEach(row => {
+      row.style.display = row.dataset.category === category ? 'flex' : 'none';
+    });
+  });
+});
+
+canvas.addEventListener('mousedown', startDrawing);
+canvas.addEventListener('mousemove', (e) => {
+  draw(e);
+  updateHoverInfo(e);
+});
+canvas.addEventListener('mouseup', stopDrawing);
+canvas.addEventListener('touchstart', e => {
+  e.preventDefault();
+  startDrawing(e.touches[0]);
+});
+canvas.addEventListener('touchmove', e => {
+  e.preventDefault();
+  draw(e.touches[0]);
+});
+canvas.addEventListener('touchend', stopDrawing);
+
+canvas.addEventListener('wheel', (e) => {
+  e.preventDefault();
+  brushSize = Math.max(1, Math.min(10, brushSize + Math.sign(e.deltaY) * -1));
+  brushSizeValue.textContent = brushSize;
+});
+
+let isDrawing = false;
+
+function startDrawing(e) {
+  isDrawing = true;
+  draw(e);
+}
+
+function stopDrawing() {
+  isDrawing = false;
+}
+
+function draw(e) {
+  if (!isDrawing || (!selectedElement && !selectedTool)) return;
+  
+  const rect = canvas.getBoundingClientRect();
+  const scaleX = width / rect.width;
+  const scaleY = height / rect.height;
+  const x = Math.floor((e.clientX - rect.left) * scaleX);
+  const y = Math.floor((e.clientY - rect.top) * scaleY);
+  
+  for (let i = -brushSize; i <= brushSize; i++) {
+    for (let j = -brushSize; j <= brushSize; j++) {
+      if (Math.random() < 0.7 && (i*i + j*j <= brushSize*brushSize)) {
+        if (selectedElement) {
+          const type = getElementType(selectedElement);
+          setPixel(x + i, y + j, type);
+          setHeat(x + i, y + j, getInitialHeat(type));
+          if (type === VIRUS || type === VIRUS_DORMANT || type === VIRUS_DEAD) {
+            virusTimer[((y + j) * width) + (x + i)] = 180; // 3 seconds at 60 FPS
+          }
+          if (type === PLANT || type === FLOWER) {
+            plantGrowth[((y + j) * width) + (x + i)] = 0; // Initialize plant growth
+            flowerGrowth[((y + j) * width) + (x + i)] = 0; // Initialize flower growth
+          }
+          if (type === SLUDGE) {
+            sludgeViscosity[((y + j) * width) + (x + i)] = 1; // Initialize sludge viscosity
+          }
+        } else if (selectedTool) {
+          applyTool(x + i, y + j, selectedTool);
+        }
+      }
+    }
+  }
+}
+
+function updateHoverInfo(e) {
+  const rect = canvas.getBoundingClientRect();
+  const scaleX = width / rect.width;
+  const scaleY = height / rect.height;
+  const x = Math.floor((e.clientX - rect.left) * scaleX);
+  const y = Math.floor((e.clientY - rect.top) * scaleY);
+  
+  const pixelType = getPixel(x, y);
+  const pixelHeat = getHeat(x, y);
+  
+  hover.textContent = `Material: ${getElementName(pixelType)}, Temperature: ${pixelHeat.toFixed(1)}°C`;
+}
+
+function getElementName(type) {
+  switch(type) {
+    case EMPTY: return "Empty";
+    case SAND: return "Sand";
+    case WATER: return "Water";
+    case FIRE: return "Fire";
+    case WOOD: return "Wood";
+    case METAL: return "Metal";
+    case ICE: return "Ice";
+    case LAVA: return "Lava";
+    case ROCK: return "Rock";
+    case STEAM: return "Steam";
+    case COPPER: return "Copper";
+    case ACID: return "Acid";
+    case SALT: return "Salt";
+    case SALTWATER: return "Salt Water";
+    case STEEL: return "Steel";
+    case CARBONATED_WATER: return "Carbonated Water";
+    case OIL: return "Oil";
+    case CO2: return "CO2";
+    case OXYGEN: return "Oxygen";
+    case HYDROGEN: return "Hydrogen";
+    case SMOKE: return "Smoke";
+    case STONE: return "Stone";
+    case PLASMA: return "Plasma";
+    case INSULATOR: return "Insulator";
+    case SAWDUST: return "Sawdust";
+    case RUST: return "Rust";
+    case THERMOMETER: return "Thermometer";
+    case VIRUS: return "Virus";
+    case VIRUS_DORMANT: return "Dormant Virus";
+    case VIRUS_DEAD: return "Dead Virus";
+    case PLANT: return "Plant";
+    case FLOWER: return "Flower";
+    case GUNPOWDER: return "Gunpowder";
+    case SLUDGE: return "Sludge";
+    default: return "Unknown";
+  }
+}
+
+function getElementType(element) {
+  switch(element) {
+    case 'sand': return SAND;
+    case 'water': return WATER;
+    case 'fire': return FIRE;
+    case 'wood': return WOOD;
+    case 'metal': return METAL;
+    case 'ice': return ICE;
+    case 'lava': return LAVA;
+    case 'copper': return COPPER;
+    case 'acid': return ACID;
+    case 'salt': return SALT;
+    case 'steel': return STEEL;
+    case 'carbonated-water': return CARBONATED_WATER;
+    case 'oil': return OIL;
+    case 'co2': return CO2;
+    case 'oxygen': return OXYGEN;
+    case 'hydrogen': return HYDROGEN;
+    case 'smoke': return SMOKE;
+    case 'stone': return STONE;
+    case 'plasma': return PLASMA;
+    case 'insulator': return INSULATOR;
+    case 'sawdust': return SAWDUST;
+    case 'saltwater': return SALTWATER;
+    case 'rust': return RUST;
+    case 'thermometer': return THERMOMETER;
+    case 'virus': return VIRUS;
+    case 'virus-dormant': return VIRUS_DORMANT;
+    case 'virus-dead': return VIRUS_DEAD;
+    case 'plant': return PLANT;
+    case 'flower': return FLOWER;
+    case 'gunpowder': return GUNPOWDER;
+    case 'sludge': return SLUDGE;
+  }
+}
+
+function getInitialHeat(type) {
+  switch(type) {
+    case FIRE: return 1000;
+    case LAVA: return 800;
+    case ICE: return -10;
+    case CARBONATED_WATER: return 5;
+    case CO2: return 20;
+    case OXYGEN: return 20;
+    case HYDROGEN: return 20;
+    case SMOKE: return 200;
+    case STONE: return 25;
+    case PLASMA: return 5000;
+    case INSULATOR: return 20;
+    case SAWDUST: return 20;
+    case SALTWATER: return 20;
+    case RUST: return 20;
+    case THERMOMETER: return 20;
+    case VIRUS: return 20;
+    case VIRUS_DORMANT: return 20;
+    case VIRUS_DEAD: return 20;
+    case PLANT: return 20;
+    case FLOWER: return 20;
+    case GUNPOWDER: return 20;
+    case SLUDGE: return 30;
+    default: return 20;
+  }
+}
+
+function applyTool(x, y, tool) {
+  switch(tool) {
+    case 'heat':
+      setHeat(x, y, getHeat(x, y) + 50);
+      break;
+    case 'cool':
+      setHeat(x, y, getHeat(x, y) - 50);
+      break;
+    case 'erase':
+      setPixel(x, y, EMPTY);
+      setHeat(x, y, 20);
+      break;
+    case 'thermometer':
+      setPixel(x, y, THERMOMETER);
+      break;
+  }
+}
+
+function setPixel(x, y, type) {
+  if (x >= 0 && x < width && y >= 0 && y < height) {
+    grid[y * width + x] = type;
+  }
+}
+
+function getPixel(x, y) {
+  if (x >= 0 && x < width && y >= 0 && y < height) {
+    return grid[y * width + x];
+  }
+  return EMPTY;
+}
+
+function setHeat(x, y, value) {
+  if (x >= 0 && x < width && y >= 0 && y < height) {
+    heat[y * width + x] = value;
+  }
+}
+
+function getHeat(x, y) {
+  if (x >= 0 && x < width && y >= 0 && y < height) {
+    return heat[y * width + x];
+  }
+  return 20;
+}
+
+function getConductivity(type) {
+  switch(type) {
+    case COPPER: return 0.9;
+    case METAL: return 0.7;
+    case WATER: return 0.5;
+    case SAND: return 0.2;
+    case WOOD: return 0.1;
+    case ACID: return 0.6;
+    case SALT: return 0.3;
+    case SALTWATER: return 0.55;
+    case STEEL: return 0.4;
+    case CARBONATED_WATER: return 0.52;
+    case OIL: return 0.15;
+    case CO2: return 0.1;
+    case OXYGEN: return 0.12;
+    case HYDROGEN: return 0.14;
+    case SMOKE: return 0.05;
+    case STONE: return 0.3;
+    case PLASMA: return 0.95;
+    case INSULATOR: return 0.01;
+    case SAWDUST: return 0.05;
+    case RUST: return 0.15;
+    case THERMOMETER: return 0.8;
+    case VIRUS: return 0.2;
+    case VIRUS_DORMANT: return 0.1;
+    case VIRUS_DEAD: return 0.05;
+    case PLANT: return 0.3;
+    case FLOWER: return 0.3;
+    case GUNPOWDER: return 0.2;
+    case SLUDGE: return 0.3;
+    default: return 0.3;
+  }
+}
+
+function updatePhysics() {
+  if (isPaused) return;
+
+  for (let y = height - 1; y >= 0; y--) {
+    for (let x = 0; x < width; x++) {
+      const current = getPixel(x, y);
+      const currentHeat = getHeat(x, y);
+      
+      // Heat conduction for all elements, including thermometer
+      let totalHeat = currentHeat;
+      let totalConductivity = 1;
+      for (let dx = -1; dx <= 1; dx++) {
+        for (let dy = -1; dy <= 1; dy++) {
+          if (dx !== 0 || dy !== 0) {
+            const neighborType = getPixel(x + dx, y + dy);
+            const neighborHeat = getHeat(x + dx, y + dy);
+            const conductivity = getConductivity(neighborType);
+            totalHeat += neighborHeat * conductivity;
+            totalConductivity += conductivity;
+          }
+        }
+      }
+      const avgHeat = totalHeat / totalConductivity;
+      setHeat(x, y, currentHeat + (avgHeat - currentHeat) *getConductivity(current));
+      
+      // Skip the rest of the physics for thermometer
+      if (current === THERMOMETER) continue;
+
+      switch (current) {
+        case SAND:
+        case SAWDUST:
+        case RUST:
+        case GUNPOWDER:
+          if (getPixel(x, y + 1) === EMPTY || DENSITIES[getPixel(x, y + 1)] < DENSITIES[current]) {
+            setPixel(x, y, getPixel(x, y + 1));
+            setPixel(x, y + 1, current);
+            setHeat(x, y + 1, currentHeat);
+          } else if (getPixel(x - 1, y + 1) === EMPTY || DENSITIES[getPixel(x - 1, y + 1)] < DENSITIES[current]) {
+            setPixel(x, y, getPixel(x - 1, y + 1));
+            setPixel(x - 1, y + 1, current);
+            setHeat(x - 1, y + 1, currentHeat);
+          } else if (getPixel(x + 1, y + 1) === EMPTY || DENSITIES[getPixel(x + 1, y + 1)] < DENSITIES[current]) {
+            setPixel(x, y, getPixel(x + 1, y + 1));
+            setPixel(x + 1, y + 1, current);
+            setHeat(x + 1, y + 1, currentHeat);
+          }
+          if (current === SAWDUST && currentHeat > 150) {
+            setPixel(x, y, FIRE);
+            setHeat(x, y, 500);
+          }
+          if (current === GUNPOWDER) {
+            if (currentHeat > 150 || getPixel(x, y - 1) === FIRE || getPixel(x - 1, y) === FIRE || getPixel(x + 1, y) === FIRE) {
+              setPixel(x, y, FIRE);
+              setHeat(x, y, 1000);
+              // Create explosion
+              for (let dx = -2; dx <= 2; dx++) {
+                for (let dy = -2; dy <= 2; dy++) {
+                  if (Math.random() < 0.7 && getPixel(x + dx, y + dy) !== EMPTY) {
+                    setPixel(x + dx, y + dy, FIRE);
+                    setHeat(x + dx, y + dy, 1000);
+                  }
+                }
+              }
+            }
+          }
+          break;
+        case WATER:
+        case SALTWATER:
+        case CARBONATED_WATER:
+        case OIL:
+        case ACID:
+        case LAVA:
+        case SLUDGE:
+          const currentDensity = DENSITIES[current];
+          let flowRate = 1;
+          
+          if (current === SLUDGE) {
+            const viscosity = sludgeViscosity[y * width + x];
+            flowRate = Math.random() < viscosity ? 0 : 1;
+          }
+          
+          if (flowRate > 0 && y < height - 1) {
+            const belowType = getPixel(x, y + 1);
+            if (belowType === EMPTY || (DENSITIES[belowType] !== undefined && DENSITIES[belowType] < currentDensity)) {
+              setPixel(x, y, belowType);
+              setPixel(x, y + 1, current);
+              setHeat(x, y + 1, currentHeat);
+              if (current === SLUDGE) {
+                sludgeViscosity[(y + 1) * width + x] = sludgeViscosity[y * width + x];
+              }
+              continue;
+            }
+          }
+          
+          if (flowRate > 0) {
+            const directions = Math.random() < 0.5 ? [-1, 1] : [1, -1];
+            for (const dx of directions) {
+              if (x + dx >= 0 && x + dx < width) {
+                const sideType = getPixel(x + dx, y);
+                if (sideType === EMPTY) {
+                  setPixel(x, y, EMPTY);
+                  setPixel(x + dx, y, current);
+                  setHeat(x + dx, y, currentHeat);
+                  if (current === SLUDGE) {
+                    sludgeViscosity[y * width + (x + dx)] = sludgeViscosity[y * width + x];
+                  }
+                  break;
+                } else if (y < height - 1) {
+                  const diagType = getPixel(x + dx, y + 1);
+                  if (diagType === EMPTY || (DENSITIES[diagType] !== undefined && DENSITIES[diagType] < currentDensity)) {
+                    setPixel(x, y, diagType);
+                    setPixel(x + dx, y + 1, current);
+                    setHeat(x + dx, y + 1, currentHeat);
+                    if (current === SLUDGE) {
+                      sludgeViscosity[(y + 1) * width + (x + dx)] = sludgeViscosity[y * width + x];
+                    }
+                    break;
+                  }
+                }
+              }
+            }
+          }
+          
+          // Special behaviors for different liquids
+          if (current === WATER && getPixel(x, y - 1) === SALT) {
+            setPixel(x, y, SALTWATER);
+            setPixel(x, y - 1, EMPTY);
+          } else if (currentHeat > 100 && current !== LAVA && current !== SLUDGE) {
+            if (Math.random() < 0.1) {
+              setPixel(x, y, STEAM);
+            }
+          } else if (currentHeat < 0 && current !== LAVA && current !== SLUDGE) {
+            setPixel(x, y, ICE);
+          }
+          
+          if (current === CARBONATED_WATER && Math.random() < 0.01) {
+            if (getPixel(x, y - 1) === EMPTY) {
+              setPixel(x, y - 1, CO2);
+              if (Math.random() < 0.1) {
+                setPixel(x, y, WATER);
+              }
+            }
+          }
+          
+          if (current === OIL && currentHeat > 150) {
+            setPixel(x, y, FIRE);
+            setHeat(x, y, 1000);
+            for (let dx = -2; dx <= 2; dx++) {
+              for (let dy = -2; dy <= 2; dy++) {
+                if (Math.random() < 0.7 && getPixel(x + dx, y + dy) !== EMPTY && getPixel(x + dx, y + dy) !== INSULATOR) {
+                  setPixel(x + dx, y + dy, FIRE);
+                  setHeat(x + dx, y + dy, 1000);
+                }
+              }
+            }
+          }
+          
+          if (current === SALTWATER) {
+            for (let dx = -1; dx <= 1; dx++) {
+              for (let dy = -1; dy <= 1; dy++) {
+                const nearbyPixel = getPixel(x + dx, y + dy);
+                if ((nearbyPixel === METAL || nearbyPixel === COPPER) && Math.random() < 0.01) {
+                  setPixel(x + dx, y + dy, RUST);
+                }
+              }
+            }
+          }
+          
+          if (current === LAVA && currentHeat < 700) {
+            setPixel(x, y, STONE);
+          }
+          
+          if (current === SLUDGE) {
+            if (currentHeat < -10) {
+              setPixel(x, y, STONE);
+            } else {
+              // Update viscosity based on heat
+              const newViscosity = Math.max(0.1, Math.min(1, 1 - (currentHeat - 20) / 180));
+              sludgeViscosity[y * width + x] = newViscosity;
+            }
+          }
+          break;
+        case FIRE:
+          setHeat(x, y, Math.max(currentHeat - 2, 20));
+          if (currentHeat < 200) {
+            setPixel(x, y, EMPTY);
+          } else {
+            if (Math.random() < 0.3) {
+              const dx = Math.floor(Math.random() * 3) - 1;
+              if (y > 0 && getPixel(x + dx, y - 1) === EMPTY) {
+                setPixel(x, y, EMPTY);
+                setPixel(x + dx, y - 1, FIRE);
+                setHeat(x + dx, y - 1, currentHeat);
+              }
+            }
+            for (let nx = -1; nx <= 1; nx++) {
+              for (let ny = -1; ny <= 1; ny++) {
+                const nearbyPixel = getPixel(x + nx, y + ny);
+                if (nearbyPixel === WOOD && Math.random() < 0.1) {
+                  setPixel(x + nx, y + ny, FIRE);
+                  setHeat(x + nx, y + ny, 500);
+                } else if (nearbyPixel === OXYGEN && Math.random() < 0.2) {
+                  setPixel(x + nx, y + ny, FIRE);
+                  setHeat(x + nx, y + ny, 1000);
+                } else if (nearbyPixel === OIL && Math.random() < 0.3) {
+                  setPixel(x + nx, y + ny, FIRE);
+                  setHeat(x + nx, y + ny, 1000);
+                } else if (nearbyPixel === SAWDUST && Math.random() < 0.4) {
+                  setPixel(x + nx, y + ny, FIRE);
+                  setHeat(x + nx, y + ny, 500);
+                } else if ((nearbyPixel === PLANT || nearbyPixel === FLOWER) && Math.random() < 0.2) {
+                  setPixel(x + nx, y + ny, FIRE);
+                  setHeat(x + nx, y + ny, 500);
+                } else if (nearbyPixel === GUNPOWDER && Math.random() < 0.5) {
+                  setPixel(x + nx, y + ny, FIRE);
+                  setHeat(x + nx, y + ny, 1000);
+                }
+                // Remove the else if block for SLUDGE to make it fire-resistant
+              }
+            }
+            if (Math.random() < 0.1 && getPixel(x, y - 1) === EMPTY) {
+              setPixel(x, y - 1, SMOKE);
+              setHeat(x, y - 1, currentHeat * 0.8);
+            }
+          }
+          break;
+        case WOOD:
+          if (currentHeat > 300) {
+            setPixel(x, y, FIRE);
+            setHeat(x, y, 500);
+          }
+          break;
+        case ICE:
+          if (currentHeat > 0) {
+            setPixel(x, y, WATER);
+          }
+          break;
+        case STEAM:
+          if (currentHeat < 100) {
+            setPixel(x, y, WATER);
+          } else if (y > 0 && getPixel(x, y - 1) === EMPTY) {
+            setPixel(x, y, EMPTY);
+            setPixel(x, y - 1, STEAM);
+            setHeat(x, y - 1, currentHeat);
+          } else if (Math.random() < 0.5 && getPixel(x - 1, y) === EMPTY) {
+            setPixel(x, y, EMPTY);
+            setPixel(x - 1, y, STEAM);
+            setHeat(x - 1, y, currentHeat);
+          } else if (getPixel(x + 1, y) === EMPTY) {
+            setPixel(x, y, EMPTY);
+            setPixel(x + 1, y, STEAM);
+            setHeat(x + 1, y, currentHeat);
+          }
+          break;
+        case SALT:
+          if (getPixel(x, y + 1) === ACID) {
+            setPixel(x, y, ACID);
+            setPixel(x, y + 1, SALT);
+            setHeat(x, y + 1, currentHeat);
+          } else if (getPixel(x, y + 1) === EMPTY || getPixel(x, y + 1) === WATER) {
+            const belowType = getPixel(x, y + 1);
+            setPixel(x, y, belowType);
+            setPixel(x, y + 1, belowType === WATER ? SALTWATER : SALT);
+            setHeat(x, y + 1, currentHeat);
+          } else if (getPixel(x - 1, y + 1) === EMPTY || getPixel(x - 1, y + 1) === WATER) {
+            const belowType = getPixel(x - 1, y + 1);
+            setPixel(x, y, belowType);
+            setPixel(x - 1, y + 1, belowType === WATER ? SALTWATER : SALT);
+            setHeat(x - 1, y + 1, currentHeat);
+          } else if (getPixel(x + 1, y + 1) === EMPTY || getPixel(x + 1, y + 1) === WATER) {
+            const belowType = getPixel(x + 1, y + 1);
+            setPixel(x, y, belowType);
+            setPixel(x + 1, y + 1, belowType === WATER ? SALTWATER : SALT);
+            setHeat(x + 1, y + 1, currentHeat);
+          }
+          break;
+        case STEEL:
+          if (currentHeat > 1500) {
+            setPixel(x, y, LAVA);
+          }
+          break;
+        case CO2:
+        case OXYGEN:
+        case HYDROGEN:
+        case SMOKE:
+          if (y > 0 && Math.random() < 0.1) {
+            if (getPixel(x, y - 1) === EMPTY) {
+              setPixel(x, y, EMPTY);
+              setPixel(x, y - 1, current);
+              setHeat(x, y - 1, currentHeat);
+            } else if (Math.random() < 0.5 && getPixel(x - 1, y) === EMPTY) {
+              setPixel(x, y, EMPTY);
+              setPixel(x - 1, y, current);
+              setHeat(x - 1, y, currentHeat);
+            } else if (getPixel(x + 1, y) === EMPTY) {
+              setPixel(x, y, EMPTY);
+              setPixel(x + 1, y, current);
+              setHeat(x + 1, y, currentHeat);
+            }
+          }
+          if (current === OXYGEN && currentHeat > 300) {
+            setPixel(x, y, FIRE);
+            setHeat(x, y, 1000);
+          }
+          if (current === HYDROGEN) {
+            for (let dx = -1; dx <= 1; dx++) {
+              for (let dy = -1; dy <= 1; dy++) {
+                if (getPixel(x + dx, y + dy) === OXYGEN && currentHeat > 400) {
+                  setPixel(x, y, WATER);
+                  setPixel(x + dx, y + dy, WATER);
+                  setHeat(x, y, 500);
+                  setHeat(x + dx, y + dy, 500);
+                }
+              }
+            }
+          }
+          if (current === SMOKE) {
+            if (Math.random() < 0.01) {
+              setPixel(x, y, EMPTY);
+            }
+          }
+          break;
+        case STONE:
+          if (currentHeat > 1200) {
+            setPixel(x, y, LAVA);
+            setHeat(x, y, 1300);
+          }
+          break;
+        case PLASMA:
+          if (y > 0 && Math.random() < 0.3) {
+            if (getPixel(x, y - 1) === EMPTY) {
+              setPixel(x, y, EMPTY);
+              setPixel(x, y - 1, PLASMA);
+              setHeat(x, y - 1, currentHeat);
+            } else if (Math.random() < 0.5 && getPixel(x - 1, y - 1) === EMPTY) {
+              setPixel(x, y, EMPTY);
+              setPixel(x - 1, y - 1, PLASMA);
+              setHeat(x - 1, y - 1, currentHeat);
+            } else if (getPixel(x + 1, y - 1) === EMPTY) {
+              setPixel(x, y, EMPTY);
+              setPixel(x + 1, y - 1, PLASMA);
+              setHeat(x + 1, y - 1, currentHeat);
+            }
+          }
+          
+          for (let dx = -1; dx <= 1; dx++) {
+            for (let dy = -1; dy <= 1; dy++) {
+              const nearbyPixel = getPixel(x + dx, y + dy);
+              if (nearbyPixel !== EMPTY && nearbyPixel !== PLASMA && nearbyPixel !== INSULATOR) {
+                setHeat(x + dx, y + dy, getHeat(x + dx, y + dy) + 50);
+                if (Math.random() < 0.1) {
+                  setPixel(x + dx, y + dy, FIRE);
+                }
+              }
+            }
+          }
+          
+          if (Math.random() < 0.05) {
+            setPixel(x, y, EMPTY);
+          }
+          
+          setHeat(x, y, Math.max(currentHeat - 10, 1000));
+          break;
+        case INSULATOR:
+          // Insulator doesn't change or conduct heat
+          break;
+        case VIRUS:
+        case VIRUS_DORMANT:
+        case VIRUS_DEAD:
+          virusTimer[y * width + x]--;
+          if (virusTimer[y * width + x] <= 0) {
+            if (current === VIRUS) {
+              setPixel(x, y, VIRUS_DORMANT);
+              virusTimer[y * width + x] = 120; // 2 seconds dormant
+            } else if (current === VIRUS_DORMANT) {
+              setPixel(x, y, VIRUS_DEAD);
+              virusTimer[y * width + x] = 60; // 1 second dead before disappearing
+            } else {
+              setPixel(x, y, EMPTY);
+            }
+          } else {
+            if (current === VIRUS) {
+              for (let dx = -1; dx <= 1; dx++) {
+                for (let dy = -1; dy <= 1; dy++) {
+                  const nearbyPixel = getPixel(x + dx, y + dy);
+                  if (nearbyPixel !== EMPTY && nearbyPixel !== VIRUS && nearbyPixel !== VIRUS_DORMANT && nearbyPixel !== VIRUS_DEAD && nearbyPixel !== WATER && nearbyPixel !== LAVA && nearbyPixel !== ACID && nearbyPixel !== SALTWATER && nearbyPixel !== CARBONATED_WATER && nearbyPixel !== OIL && nearbyPixel !== SLUDGE) {
+                    if (Math.random() < 0.1) {
+                      setPixel(x + dx, y + dy, VIRUS);
+                      virusTimer[((y + dy) * width) + (x + dx)] = 180; // 3 seconds active
+                    }
+                  }
+                }
+              }
+            }
+          }
+          break;
+        case PLANT:
+          if (currentHeat > 100) {
+            setPixel(x, y, FIRE);
+            setHeat(x, y, 500);
+          } else {
+            plantGrowth[y * width + x]++;
+            if (plantGrowth[y * width + x] > 60) { // Grow every second
+              plantGrowth[y * width + x] = 0;
+              for (let dx = -1; dx <= 1; dx++) {
+                for (let dy = -1; dy <= 1; dy++) {
+                  if (Math.random() < 0.2) {
+                    const nearbyPixel = getPixel(x + dx, y + dy);
+                    if (nearbyPixel === WATER) {
+                      setPixel(x + dx, y + dy, PLANT);
+                      plantGrowth[((y + dy) * width) + (x + dx)] = 0;
+                    }
+                  }
+                }
+              }
+              // Check if the plant can grow into a flower
+              if (y > 0 && getPixel(x, y - 1) === EMPTY && Math.random() < 0.1) {
+                setPixel(x, y - 1, FLOWER);
+                flowerGrowth[((y - 1) * width) + x] = 0;
+              }
+            }
+          }
+          break;
+        case FLOWER:
+          if (currentHeat > 100) {
+            setPixel(x, y, FIRE);
+            setHeat(x, y, 500);
+          } else {
+            flowerGrowth[y * width + x]++;
+            if (flowerGrowth[y * width + x] > 120) { // Bloom every 2 seconds
+              flowerGrowth[y * width + x] = 0;
+              // Spread pollen
+              for (let dx = -2; dx <= 2; dx++) {
+                for (let dy = -2; dy <= 2; dy++) {
+                  if (Math.random() < 0.05) {
+                    const targetX = x + dx;
+                    const targetY = y + dy;
+                    if (getPixel(targetX, targetY) === EMPTY) {
+                      setPixel(targetX, targetY, FLOWER);
+                      flowerGrowth[(targetY * width) + targetX] = 0;
+                    }
+                  }
+                }
+              }
+            }
+          }
+          break;
+      }
+    }
+  }
+}
+
+function render() {
+  const imageData = ctx.createImageData(width, height);
+  const data = imageData.data;
+  
+  for (let i = 0; i < grid.length; i++) {
+    const pixel = grid[i];
+    const temperature = heat[i];
+    const index = i * 4;
+    let r, g, b;
+    
+    if (thermalView) {
+      const normalizedTemp = (temperature + 273.15) / 2000;
+      if (normalizedTemp < 0.25) {
+        r = 0;
+        g = 0;
+        b = Math.floor(255 * (normalizedTemp / 0.25));
+      } else if (normalizedTemp < 0.5) {
+        r = 0;
+        g = Math.floor(255 * ((normalizedTemp - 0.25) / 0.25));
+        b = 255;
+      } else if (normalizedTemp < 0.75) {
+        r = Math.floor(255 * ((normalizedTemp - 0.5) / 0.25));
+        g = 255;
+        b = Math.floor(255 * (1 - ((normalizedTemp - 0.5) / 0.25)));
+      } else {
+        r = 255;
+        g = Math.floor(255 * (1 - ((normalizedTemp - 0.75) / 0.25)));
+        b = 0;
+      }
+    } else {
+      switch (pixel) {
+        case EMPTY:
+          r = g = b = 0;
+          break;
+        case SAND:
+          r = 194 + temperature / 10;
+          g = 178 + temperature / 20;
+          b = 128;
+          break;
+        case WATER:
+          r = 79;
+          g = 195 + temperature / 2;
+          b = 247;
+          break;
+        case FIRE:
+          r = 255;
+          g = 87 + (temperature - 200) / 4;
+          b = 34 + (temperature - 200) / 8;
+          break;
+        case WOOD:
+          r = 121 + temperature / 5;
+          g = 85 + temperature / 10;
+          b = 72;
+          break;
+        case METAL:
+          r = g = b = 158 + temperature / 5;
+          break;
+        case ICE:
+          r = 227 + temperature;
+          g = 242 + temperature;
+          b = 253;
+          break;
+        case LAVA:
+          r = 255;
+          g = 100 + (temperature - 700) / 2;
+          b = 0;
+          break;
+        case STEAM:
+          r = g = b = 220 + (temperature - 100) / 5;
+          break;
+        case COPPER:
+          r = 184 + temperature / 10;
+          g = 115 + temperature / 20;
+          b = 51 + temperature / 30;
+          break;
+        case ACID:
+          r = 50 + temperature / 10;
+          g = 205 + temperature / 20;
+          b = 50 + temperature / 30;
+          break;
+        case SALT:
+          r = g = b = 250 + temperature /20;
+          break;
+        case SALTWATER:
+          r = 173 + temperature / 30;
+          g = 216 + temperature / 20;
+          b = 230;
+          break;
+        case STEEL:
+          r = g = b = 113 + temperature / 20;
+          break;
+        case CARBONATED_WATER:
+          r = 79 + temperature / 30;
+          g = 195 + temperature / 2;
+          b = 247 + temperature / 10;
+          if (Math.random() < 0.2) {
+            r += 20;
+            g += 20;
+            b += 20;
+          }
+          break;
+        case OIL:
+          r = 139 + temperature / 20;
+          g = 69 + temperature / 30;
+          b = 19 + temperature / 40;
+          break;
+        case CO2:
+          r = g = b = 169 + temperature / 15;
+          break;
+        case OXYGEN:
+          r = 135 + temperature / 20;
+          g = 206 + temperature / 15;
+          b = 235 + temperature / 10;
+          break;
+        case HYDROGEN:
+          r = g = b = 255 - temperature / 10;
+          break;
+        case SMOKE:
+          const alpha = Math.min(1, temperature / 200);
+          r = g = b = Math.floor(128 * alpha);
+          break;
+        case STONE:
+          r = g = b = 105 + temperature / 20;
+          break;
+        case PLASMA:
+          r = 138 + (temperature - 5000) / 20;
+          g = 43 + (temperature - 5000) / 40;
+          b = 226 + (temperature - 5000)/ 30;
+          break;
+        case INSULATOR:
+          const x = i % width;
+          const y = Math.floor(i / width);
+          const pattern = (x + y) % 2 === 0;
+          r = pattern ? 255 : 255;
+          g = pattern ? 105 : 182;
+          b = pattern ? 180 : 193;
+          break;
+        case SAWDUST:
+          r = 222 + temperature / 15;
+          g = 184 + temperature / 20;
+          b = 135 + temperature / 25;
+          break;
+        case RUST:
+          r = 139 + temperature / 20;
+          g = 69 + temperature / 30;
+          b = 19 + temperature / 40;
+          break;
+        case THERMOMETER:
+          const normalizedTemp = (temperature + 273.15) / 2000;
+          if (normalizedTemp < 0.5) {
+            r = Math.floor(255 * (normalizedTemp * 2));
+            g = 0;
+            b = Math.floor(255 * (1 - normalizedTemp * 2));
+          } else {
+            r = 255;
+            g = Math.floor(255 * ((normalizedTemp - 0.5) * 2));
+            b = 0;
+          }
+          break;
+        case VIRUS:
+          r = 128 + (virusTimer[i] / 180) * 127;
+          g = 0;
+          b = 128 + (virusTimer[i] / 180) * 127;
+          break;
+        case VIRUS_DORMANT:
+          r = 75 + (virusTimer[i] / 120) * 75;
+          g = 0;
+          b = 130 + (virusTimer[i] / 120) * 125;
+          break;
+        case VIRUS_DEAD:
+          r = g = b = 100 + (virusTimer[i] / 60) * 55;
+          break;
+        case PLANT:
+          r = 34 + (plantGrowth[i] / 60) * 20;
+          g = 139 + (plantGrowth[i] / 60) * 50;
+          b = 34;
+          break;
+        case FLOWER:
+          r = 255;
+          g = 105 + (flowerGrowth[i] / 120) * 150;
+          b = 180 + (flowerGrowth[i] / 120) * 75;
+          break;
+        case GUNPOWDER:
+          r = g = b = 54 + temperature / 20;
+          break;
+        case SLUDGE:
+          const viscosity = sludgeViscosity[i];
+          r = 74 + (1 - viscosity) * 20;
+          g = 74 + (1 - viscosity) * 10;
+          b = 74;
+          break;
+      }
+    }
+    
+    data[index] = Math.min(255, Math.max(0, r));
+    data[index + 1] = Math.min(255, Math.max(0, g));
+    data[index + 2] = Math.min(255, Math.max(0, b));
+    data[index + 3] = 255;
+  }
+  
+  ctx.putImageData(imageData, 0, 0);
+}
+
+function resizeCanvas() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  ctx.imageSmoothingEnabled = false;
+}
+
+function gameLoop() {
+  updatePhysics();
+  render();
+  ctx.drawImage(canvas, 0, 0, width, height, 0, 0, canvas.width, canvas.height);
+  requestAnimationFrame(gameLoop);
+}
+
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas();
+gameLoop();
+
+pauseButton.addEventListener('click', () => {
+  isPaused = !isPaused;
+  pauseButton.textContent = isPaused ? 'Resume (SPACE)' : 'Pause (SPACE)';
+});
+
+document.addEventListener('keydown', (e) => {
+  if (e.code === 'Space') {
+""
+    isPaused = !isPaused;
+    pauseButton.textContent = isPaused ? 'Resume (SPACE)' : 'Pause (SPACE)';
+  }
+});
+
+</script>
+</body>
+</html>
