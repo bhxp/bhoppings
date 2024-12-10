@@ -1,0 +1,754 @@
+<html><head><base href="https://www.RoomsExplorer.net" />
+<title>RoomsExplorer - Infinite Dimly Lit Adventure</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/tween.js/18.6.4/tween.umd.js"></script>
+<style>
+  body { margin: 0; overflow: hidden; font-family: 'Roboto', sans-serif; background-color: #000; }
+  #gameCanvas { width: 100%; height: 100%; display: none; }
+  #gameOverlay {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    color: #aaa;
+    font-size: 18px;
+    text-shadow: 2px 2px 2px rgba(0,0,0,0.5);
+    display: none;
+    background-color: rgba(0,0,0,0.5);
+    padding: 10px;
+    border-radius: 5px;
+  }
+  #controls {
+    position: absolute;
+    bottom: 10px;
+    left: 10px;
+    color: #aaa;
+    font-size: 16px;
+    text-shadow: 2px 2px 2px rgba(0,0,0,0.5);
+    background-color: rgba(0,0,0,0.5);
+    padding: 10px;
+    border-radius: 5px;
+  }
+  #message {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: #fff;
+    font-size: 24px;
+    text-align: center;
+    background-color: rgba(0,0,0,0.7);
+    padding: 20px;
+    border-radius: 10px;
+    display: none;
+  }
+  #inventory {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: #fff;
+    font-size: 18px;
+    text-align: left;
+    background-color: rgba(0,0,0,0.8);
+    padding: 20px;
+    border-radius: 10px;
+    display: none;
+    width: 300px;
+  }
+  #inventory h2 {
+    margin-top: 0;
+    text-align: center;
+  }
+  #inventory ul {
+    list-style-type: none;
+    padding: 0;
+  }
+  #inventory li {
+    margin-bottom: 10px;
+  }
+  #loadingScreen, #mainMenu {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    color: #aaa;
+    background-color: #000;
+  }
+  #loadingScreen {
+    background-color: rgba(0,0,0,0.8);
+    display: none;
+  }
+  #loadingBar {
+    width: 300px;
+    height: 20px;
+    background-color: #222;
+    border-radius: 10px;
+    margin-top: 20px;
+    overflow: hidden;
+  }
+  #loadingProgress {
+    width: 0%;
+    height: 100%;
+    background-color: #555;
+    transition: width 0.5s ease-out;
+  }
+  #loadingPercentage {
+    margin-top: 10px;
+    font-size: 18px;
+  }
+  .menu-button {
+    background-color: #333;
+    color: #aaa;
+    border: none;
+    padding: 15px 30px;
+    margin: 10px;
+    font-size: 18px;
+    cursor: pointer;
+    border-radius: 5px;
+    transition: background-color 0.3s, transform 0.1s;
+  }
+  .menu-button:hover {
+    background-color: #444;
+    transform: scale(1.05);
+  }
+  .menu-button:active {
+    transform: scale(0.95);
+  }
+  #gameTitle {
+    font-size: 48px;
+    margin-bottom: 30px;
+    color: #555;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+  }
+  #footer {
+    position: absolute;
+    bottom: 10px;
+    width: 100%;
+    text-align: center;
+    color: #444;
+    font-size: 14px;
+  }
+  a {
+    color: #555;
+    text-decoration: none;
+  }
+  a:hover {
+    text-decoration: underline;
+  }
+  #unsoftlockButton {
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+    background-color: #333;
+    color: #aaa;
+    border: none;
+    padding: 10px 20px;
+    font-size: 16px;
+    cursor: pointer;
+    border-radius: 5px;
+    transition: background-color 0.3s, transform 0.1s;
+  }
+  #unsoftlockButton:hover {
+    background-color: #444;
+    transform: scale(1.05);
+  }
+  #unsoftlockButton:active {
+    transform: scale(0.95);
+  }
+</style>
+</head>
+<body>
+<div id="loadingScreen">
+  <div>Generating Dimly Lit Rooms...</div>
+  <div id="loadingBar">
+    <div id="loadingProgress"></div>
+  </div>
+  <div id="loadingPercentage">0%</div>
+</div>
+<div id="mainMenu">
+  <h1 id="gameTitle">RoomsExplorer</h1>
+  <button id="startButton" class="menu-button">Start Dim Adventure</button>
+  <button id="optionsButton" class="menu-button">Options</button>
+  <button id="creditsButton" class="menu-button">Credits</button>
+</div>
+<div id="gameCanvas"></div>
+<div id="gameOverlay">
+  Rooms Explored: <span id="roomCounter">1</span><br>
+  Doors Opened: <span id="doorCounter">0</span><br>
+  Keys Found: <span id="keyCounter">0</span>
+</div>
+<div id="controls">
+  Controls:<br>
+  A: Turn Left<br>
+  D: Turn Right<br>
+  Left Click: Interact with Objects<br>
+  I: Open/Close Inventory
+</div>
+<div id="message"></div>
+<div id="inventory">
+  <h2>Inventory</h2>
+  <ul id="inventoryList"></ul>
+</div>
+<button id="unsoftlockButton">Get UnSoftlocked</button>
+<div id="footer">
+  &copy; 2023 RoomsExplorer | <a href="https://www.RoomsExplorer.net/privacy">Privacy Policy</a> | <a href="https://www.RoomsExplorer.net/terms">Terms of Service</a>
+</div>
+
+<script>
+let scene, camera, renderer, room, doors = [];
+let roomCounter = 1;
+let doorCounter = 0;
+let keyCounter = 0;
+let raycaster, mouse;
+let isAnimating = false;
+let hand;
+let flashlight;
+let keyStates = {};
+let inventory = [];
+let isInventoryOpen = false;
+
+const ROOM_WIDTH = 10;
+const ROOM_HEIGHT = 6;
+const ROOM_DEPTH = 10;
+const DOOR_HEIGHT = 3;
+const DOOR_WIDTH = 2;
+const TURN_SPEED = 0.05;
+
+function init() {
+  scene = new THREE.Scene();
+  camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+  renderer = new THREE.WebGLRenderer({ antialias: true });
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  document.getElementById('gameCanvas').appendChild(renderer.domElement);
+
+  raycaster = new THREE.Raycaster();
+  mouse = new THREE.Vector2();
+
+  createRoom();
+  camera.position.set(0, -1, 5);
+
+  const ambientLight = new THREE.AmbientLight(0x111111, 0.2);
+  scene.add(ambientLight);
+
+  createFlashlight();
+
+  createHand();
+
+  animate();
+  window.addEventListener('resize', onWindowResize, false);
+  window.addEventListener('keydown', onKeyDown, false);
+  window.addEventListener('keyup', onKeyUp, false);
+  window.addEventListener('click', onMouseClick, false);
+
+  // Main menu button listeners
+  document.getElementById('startButton').addEventListener('click', startGame);
+  document.getElementById('optionsButton').addEventListener('click', showOptions);
+  document.getElementById('creditsButton').addEventListener('click', showCredits);
+  document.getElementById('unsoftlockButton').addEventListener('click', getUnsoftlocked);
+}
+
+function createFlashlight() {
+  flashlight = new THREE.SpotLight(0xffffff, 1);
+  flashlight.position.set(0, 0, 1);
+  flashlight.angle = Math.PI / 6;
+  flashlight.penumbra = 0.1;
+  flashlight.decay = 2;
+  flashlight.distance = 50;
+  flashlight.castShadow = true;
+  flashlight.shadow.mapSize.width = 1024;
+  flashlight.shadow.mapSize.height = 1024;
+  flashlight.shadow.camera.near = 1;
+  flashlight.shadow.camera.far = 60;
+  camera.add(flashlight);
+  scene.add(camera);
+}
+
+function startGame() {
+  document.getElementById('mainMenu').style.display = 'none';
+  document.getElementById('loadingScreen').style.display = 'flex';
+
+  // Simulate loading progress
+  let progress = 0;
+  const loadingInterval = setInterval(() => {
+    progress += 5;
+    document.getElementById('loadingProgress').style.width = `${progress}%`;
+    document.getElementById('loadingPercentage').textContent = `${progress}%`;
+    if (progress >= 100) {
+      clearInterval(loadingInterval);
+      setTimeout(() => {
+        document.getElementById('loadingScreen').style.display = 'none';
+        document.getElementById('gameCanvas').style.display = 'block';
+        document.getElementById('gameOverlay').style.display = 'block';
+        document.getElementById('controls').style.display = 'block';
+        document.getElementById('unsoftlockButton').style.display = 'block';
+      }, 500);
+    }
+  }, 100);
+}
+
+function showOptions() {
+  alert('Options menu coming soon! Stay tuned for customization features.');
+}
+
+function showCredits() {
+  alert('RoomsExplorer\n\nDeveloped by: WebSim AI\nMusic: Procedurally generated\nSpecial thanks to our beta testers and the open-source community!');
+}
+
+function createRoom() {
+  if (room) scene.remove(room);
+  room = new THREE.Group();
+
+  const wallGeometry = new THREE.BoxGeometry(ROOM_WIDTH, ROOM_HEIGHT, 0.1);
+  const wallMaterial = new THREE.MeshPhongMaterial({ color: getDarkColor() });
+
+  // Back wall
+  const backWall = new THREE.Mesh(wallGeometry, wallMaterial);
+  backWall.position.z = -ROOM_DEPTH / 2;
+  backWall.position.y = 0;
+  room.add(backWall);
+
+  // Left wall
+  const leftWall = new THREE.Mesh(new THREE.BoxGeometry(ROOM_DEPTH, ROOM_HEIGHT, 0.1), wallMaterial.clone());
+  leftWall.material.color.setHex(getDarkColor());
+  leftWall.rotation.y = Math.PI / 2;
+  leftWall.position.x = -ROOM_WIDTH / 2;
+  leftWall.position.y = 0;
+  room.add(leftWall);
+
+  // Right wall
+  const rightWall = new THREE.Mesh(new THREE.BoxGeometry(ROOM_DEPTH, ROOM_HEIGHT, 0.1), wallMaterial.clone());
+  rightWall.material.color.setHex(getDarkColor());
+  rightWall.rotation.y = -Math.PI / 2;
+  rightWall.position.x = ROOM_WIDTH / 2;
+  rightWall.position.y = 0;
+  room.add(rightWall);
+
+  // Ceiling
+  const ceilingWall = new THREE.Mesh(new THREE.BoxGeometry(ROOM_WIDTH, ROOM_DEPTH, 0.1), wallMaterial.clone());
+  ceilingWall.material.color.setHex(getDarkColor());
+  ceilingWall.rotation.x = Math.PI / 2;
+  ceilingWall.position.y = ROOM_HEIGHT / 2;
+  room.add(ceilingWall);
+
+  // Floor
+  const floorWall = new THREE.Mesh(new THREE.BoxGeometry(ROOM_WIDTH, ROOM_DEPTH, 0.1), wallMaterial.clone());
+  floorWall.material.color.setHex(getDarkColor());
+  floorWall.rotation.x = -Math.PI / 2;
+  floorWall.position.y = -ROOM_HEIGHT / 2;
+  room.add(floorWall);
+
+  // Create doors
+  doors = [];
+  const doorPositions = [
+    { x: 0, y: -ROOM_HEIGHT / 2 + DOOR_HEIGHT / 2, z: -ROOM_DEPTH / 2 + 0.1, rotation: 0 },
+    { x: -ROOM_WIDTH / 2 + 0.1, y: -ROOM_HEIGHT / 2 + DOOR_HEIGHT / 2, z: 0, rotation: Math.PI / 2 },
+    { x: ROOM_WIDTH / 2 - 0.1, y: -ROOM_HEIGHT / 2 + DOOR_HEIGHT / 2, z: 0, rotation: -Math.PI / 2 }
+  ];
+
+  // Randomly choose number of doors (1 to 3)
+  const numDoors = Math.floor(Math.random() * 3) + 1;
+  
+  // Shuffle array and take first numDoors elements
+  const shuffledPositions = doorPositions.sort(() => 0.5 - Math.random()).slice(0, numDoors);
+
+  shuffledPositions.forEach(pos => {
+    const door = createDoor();
+    door.position.set(pos.x, pos.y, pos.z);
+    door.rotation.y = pos.rotation;
+    room.add(door);
+    doors.push(door);
+  });
+
+  // Add furniture
+  addFurniture(room);
+
+  // Add key with 30% probability
+  if (Math.random() < 0.3) {
+    const key = createKey();
+    key.position.set(
+      (Math.random() - 0.5) * ROOM_WIDTH * 0.8,
+      -ROOM_HEIGHT / 2 + 0.5,
+      (Math.random() - 0.5) * ROOM_DEPTH * 0.8
+    );
+    room.add(key);
+  }
+
+  scene.add(room);
+}
+
+function addFurniture(room) {
+  // Add a desk
+  const desk = createDesk();
+  desk.position.set(-ROOM_WIDTH / 4, -ROOM_HEIGHT / 2 + 0.5, -ROOM_DEPTH / 4);
+  room.add(desk);
+
+  // Add a table
+  const table = createTable();
+  table.position.set(ROOM_WIDTH / 4, -ROOM_HEIGHT / 2 + 0.4, ROOM_DEPTH / 4);
+  room.add(table);
+
+  // Add pictures
+  const picture1 = createPicture();
+  picture1.position.set(-ROOM_WIDTH / 2 + 0.1, 0, -ROOM_DEPTH / 4);
+  picture1.rotation.y = Math.PI / 2;
+  room.add(picture1);
+
+  const picture2 = createPicture();
+  picture2.position.set(0, 0, -ROOM_DEPTH / 2 + 0.1);
+  room.add(picture2);
+}
+
+function createDesk() {
+  const deskGroup = new THREE.Group();
+
+  // Desk top
+  const deskTopGeometry = new THREE.BoxGeometry(2, 0.1, 1);
+  const deskMaterial = new THREE.MeshPhongMaterial({ color: 0x8B4513 });
+  const deskTop = new THREE.Mesh(deskTopGeometry, deskMaterial);
+  deskTop.position.y = 0.75;
+  deskGroup.add(deskTop);
+
+  // Desk legs
+  const legGeometry = new THREE.BoxGeometry(0.1, 1.5, 0.1);
+  for (let i = 0; i < 4; i++) {
+    const leg = new THREE.Mesh(legGeometry, deskMaterial);
+    leg.position.x = (i % 2 === 0 ? 1 : -1) * 0.95;
+    leg.position.z = (i < 2 ? 1 : -1) * 0.45;
+    deskGroup.add(leg);
+  }
+
+  return deskGroup;
+}
+
+function createTable() {
+  const tableGroup = new THREE.Group();
+
+  // Table top
+  const tableTopGeometry = new THREE.CylinderGeometry(0.75, 0.75, 0.05, 32);
+  const tableMaterial = new THREE.MeshPhongMaterial({ color: 0x8B4513 });
+  const tableTop = new THREE.Mesh(tableTopGeometry, tableMaterial);
+  tableTop.position.y = 0.7;
+  tableGroup.add(tableTop);
+
+  // Table leg
+  const legGeometry = new THREE.CylinderGeometry(0.05, 0.05, 1.4, 16);
+  const leg = new THREE.Mesh(legGeometry, tableMaterial);
+  tableGroup.add(leg);
+
+  return tableGroup;
+}
+
+function createPicture() {
+  const pictureGroup = new THREE.Group();
+
+  // Frame
+  const frameGeometry = new THREE.BoxGeometry(1, 1, 0.05);
+  const frameMaterial = new THREE.MeshPhongMaterial({ color: 0x4A3728 });
+  const frame = new THREE.Mesh(frameGeometry, frameMaterial);
+  pictureGroup.add(frame);
+
+  // Canvas
+  const canvasGeometry = new THREE.PlaneGeometry(0.9, 0.9);
+  const canvasMaterial = new THREE.MeshPhongMaterial({ color: getRandomColor() });
+  const canvas = new THREE.Mesh(canvasGeometry, canvasMaterial);
+  canvas.position.z = 0.03;
+  pictureGroup.add(canvas);
+
+  return pictureGroup;
+}
+
+function createDoor() {
+  const doorGroup = new THREE.Group();
+
+  const doorGeometry = new THREE.BoxGeometry(DOOR_WIDTH, DOOR_HEIGHT, 0.1);
+  const doorMaterial = new THREE.MeshPhongMaterial({ color: 0x4A3728 }); // Dark brown color
+  const doorMesh = new THREE.Mesh(doorGeometry, doorMaterial);
+  doorGroup.add(doorMesh);
+
+  // Create door knob
+  const knobGeometry = new THREE.SphereGeometry(0.1, 32, 32);
+  const knobMaterial = new THREE.MeshPhongMaterial({ color: 0x8B4513 }); // Dark gold color
+  const knobMesh = new THREE.Mesh(knobGeometry, knobMaterial);
+  knobMesh.position.set(DOOR_WIDTH / 2 - 0.2, 0, 0.05);
+  doorGroup.add(knobMesh);
+
+  // Add lock with 30% probability
+  if (Math.random() < 0.3) {
+    const lockGeometry = new THREE.BoxGeometry(0.2, 0.3, 0.1);
+    const lockMaterial = new THREE.MeshPhongMaterial({ color: 0xC0C0C0 }); // Silver color
+    const lockMesh = new THREE.Mesh(lockGeometry, lockMaterial);
+    lockMesh.position.set(-DOOR_WIDTH / 2 + 0.2, 0, 0.05);
+    doorGroup.add(lockMesh);
+    doorGroup.userData.locked = true;
+  } else {
+    doorGroup.userData.locked = false;
+  }
+
+  return doorGroup;
+}
+
+function createKey() {
+  const keyGroup = new THREE.Group();
+
+  // Key head
+  const headGeometry = new THREE.CylinderGeometry(0.1, 0.1, 0.05, 32);
+  const keyMaterial = new THREE.MeshPhongMaterial({ color: 0xFFD700 }); // Gold color
+  const head = new THREE.Mesh(headGeometry, keyMaterial);
+  keyGroup.add(head);
+
+  // Key shaft
+  const shaftGeometry = new THREE.BoxGeometry(0.03, 0.2, 0.03);
+  const shaft = new THREE.Mesh(shaftGeometry, keyMaterial);
+  shaft.position.y = -0.125;
+  keyGroup.add(shaft);
+
+  // Key teeth
+  const teethGeometry = new THREE.BoxGeometry(0.07, 0.07, 0.03);
+  const teeth = new THREE.Mesh(teethGeometry, keyMaterial);
+  teeth.position.y = -0.2;
+  keyGroup.add(teeth);
+
+  keyGroup.userData.isKey = true;
+  return keyGroup;
+}
+
+function createHand() {
+  const handGroup = new THREE.Group();
+
+  // Palm
+  const palmGeometry = new THREE.BoxGeometry(0.15, 0.2, 0.05);
+  const skinMaterial = new THREE.MeshPhongMaterial({ color: 0xd4a67e });
+  const palm = new THREE.Mesh(palmGeometry, skinMaterial);
+  handGroup.add(palm);
+
+  // Fingers
+  for (let i = 0; i < 4; i++) {
+    const fingerGeometry = new THREE.BoxGeometry(0.03, 0.1, 0.03);
+    const finger = new THREE.Mesh(fingerGeometry, skinMaterial);
+    finger.position.y = 0.15;
+    finger.position.x = -0.05 + i * 0.04;
+    handGroup.add(finger);
+  }
+
+  // Thumb
+  const thumbGeometry = new THREE.BoxGeometry(0.03, 0.08, 0.03);
+  const thumb = new THREE.Mesh(thumbGeometry, skinMaterial);
+  thumb.position.set(0.08, 0.05, 0);
+  thumb.rotation.z = -Math.PI / 4;
+  handGroup.add(thumb);
+
+  handGroup.position.set(0.5, -0.7, -1);
+  handGroup.rotation.x = Math.PI / 2;
+  handGroup.rotation.z = Math.PI;
+  camera.add(handGroup);
+
+  hand = handGroup;
+}
+
+function getDarkColor() {
+  return Math.floor(Math.random() * 0x444444);
+}
+
+function getRandomColor() {
+  return Math.random() * 0xffffff;
+}
+
+function animate(time) {
+  requestAnimationFrame(animate);
+  TWEEN.update(time);
+  handleKeyInput();
+  updateFlashlightPosition();
+  renderer.render(scene, camera);
+}
+
+function updateFlashlightPosition() {
+  const cameraDirection = new THREE.Vector3();
+  camera.getWorldDirection(cameraDirection);
+  const targetPosition = camera.position.clone().add(cameraDirection.multiplyScalar(10));
+  flashlight.target.position.copy(targetPosition);
+  flashlight.target.updateMatrixWorld();
+}
+
+function onWindowResize() {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+}
+
+function onKeyDown(event) {
+  keyStates[event.code] = true;
+  if (event.code === 'KeyI') {
+    toggleInventory();
+  }
+}
+
+function onKeyUp(event) {
+  keyStates[event.code] = false;
+}
+
+function handleKeyInput() {
+  if (keyStates['KeyA']) {
+    camera.rotation.y += TURN_SPEED;
+  }
+  if (keyStates['KeyD']) {
+    camera.rotation.y -= TURN_SPEED;
+  }
+}
+
+function onMouseClick(event) {
+  if (isAnimating) return;
+
+  mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+  mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+  raycaster.setFromCamera(mouse, camera);
+
+  const intersects = raycaster.intersectObjects(scene.children, true);
+
+  if (intersects.length > 0) {
+    const object = intersects[0].object;
+    if (object.parent.userData.isKey) {
+      collectKey(object.parent);
+    } else if (doors.includes(object.parent)) {
+      interactWithDoor(object.parent);
+    }
+  }
+}
+
+function collectKey(keyObject) {
+  keyCounter++;
+  document.getElementById('keyCounter').textContent = keyCounter;
+  room.remove(keyObject);
+  showMessage("You found a key!");
+  addToInventory("Key");
+}
+
+function interactWithDoor(doorGroup) {
+  if (doorGroup.userData.locked) {
+    if (keyCounter > 0) {
+      keyCounter--;
+      document.getElementById('keyCounter').textContent = keyCounter;
+      doorGroup.userData.locked = false;
+      doorGroup.remove(doorGroup.children[2]); // Remove lock mesh
+      showMessage("You unlocked the door!");
+      removeFromInventory("Key");
+    } else {
+      showMessage("The door is locked. You need a key!");
+      return;
+    }
+  }
+  walkThroughDoor(doorGroup);
+}
+
+function walkThroughDoor(doorGroup) {
+  isAnimating = true;
+
+  const startPosition = camera.position.clone();
+  const midPosition = doorGroup.position.clone();
+  midPosition.y = camera.position.y;  // Keep the same height
+
+  const endPosition = doorGroup.position.clone();
+  const doorRotation = doorGroup.rotation.y;
+
+  let rotationAngle = 0;
+  if (doorRotation === Math.PI / 2) {  // Left door
+    endPosition.x += 2;
+    rotationAngle = Math.PI / 2;  // Turn left
+  } else if (doorRotation === -Math.PI / 2) {  // Right door
+    endPosition.x -= 2;
+    rotationAngle = -Math.PI / 2;  // Turn right
+  } else {  // Front door
+    endPosition.z -= 2;
+  }
+
+  // First tween: move to the door
+  new TWEEN.Tween(camera.position)
+    .to(midPosition, 1000)
+    .easing(TWEEN.Easing.Quadratic.InOut)
+    .onComplete(() => {
+      // Second tween: rotate camera
+      new TWEEN.Tween(camera.rotation)
+        .to({ y: rotationAngle }, 500)
+        .easing(TWEEN.Easing.Quadratic.InOut)
+        .onComplete(() => {
+          // Third tween: move through the door
+          new TWEEN.Tween(camera.position)
+            .to(endPosition, 500)
+            .easing(TWEEN.Easing.Quadratic.In)
+            .onComplete(() => {
+              roomCounter++;
+              doorCounter++;
+              document.getElementById('roomCounter').textContent = roomCounter;
+              document.getElementById('doorCounter').textContent = doorCounter;
+              createRoom();
+              resetCameraPosition();
+              isAnimating = false;
+            })
+            .start();
+        })
+        .start();
+    })
+    .start();
+}
+
+function resetCameraPosition() {
+  camera.position.set(0, -1, 5);
+  camera.rotation.set(0, 0, 0);
+}
+
+function showMessage(text) {
+  const messageElement = document.getElementById('message');
+  messageElement.textContent = text;
+  messageElement.style.display = 'block';
+  setTimeout(() => {
+    messageElement.style.display = 'none';
+  }, 3000);
+}
+
+function toggleInventory() {
+  isInventoryOpen = !isInventoryOpen;
+  const inventoryElement = document.getElementById('inventory');
+  inventoryElement.style.display = isInventoryOpen ? 'block' : 'none';
+  updateInventoryDisplay();
+}
+
+function addToInventory(item) {
+  inventory.push(item);
+  updateInventoryDisplay();
+}
+
+function removeFromInventory(item) {
+  const index = inventory.indexOf(item);
+  if (index > -1) {
+    inventory.splice(index, 1);
+  }
+  updateInventoryDisplay();
+}
+
+function updateInventoryDisplay() {
+  const inventoryList = document.getElementById('inventoryList');
+  inventoryList.innerHTML = '';
+  inventory.forEach(item => {
+    const li = document.createElement('li');
+    li.textContent = item;
+    inventoryList.appendChild(li);
+  });
+}
+
+function getUnsoftlocked() {
+  showMessage("Regenerating room...");
+  createRoom();
+  resetCameraPosition();
+}
+
+init();
+
+</script>
+
+</body></html>
