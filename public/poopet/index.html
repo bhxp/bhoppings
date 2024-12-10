@@ -1,0 +1,307 @@
+<html><head><base href="https://www.poopet.com/"><title>PooPet</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Fredoka+One&display=swap');
+
+body {
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    background: linear-gradient(to bottom, #87CEEB, #E0F7FA);
+    font-family: 'Fredoka One', cursive;
+    transition: background 0.5s ease;
+}
+.grass {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 30%;
+    background: linear-gradient(to top, #2ecc71, #27ae60);
+    overflow: hidden;
+}
+.blade {
+    position: absolute;
+    bottom: 0;
+    width: 5px;
+    height: 60px;
+    background: linear-gradient(to top, #2ecc71, #27ae60);
+    transform-origin: bottom center;
+    animation: sway 4s ease-in-out infinite;
+}
+@keyframes sway {
+    0%, 100% { transform: rotate(0deg); }
+    50% { transform: rotate(5deg); }
+}
+.poop-emoji {
+    position: absolute;
+    font-size: 80px;
+    bottom: 25%;
+    left: 50%;
+    transform: translateX(-50%);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    user-select: none;
+    filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
+}
+.poop-emoji:hover {
+    transform: translateX(-50%) scale(1.1);
+}
+.toolbar {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: rgba(255, 255, 255, 0.9);
+    padding: 15px;
+    border-radius: 50px;
+    box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+}
+.toolbar-button {
+    font-size: 24px;
+    padding: 15px 25px;
+    border: none;
+    border-radius: 30px;
+    background: linear-gradient(145deg, #FFD700, #FFA500);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-family: 'Fredoka One', cursive;
+    color: #8B4513;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+.toolbar-button:hover {
+    background: linear-gradient(145deg, #FFA500, #FFD700);
+    transform: scale(1.05) translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+}
+.stats {
+    position: fixed;
+    top: 100px;
+    right: 20px;
+    background-color: rgba(255, 255, 255, 0.9);
+    padding: 20px;
+    border-radius: 20px;
+    box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+}
+.stat {
+    margin-bottom: 15px;
+}
+.progress-bar {
+    width: 180px;
+    height: 25px;
+    background-color: #e0e0e0;
+    border-radius: 12.5px;
+    overflow: hidden;
+    box-shadow: inset 0 2px 5px rgba(0,0,0,0.1);
+}
+.progress {
+    height: 100%;
+    background: linear-gradient(90deg, #4CAF50, #8BC34A);
+    transition: width 0.3s ease;
+    border-radius: 12.5px;
+}
+.cloud {
+    position: absolute;
+    background: white;
+    border-radius: 50%;
+    opacity: 0.8;
+    animation: float 30s infinite linear;
+}
+@keyframes float {
+    0% { transform: translateX(100vw); }
+    100% { transform: translateX(-100%); }
+}
+</style>
+</head>
+<body>
+<div class="toolbar">
+    <button class="toolbar-button" id="feedButton">🍽️ Feed</button>
+    <button class="toolbar-button" id="cleanButton">🧼 Clean</button>
+    <button class="toolbar-button" id="petButton">🤚 Pet</button>
+</div>
+<div class="stats">
+    <div class="stat">
+        <div>Hunger:</div>
+        <div class="progress-bar"><div class="progress" id="hungerProgress"></div></div>
+    </div>
+    <div class="stat">
+        <div>Cleanliness:</div>
+        <div class="progress-bar"><div class="progress" id="cleanlinessProgress"></div></div>
+    </div>
+    <div class="stat">
+        <div>Mood:</div>
+        <div class="progress-bar"><div class="progress" id="moodProgress"></div></div>
+    </div>
+</div>
+<div class="grass" id="grassField"></div>
+<div class="poop-emoji" id="poopEmoji">💩</div>
+
+<script>
+const grassField = document.getElementById('grassField');
+const bladeCount = 200;
+
+for (let i = 0; i < bladeCount; i++) {
+    const blade = document.createElement('div');
+    blade.className = 'blade';
+    blade.style.left = `${Math.random() * 100}%`;
+    blade.style.height = `${40 + Math.random() * 40}px`;
+    blade.style.animationDelay = `${Math.random() * 4}s`;
+    grassField.appendChild(blade);
+}
+
+function createCloud() {
+    const cloud = document.createElement('div');
+    cloud.className = 'cloud';
+    cloud.style.top = `${Math.random() * 30}%`;
+    cloud.style.width = `${50 + Math.random() * 100}px`;
+    cloud.style.height = `${50 + Math.random() * 100}px`;
+    cloud.style.animationDuration = `${30 + Math.random() * 20}s`;
+    document.body.appendChild(cloud);
+}
+
+for (let i = 0; i < 5; i++) {
+    createCloud();
+}
+
+document.addEventListener('mousemove', (e) => {
+    const mouseX = e.clientX / window.innerWidth;
+    const mouseY = 1 - (e.clientY / window.innerHeight);
+    
+    grassField.style.filter = `brightness(${0.8 + mouseY * 0.4})`;
+    
+    const blades = document.querySelectorAll('.blade');
+    blades.forEach((blade) => {
+        const bladeX = blade.offsetLeft / window.innerWidth;
+        const distance = Math.abs(mouseX - bladeX);
+        const angle = (1 - distance) * 10 * mouseY;
+        blade.style.transform = `rotate(${angle}deg)`;
+    });
+});
+
+const poopEmoji = document.getElementById('poopEmoji');
+let poopX = 50;
+let poopY = 25;
+const moveSpeed = 2;
+
+function updatePoopPosition() {
+    poopEmoji.style.left = `${poopX}%`;
+    poopEmoji.style.bottom = `${poopY}%`;
+}
+
+poopEmoji.addEventListener('click', () => {
+    const audio = new Audio('https://www.myinstants.com/media/sounds/fart-with-reverb.mp3');
+    audio.play();
+    poopEmoji.style.transform = 'translateX(-50%) scale(1.2) rotate(10deg)';
+    setTimeout(() => {
+        poopEmoji.style.transform = 'translateX(-50%) scale(1) rotate(0deg)';
+    }, 200);
+});
+
+document.addEventListener('keydown', (e) => {
+    switch(e.key.toLowerCase()) {
+        case 'a':
+            poopX = Math.max(0, poopX - moveSpeed);
+            break;
+        case 'd':
+            poopX = Math.min(95, poopX + moveSpeed);
+            break;
+        case 'w':
+            poopY = Math.min(80, poopY + moveSpeed);
+            break;
+        case 's':
+            poopY = Math.max(0, poopY - moveSpeed);
+            break;
+    }
+    updatePoopPosition();
+});
+
+updatePoopPosition();
+
+let hunger = 50;
+let cleanliness = 50;
+let mood = 50;
+
+const hungerProgress = document.getElementById('hungerProgress');
+const cleanlinessProgress = document.getElementById('cleanlinessProgress');
+const moodProgress = document.getElementById('moodProgress');
+
+function updateStats() {
+    hungerProgress.style.width = `${hunger}%`;
+    cleanlinessProgress.style.width = `${cleanliness}%`;
+    moodProgress.style.width = `${mood}%`;
+
+    if (hunger < 20 || cleanliness < 20 || mood < 20) {
+        poopEmoji.style.filter = 'grayscale(50%)';
+        document.body.style.background = 'linear-gradient(to bottom, #708090, #B0C4DE)';
+    } else {
+        poopEmoji.style.filter = 'none';
+        document.body.style.background = 'linear-gradient(to bottom, #87CEEB, #E0F7FA)';
+    }
+}
+
+const feedButton = document.getElementById('feedButton');
+const cleanButton = document.getElementById('cleanButton');
+const petButton = document.getElementById('petButton');
+
+function animateButton(button) {
+    button.style.transform = 'scale(0.95) translateY(2px)';
+    setTimeout(() => {
+        button.style.transform = 'scale(1) translateY(0)';
+    }, 200);
+}
+
+feedButton.addEventListener('click', () => {
+    animateButton(feedButton);
+    poopEmoji.textContent = '🍽️💩';
+    hunger = Math.min(100, hunger + 20);
+    updateStats();
+    setTimeout(() => {
+        poopEmoji.textContent = '💩';
+        poopEmoji.style.fontSize = `${parseInt(getComputedStyle(poopEmoji).fontSize) + 5}px`;
+    }, 1000);
+});
+
+cleanButton.addEventListener('click', () => {
+    animateButton(cleanButton);
+    poopEmoji.textContent = '🧼💩';
+    cleanliness = Math.min(100, cleanliness + 20);
+    updateStats();
+    setTimeout(() => {
+        poopEmoji.textContent = '💩';
+        poopEmoji.style.fontSize = '80px';
+    }, 1000);
+});
+
+petButton.addEventListener('click', () => {
+    animateButton(petButton);
+    poopEmoji.textContent = '🤚💩';
+    mood = Math.min(100, mood + 20);
+    updateStats();
+    poopEmoji.style.transform = 'translateX(-50%) scale(1.2) rotate(10deg)';
+    setTimeout(() => {
+        poopEmoji.textContent = '💩';
+        poopEmoji.style.transform = 'translateX(-50%) scale(1) rotate(0deg)';
+    }, 1000);
+});
+
+function decreaseStats() {
+    hunger = Math.max(0, hunger - 1);
+    cleanliness = Math.max(0, cleanliness - 1);
+    mood = Math.max(0, mood - 1);
+    updateStats();
+}
+
+setInterval(decreaseStats, 3000);
+updateStats();
+</script>
+</body>
+</html>
