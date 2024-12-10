@@ -1,0 +1,258 @@
+<html><head><base href="/" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+<title>Double Snowglobe Animation with Copy Button</title>
+<style>
+body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: row;
+    gap: 50px;
+    height: 90vh;
+    background-color: hsl(210, 60%, 15%);
+}
+
+.globe-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+#snowball1, #snowball2 {
+    clip-path: circle(50%);
+    width: 200px;
+    height: 200px;
+}
+
+.snowflake-area {
+    width: 200px;
+    height: 200px;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    position: relative;
+    background: radial-gradient(
+        circle,
+        rgba(255, 255, 255, 0.05) 60%,
+        rgba(255, 255, 255, 0.2) 80%
+    );
+}
+
+.snowflake-area::before {
+    content: "";
+    filter: blur(1px);
+    position: absolute;
+    width: 50%;
+    height: 30%;
+    top: 2%;
+    left: 25%;
+    border-radius: 50%;
+    background-image: linear-gradient(
+        to bottom,
+        rgba(255, 255, 255, 0.15),
+        rgba(255, 255, 255, 0)
+    );
+}
+
+.snowflake-area::after {
+    content: "";
+    border-radius: 30%;
+    width: 200px;
+    height: 200px;
+    position: absolute;
+    z-index: -1;
+    bottom: -100px;
+    left: 0px;
+    transform: perspective(150px) rotatex(80deg);
+    filter: blur(20px);
+    background: radial-gradient(
+        circle,
+        rgba(255, 255, 255, 0.3) 10%,
+        hsla(210, 60%, 30%, 0.8) 25%,
+        rgba(255, 255, 255, 0.8) 40%
+    );
+}
+
+.button-container {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+button {
+    background-color: hsla(210, 60%, 100%, 0);
+    border: 1px solid hsla(210, 60%, 100%, 0.3);
+    color: hsla(210, 60%, 100%, 0.5);
+    padding: 8px 16px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    cursor: pointer;
+    font-size: 0.6em;
+    text-transform: uppercase;
+    font-weight: bold;
+    border-radius: 5px;
+    transition: 1s;
+}
+
+button:hover {
+    border: 1px solid hsla(210, 60%, 100%, 0.6);
+    color: hsla(210, 60%, 100%, 0.8);
+}
+
+#codeArea {
+    display: none;
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80%;
+    height: 100px;
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    padding: 10px;
+    border-radius: 5px;
+    font-family: monospace;
+}
+</style>
+</head>
+<body>
+    <div class="globe-container">
+        <div class="snowflake-area">
+            <canvas id="snowball1" width="200" height="200"></canvas>
+        </div>
+        <div class="button-container">
+            <button onclick="createSnowflakes(1)">SPIN GLOBE 1</button>
+            <button onclick="copyCode()">COPY CODE</button>
+        </div>
+    </div>
+
+    <div class="globe-container">
+        <div class="snowflake-area">
+            <canvas id="snowball2" width="200" height="200"></canvas>
+        </div>
+        <div class="button-container">
+            <button onclick="createSnowflakes(2)">SPIN GLOBE 2</button>
+        </div>
+    </div>
+    
+    <textarea id="codeArea" readonly></textarea>
+
+<script>
+const spin1 = gsap.timeline({ paused: true });
+spin1.from("#snowball1", {
+    duration: 5,
+    rotate: 360,
+    transformOrigin: "50%,50%",
+    ease: "expo.out"
+});
+
+const spin2 = gsap.timeline({ paused: true });
+spin2.from("#snowball2", {
+    duration: 5,
+    rotate: 360,
+    transformOrigin: "50%,50%",
+    ease: "expo.out"
+});
+
+const canvas1 = document.getElementById("snowball1");
+const ctx1 = canvas1.getContext("2d");
+const canvas2 = document.getElementById("snowball2");
+const ctx2 = canvas2.getContext("2d");
+
+canvas1.width = canvas2.width = 200;
+canvas1.height = canvas2.height = 200;
+
+let snowflakes1 = [];
+let snowflakes2 = [];
+
+function Snowflake(x, y, radius, speed, wind, alpha) {
+    this.x = x;
+    this.y = y;
+    this.radius = radius;
+    this.speed = speed;
+    this.wind = wind;
+    this.update = function (canvasHeight, canvasWidth) {
+        this.y += this.speed;
+        this.x += this.wind;
+        if (this.y > canvasHeight) {
+            this.y = 0;
+            this.x = Math.random() * canvasWidth;
+        }
+    };
+
+    this.draw = function (ctx) {
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        ctx.fillStyle = "white";
+        ctx.globalAlpha = alpha;
+        ctx.fill();
+    };
+}
+
+function createSnowflakes(globeNum) {
+    if (globeNum === 1) {
+        spin1.restart();
+        snowflakes1 = [];
+        let count = Math.floor(Math.random() * 301) + 100;
+        for (let i = 0; i < count; i++) {
+            let x = Math.random() * canvas1.width;
+            let y = Math.random() * canvas1.height;
+            let radius = Math.random() * 3;
+            let speed = Math.random() * 0.1 + 1;
+            let wind = Math.random() * 2 - 1;
+            let alpha = Math.random() * 0.6 + 0.4;
+            snowflakes1.push(new Snowflake(x, y, radius, speed, wind, alpha));
+        }
+    } else {
+        spin2.restart();
+        snowflakes2 = [];
+        let count = Math.floor(Math.random() * 301) + 100;
+        for (let i = 0; i < count; i++) {
+            let x = Math.random() * canvas2.width;
+            let y = Math.random() * canvas2.height;
+            let radius = Math.random() * 3;
+            let speed = Math.random() * 0.1 + 1;
+            let wind = Math.random() * 2 - 1;
+            let alpha = Math.random() * 0.6 + 0.4;
+            snowflakes2.push(new Snowflake(x, y, radius, speed, wind, alpha));
+        }
+    }
+}
+
+function animate() {
+    ctx1.clearRect(0, 0, canvas1.width, canvas1.height);
+    ctx2.clearRect(0, 0, canvas2.width, canvas2.height);
+    
+    snowflakes1.forEach((snowflake) => {
+        snowflake.update(canvas1.height, canvas1.width);
+        snowflake.draw(ctx1);
+    });
+    
+    snowflakes2.forEach((snowflake) => {
+        snowflake.update(canvas2.height, canvas2.width);
+        snowflake.draw(ctx2);
+    });
+    
+    requestAnimationFrame(animate);
+}
+
+function copyCode() {
+    const codeArea = document.getElementById('codeArea');
+    const fullCode = document.documentElement.outerHTML;
+    codeArea.style.display = 'block';
+    codeArea.value = fullCode;
+    codeArea.select();
+    document.execCommand('copy');
+    
+    setTimeout(() => {
+        codeArea.style.display = 'none';
+        alert('Code has been copied to clipboard!');
+    }, 100);
+}
+
+createSnowflakes(1);
+createSnowflakes(2);
+animate();
+</script>
+</body>
+</html>
