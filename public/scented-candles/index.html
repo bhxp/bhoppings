@@ -1,0 +1,717 @@
+<html><head><base href="https://scented-candle-experience.com/wisp%20move%20up">
+<title>Exotic Scented Candle Simulation</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700&family=Tangerine:wght@700&family=Carattere&family=Playfair+Display:ital@1&family=Cormorant+Garamond:ital,wght@1,600&family=Raleway:wght@300&family=Berkshire+Swash&display=swap');
+
+  body {
+    background-color: #0a0a0a;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+    font-family: Arial, sans-serif;
+    overflow: hidden;
+  }
+  .candle-container {
+    position: relative;
+    width: 300px;
+    height: 500px;
+  }
+  .candle {
+    position: absolute;
+    bottom: 160px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 180px;
+    height: 250px;
+    border-radius: 50% / 10%;
+    transition: all 0.5s ease;
+  }
+  .candle-body {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(to right, #e0e0e0, #ffffff, #e0e0e0);
+    border-radius: 50% / 10%;
+    box-shadow: 
+      inset -10px 0 20px rgba(0,0,0,0.2),
+      inset 10px 0 20px rgba(255,255,255,0.5);
+  }
+  .candle-shadow {
+    position: absolute;
+    bottom: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 160px;
+    height: 20px;
+    background: radial-gradient(ellipse at center, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0) 70%);
+    border-radius: 50%;
+  }
+  .wick {
+    position: absolute;
+    top: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 4px;
+    height: 20px;
+    background-color: #333;
+    border-radius: 2px;
+  }
+  .flame {
+    position: absolute;
+    top: -40px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 30px;
+    height: 40px;
+    background: radial-gradient(ellipse at bottom, #ffdb57 0%, #ffb300 50%, transparent 80%);
+    border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+    animation: flicker 0.5s infinite alternate;
+    filter: blur(1px);
+    display: none;  /* Initially hidden */
+  }
+  @keyframes flicker {
+    0% { transform: translateX(-50%) scale(1) rotate(-2deg); opacity: 0.9; }
+    100% { transform: translateX(-50%) scale(0.9) rotate(2deg); opacity: 1; }
+  }
+  .aroma {
+    position: absolute;
+    top: -60px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 120px;
+    height: 120px;
+    opacity: 0;
+    animation: rise 4s infinite;
+    display: none;  /* Initially hidden */
+  }
+  @keyframes rise {
+    0% { opacity: 0; transform: translateX(-50%) translateY(0); }
+    50% { opacity: 0.3; }
+    100% { opacity: 0; transform: translateX(-50%) translateY(-100px); }
+  }
+  .controls {
+    position: absolute;
+    bottom: -120px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 10px;
+  }
+  button {
+    padding: 10px 20px;
+    font-size: 16px;
+    cursor: pointer;
+    background-color: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    transition: background-color 0.3s ease;
+  }
+  button:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+  }
+  .scent-name {
+    position: absolute;
+    top: -100px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 36px;
+    text-align: center;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+    color: #fff;
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+    width: 300px;
+  }
+  .dramatic-lighting {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle at center -30%, transparent 0%, rgba(0,0,0,0.8) 80%);
+    opacity: 0;
+    transition: opacity 0.5s ease;
+    pointer-events: none;
+  }
+  .light-effect {
+    position: absolute;
+    width: 400px;
+    height: 400px;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: radial-gradient(circle, rgba(255, 165, 0, 0.4) 0%, transparent 70%);
+    opacity: 0;
+    transition: opacity 0.5s ease;
+  }
+  .smoke {
+    position: absolute;
+    top: -30px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 10px;
+    height: 200px;
+    background: linear-gradient(to top, rgba(255, 255, 255, 0.9), transparent);
+    border-radius: 50%;
+    opacity: 0;
+    filter: blur(4px);
+    display: none; /* Initially hidden */
+  }
+  @keyframes smokeRise {
+    0% { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); filter: blur(4px); }
+    40% { opacity: 0.8; transform: translateX(-52%) translateY(-100px) scale(1.5); filter: blur(6px); }
+    80% { opacity: 0.3; transform: translateX(-48%) translateY(-200px) scale(2); filter: blur(8px); }
+    100% { opacity: 0; transform: translateX(-50%) translateY(-250px) scale(2.5); filter: blur(10px); }
+  }
+  .candlestick {
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 260px;
+    height: 160px;
+    background: linear-gradient(to bottom, #c0c0c0, #a0a0a0);
+    border-radius: 50% / 60% 60% 40% 40%;
+    box-shadow: 
+      0 5px 15px rgba(0,0,0,0.3),
+      inset 0 -5px 10px rgba(0,0,0,0.2),
+      inset 0 5px 10px rgba(255,255,255,0.5);
+  }
+  .candlestick::before {
+    content: '';
+    position: absolute;
+    top: -20px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 220px;
+    height: 40px;
+    background: #b0b0b0;
+    border-radius: 50%;
+    box-shadow: 
+      0 2px 5px rgba(0,0,0,0.2),
+      inset 0 -2px 5px rgba(0,0,0,0.1),
+      inset 0 2px 5px rgba(255,255,255,0.3);
+  }
+  .candlestick-foot {
+    position: absolute;
+    bottom: -10px; /* Adjusted to make legs smaller */
+    width: 50px; /* Reduced width */
+    height: 40px; /* Reduced height */
+    background: #808080;
+    border-radius: 50% / 60% 60% 40% 40%;
+    box-shadow: 
+      0 3px 5px rgba(0,0,0,0.3),
+      inset 0 -2px 3px rgba(0,0,0,0.2),
+      inset 0 2px 3px rgba(255,255,255,0.1);
+  }
+  .candlestick-foot:nth-child(1) {
+    left: 40px; /* Adjusted position */
+    transform: rotate(10deg) skew(-10deg);
+  }
+  .candlestick-foot:nth-child(2) {
+    right: 40px; /* Adjusted position */
+    transform: rotate(-10deg) skew(10deg);
+  }
+  .candlestick-toe {
+    position: absolute;
+    bottom: -3px; /* Adjusted to make toes smaller */
+    width: 15px; /* Reduced width */
+    height: 10px; /* Reduced height */
+    background: #707070;
+    border-radius: 50%;
+    box-shadow: 
+      0 2px 3px rgba(0,0,0,0.2),
+      inset 0 -1px 2px rgba(0,0,0,0.1),
+      inset 0 1px 2px rgba(255,255,255,0.1);
+  }
+  .candlestick-foot:nth-child(1) .candlestick-toe:nth-child(1) { left: 3px; transform: rotate(-10deg); }
+  .candlestick-foot:nth-child(1) .candlestick-toe:nth-child(2) { left: 18px; }
+  .candlestick-foot:nth-child(1) .candlestick-toe:nth-child(3) { left: 33px; transform: rotate(10deg); }
+  .candlestick-foot:nth-child(2) .candlestick-toe:nth-child(1) { right: 3px; transform: rotate(10deg); }
+  .candlestick-foot:nth-child(2) .candlestick-toe:nth-child(2) { right: 18px; }
+  .candlestick-foot:nth-child(2) .candlestick-toe:nth-child(3) { right: 33px; transform: rotate(-10deg); }
+  .ruby-eye {
+    position: absolute;
+    width: 50px;
+    height: 25px;
+    background: radial-gradient(ellipse at center, #ff1744 0%, #b71c1c 100%);
+    clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+    box-shadow: 
+      0 0 10px #ff8a80,
+      inset 0 0 4px rgba(255,255,255,0.8),
+      0 5px 10px rgba(0, 0, 0, 0.7);
+    overflow: hidden;
+    transition: background 0.5s ease;
+  }
+  .ruby-eye::before {
+    content: '';
+    position: absolute;
+    top: -10px;
+    left: -10px;
+    right: -10px;
+    bottom: -10px;
+    background: 
+      repeating-linear-gradient(
+        45deg,
+        transparent,
+        transparent 2px,
+        rgba(255,255,255,0.1) 2px,
+        rgba(255,255,255,0.1) 4px
+      );
+  }
+  .ruby-eye::after {
+    content: '';
+    position: absolute;
+    top: 15%;
+    left: 15%;
+    width: 30%;
+    height: 30%;
+    background: rgba(255,255,255,0.9);
+    border-radius: 50%;
+    filter: blur(1px);
+  }
+  .ruby-eye:nth-child(3) {
+    left: 65px;
+    top: 55px;
+    transform: rotate(15deg);
+  }
+  .ruby-eye:nth-child(4) {
+    right: 65px;
+    top: 55px;
+    transform: rotate(-15deg);
+  }
+  .ruby-eye-shadow {
+    position: absolute;
+    width: 60px;
+    height: 30px;
+    background: rgba(0,0,0,0.5);
+    filter: blur(8px);
+    z-index: -1;
+    border-radius: 50%;
+  }
+  .ruby-eye-shadow:nth-child(5) {
+    left: 60px;
+    top: 50px;
+    transform: rotate(15deg);
+  }
+  .ruby-eye-shadow:nth-child(6) {
+    right: 60px;
+    top: 50px;
+    transform: rotate(-15deg);
+  }
+  @keyframes sparkle {
+    0%, 100% { opacity: 0.8; }
+    50% { opacity: 1; }
+  }
+  .ruby-eye .facet {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(45deg, transparent 0%, rgba(255,255,255,0.3) 50%, transparent 100%);
+    animation: sparkle 2s infinite;
+  }
+  .ruby-eye .facet:nth-child(2) {
+    transform: rotate(60deg);
+  }
+  .ruby-eye .facet:nth-child(3) {
+    transform: rotate(120deg);
+  }
+  .ruby-eye-top {
+    position: absolute;
+    width: 100%;
+    height: 50%;
+    top: 0;
+    left: 0;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 50% 50% 0 0 / 100% 100% 0 0;
+  }
+  .ruby-eye-top::before,
+  .ruby-eye-top::after {
+    content: '';
+    position: absolute;
+    width: 100%;
+    height: 1px;
+    background: rgba(0, 0, 0, 0.4);
+  }
+  .ruby-eye-top::before {
+    top: 25%;
+  }
+  .ruby-eye-top::after {
+    top: 50%;
+  }
+  .mouth {
+    position: absolute;
+    bottom: 40px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80px;
+    height: 40px;
+    border-radius: 0 0 40px 40px;
+    border: 4px solid #808080;
+    border-top: none;
+    box-shadow: 
+      0 5px 10px rgba(0,0,0,0.3),
+      inset 0 -5px 10px rgba(0,0,0,0.2);
+  }
+  .mouth::before {
+    content: '';
+    position: absolute;
+    top: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60px;
+    height: 20px;
+    background: #a0a0a0;
+    border-radius: 50%;
+    box-shadow: 
+      0 5px 10px rgba(0,0,0,0.2),
+      inset 0 -3px 5px rgba(0,0,0,0.1);
+  }
+  .tooth {
+    position: absolute;
+    top: -5px;
+    width: 10px;
+    height: 15px;
+    background: #ffffff;
+    clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+  }
+  .tooth.left {
+    left: 25px;
+  }
+  .tooth.right {
+    right: 25px;
+  }
+  .scent-description {
+    position: absolute;
+    top: -140px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 18px;
+    text-align: center;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+    color: #ccc;
+    width: 300px;
+    font-family: 'Raleway', sans-serif;
+  }
+  .loading-screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: #0a0a0a;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+    opacity: 1;
+    transition: opacity 1s ease-out;
+  }
+  .loading-text {
+    font-family: 'Berkshire Swash', cursive;
+    font-size: 36px;
+    color: #ffa500; /* Changed to yellow-orange color */
+    text-align: center;
+    animation: glow 2s ease-in-out infinite alternate;
+  }
+  @keyframes glow {
+    from {
+      text-shadow: 0 0 3.5px #b37300, 0 0 7px #b37300, 0 0 10.5px #b37300, 0 0 14px #b36200, 0 0 24.5px #b36200, 0 0 28px #b36200, 0 0 35px #b36200, 0 0 52.5px #b36200;
+    }
+    to {
+      text-shadow: 0 0 7px #b37300, 0 0 14px #b37300, 0 0 21px #b37300, 0 0 28px #b36200, 0 0 49px #b36200, 0 0 56px #b36200, 0 0 70px #b36200, 0 0 105px #b36200;
+    }
+  }
+  .white-ellipse {
+    position: absolute;
+    width: 120px; /* Increased width */
+    height: 80px; /* Adjusted height to create an ellipse */
+    background-color: rgba(255, 255, 255, 0.5);
+    border-radius: 50%;
+    right: -140px; /* Adjusted position */
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-family: 'Comic Sans MS', cursive;
+    font-size: 14px;
+    color: #333;
+    text-align: center;
+    padding: 10px;
+    box-sizing: border-box;
+    opacity: 0; /* Initially hidden */
+  }
+  @keyframes fadeInOut {
+    0%, 100% { opacity: 0; }
+    10%, 90% { opacity: 0.5; }
+  }
+  .extinguish-smoke {
+    position: absolute;
+    top: -30px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 20px;
+    height: 0;
+    background: linear-gradient(to top, rgba(200, 200, 200, 0.9), transparent);
+    border-radius: 50%;
+    opacity: 0;
+    filter: blur(4px);
+  }
+  @keyframes extinguishSmoke {
+    0% { height: 0; opacity: 1; transform: translateX(-50%) translateY(0); }
+    100% { height: 100px; opacity: 0; transform: translateX(-50%) translateY(-100px); }
+  }
+</style>
+</head>
+<body>
+  <div class="loading-screen" id="loadingScreen">
+    <div class="loading-text">Now loading your scented candle experience...</div>
+  </div>
+  <div class="dramatic-lighting" id="dramaticLighting"></div>
+  <div class="light-effect" id="lightEffect"></div>
+  <div class="candle-container">
+    <div class="scent-name" id="scentName"></div>
+    <div class="scent-description" id="scentDescription"></div>
+    <div class="candlestick">
+      <div class="candlestick-foot">
+        <div class="candlestick-toe"></div>
+        <div class="candlestick-toe"></div>
+        <div class="candlestick-toe"></div>
+      </div>
+      <div class="candlestick-foot">
+        <div class="candlestick-toe"></div>
+        <div class="candlestick-toe"></div>
+        <div class="candlestick-toe"></div>
+      </div>
+      <div class="ruby-eye">
+        <div class="ruby-eye-top"></div>
+        <div class="facet"></div>
+        <div class="facet"></div>
+        <div class="facet"></div>
+      </div>
+      <div class="ruby-eye">
+        <div class="ruby-eye-top"></div>
+        <div class="facet"></div>
+        <div class="facet"></div>
+        <div class="facet"></div>
+      </div>
+      <div class="ruby-eye-shadow"></div>
+      <div class="ruby-eye-shadow"></div>
+      <div class="mouth">
+        <div class="tooth left"></div>
+        <div class="tooth right"></div>
+      </div>
+    </div>
+    <div class="candle">
+      <div class="candle-body"></div>
+      <div class="candle-shadow"></div>
+      <div class="wick"></div>
+      <div class="flame"></div>
+      <div class="smoke" id="smoke"></div>
+      <div class="extinguish-smoke" id="extinguishSmoke"></div>
+    </div>
+    <svg class="aroma" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+      <path d="M50 0 C20 50 80 50 50 100" fill="none" stroke="#ffdb57" stroke-width="2" opacity="0.5">
+        <animate attributeName="d" dur="4s" repeatCount="indefinite"
+          values="M50 0 C20 50 80 50 50 100;
+                  M50 0 C80 50 20 50 50 100;
+                  M50 0 C20 50 80 50 50 100" />
+      </path>
+    </svg>
+    <div class="controls">
+      <button id="lightBtn">Light Candle</button>
+      <button id="scentBtn">Change Scent</button>
+    </div>
+    <div class="white-ellipse" id="insultEllipse"></div>
+  </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const flame = document.querySelector('.flame');
+  const aroma = document.querySelector('.aroma');
+  const candle = document.querySelector('.candle');
+  const candleBody = document.querySelector('.candle-body');
+  const lightBtn = document.getElementById('lightBtn');
+  const scentBtn = document.getElementById('scentBtn');
+  const scentNameElement = document.getElementById('scentName');
+  const scentDescriptionElement = document.getElementById('scentDescription');
+  const dramaticLighting = document.getElementById('dramaticLighting');
+  const lightEffect = document.getElementById('lightEffect');
+  const smoke = document.getElementById('smoke');
+  const rubyEyes = document.querySelectorAll('.ruby-eye');
+  const rubyEyeShadows = document.querySelectorAll('.ruby-eye-shadow');
+  const mouth = document.querySelector('.mouth');
+  const teeth = document.querySelectorAll('.tooth');
+  const loadingScreen = document.getElementById('loadingScreen');
+  const insultEllipse = document.getElementById('insultEllipse');
+  const extinguishSmoke = document.getElementById('extinguishSmoke');
+  
+  let isLit = false;
+
+  const adjectives = ['Mystic', 'Enchanted', 'Celestial', 'Ethereal', 'Arcane', 'Whimsical', 'Enigmatic', 'Effervescent', 'Luminous', 'Radiant', 'Gossamer', 'Velvet', 'Opulent', 'Sublime', 'Serene'];
+  const nouns = ['Whisper', 'Aura', 'Zephyr', 'Mirage', 'Reverie', 'Cascade', 'Nebula', 'Serenade', 'Silhouette', 'Horizon', 'Twilight', 'Labyrinth', 'Odyssey', 'Rhapsody', 'Solstice'];
+  const scents = ['Jasmine', 'Sandalwood', 'Vanilla', 'Bergamot', 'Lavender', 'Cedarwood', 'Patchouli', 'Rose', 'Amber', 'Frankincense', 'Vetiver', 'Ylang-Ylang', 'Neroli', 'Oud', 'Cardamom'];
+  const descriptors = ['aromatic', 'intoxicating', 'subtle', 'captivating', 'alluring', 'enticing', 'mesmerizing', 'enchanting', 'beguiling', 'tantalizing', 'seductive', 'hypnotic', 'bewitching', 'spellbinding', 'entrancing'];
+
+  const childishInsults = [
+    "Eww, it smells like stinky socks!",
+    "Your room smells like a rotten egg!",
+    "Did someone forget to shower?",
+    "It's like a skunk had a party in here!",
+    "Yuck! Who let the smelly cat in?",
+    "This place reeks of moldy cheese!",
+    "Pee-yew! Did you eat too many beans?",
+    "It smells like grandpa's old shoe closet!",
+    "Ugh, did someone fart in here?",
+    "Your room smells like a garbage truck!"
+  ];
+
+  function generateScent() {
+    const adjective = adjectives[Math.floor(Math.random() * adjectives.length)];
+    const noun = nouns[Math.floor(Math.random() * nouns.length)];
+    const scent = scents[Math.floor(Math.random() * scents.length)];
+    const descriptor = descriptors[Math.floor(Math.random() * descriptors.length)];
+    const color = `hsl(${Math.random() * 360}, ${50 + Math.random() * 50}%, ${40 + Math.random() * 20}%)`;
+    const aromaColor = `hsl(${Math.random() * 360}, ${70 + Math.random() * 30}%, ${50 + Math.random() * 30}%)`;
+    const fonts = ['Cinzel Decorative', 'Tangerine', 'Carattere', 'Playfair Display', 'Cormorant Garamond'];
+    const font = fonts[Math.floor(Math.random() * fonts.length)];
+
+    return {
+      name: `${adjective} ${noun}`,
+      color: color,
+      aromaColor: aromaColor,
+      font: font,
+      description: `A ${descriptor} blend with notes of ${scent}.`
+    };
+  }
+
+  function updateScent() {
+    const scent = generateScent();
+    candleBody.style.background = `linear-gradient(to right, ${scent.color}, #ffffff, ${scent.color})`;
+    aroma.querySelector('path').setAttribute('stroke', scent.aromaColor);
+    scentNameElement.textContent = scent.name;
+    scentNameElement.style.fontFamily = scent.font;
+    scentNameElement.style.opacity = isLit ? '1' : '0';
+    scentDescriptionElement.textContent = scent.description;
+    scentDescriptionElement.style.opacity = isLit ? '1' : '0';
+    
+    rubyEyes.forEach(eye => {
+      eye.style.background = `radial-gradient(ellipse at center, ${scent.color} 0%, ${scent.aromaColor} 100%)`;
+    });
+    
+    if (isLit) {
+      document.title = `${scent.name} Exotic Candle - Lit`;
+    }
+  }
+
+  function flickerGlow() {
+    if (isLit) {
+      const flickerIntensity = Math.random() * 0.3 + 0.7;
+      dramaticLighting.style.opacity = 0.8 + (flickerIntensity - 0.7) * 0.2;
+      lightEffect.style.opacity = flickerIntensity * 0.7;
+      
+      // Add dynamic shadow to candle
+      const shadowIntensity = 0.2 + (flickerIntensity - 0.7) * 0.1;
+      candleBody.style.boxShadow = `
+        inset -10px 0 20px rgba(0,0,0,${shadowIntensity}),
+        inset 10px 0 20px rgba(255,255,255,${0.5 - shadowIntensity / 2})
+      `;
+      
+      // Add flickering effect to ruby eyes and their shadows
+      rubyEyes.forEach((eye, index) => {
+        eye.style.boxShadow = `
+          0 0 ${10 + flickerIntensity * 5}px ${eye.style.background.match(/radial-gradient\(ellipse at center,\s*(.*?)\s*0%/)[1]},
+          inset 0 0 4px rgba(255,255,255,${0.8 + (flickerIntensity - 0.7) * 0.2}),
+          0 5px 10px rgba(0, 0, 0, ${0.5 + (flickerIntensity - 0.7) * 0.2})
+        `;
+        eye.querySelectorAll('.facet').forEach(facet => {
+          facet.style.opacity = 0.8 + (flickerIntensity - 0.7) * 0.4;
+        });
+        
+        // Update shadow opacity based on flicker
+        rubyEyeShadows[index].style.opacity = 0.5 + (flickerIntensity - 0.7) * 0.2;
+      });
+      
+      // Add flickering effect to mouth and teeth
+      mouth.style.boxShadow = `
+        0 ${5 + flickerIntensity * 2}px ${10 + flickerIntensity * 3}px rgba(0,0,0,${0.3 + (flickerIntensity - 0.7) * 0.1}),
+        inset 0 -${5 + flickerIntensity * 2}px ${10 + flickerIntensity * 3}px rgba(0,0,0,${0.2 + (flickerIntensity - 0.7) * 0.1})
+      `;
+      
+      teeth.forEach(tooth => {
+        tooth.style.boxShadow = `0 ${2 + flickerIntensity}px ${5 + flickerIntensity * 2}px rgba(0,0,0,${0.2 + (flickerIntensity - 0.7) * 0.1})`;
+      });
+      
+      requestAnimationFrame(flickerGlow);
+    }
+  }
+
+  function showInsult() {
+    const insult = childishInsults[Math.floor(Math.random() * childishInsults.length)];
+    insultEllipse.textContent = insult;
+    insultEllipse.style.animation = 'fadeInOut 6s ease-in-out';
+    setTimeout(() => {
+      insultEllipse.style.animation = 'none';
+    }, 6000);
+  }
+
+  function toggleCandle() {
+    isLit = !isLit;
+    flame.style.display = isLit ? 'block' : 'none';
+    aroma.style.display = isLit ? 'block' : 'none';
+    smoke.style.display = 'none';
+    dramaticLighting.style.opacity = isLit ? '0.8' : '0';
+    lightEffect.style.opacity = isLit ? '0.7' : '0';
+    lightBtn.textContent = isLit ? 'Extinguish Candle' : 'Light Candle';
+    scentNameElement.style.opacity = isLit ? '1' : '0';
+    scentDescriptionElement.style.opacity = isLit ? '1' : '0';
+    
+    if (isLit) {
+      flickerGlow();
+      document.title = `${scentNameElement.textContent} Exotic Candle - Lit`;
+    } else {
+      document.title = 'Exotic Scented Candle Simulation';
+      extinguishCandle();
+    }
+  }
+
+  function extinguishCandle() {
+    extinguishSmoke.style.animation = 'extinguishSmoke 2s ease-out';
+    setTimeout(() => {
+      extinguishSmoke.style.animation = 'none';
+    }, 2000);
+  }
+
+  lightBtn.addEventListener('click', toggleCandle);
+  scentBtn.addEventListener('click', updateScent);
+
+  // Initial setup
+  updateScent();
+  
+  // Hide loading screen after a delay
+  setTimeout(() => {
+    loadingScreen.style.opacity = '0';
+    setTimeout(() => {
+      loadingScreen.style.display = 'none';
+    }, 1000);
+  }, 3000);
+
+  // Show insult periodically
+  setInterval(() => {
+    if (Math.random() < 0.3) {  // Increased probability to 30%
+      showInsult();
+    }
+  }, 10000);  // Check every 10 seconds
+});
+</script>
+</body>
+</html>
