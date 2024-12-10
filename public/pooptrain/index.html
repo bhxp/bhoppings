@@ -1,0 +1,528 @@
+<html><head><base href="/">
+<title>3D Poop Train Simulator</title>
+<style>
+  body { 
+    margin: 0;
+    background: #8b4513;
+    overflow: hidden;
+    font-family: Arial, sans-serif;
+  }
+  
+  #gameContainer {
+    width: 100vw;
+    height: 100vh;
+  }
+
+  .controls {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(139, 69, 19, 0.8);
+    padding: 10px;
+    border-radius: 10px;
+    color: white;
+  }
+
+  .steam {
+    position: absolute;
+    animation: rise 2s infinite;
+    opacity: 0;
+  }
+
+  @keyframes rise {
+    0% { transform: translateY(0); opacity: 0.6; }
+    100% { transform: translateY(-100px); opacity: 0; }
+  }
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body>
+
+<div id="gameContainer"></div>
+<div class="controls">
+  Use WASD to drive the Poop Train! 🚂💩<br>
+  Click and drag to rotate camera!<br>
+  Press SPACE to switch tracks!
+</div>
+
+<script>
+let scene, camera, renderer, train;
+const steamParticles = [];
+let cameraOffset = new THREE.Vector3(0, 3, 10);
+let trainRotation = 0;
+let isDragging = false;
+let previousMousePosition = { x: 0, y: 0 };
+let cameraAngleHorizontal = 0;
+let cameraAngleVertical = 0.5;
+let pistonRotation = 0;
+let currentTrack = 'straight'; // Can be 'straight', 'left', or 'right'
+let switchPoint = new THREE.Vector3(0, 0, 20); // Point where tracks split
+const freightCars = []; // Create array to store freight cars
+
+function createCurvedTrack(startPoint, endPoint, curveDirection, segments = 20) {
+  const curveGroup = new THREE.Group();
+  const trackMaterial = new THREE.MeshPhongMaterial({ color: 0x444444 });
+  
+  // Create a curved path
+  const curve = new THREE.QuadraticBezierCurve3(
+    startPoint,
+    new THREE.Vector3(
+      startPoint.x + (curveDirection === 'left' ? -10 : 10),
+      startPoint.y,
+      (startPoint.z + endPoint.z) / 2
+    ),
+    endPoint
+  );
+
+  // Create points along the curve
+  const points = curve.getPoints(segments);
+  
+  // Create rail segments
+  for(let i = 0; i < points.length - 1; i++) {
+    const segment = new THREE.Mesh(
+      new THREE.BoxGeometry(0.2, 0.2, 2),
+      trackMaterial
+    );
+    
+    // Position and rotate each segment to follow the curve
+    segment.position.copy(points[i]);
+    segment.lookAt(points[i + 1]);
+    
+    // Create two parallel rails
+    const leftRail = segment.clone();
+    const rightRail = segment.clone();
+    leftRail.position.x -= 1.2;
+    rightRail.position.x += 1.2;
+    
+    curveGroup.add(leftRail);
+    curveGroup.add(rightRail);
+    
+    // Add sleepers (railroad ties)
+    const sleeper = new THREE.Mesh(
+      new THREE.BoxGeometry(2.8, 0.2, 0.4),
+      trackMaterial
+    );
+    sleeper.position.copy(points[i]);
+    sleeper.lookAt(points[i + 1]);
+    curveGroup.add(sleeper);
+  }
+  
+  return curveGroup;
+}
+
+function createFreightCar(position) {
+  const carGroup = new THREE.Group();
+  
+  // Car body
+  const carGeometry = new THREE.BoxGeometry(2, 2, 3);
+  const carMaterial = new THREE.MeshPhongMaterial({ color: 0x8B4513 });
+  const carBody = new THREE.Mesh(carGeometry, carMaterial);
+  carGroup.add(carBody);
+
+  // Wheels
+  const wheelGeometry = new THREE.CylinderGeometry(0.3, 0.3, 0.2, 16);
+  const wheelMaterial = new THREE.MeshPhongMaterial({ color: 0x222222 });
+  
+  // Add 4 wheels (2 on each side)
+  const wheelPositions = [
+    [-1, -1.5, -1],
+    [1, -1.5, -1],
+    [-1, -1.5, 1],
+    [1, -1.5, 1]
+  ];
+  
+  wheelPositions.forEach(pos => {
+    const wheel = new THREE.Mesh(wheelGeometry, wheelMaterial);
+    wheel.rotation.z = Math.PI / 2;
+    wheel.position.set(...pos);
+    carGroup.add(wheel);
+  });
+
+  carGroup.position.copy(position);
+  return carGroup;
+}
+
+function init() {
+  // Previous initialization code remains the same until track creation
+  scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x87CEEB);
+  
+  camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+  renderer = new THREE.WebGLRenderer();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  document.getElementById('gameContainer').appendChild(renderer.domElement);
+
+  // Lights
+  const light = new THREE.AmbientLight(0xffffff, 0.5);
+  scene.add(light);
+  const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+  dirLight.position.set(5, 5, 5);
+  scene.add(dirLight);
+
+  // Create train (previous train creation code remains the same)
+  
+  const trainGeometry = new THREE.Group();
+  
+  // Train body (a series of spheres)
+  const sphereGeometry = new THREE.SphereGeometry(1, 32, 32);
+  const poopMaterial = new THREE.MeshPhongMaterial({ color: 0x4a3419 });
+  
+  for(let i = 0; i < 3; i++) {
+    const sphere = new THREE.Mesh(sphereGeometry, poopMaterial);
+    sphere.position.z = i * 2;
+    trainGeometry.add(sphere);
+  }
+
+  // Add chimney
+  const chimneyGeometry = new THREE.CylinderGeometry(0.2, 0.2, 0.8, 16);
+  const chimneyMaterial = new THREE.MeshPhongMaterial({ color: 0x333333 });
+  const chimney = new THREE.Mesh(chimneyGeometry, chimneyMaterial);
+  chimney.position.set(0, 1, 0);
+  trainGeometry.add(chimney);
+
+  // Add wheels with middle wheel bigger
+  const smallWheelGeometry = new THREE.CylinderGeometry(0.3, 0.3, 0.2, 16);
+  const bigWheelGeometry = new THREE.CylinderGeometry(0.5, 0.5, 0.2, 16);
+  const wheelMaterial = new THREE.MeshPhongMaterial({ color: 0x222222 });
+  
+  for(let i = 0; i < 3; i++) {
+    const wheelGeometry = i === 1 ? bigWheelGeometry : smallWheelGeometry;
+    
+    const leftWheel = new THREE.Mesh(wheelGeometry, wheelMaterial);
+    leftWheel.rotation.z = Math.PI / 2;
+    leftWheel.position.set(-1.2, -0.8, i * 2);
+    trainGeometry.add(leftWheel);
+
+    const rightWheel = new THREE.Mesh(wheelGeometry, wheelMaterial);
+    rightWheel.rotation.z = Math.PI / 2;
+    rightWheel.position.set(1.2, -0.8, i * 2);
+    trainGeometry.add(rightWheel);
+
+    // Add side rods and pistons for the middle wheel
+    if(i === 1) {
+      // Side rod
+      const sideRodGeometry = new THREE.BoxGeometry(0.1, 0.1, 1.2);
+      const sideRodMaterial = new THREE.MeshPhongMaterial({ color: 0x666666 });
+      
+      const leftSideRod = new THREE.Mesh(sideRodGeometry, sideRodMaterial);
+      leftSideRod.position.set(-1.4, -0.8, i * 2);
+      trainGeometry.add(leftSideRod);
+
+      const rightSideRod = new THREE.Mesh(sideRodGeometry, sideRodMaterial);
+      rightSideRod.position.set(1.4, -0.8, i * 2);
+      trainGeometry.add(rightSideRod);
+
+      // Pistons
+      const pistonGeometry = new THREE.CylinderGeometry(0.1, 0.1, 0.6);
+      const pistonMaterial = new THREE.MeshPhongMaterial({ color: 0x888888 });
+      
+      const leftPiston = new THREE.Mesh(pistonGeometry, pistonMaterial);
+      leftPiston.rotation.z = Math.PI / 2;
+      leftPiston.position.set(-1.6, -0.8, i * 2 - 0.6);
+      trainGeometry.add(leftPiston);
+
+      const rightPiston = new THREE.Mesh(pistonGeometry, pistonMaterial);
+      rightPiston.rotation.z = Math.PI / 2;
+      rightPiston.position.set(1.6, -0.8, i * 2 - 0.6);
+      trainGeometry.add(rightPiston);
+    }
+  }
+
+  // Train face with eyes and mouth
+  const eyeGeometry = new THREE.SphereGeometry(0.2, 16, 16);
+  const eyeMaterial = new THREE.MeshPhongMaterial({ color: 0xffffff });
+  
+  const leftEye = new THREE.Mesh(eyeGeometry, eyeMaterial);
+  leftEye.position.set(-0.4, 0.3, -0.8);
+  trainGeometry.add(leftEye);
+  
+  const rightEye = new THREE.Mesh(eyeGeometry, eyeMaterial);
+  rightEye.position.set(0.4, 0.3, -0.8);
+  trainGeometry.add(rightEye);
+  
+  // Mouth
+  const mouthGeometry = new THREE.BoxGeometry(0.6, 0.1, 0.1);
+  const mouthMaterial = new THREE.MeshPhongMaterial({ color: 0x000000 });
+  const mouth = new THREE.Mesh(mouthGeometry, mouthMaterial);
+  mouth.position.set(0, 0, -0.8);
+  trainGeometry.add(mouth);
+
+  train = trainGeometry;
+  scene.add(train);
+
+  // Create freight cars
+  for (let i = 0; i < 3; i++) {
+    const car = createFreightCar(new THREE.Vector3(0, 0, 6 + (i * 4)));
+    scene.add(car);
+    freightCars.push(car);
+  }
+
+  // Create track system
+  const trackGroup = new THREE.Group();
+  
+  // Straight track (main line)
+  const straightTrack = new THREE.Group();
+  const railGeometry = new THREE.BoxGeometry(0.2, 0.2, 100);
+  const trackMaterial = new THREE.MeshPhongMaterial({ color: 0x444444 });
+  
+  const leftRail = new THREE.Mesh(railGeometry, trackMaterial);
+  leftRail.position.set(-1.2, -1.9, 0);
+  straightTrack.add(leftRail);
+  
+  const rightRail = new THREE.Mesh(railGeometry, trackMaterial);
+  rightRail.position.set(1.2, -1.9, 0);
+  straightTrack.add(rightRail);
+  
+  // Add sleepers to straight track
+  for(let i = -50; i < 50; i += 2) {
+    const sleeper = new THREE.Mesh(
+      new THREE.BoxGeometry(2.8, 0.2, 0.4),
+      trackMaterial
+    );
+    sleeper.position.set(0, -2, i);
+    straightTrack.add(sleeper);
+  }
+  
+  trackGroup.add(straightTrack);
+  
+  // Create curved tracks (branching from switch point)
+  const leftCurve = createCurvedTrack(
+    new THREE.Vector3(0, -1.9, 20),
+    new THREE.Vector3(-20, -1.9, 40),
+    'left'
+  );
+  
+  const rightCurve = createCurvedTrack(
+    new THREE.Vector3(0, -1.9, 20),
+    new THREE.Vector3(20, -1.9, 40),
+    'right'
+  );
+  
+  trackGroup.add(leftCurve);
+  trackGroup.add(rightCurve);
+  
+  // Create switch point indicator
+  const switchIndicator = new THREE.Mesh(
+    new THREE.ConeGeometry(0.5, 1, 32),
+    new THREE.MeshPhongMaterial({ color: 0xff0000 })
+  );
+  switchIndicator.position.set(0, -1, 20);
+  trackGroup.add(switchIndicator);
+  
+  scene.add(trackGroup);
+
+  // Ground
+  const groundGeometry = new THREE.PlaneGeometry(100, 100);
+  const groundMaterial = new THREE.MeshPhongMaterial({ 
+    color: 0x90EE90,
+    side: THREE.DoubleSide
+  });
+  const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+  ground.rotation.x = Math.PI / 2;
+  ground.position.y = -2.1;
+  scene.add(ground);
+
+  updateCameraPosition();
+}
+
+function createSteam() {
+  const steam = document.createElement('div');
+  steam.className = 'steam';
+  steam.style.left = Math.random() * window.innerWidth + 'px';
+  steam.style.bottom = '50px';
+  steam.innerHTML = '💨';
+  document.body.appendChild(steam);
+  
+  setTimeout(() => {
+    steam.remove();
+  }, 2000);
+}
+
+function updateCameraPosition() {
+  const distance = cameraOffset.z;
+  const height = cameraOffset.y;
+  
+  camera.position.x = train.position.x + distance * Math.sin(cameraAngleHorizontal) * Math.cos(cameraAngleVertical);
+  camera.position.y = train.position.y + height + distance * Math.sin(cameraAngleVertical);
+  camera.position.z = train.position.z + distance * Math.cos(cameraAngleHorizontal) * Math.cos(cameraAngleVertical);
+  
+  camera.lookAt(train.position);
+}
+
+function animate() {
+  requestAnimationFrame(animate);
+  
+  // Make train bounce slightly
+  train.position.y = Math.sin(Date.now() * 0.003) * 0.1 - 0.5;
+
+  // Update freight car positions
+  freightCars.forEach((car, index) => {
+    const target = index === 0 ? train : freightCars[index - 1];
+    const spacing = 4; // Distance between cars
+    
+    const direction = new THREE.Vector3()
+      .subVectors(target.position, car.position)
+      .normalize();
+    
+    car.position.x = target.position.x - direction.x * spacing;
+    car.position.z = target.position.z - direction.z * spacing;
+    car.position.y = Math.sin(Date.now() * 0.003 + index * 0.5) * 0.1 - 0.5; // Offset bounce animation
+    
+    const targetRotation = index === 0 ? train.rotation.y : freightCars[index - 1].rotation.y;
+    car.rotation.y = targetRotation;
+    
+    car.children.forEach(child => {
+      if (child.geometry && child.geometry.type === 'CylinderGeometry') {
+        child.rotation.x += 0.1;
+      }
+    });
+  });
+
+  // Rotate wheels and animate pistons
+  pistonRotation += 0.1;
+  train.children.forEach((child, index) => {
+    if (child.geometry) {
+      if (child.geometry.type === 'CylinderGeometry' && child.position.y < 0) {
+        child.rotation.x += 0.1;
+      }
+      // Animate pistons and side rods
+      if (child.geometry.type === 'BoxGeometry' || 
+          (child.geometry.type === 'CylinderGeometry' && Math.abs(child.position.x) > 1.5)) {
+        child.position.z = child.position.z + Math.sin(pistonRotation) * 0.02;
+      }
+    }
+  });
+
+  updateCameraPosition();
+  
+  // Randomly create steam
+  if(Math.random() < 0.03) {
+    createSteam();
+  }
+  
+  renderer.render(scene, camera);
+}
+
+function handleMouseDown(event) {
+  isDragging = true;
+  previousMousePosition = {
+    x: event.clientX,
+    y: event.clientY
+  };
+}
+
+function handleMouseMove(event) {
+  if (!isDragging) return;
+
+  const deltaMove = {
+    x: event.clientX - previousMousePosition.x,
+    y: event.clientY - previousMousePosition.y
+  };
+
+  cameraAngleHorizontal += deltaMove.x * 0.01;
+  cameraAngleVertical = Math.max(-Math.PI/3, Math.min(Math.PI/3, cameraAngleVertical + deltaMove.y * 0.01));
+
+  previousMousePosition = {
+    x: event.clientX,
+    y: event.clientY
+  };
+}
+
+function handleMouseUp() {
+  isDragging = false;
+}
+
+function handleKeyDown(event) {
+  const speed = 0.1;
+  const rotationSpeed = 0.03;
+  
+  // Store previous position
+  const prevPosition = {
+    x: train.position.x,
+    z: train.position.z
+  };
+  
+  switch(event.key.toLowerCase()) {
+    case 'w':
+      train.position.x += Math.sin(trainRotation) * speed;
+      train.position.z += Math.cos(trainRotation) * speed;
+      
+      // Handle track switching
+      if (Math.abs(train.position.z - switchPoint.z) < 0.5) {
+        if (currentTrack === 'left') {
+          trainRotation = Math.PI / 4;
+        } else if (currentTrack === 'right') {
+          trainRotation = -Math.PI / 4;
+        }
+        train.rotation.y = trainRotation;
+      }
+      
+      // Check if train is on valid track
+      const isOnTrack = checkTrackPosition(train.position, currentTrack);
+      if (!isOnTrack) {
+        train.position.x = prevPosition.x;
+        train.position.z = prevPosition.z;
+      }
+      break;
+    case 's':
+      train.position.x -= Math.sin(trainRotation) * speed;
+      train.position.z -= Math.cos(trainRotation) * speed;
+      break;
+    case 'a':
+      trainRotation += rotationSpeed;
+      train.rotation.y = trainRotation;
+      break;
+    case 'd':
+      trainRotation -= rotationSpeed;
+      train.rotation.y = trainRotation;
+      break;
+    case ' ':
+      // Switch tracks
+      if (currentTrack === 'straight') {
+        currentTrack = 'left';
+      } else if (currentTrack === 'left') {
+        currentTrack = 'right';
+      } else {
+        currentTrack = 'straight';
+      }
+      break;
+  }
+}
+
+// Add function to check if position is on valid track
+function checkTrackPosition(position, track) {
+  if (position.z < switchPoint.z) {
+    // Before switch point - main track only
+    return Math.abs(position.x) < 1.5;
+  } else {
+    // After switch point - check current track
+    if (track === 'straight') {
+      return Math.abs(position.x) < 1.5;
+    } else if (track === 'left') {
+      const idealX = -((position.z - switchPoint.z) / 2);
+      return Math.abs(position.x - idealX) < 1.5;
+    } else if (track === 'right') {
+      const idealX = (position.z - switchPoint.z) / 2;
+      return Math.abs(position.x - idealX) < 1.5;
+    }
+  }
+  return false;
+}
+
+window.addEventListener('mousedown', handleMouseDown);
+window.addEventListener('mousemove', handleMouseMove);
+window.addEventListener('mouseup', handleMouseUp);
+window.addEventListener('keydown', handleKeyDown);
+window.addEventListener('resize', () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+init();
+animate();
+</script>
+
+</body>
+</html>
