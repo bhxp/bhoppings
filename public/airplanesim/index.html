@@ -1,0 +1,573 @@
+<html><head><base href="https://air.plane/">
+<title>3D Airplane Simulator FULL</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<style>
+    body { margin: 0; overflow: hidden; }
+    canvas { display: block; }
+    #instructions {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        color: white;
+        font-family: Arial, sans-serif;
+        font-size: 14px;
+        background-color: rgba(0, 0, 0, 0.5);
+        padding: 10px;
+        border-radius: 5px;
+    }
+    #announcement {
+        position: absolute;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        color: white;
+        font-family: Arial, sans-serif;
+        font-size: 16px;
+        background-color: rgba(0, 0, 0, 0.5);
+        padding: 10px;
+        border-radius: 5px;
+        text-align: center;
+        max-width: 80%;
+    }
+</style>
+</head>
+<body>
+<div id="instructions">
+    Use WASD to move around<br>
+    Move the mouse to look around<br>
+    Click to lock pointer<br>
+    Space to jump
+</div>
+<div id="announcement"></div>
+<script>
+    // Set up Three.js scene, camera, and renderer
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.body.appendChild(renderer.domElement);
+
+    // Set up lighting
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
+    scene.add(ambientLight);
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.2);
+    directionalLight.position.set(1, 1, 1);
+    scene.add(directionalLight);
+
+    // Create hallway (airplane body)
+    const hallwayLength = 50;
+    const hallwayWidth = 6;
+    const hallwayHeight = 2.5;
+    const wallMaterial = new THREE.MeshLambertMaterial({ color: 0xffffff, side: THREE.DoubleSide });
+
+    // Floor (darker color)
+    const floorGeometry = new THREE.PlaneGeometry(hallwayWidth, hallwayLength);
+    const floorMaterial = new THREE.MeshLambertMaterial({ color: 0x555555, side: THREE.DoubleSide });
+    const floorMesh = new THREE.Mesh(floorGeometry, floorMaterial);
+    floorMesh.rotation.x = -Math.PI / 2;
+    floorMesh.position.set(0, -hallwayHeight / 2, -hallwayLength / 2);
+    scene.add(floorMesh);
+
+    // Ceiling
+    const ceilingMesh = new THREE.Mesh(floorGeometry, wallMaterial);
+    ceilingMesh.rotation.x = Math.PI / 2;
+    ceilingMesh.position.set(0, hallwayHeight / 2, -hallwayLength / 2);
+    scene.add(ceilingMesh);
+
+    // Left wall
+    const wallGeometry = new THREE.PlaneGeometry(hallwayLength, hallwayHeight);
+    const leftWallMesh = new THREE.Mesh(wallGeometry, wallMaterial);
+    leftWallMesh.rotation.y = Math.PI / 2;
+    leftWallMesh.position.set(-hallwayWidth / 2, 0, -hallwayLength / 2);
+    scene.add(leftWallMesh);
+
+    // Right wall
+    const rightWallMesh = leftWallMesh.clone();
+    rightWallMesh.rotation.y = -Math.PI / 2;
+    rightWallMesh.position.x = hallwayWidth / 2;
+    scene.add(rightWallMesh);
+
+    // Front wall
+    const frontWallGeometry = new THREE.PlaneGeometry(hallwayWidth, hallwayHeight);
+    const frontWallMesh = new THREE.Mesh(frontWallGeometry, wallMaterial);
+    frontWallMesh.position.set(0, 0, 0);
+    scene.add(frontWallMesh);
+
+    // Back wall with door
+    const backWallMesh = frontWallMesh.clone();
+    backWallMesh.rotation.y = Math.PI;
+    backWallMesh.position.z = -hallwayLength;
+    scene.add(backWallMesh);
+
+    // Door
+    const doorWidth = 1.5;
+    const doorHeight = 2;
+    const doorGeometry = new THREE.PlaneGeometry(doorWidth, doorHeight);
+    const doorMaterial = new THREE.MeshLambertMaterial({ color: 0x8B4513, side: THREE.DoubleSide });
+    const doorMesh = new THREE.Mesh(doorGeometry, doorMaterial);
+    doorMesh.position.set(0, -hallwayHeight / 2 + doorHeight / 2, -hallwayLength + 0.01);
+    scene.add(doorMesh);
+
+    // Door handle
+    const handleGeometry = new THREE.CylinderGeometry(0.02, 0.02, 0.1, 16);
+    const handleMaterial = new THREE.MeshLambertMaterial({ color: 0xC0C0C0 });
+    const handleMesh = new THREE.Mesh(handleGeometry, handleMaterial);
+    handleMesh.rotation.z = Math.PI / 2;
+    handleMesh.position.set(0.5, 0, 0.05);
+    doorMesh.add(handleMesh);
+
+    // Create airplane seat model
+    function createSeat() {
+        const seatGroup = new THREE.Group();
+
+        const seatMaterial = new THREE.MeshLambertMaterial({ color: 0x0000ff });
+
+        // Seat base
+        const seatBaseGeometry = new THREE.BoxGeometry(1, 0.1, 1);
+        const seatBase = new THREE.Mesh(seatBaseGeometry, seatMaterial);
+        seatBase.position.set(0, 0.05, 0);
+        seatGroup.add(seatBase);
+
+        // Seat back (with smooth top corners)
+        const seatBackShape = new THREE.Shape();
+        seatBackShape.moveTo(0, 0);
+        seatBackShape.lineTo(0, 0.9);
+        seatBackShape.quadraticCurveTo(0, 1, 0.1, 1);
+        seatBackShape.lineTo(0.9, 1);
+        seatBackShape.quadraticCurveTo(1, 1, 1, 0.9);
+        seatBackShape.lineTo(1, 0);
+        seatBackShape.lineTo(0, 0);
+
+        const extrudeSettings = {
+            steps: 2,
+            depth: 0.1,
+            bevelEnabled: false
+        };
+
+        const seatBackGeometry = new THREE.ExtrudeGeometry(seatBackShape, extrudeSettings);
+        const seatBack = new THREE.Mesh(seatBackGeometry, seatMaterial);
+        seatBack.position.set(-0.5, 0.1, -0.5);
+        seatGroup.add(seatBack);
+
+        // Armrests
+        const armrestGeometry = new THREE.BoxGeometry(0.2, 0.4, 0.8);
+        const leftArmrest = new THREE.Mesh(armrestGeometry, seatMaterial);
+        leftArmrest.position.set(-0.4, 0.25, -0.1);
+        seatGroup.add(leftArmrest);
+
+        const rightArmrest = leftArmrest.clone();
+        rightArmrest.position.set(0.4, 0.25, -0.1);
+        seatGroup.add(rightArmrest);
+
+        return seatGroup;
+    }
+
+    // Create window function
+    function createWindow() {
+        const windowShape = new THREE.Shape();
+        windowShape.ellipse(0, 0, 0.2, 0.3, 0, 2 * Math.PI);
+        const windowGeometry = new THREE.ShapeGeometry(windowShape);
+        const windowMaterial = new THREE.MeshLambertMaterial({ color: 0x01A3F4, side: THREE.DoubleSide });
+        return new THREE.Mesh(windowGeometry, windowMaterial);
+    }
+
+    // Create passenger model
+    function createPassenger(type) {
+        const passengerGroup = new THREE.Group();
+
+        let bodyColor, headColor, hairColor;
+        switch (type) {
+            case 'man':
+                bodyColor = 0x2244aa;
+                headColor = 0xffcc99;
+                hairColor = 0x442200;
+                break;
+            case 'woman':
+                bodyColor = 0xaa4466;
+                headColor = 0xffddbb;
+                hairColor = 0x884400;
+                break;
+            default:
+                bodyColor = 0x44aa66;
+                headColor = 0xffe0cc;
+                hairColor = 0x663300;
+        }
+
+        // Body
+        const bodyGeometry = new THREE.BoxGeometry(0.6, 0.8, 0.3);
+        const bodyMaterial = new THREE.MeshLambertMaterial({ color: bodyColor });
+        const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
+        body.position.set(0, 0.4, 0);
+        passengerGroup.add(body);
+
+        // Head
+        const headGeometry = new THREE.SphereGeometry(0.2, 32, 32);
+        const headMaterial = new THREE.MeshLambertMaterial({ color: headColor });
+        const head = new THREE.Mesh(headGeometry, headMaterial);
+        head.position.set(0, 0.9, 0);
+        passengerGroup.add(head);
+
+        // Hair
+        const hairGeometry = new THREE.SphereGeometry(0.21, 32, 32, 0, Math.PI * 2, 0, Math.PI / 2);
+        const hairMaterial = new THREE.MeshLambertMaterial({ color: hairColor });
+        const hair = new THREE.Mesh(hairGeometry, hairMaterial);
+        hair.position.set(0, 0.9, 0);
+        passengerGroup.add(hair);
+
+        // Eyes
+        const eyeGeometry = new THREE.SphereGeometry(0.03, 16, 16);
+        const eyeMaterial = new THREE.MeshLambertMaterial({ color: 0xffffff });
+        const leftEye = new THREE.Mesh(eyeGeometry, eyeMaterial);
+        leftEye.position.set(-0.08, 0.95, 0.15);
+        passengerGroup.add(leftEye);
+
+        const rightEye = leftEye.clone();
+        rightEye.position.set(0.08, 0.95, 0.15);
+        passengerGroup.add(rightEye);
+
+        // Pupils
+        const pupilGeometry = new THREE.SphereGeometry(0.015, 16, 16);
+        const pupilMaterial = new THREE.MeshLambertMaterial({ color: 0x000000 });
+        const leftPupil = new THREE.Mesh(pupilGeometry, pupilMaterial);
+        leftPupil.position.set(-0.08, 0.95, 0.18);
+        passengerGroup.add(leftPupil);
+
+        const rightPupil = leftPupil.clone();
+        rightPupil.position.set(0.08, 0.95, 0.18);
+        passengerGroup.add(rightPupil);
+
+        // Smile
+        const smileGeometry = new THREE.TorusGeometry(0.07, 0.02, 16, 32, Math.PI);
+        const smileMaterial = new THREE.MeshLambertMaterial({ color: 0x000000 });
+        const smile = new THREE.Mesh(smileGeometry, smileMaterial);
+        smile.position.set(0, 0.85, 0.15);
+        smile.rotation.set(Math.PI / 2, 0, 0);
+        passengerGroup.add(smile);
+
+        // Seatbelt
+        const beltGeometry = new THREE.BoxGeometry(0.6, 0.05, 0.3);
+        const beltMaterial = new THREE.MeshLambertMaterial({ color: 0x888888 });
+        const belt = new THREE.Mesh(beltGeometry, beltMaterial);
+        belt.position.set(0, 0.3, 0.1);
+        passengerGroup.add(belt);
+
+        return passengerGroup;
+    }
+
+    // Create luggage model
+    function createLuggage() {
+        const luggageGroup = new THREE.Group();
+
+        const colors = [0x8B4513, 0x4A0E4E, 0x21618C, 0x1E8449, 0xB7950B];
+        const color = colors[Math.floor(Math.random() * colors.length)];
+
+        const luggageGeometry = new THREE.BoxGeometry(0.6, 0.4, 0.3);
+        const luggageMaterial = new THREE.MeshLambertMaterial({ color: color });
+        const luggage = new THREE.Mesh(luggageGeometry, luggageMaterial);
+        luggageGroup.add(luggage);
+
+        const handleGeometry = new THREE.CylinderGeometry(0.02, 0.02, 0.3, 16);
+        const handleMaterial = new THREE.MeshLambertMaterial({ color: 0x333333 });
+        const handle = new THREE.Mesh(handleGeometry, handleMaterial);
+        handle.rotation.x = Math.PI / 2;
+        handle.position.set(0, 0.2, 0);
+        luggageGroup.add(handle);
+
+        return luggageGroup;
+    }
+
+    // Create overhead compartment
+    function createOverheadCompartment(length) {
+        const compartmentGroup = new THREE.Group();
+
+        const compartmentGeometry = new THREE.BoxGeometry(1, 0.6, length);
+        const compartmentMaterial = new THREE.MeshLambertMaterial({ color: 0xCCCCCC });
+        const compartment = new THREE.Mesh(compartmentGeometry, compartmentMaterial);
+        compartmentGroup.add(compartment);
+
+        // Add luggage
+        const luggageCount = Math.floor(length / 0.7);
+        for (let i = 0; i < luggageCount; i++) {
+            const luggage = createLuggage();
+            luggage.position.set(
+                Math.random() * 0.4 - 0.2,
+                -0.1,
+                -length / 2 + 0.3 + i * 0.7
+            );
+            luggage.rotation.set(
+                Math.random() * 0.2 - 0.1,
+                Math.random() * Math.PI,
+                Math.random() * 0.2 - 0.1
+            );
+            compartmentGroup.add(luggage);
+        }
+
+        return compartmentGroup;
+    }
+
+    // Add seats, windows, passengers, and overhead compartments to the scene
+    const seatSpacing = 1.2;
+    const numRows = Math.floor(hallwayLength / seatSpacing) - 1;
+    const seatObjects = [];
+    const passengers = [];
+
+    // Left overhead compartment
+    const leftOverhead = createOverheadCompartment(hallwayLength);
+    leftOverhead.position.set(-2, hallwayHeight / 2 - 0.3, -hallwayLength / 2);
+    scene.add(leftOverhead);
+
+    // Right overhead compartment
+    const rightOverhead = createOverheadCompartment(hallwayLength);
+    rightOverhead.position.set(2, hallwayHeight / 2 - 0.3, -hallwayLength / 2);
+    scene.add(rightOverhead);
+
+    for (let i = 0; i < numRows; i++) {
+        // Left side seats, window, and passengers
+        const leftSeat1 = createSeat();
+        leftSeat1.position.set(-2.5, -hallwayHeight / 2 + 0.1, -i * seatSpacing - 1);
+        scene.add(leftSeat1);
+        seatObjects.push(leftSeat1);
+
+        const leftSeat2 = createSeat();
+        leftSeat2.position.set(-1.3, -hallwayHeight / 2 + 0.1, -i * seatSpacing - 1);
+        scene.add(leftSeat2);
+        seatObjects.push(leftSeat2);
+
+        const leftWindow = createWindow();
+        leftWindow.position.set(-hallwayWidth / 2 + 0.01, 0, -i * seatSpacing - 1);
+        leftWindow.rotation.y = Math.PI / 2;
+        scene.add(leftWindow);
+
+        const leftPassenger1 = createPassenger(i % 3 === 0 ? 'man' : i % 3 === 1 ? 'woman' : 'neutral');
+        leftPassenger1.position.copy(leftSeat1.position).add(new THREE.Vector3(0, 0.1, 0));
+        scene.add(leftPassenger1);
+        passengers.push({ passenger: leftPassenger1, seat: leftSeat1.position.clone().add(new THREE.Vector3(0, 0.1, 0)), isMoving: false });
+
+        const leftPassenger2 = createPassenger(i % 3 === 1 ? 'man' : i % 3 === 2 ? 'woman' : 'neutral');
+        leftPassenger2.position.copy(leftSeat2.position).add(new THREE.Vector3(0, 0.1, 0));
+        scene.add(leftPassenger2);
+        passengers.push({ passenger: leftPassenger2, seat: leftSeat2.position.clone().add(new THREE.Vector3(0, 0.1, 0)), isMoving: false });
+
+        // Right side seats, window, and passengers
+        const rightSeat1 = createSeat();
+        rightSeat1.position.set(1.3, -hallwayHeight / 2 + 0.1, -i * seatSpacing - 1);
+        scene.add(rightSeat1);
+        seatObjects.push(rightSeat1);
+
+        const rightSeat2 = createSeat();
+        rightSeat2.position.set(2.5, -hallwayHeight / 2 + 0.1, -i * seatSpacing - 1);
+        scene.add(rightSeat2);
+        seatObjects.push(rightSeat2);
+
+        const rightWindow = createWindow();
+        rightWindow.position.set(hallwayWidth / 2 - 0.01, 0, -i * seatSpacing - 1);
+        rightWindow.rotation.y = -Math.PI / 2;
+        scene.add(rightWindow);
+
+        const rightPassenger1 = createPassenger(i % 3 === 2 ? 'man' : i % 3 === 0 ? 'woman' : 'neutral');
+        rightPassenger1.position.copy(rightSeat1.position).add(new THREE.Vector3(0, 0.1, 0));
+        scene.add(rightPassenger1);
+        passengers.push({ passenger: rightPassenger1, seat: rightSeat1.position.clone().add(new THREE.Vector3(0, 0.1, 0)), isMoving: false });
+
+        const rightPassenger2 = createPassenger(i % 3 === 0 ? 'man' : i % 3 === 1 ? 'woman' : 'neutral');
+        rightPassenger2.position.copy(rightSeat2.position).add(new THREE.Vector3(0, 0.1, 0));
+        scene.add(rightPassenger2);
+        passengers.push({ passenger: rightPassenger2, seat: rightSeat2.position.clone().add(new THREE.Vector3(0, 0.1, 0)), isMoving: false });
+    }
+
+    // Set up camera controls
+    camera.position.set(0, 0, 0);
+    let pitch = 0;
+    let yaw = 0;
+
+    // Create a list of collidable objects
+    const collidableObjects = [leftWallMesh, rightWallMesh, floorMesh, ceilingMesh, frontWallMesh, backWallMesh, doorMesh, ...seatObjects];
+
+    // Handle mouse movement
+    document.addEventListener('mousemove', (event) => {
+        if (document.pointerLockElement === renderer.domElement) {
+            const sensitivity = 0.002;
+            yaw -= event.movementX * sensitivity;
+            pitch -= event.movementY * sensitivity;
+            pitch = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, pitch));
+        }
+    });
+
+    // Handle keyboard input
+    const keys = {};
+    document.addEventListener('keydown', (event) => { keys[event.key.toLowerCase()] = true; });
+    document.addEventListener('keyup', (event) => { keys[event.key.toLowerCase()] = false; });
+
+    // Lock pointer
+    renderer.domElement.addEventListener('click', () => {
+        renderer.domElement.requestPointerLock();
+    });
+
+    // Collision detection function
+    function checkCollision(position) {
+        const playerRadius = 0.3;
+        for (const object of collidableObjects) {
+            const objectBoundingBox = new THREE.Box3().setFromObject(object);
+            const sphereCenter = new THREE.Vector3(position.x, position.y, position.z);
+            if (objectBoundingBox.intersectsSphere(new THREE.Sphere(sphereCenter, playerRadius))) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    // Physics variables
+    const gravity = -9.8;
+    let velocity = new THREE.Vector3(0, 0, 0);
+    let isGrounded = false;
+    const jumpForce = 5;
+
+    // Passenger movement
+    function movePassengers(deltaTime) {
+        const moveSpeed = 1;
+        const moveProbability = 0.00001; // Adjusted to make the event 10x rarer
+
+        passengers.forEach(passenger => {
+            if (!passenger.isMoving && Math.random() < moveProbability) {
+                passenger.isMoving = true;
+                passenger.destination = new THREE.Vector3(0, passenger.seat.y, -hallwayLength + 1.5); // Adjusted to stop in front of the door
+            }
+
+            if (passenger.isMoving) {
+                const direction = passenger.destination.clone().sub(passenger.passenger.position).normalize();
+                passenger.passenger.position.add(direction.multiplyScalar(moveSpeed * deltaTime));
+
+                if (passenger.passenger.position.distanceTo(passenger.destination) < 0.1) {
+                    if (passenger.destination.z === -hallwayLength + 1.5) {
+                        passenger.destination = passenger.seat.clone();
+                    } else {
+                        passenger.isMoving = false;
+                        passenger.passenger.position.copy(passenger.seat);
+                    }
+                }
+            }
+        });
+    }
+
+    // Captain's announcements
+    const announcements = [
+        "Ladies and gentlemen, we have reached our cruising altitude of 35,000 feet.",
+        "We're experiencing some light turbulence. Please fasten your seatbelts.",
+        "We'll be starting our in-flight service shortly. Please let our crew know if you need anything.",
+        "We're expecting clear skies for the remainder of our flight.",
+        "We'll be landing in approximately 30 minutes. Local time at our destination is 2:15 PM.",
+        "Please make sure your seats and tray tables are in their upright and locked positions.",
+        "We're now beginning our final descent. Please remain seated.",
+        "Welcome to your destination. Local temperature is a pleasant 72°F or 22°C.",
+        "We hope you've enjoyed your flight with us today.",
+        "This is your captain speaking. We're cruising at a speed of 550 miles per hour.",
+        "We've just passed over the Grand Canyon. If you look out the left side windows, you might catch a glimpse.",
+        "We're currently flying over the Rocky Mountains. Enjoy the view!",
+        "Due to strong tailwinds, we expect to arrive at our destination ahead of schedule.",
+        "The crew will be coming around with refreshments shortly.",
+        "We're about to cross into a different time zone. Please adjust your watches accordingly.",
+        "For those interested, there's a beautiful sunset visible from the right side of the aircraft.",
+        "We're cruising at an altitude twice as high as Mount Everest.",
+        "We've just received clearance for landing. Please prepare for our descent.",
+        "This is your first officer speaking. Captain Johnson is taking a short break.",
+        "Thank you for choosing our airline. We know you have a choice, and we appreciate your business."
+    ];
+
+    function updateAnnouncement() {
+        const announcementElement = document.getElementById('announcement');
+        const randomAnnouncement = announcements[Math.floor(Math.random() * announcements.length)];
+        announcementElement.textContent = randomAnnouncement;
+        setTimeout(() => {
+            announcementElement.textContent = '';
+        }, 10000); // Display for 10 seconds
+    }
+
+    // Periodically update announcements
+    setInterval(updateAnnouncement, 30000); // New announcement every 30 seconds
+
+    // Animation loop
+    function animate() {
+        requestAnimationFrame(animate);
+
+        const deltaTime = 1 / 60; // Assuming 60 FPS
+
+        // Update camera rotation using quaternions
+        const qx = new THREE.Quaternion();
+        qx.setFromAxisAngle(new THREE.Vector3(1, 0, 0), pitch);
+        const qy = new THREE.Quaternion();
+        qy.setFromAxisAngle(new THREE.Vector3(0, 1, 0), yaw);
+        const quaternion = qy.multiply(qx);
+        camera.quaternion.copy(quaternion);
+
+        // Apply gravity
+        if (!isGrounded) {
+            velocity.y += gravity * deltaTime;
+        }
+
+        // Handle jumping
+        if (keys[' '] && isGrounded) {
+            velocity.y = jumpForce;
+            isGrounded = false;
+        }
+
+        // Update camera position
+        const speed = 5;
+        const moveDirection = new THREE.Vector3();
+
+        if (keys['w']) moveDirection.z -= 1;
+        if (keys['s']) moveDirection.z += 1;
+        if (keys['a']) moveDirection.x -= 1;
+        if (keys['d']) moveDirection.x += 1;
+
+        moveDirection.normalize().multiplyScalar(speed * deltaTime);
+
+        // Apply yaw rotation to movement
+        moveDirection.applyAxisAngle(new THREE.Vector3(0, 1, 0), yaw);
+
+        const newPosition = camera.position.clone();
+        newPosition.x += moveDirection.x + velocity.x * deltaTime;
+        newPosition.y += velocity.y * deltaTime;
+        newPosition.z += moveDirection.z + velocity.z * deltaTime;
+
+        // Check for collisions
+        if (!checkCollision(newPosition)) {
+            camera.position.copy(newPosition);
+        } else {
+            velocity.set(0, 0, 0);
+        }
+
+        // Check if grounded
+        const groundCheck = camera.position.clone();
+        groundCheck.y -= 1.7; // Player height
+        if (groundCheck.y <= -hallwayHeight / 2) {
+            isGrounded = true;
+            velocity.y = 0;
+            camera.position.y = Math.max(camera.position.y, -hallwayHeight / 2 + 1.7);
+        } else {
+            isGrounded = false;
+        }
+
+        // Ensure the camera stays within the hallway
+        camera.position.x = Math.max(-hallwayWidth / 2 + 0.3, Math.min(hallwayWidth / 2 - 0.3, camera.position.x));
+        camera.position.y = Math.max(-hallwayHeight / 2 + 1.7, Math.min(hallwayHeight / 2 - 0.3, camera.position.y));
+        camera.position.z = Math.max(-hallwayLength + 0.3, Math.min(-0.3, camera.position.z));
+
+        // Move passengers
+        movePassengers(deltaTime);
+
+        renderer.render(scene, camera);
+    }
+
+    animate();
+
+    // Handle window resizing
+    window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+</script>
+</body>
+</html>
