@@ -1,0 +1,287 @@
+<html><head><base href="https://butt.com" />
+<title>Enhanced 3D Ping Pong Game</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/tween.js/18.6.4/tween.umd.js"></script>
+<style>
+  body { margin: 0; overflow: hidden; background-color: #000; }
+  #gameCanvas { width: 100%; height: 100%; display: block; }
+  #gameInfo {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    color: #fff;
+    font-family: 'Arial', sans-serif;
+    font-size: 24px;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+  }
+  .score { font-weight: bold; }
+  #cameraInfo {
+    position: absolute;
+    bottom: 20px;
+    left: 20px;
+    color: #fff;
+    font-family: 'Arial', sans-serif;
+    font-size: 18px;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+  }
+</style>
+</head>
+<body>
+<div id="gameInfo">Player: <span id="playerScore" class="score">0</span> | AI: <span id="aiScore" class="score">0</span></div>
+<div id="cameraInfo">Camera: <span id="cameraMode">Overview</span> (Press 1-5 to change)</div>
+<canvas id="gameCanvas"></canvas>
+<script>
+// Set up the scene, camera, and renderer
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+const renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('gameCanvas'), antialias: true });
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setClearColor(0x87CEEB); // Sky blue background
+
+// Create the table
+const tableGeometry = new THREE.BoxGeometry(20, 0.5, 10);
+const tableMaterial = new THREE.MeshPhongMaterial({ 
+  color: 0x1E90FF,
+  specular: 0x111111,
+  shininess: 30
+});
+const table = new THREE.Mesh(tableGeometry, tableMaterial);
+scene.add(table);
+
+// Add table edges
+const edgeGeometry = new THREE.BoxGeometry(20, 0.5, 0.5);
+const edgeMaterial = new THREE.MeshPhongMaterial({ color: 0xFFFFFF });
+const topEdge = new THREE.Mesh(edgeGeometry, edgeMaterial);
+topEdge.position.set(0, 0.25, 5.25);
+scene.add(topEdge);
+const bottomEdge = topEdge.clone();
+bottomEdge.position.set(0, 0.25, -5.25);
+scene.add(bottomEdge);
+
+// Create the net
+const netGeometry = new THREE.PlaneGeometry(0.1, 1.5);
+const netMaterial = new THREE.MeshBasicMaterial({ color: 0xFFFFFF, side: THREE.DoubleSide });
+const net = new THREE.Mesh(netGeometry, netMaterial);
+net.position.set(0, 0.75, 0);
+scene.add(net);
+
+// Create enhanced paddles
+function createPaddle(color) {
+  const paddleGroup = new THREE.Group();
+
+  // Main paddle body
+  const paddleGeometry = new THREE.BoxGeometry(0.5, 1.2, 2.2);
+  const paddleMaterial = new THREE.MeshPhongMaterial({ 
+    color: color,
+    specular: 0x333333,
+    shininess: 30
+  });
+  const paddleBody = new THREE.Mesh(paddleGeometry, paddleMaterial);
+  paddleGroup.add(paddleBody);
+
+  // Paddle grip
+  const gripGeometry = new THREE.CylinderGeometry(0.1, 0.1, 0.8, 32);
+  const gripMaterial = new THREE.MeshPhongMaterial({ color: 0x333333 });
+  const grip = new THREE.Mesh(gripGeometry, gripMaterial);
+  grip.rotation.x = Math.PI / 2;
+  grip.position.set(0.3, -0.6, 0);
+  paddleGroup.add(grip);
+
+  // Paddle logo
+  const logoGeometry = new THREE.CircleGeometry(0.3, 32);
+  const logoMaterial = new THREE.MeshBasicMaterial({ color: 0xFFFFFF });
+  const logo = new THREE.Mesh(logoGeometry, logoMaterial);
+  logo.position.set(-0.26, 0, 0);
+  paddleGroup.add(logo);
+
+  return paddleGroup;
+}
+
+const playerPaddle = createPaddle(0xFF4500);
+playerPaddle.position.set(-9, 1, 0);
+scene.add(playerPaddle);
+
+const aiPaddle = createPaddle(0x4169E1);
+aiPaddle.position.set(9, 1, 0);
+scene.add(aiPaddle);
+
+// Create the ball
+const ballGeometry = new THREE.SphereGeometry(0.25, 32, 32);
+const ballMaterial = new THREE.MeshPhongMaterial({ 
+  color: 0xFFFFFF,
+  specular: 0xFFFFFF,
+  shininess: 100
+});
+const ball = new THREE.Mesh(ballGeometry, ballMaterial);
+ball.position.set(0, 1, 0);
+scene.add(ball);
+
+// Add lighting
+const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+scene.add(ambientLight);
+
+const pointLight = new THREE.PointLight(0xffffff, 1);
+pointLight.position.set(0, 10, 0);
+scene.add(pointLight);
+
+// Add shadows
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+table.receiveShadow = true;
+playerPaddle.traverse((child) => {
+  if (child.isMesh) child.castShadow = true;
+});
+aiPaddle.traverse((child) => {
+  if (child.isMesh) child.castShadow = true;
+});
+ball.castShadow = true;
+
+pointLight.castShadow = true;
+pointLight.shadow.mapSize.width = 1024;
+pointLight.shadow.mapSize.height = 1024;
+
+// Set up the camera
+camera.position.set(0, 10, 15);
+camera.lookAt(scene.position);
+
+// Game variables
+let ballSpeed = 0.07; // Reduced from 0.1 to 0.07
+let ballDirectionX = 1;
+let ballDirectionZ = 1;
+let playerScore = 0;
+let aiScore = 0;
+
+// Camera movement
+let cameraMode = 'overview';
+const cameraPositions = {
+  overview: { x: 0, y: 10, z: 15 },
+  player: { x: -11, y: 3, z: 0 },
+  ai: { x: 11, y: 3, z: 0 },
+  ball: { x: 0, y: 2, z: 8 },
+  topDown: { x: 0, y: 15, z: 0 }
+};
+
+function moveCameraTo(position, duration = 1000) {
+  new TWEEN.Tween(camera.position)
+    .to(position, duration)
+    .easing(TWEEN.Easing.Quadratic.InOut)
+    .onUpdate(() => camera.lookAt(scene.position))
+    .start();
+}
+
+// Switch camera view
+window.addEventListener('keydown', (event) => {
+  switch(event.key) {
+    case '1':
+      cameraMode = 'overview';
+      moveCameraTo(cameraPositions.overview);
+      document.getElementById('cameraMode').textContent = 'Overview';
+      break;
+    case '2':
+      cameraMode = 'player';
+      moveCameraTo(cameraPositions.player);
+      document.getElementById('cameraMode').textContent = 'Player';
+      break;
+    case '3':
+      cameraMode = 'ai';
+      moveCameraTo(cameraPositions.ai);
+      document.getElementById('cameraMode').textContent = 'AI';
+      break;
+    case '4':
+      cameraMode = 'ball';
+      moveCameraTo(cameraPositions.ball);
+      document.getElementById('cameraMode').textContent = 'Ball';
+      break;
+    case '5':
+      cameraMode = 'topDown';
+      moveCameraTo(cameraPositions.topDown);
+      document.getElementById('cameraMode').textContent = 'Top Down';
+      break;
+  }
+});
+
+// Update score display
+function updateScore() {
+  document.getElementById('playerScore').textContent = playerScore;
+  document.getElementById('aiScore').textContent = aiScore;
+}
+
+// Handle player paddle movement
+document.addEventListener('mousemove', (event) => {
+  const mouseY = (event.clientY / window.innerHeight) * 2 - 1;
+  playerPaddle.position.z = -mouseY * 4;
+});
+
+// Game loop
+function animate(time) {
+  requestAnimationFrame(animate);
+
+  TWEEN.update(time);
+
+  // Move the ball
+  ball.position.x += ballSpeed * ballDirectionX;
+  ball.position.z += ballSpeed * ballDirectionZ;
+
+  // Rotate the ball
+  ball.rotation.x += 0.1;
+  ball.rotation.z += 0.1;
+
+  // Ball collision with top and bottom walls
+  if (ball.position.z > 4.75 || ball.position.z < -4.75) {
+    ballDirectionZ *= -1;
+  }
+
+  // Ball collision with paddles
+  if (ball.position.x < -8.5 && ball.position.z > playerPaddle.position.z - 1.1 && ball.position.z < playerPaddle.position.z + 1.1) {
+    ballDirectionX *= -1;
+    ballSpeed += 0.003; // Reduced speed increase from 0.005 to 0.003
+  }
+
+  if (ball.position.x > 8.5 && ball.position.z > aiPaddle.position.z - 1.1 && ball.position.z < aiPaddle.position.z + 1.1) {
+    ballDirectionX *= -1;
+    ballSpeed += 0.003; // Reduced speed increase from 0.005 to 0.003
+  }
+
+  // AI paddle movement (slower and with some delay)
+  aiPaddle.position.z += (ball.position.z - aiPaddle.position.z) * 0.03;
+
+  // Check for scoring
+  if (ball.position.x < -10) {
+    aiScore++;
+    updateScore();
+    resetBall();
+  } else if (ball.position.x > 10) {
+    playerScore++;
+    updateScore();
+    resetBall();
+  }
+
+  // Update camera position for ball-following mode
+  if (cameraMode === 'ball') {
+    camera.position.x = ball.position.x;
+    camera.position.z = ball.position.z + 8;
+    camera.lookAt(ball.position);
+  }
+
+  renderer.render(scene, camera);
+}
+
+function resetBall() {
+  ball.position.set(0, 1, 0);
+  ballSpeed = 0.07; // Reset to the new initial speed
+  ballDirectionX = Math.random() > 0.5 ? 1 : -1;
+  ballDirectionZ = Math.random() > 0.5 ? 1 : -1;
+}
+
+// Handle window resizing
+window.addEventListener('resize', () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+// Start the game loop
+animate();
+</script>
+</body></html>
