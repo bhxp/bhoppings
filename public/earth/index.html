@@ -1,0 +1,411 @@
+<html><head><base href="https://earth.rape/" /><title>earth</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.132.2/examples/js/controls/OrbitControls.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<style>
+  body { margin: 0; overflow: hidden; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #000; color: #fff; }
+  #container { position: relative; width: 100vw; height: 100vh; }
+  .menu-tab {
+    position: absolute;
+    background: rgba(255,255,255,0.1);
+    backdrop-filter: blur(10px);
+    color: white;
+    width: 25px;
+    height: 25px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    z-index: 1000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 14px;
+  }
+  .menu-tab:hover {
+    background: rgba(255,255,255,0.2);
+  }
+  #top-menu-tab {
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    border-radius: 0 0 12px 12px;
+  }
+  #side-menu-tab {
+    bottom: 0;
+    left: 0;
+    border-radius: 0 12px 0 0;
+  }
+  .menu-arrow {
+    transition: transform 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+  }
+  .menu-content {
+    position: absolute;
+    background: rgba(255,255,255,0.1);
+    backdrop-filter: blur(10px);
+    color: white;
+    padding: 10px;
+    box-sizing: border-box;
+    transition: 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+    z-index: 999;
+  }
+  #top-menu-content {
+    top: -100%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 240px;
+    border-radius: 0 0 12px 12px;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 5px;
+  }
+  #side-menu-content {
+    bottom: -100%;
+    left: 0;
+    width: 180px;
+    border-radius: 0 12px 0 0;
+  }
+  .button { 
+    background: rgba(76, 175, 80, 0.6);
+    color: white;
+    padding: 6px 12px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.3s;
+    font-size: 10px;
+    text-align: center;
+  }
+  .button:hover { background: rgba(76, 175, 80, 0.8); }
+  .controls { margin-top: 5px; }
+  input[type="range"] { width: 100%; margin: 3px 0; }
+  #shapeSelector { grid-column: span 2; margin-top: 5px; }
+  select { 
+    width: 100%;
+    padding: 3px;
+    border-radius: 4px;
+    background: rgba(255,255,255,0.1);
+    color: white;
+    border: none;
+    font-size: 10px;
+  }
+  h1 { 
+    color: #4CAF50;
+    margin: 0 0 5px 0;
+    font-size: 14px;
+    text-align: center;
+    grid-column: span 2;
+  }
+  label { font-size: 9px; }
+  @media (max-width: 600px) {
+    #top-menu-content { width: 220px; }
+    #side-menu-content { width: 160px; }
+  }
+</style>
+</head>
+<body>
+<div id="container">
+  <div id="top-menu-tab" class="menu-tab"><span class="menu-arrow">▼</span></div>
+  <div id="top-menu-content" class="menu-content">
+    <h1>SpectraGraph PBR</h1>
+    <input type="file" id="fileInput" accept="image/*" style="display:none;">
+    <button id="uploadButton" class="button">Upload Image</button>
+    <input type="file" id="normalMapInput" accept="image/*" style="display:none;">
+    <button id="normalMapButton" class="button">Upload Normal</button>
+    <input type="file" id="roughnessMapInput" accept="image/*" style="display:none;">
+    <button id="roughnessMapButton" class="button">Upload Roughness</button>
+    <div id="shapeSelector">
+      <select id="shape">
+        <option value="sphere">Sphere</option>
+        <option value="plane">Flat</option>
+      </select>
+    </div>
+  </div>
+  <div id="side-menu-tab" class="menu-tab"><span class="menu-arrow">▲</span></div>
+  <div id="side-menu-content" class="menu-content">
+    <div class="controls">
+      <label for="displacementScale">Displacement: <span id="displacementScaleValue">0.5</span></label>
+      <input type="range" id="displacementScale" min="0" max="2" value="0.5" step="0.1">
+      <label for="sunPosition">Sun: <span id="sunPositionValue">0.5</span></label>
+      <input type="range" id="sunPosition" min="0" max="1" value="0.5" step="0.01">
+      <label for="normalScale">Normal: <span id="normalScaleValue">1</span></label>
+      <input type="range" id="normalScale" min="0" max="2" value="1" step="0.1">
+      <label for="roughness">Roughness: <span id="roughnessValue">0.5</span></label>
+      <input type="range" id="roughness" min="0" max="1" value="0.5" step="0.01">
+    </div>
+  </div>
+</div>
+
+<script>
+let scene, camera, renderer, controls, shape, sun;
+const textureLoader = new THREE.TextureLoader();
+let currentShape = 'sphere';
+let currentTexture, currentNormalMap, currentRoughnessMap;
+
+function init() {
+  scene = new THREE.Scene();
+  camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+  renderer = new THREE.WebGLRenderer({ antialias: true });
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setPixelRatio(window.devicePixelRatio);
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  document.getElementById('container').appendChild(renderer.domElement);
+
+  controls = new THREE.OrbitControls(camera, renderer.domElement);
+  controls.enableDamping = true;
+  controls.dampingFactor = 0.05;
+  controls.screenSpacePanning = false;
+  controls.minDistance = 5;
+  controls.maxDistance = 50;
+  controls.maxPolarAngle = Math.PI;
+
+  const ambientLight = new THREE.AmbientLight(0xffffff, 0.3);
+  scene.add(ambientLight);
+
+  sun = new THREE.DirectionalLight(0xffffff, 1);
+  sun.position.set(5, 10, 5);
+  sun.castShadow = true;
+  sun.shadow.mapSize.width = 2048;
+  sun.shadow.mapSize.height = 2048;
+  sun.shadow.camera.near = 0.5;
+  sun.shadow.camera.far = 50;
+  scene.add(sun);
+
+  camera.position.set(0, 0, 20);
+  controls.update();
+
+  loadDefaultTexture();
+  animate();
+  setupControls();
+  setupMenus();
+}
+
+function createShape(shapeType) {
+  if (shape) {
+    scene.remove(shape);
+  }
+
+  let geometry;
+  
+  switch(shapeType) {
+    case 'plane':
+      geometry = new THREE.PlaneGeometry(10, 10, 256, 256);
+      break;
+    case 'sphere':
+      geometry = new THREE.SphereGeometry(5, 128, 128);
+      break;
+  }
+
+  const material = new THREE.MeshStandardMaterial({
+    color: 0xffffff,
+    side: THREE.DoubleSide,
+    displacementScale: 0.5,
+    roughness: 0.5,
+    metalness: 0.2,
+  });
+
+  shape = new THREE.Mesh(geometry, material);
+  shape.castShadow = true;
+  shape.receiveShadow = true;
+
+  if (shapeType === 'plane') {
+    shape.rotation.x = -Math.PI / 4;
+  }
+
+  scene.add(shape);
+  currentShape = shapeType;
+
+  if (currentTexture) applyTexture(currentTexture, 'map');
+  if (currentNormalMap) applyTexture(currentNormalMap, 'normalMap');
+  if (currentRoughnessMap) applyTexture(currentRoughnessMap, 'roughnessMap');
+}
+
+function loadDefaultTexture() {
+  textureLoader.load('https://threejs.org/examples/textures/planets/earth_atmos_2048.jpg', (texture) => {
+    currentTexture = texture;
+    createShape('sphere');
+    applyTexture(texture);
+  });
+}
+
+function applyTexture(texture, type = 'map') {
+  texture.wrapS = THREE.RepeatWrapping;
+  texture.wrapT = THREE.RepeatWrapping;
+  texture.repeat.set(1, 1);
+
+  switch(type) {
+    case 'map':
+      shape.material.map = texture;
+      shape.material.displacementMap = texture;
+      shape.material.bumpMap = texture;
+      shape.material.bumpScale = 0.1;
+      currentTexture = texture;
+      break;
+    case 'normalMap':
+      shape.material.normalMap = texture;
+      currentNormalMap = texture;
+      break;
+    case 'roughnessMap':
+      shape.material.roughnessMap = texture;
+      currentRoughnessMap = texture;
+      break;
+  }
+  
+  shape.material.needsUpdate = true;
+}
+
+function animate() {
+  requestAnimationFrame(animate);
+  controls.update();
+  renderer.render(scene, camera);
+}
+
+function onWindowResize() {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+}
+
+function setupControls() {
+  const displacementScale = document.getElementById('displacementScale');
+  const sunPosition = document.getElementById('sunPosition');
+  const normalScale = document.getElementById('normalScale');
+  const roughness = document.getElementById('roughness');
+  const shapeSelector = document.getElementById('shape');
+
+  function updateDisplacementScale() {
+    shape.material.displacementScale = parseFloat(displacementScale.value);
+    document.getElementById('displacementScaleValue').textContent = displacementScale.value;
+  }
+
+  function updateSunPosition() {
+    const angle = parseFloat(sunPosition.value) * Math.PI * 2;
+    sun.position.x = Math.cos(angle) * 15;
+    sun.position.z = Math.sin(angle) * 15;
+    sun.position.y = 10 + Math.sin(angle) * 5;
+    document.getElementById('sunPositionValue').textContent = sunPosition.value;
+  }
+
+  function updateNormalScale() {
+    shape.material.normalScale.set(parseFloat(normalScale.value), parseFloat(normalScale.value));
+    document.getElementById('normalScaleValue').textContent = normalScale.value;
+  }
+
+  function updateRoughness() {
+    shape.material.roughness = parseFloat(roughness.value);
+    document.getElementById('roughnessValue').textContent = roughness.value;
+  }
+
+  displacementScale.addEventListener('input', updateDisplacementScale);
+  sunPosition.addEventListener('input', updateSunPosition);
+  normalScale.addEventListener('input', updateNormalScale);
+  roughness.addEventListener('input', updateRoughness);
+
+  shapeSelector.addEventListener('change', (event) => {
+    createShape(event.target.value);
+  });
+}
+
+function setupMenus() {
+  setupMenu('top-menu-tab', 'top-menu-content', 'top');
+  setupMenu('side-menu-tab', 'side-menu-content', 'side');
+}
+
+function setupMenu(tabId, contentId, type) {
+  const menuTab = document.getElementById(tabId);
+  const menuContent = document.getElementById(contentId);
+  const menuArrow = menuTab.querySelector('.menu-arrow');
+  let isOpen = false;
+
+  menuTab.addEventListener('click', () => toggleMenu(type));
+
+  function toggleMenu(menuType) {
+    if (isOpen) {
+      closeMenu(menuType);
+    } else {
+      openMenu(menuType);
+    }
+  }
+
+  function openMenu(menuType) {
+    if (menuType === 'top') {
+      menuContent.style.top = '25px';
+      menuArrow.style.transform = 'rotate(180deg)';
+    } else {
+      menuContent.style.bottom = '25px';
+      menuArrow.style.transform = 'rotate(180deg)';
+    }
+    isOpen = true;
+    animateMenuTab(menuTab);
+  }
+
+  function closeMenu(menuType) {
+    if (menuType === 'top') {
+      menuContent.style.top = '-100%';
+      menuArrow.style.transform = 'rotate(0deg)';
+    } else {
+      menuContent.style.bottom = '-100%';
+      menuArrow.style.transform = 'rotate(0deg)';
+    }
+    isOpen = false;
+    animateMenuTab(menuTab);
+  }
+
+  function animateMenuTab(tab) {
+    tab.animate([
+      { transform: type === 'top' ? 'translateX(-50%) scale(1)' : 'scale(1)' },
+      { transform: type === 'top' ? 'translateX(-50%) scale(1.2)' : 'scale(1.2)' },
+      { transform: type === 'top' ? 'translateX(-50%) scale(1)' : 'scale(1)' }
+    ], {
+      duration: 300,
+      easing: 'cubic-bezier(0.68,-0.55, 0.27, 1.55)'
+    });
+  }
+}
+
+document.getElementById('uploadButton').addEventListener('click', () => {
+  document.getElementById('fileInput').click();
+});
+
+document.getElementById('normalMapButton').addEventListener('click', () => {
+  document.getElementById('normalMapInput').click();
+});
+
+document.getElementById('roughnessMapButton').addEventListener('click', () => {
+  document.getElementById('roughnessMapInput').click();
+});
+
+document.getElementById('fileInput').addEventListener('change', (event) => {
+  handleFileUpload(event, 'map');
+});
+
+document.getElementById('normalMapInput').addEventListener('change', (event) => {
+  handleFileUpload(event, 'normalMap');
+});
+
+document.getElementById('roughnessMapInput').addEventListener('change', (event) => {
+  handleFileUpload(event, 'roughnessMap');
+});
+
+function handleFileUpload(event, type) {
+  const file = event.target.files[0];
+  if (file) {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      const img = new Image();
+      img.onload = function() {
+        const texture = new THREE.Texture(this);
+        texture.needsUpdate = true;
+        applyTexture(texture, type);
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+}
+
+window.addEventListener('resize', onWindowResize);
+
+init();
+</script>
+</body>
+</html>
