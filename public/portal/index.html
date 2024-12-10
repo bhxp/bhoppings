@@ -1,0 +1,475 @@
+<html><head><base href="nigger.io" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Portal</title>
+<style>
+body { margin: 0; overflow: hidden; cursor: crosshair; }
+#gameCanvas { width: 100%; height: 100%; }
+#instructions {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  color: white;
+  font-family: Arial, sans-serif;
+  background: rgba(0, 0, 0, 0.5);
+  padding: 10px;
+  border-radius: 5px;
+  pointer-events: none;
+}
+/* Remove these button styles since we won't need them anymore */
+.button {
+  display: none;
+}
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/tween.js/18.6.4/tween.umd.js"></script>
+</head>
+<body>
+<canvas id="gameCanvas"></canvas>
+
+<!-- Add the instructions div to the body -->
+<div id="instructions">
+  Left Click: Fire Portal<br>
+  Right Click: Switch Portal Color
+</div>
+
+<script>
+let scene, camera, renderer, player, portalGun;
+let joystickPressed = false;
+let joystickVector = new THREE.Vector2();
+let walls = [];
+let portals = [];
+let currentPortalColor = 0; // 0 for blue, 1 for orange
+let bluePortal, orangePortal;
+let clock, deltaTime;
+let gravity = -9.8;
+let velocity = new THREE.Vector3();
+let isPointerLocked = false;
+let moveState = {
+  forward: false,
+  backward: false,
+  left: false,
+  right: false
+};
+
+function init() {
+  clock = new THREE.Clock();
+  scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x87CEEB); // Sky blue background
+  camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+  renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('gameCanvas'), antialias: true });
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+  const ambientLight = new THREE.AmbientLight(0x404040);
+  scene.add(ambientLight);
+
+  const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+  directionalLight.position.set(5, 10, 7.5);
+  directionalLight.castShadow = true;
+  directionalLight.shadow.mapSize.width = 1024;
+  directionalLight.shadow.mapSize.height = 1024;
+  directionalLight.shadow.camera.near = 0.5;
+  directionalLight.shadow.camera.far = 50;
+  scene.add(directionalLight);
+
+  player = new THREE.Group();
+  scene.add(player);
+  player.add(camera);
+  player.position.set(0, 1, 0);
+
+  createPortalGun();
+
+  const textureLoader = new THREE.TextureLoader();
+  const floorTexture = textureLoader.load('https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/hardwood2_diffuse.jpg');
+  floorTexture.wrapS = THREE.RepeatWrapping;
+  floorTexture.wrapT = THREE.RepeatWrapping;
+  floorTexture.repeat.set(10, 10);
+
+  const planeGeometry = new THREE.PlaneGeometry(40, 40);
+  const planeMaterial = new THREE.MeshStandardMaterial({ 
+    map: floorTexture,
+    side: THREE.DoubleSide,
+    roughness: 0.8,
+    metalness: 0.2
+  });
+  const plane = new THREE.Mesh(planeGeometry, planeMaterial);
+  plane.rotation.x = Math.PI / 2;
+  plane.position.y = 0;
+  plane.receiveShadow = true;
+  scene.add(plane);
+
+  addWalls();
+  addObstacles();
+
+  setupPointerLock();
+
+  animate();
+}
+
+function setupPointerLock() {
+  document.addEventListener('click', () => {
+    if (!isPointerLocked) {
+      document.body.requestPointerLock();
+    }
+  });
+
+  document.addEventListener('pointerlockchange', () => {
+    isPointerLocked = document.pointerLockElement === document.body;
+  });
+
+  document.addEventListener('keydown', (event) => {
+    switch(event.code) {
+      case 'KeyW': moveState.forward = true; break;
+      case 'KeyS': moveState.backward = true; break;
+      case 'KeyA': moveState.left = true; break;
+      case 'KeyD': moveState.right = true; break;
+    }
+  });
+
+  document.addEventListener('keyup', (event) => {
+    switch(event.code) {
+      case 'KeyW': moveState.forward = false; break;
+      case 'KeyS': moveState.backward = false; break;
+      case 'KeyA': moveState.left = false; break;
+      case 'KeyD': moveState.right = false; break;
+    }
+  });
+
+  document.addEventListener('mousemove', (event) => {
+    if (isPointerLocked) {
+      const movementX = event.movementX || 0;
+      const movementY = event.movementY || 0;
+      
+      player.rotation.y -= movementX * 0.002;
+      camera.rotation.x -= movementY * 0.002;
+      camera.rotation.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, camera.rotation.x));
+    }
+  });
+
+  document.addEventListener('mousedown', (event) => {
+    if (isPointerLocked) {
+      if (event.button === 0) { // Left mouse button
+        shootPortal();
+      } else if (event.button === 2) { // Right mouse button
+        switchPortalColor();
+        event.preventDefault();
+      }
+    }
+  });
+
+  // Prevent right-click context menu
+  document.addEventListener('contextmenu', (event) => {
+    event.preventDefault();
+  });
+}
+
+function createPortalGun() {
+  const gunGroup = new THREE.Group();
+
+  const gunGeometry = new THREE.CylinderGeometry(0.05, 0.08, 0.5, 32);
+  const gunMaterial = new THREE.MeshStandardMaterial({ color: 0x888888, metalness: 0.8, roughness: 0.2 });
+  const gunBody = new THREE.Mesh(gunGeometry, gunMaterial);
+  gunBody.rotation.x = Math.PI / 2;
+  gunGroup.add(gunBody);
+
+  const handleGeometry = new THREE.BoxGeometry(0.08, 0.15, 0.04);
+  const handleMaterial = new THREE.MeshStandardMaterial({ color: 0x444444, metalness: 0.5, roughness: 0.5 });
+  const handle = new THREE.Mesh(handleGeometry, handleMaterial);
+  handle.position.set(0, -0.15, 0.1);
+  gunGroup.add(handle);
+
+  const energyBallGeometry = new THREE.SphereGeometry(0.06, 32, 32);
+  const energyBallMaterial = new THREE.MeshBasicMaterial({ color: 0x00a2e8 });
+  const energyBall = new THREE.Mesh(energyBallGeometry, energyBallMaterial);
+  energyBall.position.set(0, 0.3, 0);
+  gunGroup.add(energyBall);
+
+  gunGroup.position.set(0.3, -0.2, -0.5);
+  gunGroup.rotation.y = Math.PI / 12;
+  camera.add(gunGroup);
+
+  portalGun = gunGroup;
+}
+
+function addWalls() {
+  const wallGeometry = new THREE.BoxGeometry(40, 8, 1);
+  const wallMaterial = new THREE.MeshStandardMaterial({ color: 0xcccccc, metalness: 0.2, roughness: 0.8 });
+
+  const wallsData = [
+    { position: [0, 4, -20], rotation: [0, 0, 0] },
+    { position: [0, 4, 20], rotation: [0, 0, 0] },
+    { position: [20, 4, 0], rotation: [0, Math.PI / 2, 0] },
+    { position: [-20, 4, 0], rotation: [0, Math.PI / 2, 0] }
+  ];
+
+  wallsData.forEach(wallData => {
+    const wall = new THREE.Mesh(wallGeometry, wallMaterial);
+    wall.position.set(...wallData.position);
+    wall.rotation.set(...wallData.rotation);
+    wall.castShadow = true;
+    wall.receiveShadow = true;
+    scene.add(wall);
+    walls.push(wall);
+  });
+}
+
+function addObstacles() {
+  const obstacleGeometry = new THREE.BoxGeometry(2, 4, 2);
+  const obstacleMaterial = new THREE.MeshStandardMaterial({ color: 0x8B4513, metalness: 0.1, roughness: 0.8 });
+
+  for (let i = 0; i < 8; i++) {
+    const obstacle = new THREE.Mesh(obstacleGeometry, obstacleMaterial);
+    obstacle.position.set(
+      Math.random() * 30 - 15,
+      2,
+      Math.random() * 30 - 15
+    );
+    obstacle.castShadow = true;
+    obstacle.receiveShadow = true;
+    scene.add(obstacle);
+    walls.push(obstacle);
+  }
+}
+
+function checkCollision(newPosition) {
+  const playerRadius = 0.5;
+
+  for (let wall of walls) {
+    const wallBox = new THREE.Box3().setFromObject(wall);
+    const playerBox = new THREE.Box3().setFromCenterAndSize(
+      newPosition,
+      new THREE.Vector3(playerRadius * 2, 2, playerRadius * 2)
+    );
+
+    if (wallBox.intersectsBox(playerBox)) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+function createPortalEffect(color) {
+  const portalGroup = new THREE.Group();
+
+  const portalRingGeometry = new THREE.TorusGeometry(1, 0.1, 32, 100);
+  const portalRingMaterial = new THREE.MeshStandardMaterial({ 
+    color: color,
+    emissive: color,
+    emissiveIntensity: 0.5,
+    side: THREE.DoubleSide,
+    metalness: 0.8,
+    roughness: 0.2
+  });
+  const portalRing = new THREE.Mesh(portalRingGeometry, portalRingMaterial);
+  portalGroup.add(portalRing);
+
+  const surfaceGeometry = new THREE.CircleGeometry(0.95, 64);
+  const surfaceMaterial = new THREE.ShaderMaterial({
+    uniforms: {
+      time: { value: 0 },
+      color: { value: new THREE.Color(color) }
+    },
+    vertexShader: `
+      varying vec2 vUv;
+      void main() {
+        vUv = uv;
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+      }
+    `,
+    fragmentShader: `
+      uniform float time;
+      uniform vec3 color;
+      varying vec2 vUv;
+      
+      float noise(vec2 p) {
+        return fract(sin(dot(p.xy, vec2(12.9898, 78.233))) * 43758.5453);
+      }
+      
+      void main() {
+        vec2 p = vUv * 2.0 - 1.0;
+        float r = length(p);
+        float angle = atan(p.y, p.x);
+        
+        float noise1 = noise(vec2(angle * 10.0, r * 10.0 - time));
+        float noise2 = noise(vec2(angle * 20.0, r * 20.0 + time * 0.5));
+        
+        float intensity = sin(r * 10.0 - time * 2.0) * 0.5 + 0.5;
+        intensity *= smoothstep(1.0, 0.8, r);
+        intensity += noise1 * 0.2 + noise2 * 0.1;
+        
+        vec3 finalColor = mix(color, vec3(1.0), intensity * 0.5);
+        gl_FragColor = vec4(finalColor, 0.8);
+      }
+    `,
+    transparent: true,
+    side: THREE.DoubleSide
+  });
+  const surfaceMesh = new THREE.Mesh(surfaceGeometry, surfaceMaterial);
+  surfaceMesh.position.z = 0.01;
+  portalGroup.add(surfaceMesh);
+
+  const particlesGeometry = new THREE.BufferGeometry();
+  const particleCount = 1000;
+  const posArray = new Float32Array(particleCount * 3);
+  const velocityArray = new Float32Array(particleCount * 3);
+  
+  for (let i = 0; i < particleCount * 3; i += 3) {
+    const angle = Math.random() * Math.PI * 2;
+    const radius = Math.random() * 0.9;
+    posArray[i] = Math.cos(angle) * radius;
+    posArray[i+1] = Math.sin(angle) * radius;
+    posArray[i+2] = (Math.random() - 0.5) * 0.1;
+    
+    velocityArray[i] = (Math.random() - 0.5) * 0.02;
+    velocityArray[i+1] = (Math.random() - 0.5) * 0.02;
+    velocityArray[i+2] = (Math.random() - 0.5) * 0.02;
+  }
+  
+  particlesGeometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+  particlesGeometry.setAttribute('velocity', new THREE.BufferAttribute(velocityArray, 3));
+  
+  const particlesMaterial = new THREE.PointsMaterial({
+    size: 0.02,
+    color: color,
+    transparent: true,
+    opacity: 0.8,
+    blending: THREE.AdditiveBlending
+  });
+  
+  const particlesMesh = new THREE.Points(particlesGeometry, particlesMaterial);
+  portalGroup.add(particlesMesh);
+
+  return portalGroup;
+}
+
+function shootPortal() {
+  const raycaster = new THREE.Raycaster();
+  raycaster.setFromCamera(new THREE.Vector2(), camera);
+
+  const intersects = raycaster.intersectObjects(walls);
+
+  if (intersects.length > 0) {
+    const intersection = intersects[0];
+    const portalColor = currentPortalColor === 0 ? 0x00a2e8 : 0xff7f27;
+    const portal = createPortalEffect(portalColor);
+
+    portal.position.copy(intersection.point);
+    portal.lookAt(intersection.point.add(intersection.face.normal));
+
+    if (currentPortalColor === 0) {
+      if (bluePortal) scene.remove(bluePortal);
+      bluePortal = portal;
+    } else {
+      if (orangePortal) scene.remove(orangePortal);
+      orangePortal = portal;
+    }
+
+    scene.add(portal);
+  }
+}
+
+function switchPortalColor() {
+  currentPortalColor = 1 - currentPortalColor;
+  const energyBall = portalGun.children[2];
+  energyBall.material.color.setHex(currentPortalColor === 0 ? 0x00a2e8 : 0xff7f27);
+}
+
+function teleportPlayer() {
+  if (bluePortal && orangePortal) {
+    const playerPosition = player.position.clone();
+    const blueDistance = playerPosition.distanceTo(bluePortal.position);
+    const orangeDistance = playerPosition.distanceTo(orangePortal.position);
+
+    if (blueDistance < 1) {
+      const teleportDirection = orangePortal.getWorldDirection(new THREE.Vector3());
+      player.position.copy(orangePortal.position);
+      player.position.add(teleportDirection.multiplyScalar(1.5));
+
+      const portalForward = orangePortal.getWorldDirection(new THREE.Vector3());
+      portalForward.y = 0;
+      portalForward.normalize();
+      const portalRight = new THREE.Vector3(portalForward.z, 0, -portalForward.x);
+      const portalUp = new THREE.Vector3(0, 1, 0);
+      
+      const rotationMatrix = new THREE.Matrix4().makeBasis(portalRight, portalUp, portalForward.negate());
+      player.quaternion.setFromRotationMatrix(rotationMatrix);
+    } else if (orangeDistance < 1) {
+      const teleportDirection = bluePortal.getWorldDirection(new THREE.Vector3());
+      player.position.copy(bluePortal.position);
+      player.position.add(teleportDirection.multiplyScalar(1.5));
+
+      const portalForward = bluePortal.getWorldDirection(new THREE.Vector3());
+      portalForward.y = 0;
+      portalForward.normalize();
+      const portalRight = new THREE.Vector3(portalForward.z, 0, -portalForward.x);
+      const portalUp = new THREE.Vector3(0, 1, 0);
+      
+      const rotationMatrix = new THREE.Matrix4().makeBasis(portalRight, portalUp, portalForward.negate());
+      player.quaternion.setFromRotationMatrix(rotationMatrix);
+    }
+  }
+}
+
+function updatePlayerPosition(deltaTime) {
+  velocity.y += gravity * deltaTime;
+  const deltaPosition = velocity.clone().multiplyScalar(deltaTime);
+  
+  if (isPointerLocked) {
+    const moveSpeed = 5;
+    const movement = new THREE.Vector3();
+    
+    if (moveState.forward) movement.z -= 1;
+    if (moveState.backward) movement.z += 1;
+    if (moveState.left) movement.x -= 1;
+    if (moveState.right) movement.x += 1;
+    
+    if (movement.length() > 0) {
+      movement.normalize();
+      movement.applyQuaternion(player.quaternion);
+      deltaPosition.add(movement.multiplyScalar(moveSpeed * deltaTime));
+    }
+  }
+
+  const newPosition = player.position.clone().add(deltaPosition);
+
+  if (!checkCollision(newPosition)) {
+    player.position.copy(newPosition);
+  } else {
+    if (velocity.y < 0) {
+      velocity.y = 0;
+    }
+    velocity.x = 0;
+    velocity.z = 0;
+  }
+
+  if (player.position.y < 1) {
+    player.position.y = 1;
+    velocity.y = 0;
+  }
+}
+
+function animate() {
+  requestAnimationFrame(animate);
+
+  deltaTime = clock.getDelta();
+  updatePlayerPosition(deltaTime);
+  teleportPlayer();
+
+  TWEEN.update();
+
+  renderer.render(scene, camera);
+}
+
+window.addEventListener('resize', () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+init();
+</script>
+</body>
+</html>
