@@ -1,0 +1,1005 @@
+<html><head><base href="https://celestial-forge.com/" target="_blank">
+<title>3D Planet Generator with Terrain Gradient</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/simplex-noise@2.4.0/simplex-noise.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/seedrandom/3.0.5/seedrandom.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<style>
+    body { margin: 0; overflow: hidden; font-family: Arial, sans-serif; }
+    #canvas { width: 100%; height: 100vh; }
+    #controls {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        background: rgba(0,0,0,0.7);
+        color: white;
+        padding: 10px;
+        border-radius: 5px;
+        max-height: 90vh;
+        overflow-y: auto;
+        width: 250px;
+    }
+    #moonMenu {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        background: rgba(0,0,0,0.7);
+        color: white;
+        padding: 10px;
+        border-radius: 5px;
+        max-height: 90vh;
+        overflow-y: auto;
+        width: 250px;
+    }
+    #versionDisplay {
+        position: fixed;
+        top: 10px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(0,0,0,0.7);
+        color: white;
+        padding: 10px 20px;
+        border-radius: 5px;
+        font-size: 16px;
+        z-index: 1000;
+    }
+    input[type="range"] { width: 100%; }
+    button {
+        background: #4CAF50;
+        border: none;
+        color: white;
+        padding: 10px 20px;
+        text-align: center;
+        text-decoration: none;
+        display: inline-block;
+        font-size: 16px;
+        margin: 4px 2px;
+        cursor: pointer;
+        border-radius: 5px;
+    }
+</style>
+</head>
+<body>
+<div id="versionDisplay">Celestial Forge v1.0.0</div>
+<div id="canvas"></div>
+<div id="controls">
+    <h2>Planet Generator</h2>
+    <label for="size">Size: <span id="sizeValue">1</span></label>
+    <input type="range" id="size" min="0.5" max="2" step="0.1" value="1">
+    <br>
+    <label for="roughness">Roughness: <span id="roughnessValue">2.6</span></label>
+    <input type="range" id="roughness" min="0" max="3" step="0.1" value="2.6">
+    <br>
+    <label for="flattening">Terrain Flattening: <span id="flatteningValue">0.9</span></label>
+    <input type="range" id="flattening" min="0" max="1" step="0.05" value="0.9">
+    <br>
+    <label for="baseColor1">Base Color 1 (Lowest):</label>
+    <input type="color" id="baseColor1" value="#228B22">
+    <br>
+    <label for="baseColor2">Base Color 2 (Low-Mid):</label>
+    <input type="color" id="baseColor2" value="#8B4513">
+    <br>
+    <label for="baseColor3">Base Color 3 (Mid-High):</label>
+    <input type="color" id="baseColor3" value="#D2691E">
+    <br>
+    <label for="baseColor4">Base Color 4 (Highest):</label>
+    <input type="color" id="baseColor4" value="#F4A460">
+    <br>
+    <label for="seaLevel">Sea Level: <span id="seaLevelValue">0.500</span></label>
+    <input type="range" id="seaLevel" min="0" max="1" step="0.001" value="0.500">
+    <br>
+    <label for="seaColor">Sea Color:</label>
+    <input type="color" id="seaColor" value="#0077be">
+    <br>
+    <label for="seaTransparency">Sea Transparency: <span id="seaTransparencyValue">0.7</span></label>
+    <input type="range" id="seaTransparency" min="0" max="1" step="0.05" value="0.7">
+    <br>
+    <label for="seaGlow">
+        <input type="checkbox" id="seaGlow"> Enable Sea Glow
+    </label>
+    <br>
+    <label for="seaGlowIntensity">Sea Glow Intensity: <span id="seaGlowIntensityValue">1</span></label>
+    <input type="range" id="seaGlowIntensity" min="0" max="3" step="0.1" value="1">
+    <br>
+    <label for="ringInnerRadius">Ring Inner Radius: <span id="ringInnerRadiusValue">1.5</span></label>
+    <input type="range" id="ringInnerRadius" min="1.1" max="3" step="0.1" value="1.5">
+    <br>
+    <label for="ringOuterRadius">Ring Outer Radius: <span id="ringOuterRadiusValue">2.5</span></label>
+    <input type="range" id="ringOuterRadius" min="1.2" max="4" step="0.1" value="2.5">
+    <br>
+    <label for="ringColor1">Ring Color 1:</label>
+    <input type="color" id="ringColor1" value="#c0c0c0">
+    <br>
+    <label for="ringColor2">Ring Color 2:</label>
+    <input type="color" id="ringColor2" value="#a0a0a0">
+    <br>
+    <label for="ringColor3">Ring Color 3:</label>
+    <input type="color" id="ringColor3" value="#808080">
+    <br>
+    <label for="ringAxisTilt">Ring Axis Tilt: <span id="ringAxisTiltValue">0</span></label>
+    <input type="range" id="ringAxisTilt" min="-360" max="360" step="1" value="0">
+    <br>
+    <label for="starCount">Star Count: <span id="starCountValue">1000</span></label>
+    <input type="range" id="starCount" min="100" max="5000" step="100" value="1000">
+    <br>
+    <label for="starSeed">Star Seed: <span id="starSeedValue">0</span></label>
+    <input type="number" id="starSeed" min="0" max="9999999" step="1" value="0">
+    <br>
+    <label for="disableSea">
+        <input type="checkbox" id="disableSea"> Disable Sea
+    </label>
+    <br>
+    <label for="disableRing">
+        <input type="checkbox" id="disableRing" checked> Disable Ring
+    </label>
+    <br>
+    <label for="cloudCoverage">Cloud Coverage: <span id="cloudCoverageValue">0.5</span></label>
+    <input type="range" id="cloudCoverage" min="0" max="4" step="0.05" value="0.5">
+    <br>
+    <label for="cloudDistance">Cloud Distance: <span id="cloudDistanceValue">0.05</span></label>
+    <input type="range" id="cloudDistance" min="0.01" max="0.2" step="0.01" value="0.05">
+    <br>
+    <label for="cloudColor">Cloud Color:</label>
+    <input type="color" id="cloudColor" value="#ffffff">
+    <br>
+    <label for="cloudSeed">Cloud Seed: <span id="cloudSeedValue">0</span></label>
+    <input type="number" id="cloudSeed" min="0" max="9999999" step="1" value="0">
+    <br>
+    <label for="disableClouds">
+        <input type="checkbox" id="disableClouds"> Disable Clouds
+    </label>
+    <br>
+    <label for="seed">Seed: <span id="seedValue">0</span></label>
+    <input type="number" id="seed" min="0" max="9999999" step="1" value="0">
+    <br>
+    <label for="rotationSpeed">Rotation Speed: <span id="rotationSpeedValue">0.005</span></label>
+    <input type="range" id="rotationSpeed" min="0" max="0.05" step="0.001" value="0.005">
+    <br>
+    <label for="lightTint">Light Tint:</label>
+    <input type="color" id="lightTint" value="#ffffff">
+    <br>
+    <label for="lightTintIntensity">Light Tint Intensity: <span id="lightTintIntensityValue">0.5</span></label>
+    <input type="range" id="lightTintIntensity" min="0" max="1" step="0.05" value="0.5">
+    <br>
+    <button id="randomSeed">Random Seed</button>
+    <br>
+    <button id="generate">Generate New Planet</button>
+    <br>
+    <button id="savePlanet">Save Planet</button>
+    <br>
+    <button id="loadPlanet">Load Planet</button>
+</div>
+<div id="moonMenu">
+    <h2>Moon Controls</h2>
+    <label for="moonCount">Moon Count: <span id="moonCountValue">0</span></label>
+    <input type="range" id="moonCount" min="0" max="5" step="1" value="0">
+    <br>
+    <label for="moonDistance">Distance from Planet: <span id="moonDistanceValue">2</span></label>
+    <input type="range" id="moonDistance" min="1.5" max="4" step="0.1" value="2">
+    <br>
+    <label for="moonRotationSpeed">Rotation Speed: <span id="moonRotationSpeedValue">0.005</span></label>
+    <input type="range" id="moonRotationSpeed" min="0" max="0.05" step="0.001" value="0.005">
+    <br>
+    <label for="moonOrbitSpeed">Orbit Speed: <span id="moonOrbitSpeedValue">0.001</span></label>
+    <input type="range" id="moonOrbitSpeed" min="0" max="0.01" step="0.0001" value="0.001">
+    <br>
+    <label for="moonSize">Moon Size: <span id="moonSizeValue">0.2</span></label>
+    <input type="range" id="moonSize" min="0.1" max="0.5" step="0.05" value="0.2">
+    <br>
+    <label for="moonRoughness">Terrain Roughness: <span id="moonRoughnessValue">1</span></label>
+    <input type="range" id="moonRoughness" min="0" max="3" step="0.1" value="1">
+    <br>
+    <label for="moonFlattening">Terrain Flattening: <span id="moonFlatteningValue">0.5</span></label>
+    <input type="range" id="moonFlattening" min="0" max="1" step="0.05" value="0.5">
+    <br>
+    <label for="moonColor1">Color 1:</label>
+    <input type="color" id="moonColor1" value="#555555">
+    <br>
+    <label for="moonColor2">Color 2:</label>
+    <input type="color" id="moonColor2" value="#888888">
+    <br>
+    <label for="moonColor3">Color 3:</label>
+    <input type="color" id="moonColor3" value="#AAAAAA">
+    <br>
+    <label for="moonSeed">Terrain Seed: <span id="moonSeedValue">0</span></label>
+    <input type="number" id="moonSeed" min="0" max="9999999" step="1" value="0">
+    <br>
+    <label for="moonCraters">Crater Intensity: <span id="moonCratersValue">0</span></label>
+    <input type="range" id="moonCraters" min="0" max="1" step="0.05" value="0">
+    <br>
+    <label for="moonLocationSeed">Moon Location Seed: <span id="moonLocationSeedValue">0</span></label>
+    <input type="number" id="moonLocationSeed" min="0" max="9999999" step="1" value="0">
+    <br>
+    <label for="moonCraterSize">Crater Size: <span id="moonCraterSizeValue">1</span></label>
+    <input type="range" id="moonCraterSize" min="0.1" max="3" step="0.1" value="1">
+    <br>
+    <label for="moonCraterDepth">Crater Depth: <span id="moonCraterDepthValue">1</span></label>
+    <input type="range" id="moonCraterDepth" min="0.1" max="3" step="0.1" value="1">
+    <br>
+    <button id="randomizeMoonLocationSeed">Randomize Moon Location</button>
+    <br>
+    <button id="randomizeMoonSeed">Randomize Moon Seed</button>
+</div>
+
+<script>
+let scene, camera, renderer, planet, ocean, ringSystem, light, stars, cloudSystem, controls;
+let moons = [];
+let simplex;
+let rotationSpeed = 0.005;
+let lightTintColor, lightTintIntensity;
+
+async function createPlanetTable() {
+    let query = `CREATE TABLE if not exists planet_configs (
+        id INTEGER PRIMARY KEY,
+        name TEXT,
+        config TEXT,
+        user_id TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )`;
+    let results = await fetch('/api/v1/sql/?' + new URLSearchParams({sql: query}));
+    let data = await results.json();
+    console.log(data);
+}
+
+async function savePlanetConfig() {
+    const user = await window.websim.getUser();
+    if (!user) {
+        alert('Please log in to save planet configurations');
+        return;
+    }
+
+    const name = prompt('Enter a name for this planet configuration:');
+    if (!name) return;
+
+    const config = {
+        size: document.getElementById('size').value,
+        roughness: document.getElementById('roughness').value,
+        flattening: document.getElementById('flattening').value,
+        baseColor1: document.getElementById('baseColor1').value,
+        baseColor2: document.getElementById('baseColor2').value,
+        baseColor3: document.getElementById('baseColor3').value,
+        baseColor4: document.getElementById('baseColor4').value,
+        seaLevel: document.getElementById('seaLevel').value,
+        seaColor: document.getElementById('seaColor').value,
+        seaTransparency: document.getElementById('seaTransparency').value,
+        seaGlow: document.getElementById('seaGlow').checked,
+        seaGlowIntensity: document.getElementById('seaGlowIntensity').value,
+        ringInnerRadius: document.getElementById('ringInnerRadius').value,
+        ringOuterRadius: document.getElementById('ringOuterRadius').value,
+        ringColor1: document.getElementById('ringColor1').value,
+        ringColor2: document.getElementById('ringColor2').value,
+        ringColor3: document.getElementById('ringColor3').value,
+        ringAxisTilt: document.getElementById('ringAxisTilt').value,
+        starCount: document.getElementById('starCount').value,
+        starSeed: document.getElementById('starSeed').value,
+        disableSea: document.getElementById('disableSea').checked,
+        disableRing: document.getElementById('disableRing').checked,
+        cloudCoverage: document.getElementById('cloudCoverage').value,
+        cloudDistance: document.getElementById('cloudDistance').value,
+        cloudColor: document.getElementById('cloudColor').value,
+        cloudSeed: document.getElementById('cloudSeed').value,
+        disableClouds: document.getElementById('disableClouds').checked,
+        seed: document.getElementById('seed').value,
+        lightTint: document.getElementById('lightTint').value,
+        lightTintIntensity: document.getElementById('lightTintIntensity').value,
+        rotationSpeed: document.getElementById('rotationSpeed').value,
+        moonCount: document.getElementById('moonCount').value,
+        moonSize: document.getElementById('moonSize').value,
+        moonDistance: document.getElementById('moonDistance').value,
+        moonRotationSpeed: document.getElementById('moonRotationSpeed').value,
+        moonOrbitSpeed: document.getElementById('moonOrbitSpeed').value,
+        moonRoughness: document.getElementById('moonRoughness').value,
+        moonFlattening: document.getElementById('moonFlattening').value,
+        moonColor1: document.getElementById('moonColor1').value,
+        moonColor2: document.getElementById('moonColor2').value,
+        moonColor3: document.getElementById('moonColor3').value,
+        moonSeed: document.getElementById('moonSeed').value,
+        moonCraters: document.getElementById('moonCraters').value,
+        moonLocationSeed: document.getElementById('moonLocationSeed').value,
+        moonCraterSize: document.getElementById('moonCraterSize').value,
+        moonCraterDepth: document.getElementById('moonCraterDepth').value
+    };
+
+    const query = `INSERT INTO planet_configs (name, config, user_id) VALUES (
+        '${name}',
+        '${JSON.stringify(config)}',
+        '${user.id}'
+    )`;
+    
+    try {
+        let results = await fetch('/api/v1/sql/?' + new URLSearchParams({sql: query}));
+        let data = await results.json();
+        alert('Planet configuration saved successfully!');
+    } catch (error) {
+        console.error('Error saving planet config:', error);
+        alert('Error saving planet configuration');
+    }
+}
+
+async function loadPlanetConfig() {
+    const user = await window.websim.getUser();
+    if (!user) {
+        alert('Please log in to load planet configurations');
+        return;
+    }
+
+    const query = `SELECT id, name FROM planet_configs WHERE user_id = '${user.id}' ORDER BY created_at DESC`;
+    try {
+        let results = await fetch('/api/v1/sql/?' + new URLSearchParams({sql: query}));
+        let configs = await results.json();
+        
+        if (configs.length === 0) {
+            alert('No saved planet configurations found');
+            return;
+        }
+
+        const configList = configs.map(c => `${c.id}: ${c.name}`).join('\n');
+        const selectedId = prompt(`Enter the ID of the configuration to load:\n\n${configList}`);
+        
+        if (!selectedId) return;
+
+        const loadQuery = `SELECT config FROM planet_configs WHERE id = ${selectedId} AND user_id = '${user.id}'`;
+        results = await fetch('/api/v1/sql/?' + new URLSearchParams({sql: loadQuery}));
+        const [selectedConfig] = await results.json();
+        
+        if (!selectedConfig) {
+            alert('Configuration not found');
+            return;
+        }
+
+        const config = JSON.parse(selectedConfig.config);
+        
+        Object.entries(config).forEach(([key, value]) => {
+            const element = document.getElementById(key);
+            if (element) {
+                if (element.type === 'checkbox') {
+                    element.checked = value;
+                } else {
+                    element.value = value;
+                }
+            }
+        });
+
+        updatePlanet();
+        alert('Planet configuration loaded successfully!');
+    } catch (error) {
+        console.error('Error loading planet config:', error);
+        alert('Error loading planet configuration');
+    }
+}
+
+let createSimplexNoise = (seed) => {
+    const seedValue = seed || 0;
+    return new SimplexNoise(seedValue.toString());
+};
+
+function updateLightTint() {
+    lightTintColor = new THREE.Color(document.getElementById('lightTint').value);
+    lightTintIntensity = parseFloat(document.getElementById('lightTintIntensity').value);
+    document.getElementById('lightTintIntensityValue').textContent = lightTintIntensity.toFixed(2);
+    
+    const baseColor = new THREE.Color(1, 1, 1);
+    light.color.copy(baseColor.lerp(lightTintColor, lightTintIntensity));
+}
+
+function init() {
+    scene = new THREE.Scene();
+    camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    renderer = new THREE.WebGLRenderer();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.getElementById('canvas').appendChild(renderer.domElement);
+
+    camera.position.z = 5;
+
+    controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.enablePan = false;
+    controls.enableZoom = true;
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.05;
+    controls.rotateSpeed = 0.5;
+
+    light = new THREE.PointLight(0xffffff, 1, 100);
+    light.position.set(10, 10, 10);
+    light.castShadow = true; 
+    scene.add(light);
+    
+    updateLightTint(); 
+
+    simplex = createSimplexNoise(parseInt(document.getElementById('seed').value));
+    createStarBackground();
+    createPlanet();
+    animate();
+}
+
+// Add event listeners for the save/load buttons
+document.getElementById('savePlanet').addEventListener('click', savePlanetConfig);
+document.getElementById('loadPlanet').addEventListener('click', loadPlanetConfig);
+
+// Call createPlanetTable in init
+createPlanetTable();
+
+function createStarBackground() {
+    if (stars) scene.remove(stars);
+
+    const starCount = parseInt(document.getElementById('starCount').value);
+    const starSeed = parseInt(document.getElementById('starSeed').value);
+    const starsGeometry = new THREE.BufferGeometry();
+    const starsMaterial = new THREE.PointsMaterial({color: 0xFFFFFF, size: 0.05});
+
+    const starsVertices = [];
+    const starRandom = new Math.seedrandom(starSeed.toString());
+    for (let i = 0; i < starCount; i++) {
+        const x = (starRandom() - 0.5) * 100;
+        const y = (starRandom() - 0.5) * 100;
+        const z = (starRandom() - 0.5) * 100;
+        starsVertices.push(x, y, z);
+    }
+
+    starsGeometry.setAttribute('position', new THREE.Float32BufferAttribute(starsVertices, 3));
+    stars = new THREE.Points(starsGeometry, starsMaterial);
+    scene.add(stars);
+}
+
+function createMoon(size, distance, color1, color2, color3, roughness, seed, craterIntensity, flattening, craterSize, craterDepth) {
+    const moonGeometry = new THREE.SphereGeometry(size, 32, 32);
+    const moonMaterial = new THREE.MeshPhongMaterial({
+        vertexColors: true,
+        shininess: 5,
+        flatShading: true
+    });
+    const moon = new THREE.Mesh(moonGeometry, moonMaterial);
+    
+    const moonLocationSeed = parseInt(document.getElementById('moonLocationSeed').value);
+    const moonRandom = new Math.seedrandom((seed + moonLocationSeed).toString());
+    const angle = moonRandom() * Math.PI * 2;
+    moon.position.set(
+        Math.cos(angle) * distance,
+        (moonRandom() - 0.5) * distance * 0.3,
+        Math.sin(angle) * distance
+    );
+    
+    const moonSimplex = new SimplexNoise(seed.toString());
+    const craterSimplex = new SimplexNoise((seed + 1).toString());
+    const vertices = moon.geometry.attributes.position.array;
+    const colors = [];
+    
+    const roughnessMultiplier = 2.5; 
+    
+    for (let i = 0; i < vertices.length; i += 3) {
+        const x = vertices[i];
+        const y = vertices[i + 1];
+        const z = vertices[i + 2];
+
+        let noise = moonSimplex.noise3D(x * roughness * roughnessMultiplier, y * roughness * roughnessMultiplier, z * roughness * roughnessMultiplier);
+        
+        let craterNoise = craterSimplex.noise3D(x * roughness * 2 * craterSize, y * roughness * 2 * craterSize, z * roughness * 2 * craterSize);
+        craterNoise = Math.pow(Math.max(0, craterNoise), 3) * craterIntensity * craterDepth;
+        
+        noise = noise * (1 - flattening);
+        
+        const ratio = 1 + 0.5 * noise - craterNoise * 0.2;
+
+        vertices[i] = x * ratio;
+        vertices[i + 1] = y * ratio;
+        vertices[i + 2] = z * ratio;
+
+        const t = (noise + 1) / 2;
+        let color;
+        if (t < 0.33) {
+            color = new THREE.Color(color1).lerp(new THREE.Color(color2), t * 3);
+        } else if (t < 0.66) {
+            color = new THREE.Color(color2).lerp(new THREE.Color(color3), (t - 0.33) * 3);
+        } else {
+            color = new THREE.Color(color3);
+        }
+
+        colors.push(color.r, color.g, color.b);
+    }
+
+    moon.geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+    moon.geometry.attributes.position.needsUpdate = true;
+    moon.geometry.computeVertexNormals();
+    
+    return moon;
+}
+
+function updateMoons() {
+    moons.forEach(moon => scene.remove(moon));
+    moons = [];
+
+    const moonCount = parseInt(document.getElementById('moonCount').value);
+    const moonSize = parseFloat(document.getElementById('moonSize').value);
+    const moonDistance = parseFloat(document.getElementById('moonDistance').value);
+    const moonRotationSpeed = parseFloat(document.getElementById('moonRotationSpeed').value);
+    const moonOrbitSpeed = parseFloat(document.getElementById('moonOrbitSpeed').value);
+    const moonRoughness = parseFloat(document.getElementById('moonRoughness').value);
+    const moonFlattening = parseFloat(document.getElementById('moonFlattening').value);
+    const moonColor1 = document.getElementById('moonColor1').value;
+    const moonColor2 = document.getElementById('moonColor2').value;
+    const moonColor3 = document.getElementById('moonColor3').value;
+    const moonSeed = parseInt(document.getElementById('moonSeed').value);
+    const moonCraters = parseFloat(document.getElementById('moonCraters').value);
+    const moonLocationSeed = parseInt(document.getElementById('moonLocationSeed').value);
+    const moonCraterSize = parseFloat(document.getElementById('moonCraterSize').value);
+    const moonCraterDepth = parseFloat(document.getElementById('moonCraterDepth').value);
+    
+    document.getElementById('moonCountValue').textContent = moonCount;
+    document.getElementById('moonDistanceValue').textContent = moonDistance.toFixed(1);
+    document.getElementById('moonRotationSpeedValue').textContent = moonRotationSpeed.toFixed(3);
+    document.getElementById('moonOrbitSpeedValue').textContent = moonOrbitSpeed.toFixed(4);
+    document.getElementById('moonSizeValue').textContent = moonSize.toFixed(2);
+    document.getElementById('moonRoughnessValue').textContent = moonRoughness.toFixed(1);
+    document.getElementById('moonSeedValue').textContent = moonSeed;
+    document.getElementById('moonCratersValue').textContent = moonCraters.toFixed(2);
+    document.getElementById('moonFlatteningValue').textContent = moonFlattening.toFixed(2);
+    document.getElementById('moonLocationSeedValue').textContent = moonLocationSeed;
+    document.getElementById('moonCraterSizeValue').textContent = moonCraterSize.toFixed(1);
+    document.getElementById('moonCraterDepthValue').textContent = moonCraterDepth.toFixed(1);
+
+    for (let i = 0; i < moonCount; i++) {
+        const moon = createMoon(moonSize, moonDistance, moonColor1, moonColor2, moonColor3, moonRoughness, moonSeed + i, moonCraters, moonFlattening, moonCraterSize, moonCraterDepth);
+        moon.rotationSpeed = moonRotationSpeed;
+        moon.orbitSpeed = moonOrbitSpeed;
+        moon.orbitAngle = Math.random() * Math.PI * 2;
+        scene.add(moon);
+        moons.push(moon);
+    }
+}
+
+function createClouds() {
+    const disableClouds = document.getElementById('disableClouds').checked;
+    if (disableClouds) {
+        if (cloudSystem) scene.remove(cloudSystem);
+        return;
+    }
+
+    if (cloudSystem) scene.remove(cloudSystem);
+
+    const cloudCoverage = parseFloat(document.getElementById('cloudCoverage').value);
+    const cloudDistance = parseFloat(document.getElementById('cloudDistance').value);
+    const cloudColor = new THREE.Color(document.getElementById('cloudColor').value);
+    const cloudSeed = parseInt(document.getElementById('cloudSeed').value);
+    const planetSize = parseFloat(document.getElementById('size').value);
+
+    cloudSystem = new THREE.Group();
+
+    const cloudGeometry = new THREE.SphereGeometry(planetSize * (1 + cloudDistance), 32, 32);
+    const cloudMaterial = new THREE.MeshPhongMaterial({
+        color: cloudColor,
+        transparent: true,
+        opacity: 0.8,
+        side: THREE.DoubleSide
+    });
+
+    const cloudNoise = new SimplexNoise(cloudSeed.toString());
+    const cloudVertices = cloudGeometry.attributes.position.array;
+    const cloudColors = [];
+
+    for (let i = 0; i < cloudVertices.length; i += 3) {
+        const x = cloudVertices[i];
+        const y = cloudVertices[i + 1];
+        const z = cloudVertices[i + 2];
+
+        const noise = cloudNoise.noise3D(x * 2, y * 2, z * 2);
+        const opacity = Math.max(0, noise - (1 - cloudCoverage / 4));
+
+        cloudColors.push(cloudColor.r, cloudColor.g, cloudColor.b, opacity);
+    }
+
+    cloudGeometry.setAttribute('color', new THREE.Float32BufferAttribute(cloudColors, 4));
+    cloudMaterial.vertexColors = true;
+
+    const clouds = new THREE.Mesh(cloudGeometry, cloudMaterial);
+    cloudSystem.add(clouds);
+
+    scene.add(cloudSystem);
+}
+
+function createPlanet() {
+    const geometry = new THREE.SphereGeometry(1, 64, 64);
+    const material = new THREE.MeshPhongMaterial({
+        vertexColors: true,
+        shininess: 10,
+        flatShading: true
+    });
+
+    if (planet) scene.remove(planet);
+    if (ocean) scene.remove(ocean);
+    if (ringSystem) scene.remove(ringSystem);
+    if (cloudSystem) scene.remove(cloudSystem);
+    moons.forEach(moon => scene.remove(moon));
+    moons = [];
+
+    planet = new THREE.Mesh(geometry, material);
+    planet.castShadow = true; 
+    scene.add(planet);
+
+    simplex = createSimplexNoise(parseInt(document.getElementById('seed').value));
+
+    const size = parseFloat(document.getElementById('size').value);
+    const roughness = parseFloat(document.getElementById('roughness').value);
+    const flattening = parseFloat(document.getElementById('flattening').value);
+    const seaLevel = parseFloat(document.getElementById('seaLevel').value);
+
+    const adjustedSeaLevel = seaLevel * 0.2 - 0.1;
+
+    const seaTransparency = parseFloat(document.getElementById('seaTransparency').value);
+    const baseColor1 = new THREE.Color(document.getElementById('baseColor1').value);
+    const baseColor2 = new THREE.Color(document.getElementById('baseColor2').value);
+    const baseColor3 = new THREE.Color(document.getElementById('baseColor3').value);
+    const baseColor4 = new THREE.Color(document.getElementById('baseColor4').value);
+
+    const vertices = planet.geometry.attributes.position.array;
+    const colors = [];
+    let minHeight = Infinity;
+    let maxHeight = -Infinity;
+
+    for (let i = 0; i < vertices.length; i += 3) {
+        const x = vertices[i];
+        const y = vertices[i + 1];
+        const z = vertices[i + 2];
+
+        let noise = simplex.noise3D(x * roughness, y * roughness, z * roughness);
+        noise = noise * (1 - flattening);
+        const ratio = 1 + 0.2 * noise;
+
+        const height = ratio - 1;
+        minHeight = Math.min(minHeight, height);
+        maxHeight = Math.max(maxHeight, height);
+    }
+
+    for (let i = 0; i < vertices.length; i += 3) {
+        const x = vertices[i];
+        const y = vertices[i + 1];
+        const z = vertices[i + 2];
+
+        let noise = simplex.noise3D(x * roughness, y * roughness, z * roughness);
+        noise = noise * (1 - flattening);
+        const ratio = 1 + 0.2 * noise;
+
+        vertices[i] = x * ratio * size;
+        vertices[i + 1] = y * ratio * size;
+        vertices[i + 2] = z * ratio * size;
+
+        const height = ratio - 1;
+        const normalizedHeight = (height - minHeight) / (maxHeight - minHeight);
+        let color;
+        if (normalizedHeight < 0.25) {
+            color = baseColor1.clone().lerp(baseColor2, normalizedHeight * 4);
+        } else if (normalizedHeight < 0.5) {
+            color = baseColor2.clone().lerp(baseColor3, (normalizedHeight - 0.25) * 4);
+        } else if (normalizedHeight < 0.75) {
+            color = baseColor3.clone().lerp(baseColor4, (normalizedHeight - 0.5) * 4);
+        } else {
+            color = baseColor4;
+        }
+
+        colors.push(color.r, color.g, color.b);
+    }
+
+    planet.geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+    planet.geometry.attributes.position.needsUpdate = true;
+    planet.geometry.computeVertexNormals();
+
+    const disableSea = document.getElementById('disableSea').checked;
+    if (!disableSea) {
+        const oceanGeometry = new THREE.SphereGeometry(size * (1 + adjustedSeaLevel), 64, 64);
+        const seaColor = new THREE.Color(document.getElementById('seaColor').value);
+        const seaGlowEnabled = document.getElementById('seaGlow').checked;
+        const seaGlowIntensity = parseFloat(document.getElementById('seaGlowIntensity').value);
+        
+        const oceanMaterial = new THREE.MeshPhongMaterial({
+            color: seaColor,
+            transparent: true,
+            opacity: seaTransparency,
+            shininess: 100,
+            emissive: seaGlowEnabled ? seaColor : new THREE.Color(0x000000),
+            emissiveIntensity: seaGlowEnabled ? seaGlowIntensity : 0
+        });
+        ocean = new THREE.Mesh(oceanGeometry, oceanMaterial);
+        scene.add(ocean);
+    }
+
+    createRingSystem();
+    createClouds();
+    updateMoons();
+}
+
+function createRingSystem() {
+    const disableRing = document.getElementById('disableRing').checked;
+    if (disableRing) {
+        if (ringSystem) scene.remove(ringSystem);
+        return;
+    }
+
+    const ringInnerRadius = parseFloat(document.getElementById('ringInnerRadius').value);
+    const ringOuterRadius = parseFloat(document.getElementById('ringOuterRadius').value);
+    const ringColor1 = new THREE.Color(document.getElementById('ringColor1').value);
+    const ringColor2 = new THREE.Color(document.getElementById('ringColor2').value);
+    const ringColor3 = new THREE.Color(document.getElementById('ringColor3').value);
+    const ringAxisTilt = parseFloat(document.getElementById('ringAxisTilt').value);
+
+    ringSystem = new THREE.Group();
+
+    const ringGeometry = new THREE.RingGeometry(ringInnerRadius, ringOuterRadius, 64);
+    const ringMaterial = new THREE.ShaderMaterial({
+        uniforms: {
+            color1: { value: ringColor1 },
+            color2: { value: ringColor2 },
+            color3: { value: ringColor3 },
+            innerRadius: { value: ringInnerRadius },
+            outerRadius: { value: ringOuterRadius },
+            lightPosition: { value: new THREE.Vector3(10, 10, 10) },
+            planetPosition: { value: new THREE.Vector3(0, 0, 0) },
+            planetRadius: { value: parseFloat(document.getElementById('size').value) }
+        },
+        vertexShader: `
+            varying vec2 vUv;
+            varying vec3 vNormal;
+            varying vec3 vViewPosition;
+            varying vec3 vWorldPosition;
+
+            void main() {
+                vUv = uv;
+                vec4 worldPosition = modelMatrix * vec4(position, 1.0);
+                vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+                gl_Position = projectionMatrix * mvPosition;
+                vViewPosition = -mvPosition.xyz;
+                vNormal = normalize(normalMatrix * normal);
+                vWorldPosition = worldPosition.xyz;
+            }
+        `,
+        fragmentShader: `
+            uniform vec3 color1;
+            uniform vec3 color2;
+            uniform vec3 color3;
+            uniform float innerRadius;
+            uniform float outerRadius;
+            uniform vec3 lightPosition;
+            uniform vec3 planetPosition;
+            uniform float planetRadius;
+            
+            varying vec2 vUv;
+            varying vec3 vNormal;
+            varying vec3 vViewPosition;
+            varying vec3 vWorldPosition;
+
+            float calculateShadow(vec3 worldPos) {
+                vec3 lightDir = normalize(lightPosition - worldPos);
+                vec3 planetToPos = worldPos - planetPosition;
+                float distToPlanetCenter = length(planetToPos);
+                
+                float a = dot(lightDir, lightDir);
+                float b = 2.0 * dot(lightDir, -planetToPos);
+                float c = dot(planetToPos, planetToPos) - planetRadius * planetRadius;
+                float discriminant = b * b - 4.0 * a * c;
+                
+                if (discriminant >= 0.0) {
+                    float t1 = (-b - sqrt(discriminant)) / (2.0 * a);
+                    float t2 = (-b + sqrt(discriminant)) / (2.0 * a);
+                    if (t1 >= 0.0 || t2 >= 0.0) {
+                        return 0.0; 
+                    }
+                }
+                return 1.0; 
+            }
+
+            void main() {
+                vec2 center = vec2(0.5, 0.5);
+                float dist = distance(vUv, center) * 2.0;
+                float t1 = smoothstep(0.0, 0.5, dist);
+                float t2 = smoothstep(0.5, 1.0, dist);
+                vec3 color = mix(color1, color2, t1);
+                color = mix(color, color3, t2);
+
+                vec3 normal = normalize(vNormal);
+                vec3 lightDir = normalize(lightPosition - vWorldPosition);
+                float diffuse = max(dot(normal, lightDir), 0.0);
+                vec3 viewDir = normalize(vViewPosition);
+                vec3 reflectDir = reflect(-lightDir, normal);
+                float specular = pow(max(dot(viewDir, reflectDir), 0.0), 32.0);
+
+                float shadow = calculateShadow(vWorldPosition);
+                vec3 lighting = vec3(0.3) + shadow * (diffuse * vec3(0.7) + specular * vec3(0.5));
+                gl_FragColor = vec4(color * lighting, 0.7);
+            }
+        `,
+        side: THREE.DoubleSide,
+        transparent: true
+    });
+    const ring = new THREE.Mesh(ringGeometry, ringMaterial);
+    ring.rotation.x = Math.PI / 2;
+    ringSystem.add(ring);
+
+    ringSystem.rotation.x = THREE.MathUtils.degToRad(ringAxisTilt);
+    scene.add(ringSystem);
+
+    ringMaterial.uniforms.lightPosition.value.copy(light.position);
+}
+
+function animate() {
+    requestAnimationFrame(animate);
+    
+    controls.update();
+
+    planet.rotation.y += rotationSpeed;
+    if (ocean) ocean.rotation.y += rotationSpeed;
+    if (ringSystem) ringSystem.rotation.y += rotationSpeed;
+    if (cloudSystem) cloudSystem.rotation.y += rotationSpeed;
+    stars.rotation.y -= rotationSpeed * 0.1; 
+
+    const moonDistance = parseFloat(document.getElementById('moonDistance').value);
+    moons.forEach(moon => {
+        moon.rotation.y += moon.rotationSpeed;
+        moon.orbitAngle += moon.orbitSpeed;
+        moon.position.x = Math.cos(moon.orbitAngle) * moonDistance;
+        moon.position.z = Math.sin(moon.orbitAngle) * moonDistance;
+    });
+
+    if (ringSystem) {
+        ringSystem.children[0].material.uniforms.lightPosition.value.copy(light.position);
+        ringSystem.children[0].material.uniforms.planetPosition.value.copy(planet.position);
+        ringSystem.children[0].material.uniforms.planetRadius.value = planet.scale.x;
+    }
+    renderer.render(scene, camera);
+}
+
+function randomizePlanetSettings() {
+    document.getElementById('size').value = (Math.random() * 1.5 + 0.5).toFixed(1);
+    document.getElementById('roughness').value = (Math.random() * 3).toFixed(1);
+    document.getElementById('flattening').value = Math.random().toFixed(2);
+    document.getElementById('seaLevel').value = Math.random().toFixed(3);
+    document.getElementById('seaTransparency').value = Math.random().toFixed(2);
+    document.getElementById('seaGlowIntensity').value = (Math.random() * 3).toFixed(1);
+    document.getElementById('ringInnerRadius').value = (Math.random() * 1.9 + 1.1).toFixed(1);
+    document.getElementById('ringOuterRadius').value = (Math.random() * 2.8 + 1.2).toFixed(1);
+    document.getElementById('ringAxisTilt').value = Math.floor(Math.random() * 721 - 360);
+    document.getElementById('cloudCoverage').value = (Math.random() * 4).toFixed(2);
+    document.getElementById('cloudDistance').value = (Math.random() * 0.19 + 0.01).toFixed(2);
+    document.getElementById('rotationSpeed').value = (Math.random() * 0.05).toFixed(3);
+    document.getElementById('moonCount').value = Math.floor(Math.random() * 6);
+    document.getElementById('moonSize').value = (Math.random() * 0.4 + 0.1).toFixed(2);
+    document.getElementById('moonDistance').value = (Math.random() * 2.5 + 1.5).toFixed(1);
+    document.getElementById('moonRotationSpeed').value = (Math.random() * 0.05).toFixed(3);
+    document.getElementById('moonOrbitSpeed').value = (Math.random() * 0.01).toFixed(4);
+    document.getElementById('moonRoughness').value = (Math.random() * 3).toFixed(1);
+    document.getElementById('moonFlattening').value = Math.random().toFixed(2);
+    document.getElementById('moonColor1').value = '#' + Math.floor(Math.random()*16777215).toString(16);
+    document.getElementById('moonColor2').value = '#' + Math.floor(Math.random()*16777215).toString(16);
+    document.getElementById('moonColor3').value = '#' + Math.floor(Math.random()*16777215).toString(16);
+    document.getElementById('moonSeed').value = Math.floor(Math.random() * 10000000);
+    document.getElementById('moonCraters').value = (Math.random()).toFixed(2);
+    document.getElementById('moonLocationSeed').value = Math.floor(Math.random() * 10000000);
+    document.getElementById('moonCraterSize').value = (Math.random() * 2.9 + 0.1).toFixed(1);
+    document.getElementById('moonCraterDepth').value = (Math.random() * 2.9 + 0.1).toFixed(1);
+
+    document.getElementById('baseColor1').value = '#' + Math.floor(Math.random()*16777215).toString(16);
+    document.getElementById('baseColor2').value = '#' + Math.floor(Math.random()*16777215).toString(16);
+    document.getElementById('baseColor3').value = '#' + Math.floor(Math.random()*16777215).toString(16);
+    document.getElementById('baseColor4').value = '#' + Math.floor(Math.random()*16777215).toString(16);
+    document.getElementById('seaColor').value = '#' + Math.floor(Math.random()*16777215).toString(16);
+    document.getElementById('ringColor1').value = '#' + Math.floor(Math.random()*16777215).toString(16);
+    document.getElementById('ringColor2').value = '#' + Math.floor(Math.random()*16777215).toString(16);
+    document.getElementById('ringColor3').value = '#' + Math.floor(Math.random()*16777215).toString(16);
+    document.getElementById('cloudColor').value = '#' + Math.floor(Math.random()*16777215).toString(16);
+
+    document.getElementById('seed').value = Math.floor(Math.random() * 10000000);
+    document.getElementById('starSeed').value = Math.floor(Math.random() * 10000000);
+    document.getElementById('cloudSeed').value = Math.floor(Math.random() * 10000000);
+  
+    document.getElementById('seaGlow').checked = Math.random() < 0.5;
+    document.getElementById('disableSea').checked = Math.random() < 0.2;
+    document.getElementById('disableRing').checked = Math.random() < 0.2;
+    document.getElementById('disableClouds').checked = Math.random() < 0.2;
+
+    document.getElementById('lightTint').value = '#' + Math.floor(Math.random()*16777215).toString(16);
+    document.getElementById('lightTintIntensity').value = Math.random().toFixed(2);
+}
+
+function updateRotationSpeed() {
+    rotationSpeed = parseFloat(document.getElementById('rotationSpeed').value);
+    document.getElementById('rotationSpeedValue').textContent = rotationSpeed.toFixed(3);
+}
+
+function updatePlanet() {
+    createStarBackground();
+    createPlanet();
+    
+    const elements = [
+        'size', 'roughness', 'flattening', 'seaLevel', 'seaTransparency', 'seaGlowIntensity',
+        'ringInnerRadius', 'ringOuterRadius', 'ringAxisTilt', 'starCount', 'starSeed',
+        'cloudCoverage', 'cloudDistance', 'cloudSeed', 'seed', 'rotationSpeed',
+        'moonCount', 'moonSize', 'moonDistance', 'moonRotationSpeed', 'moonOrbitSpeed',
+        'moonRoughness', 'moonFlattening', 'moonColor1', 'moonColor2', 'moonColor3', 'moonSeed', 'moonCraters',
+        'moonCraterSize', 'moonCraterDepth'
+    ];
+    
+    elements.forEach(id => {
+        const element = document.getElementById(id);
+        const valueElement = document.getElementById(id + 'Value');
+        if (valueElement) {
+            valueElement.textContent = parseFloat(element.value).toFixed(
+                id === 'seaLevel' || id === 'rotationSpeed' || id.includes('moonSeed') || id === 'moonCraters' || id.includes('Crater') ? 3 : 
+                id === 'cloudCoverage' || id === 'cloudDistance' ? 2 : 
+                id.includes('Count') || id === 'ringAxisTilt' || id.includes('moon') ? 0 : 1
+            );
+        }
+    });
+
+    updateLightTint();
+    updateRotationSpeed();
+}
+
+window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    controls.update();
+});
+
+document.getElementById('generate').addEventListener('click', () => {
+    randomizePlanetSettings();
+    updatePlanet();
+});
+document.getElementById('size').addEventListener('input', updatePlanet);
+document.getElementById('roughness').addEventListener('input', updatePlanet);
+document.getElementById('flattening').addEventListener('input', updatePlanet);
+document.getElementById('baseColor1').addEventListener('input', updatePlanet);
+document.getElementById('baseColor2').addEventListener('input', updatePlanet);
+document.getElementById('baseColor3').addEventListener('input', updatePlanet);
+document.getElementById('baseColor4').addEventListener('input', updatePlanet);
+document.getElementById('seaLevel').addEventListener('input', updatePlanet);
+document.getElementById('seaColor').addEventListener('input', updatePlanet);
+document.getElementById('seaTransparency').addEventListener('input', updatePlanet);
+document.getElementById('seaGlow').addEventListener('change', updatePlanet);
+document.getElementById('seaGlowIntensity').addEventListener('input', updatePlanet);
+document.getElementById('ringInnerRadius').addEventListener('input', updatePlanet);
+document.getElementById('ringOuterRadius').addEventListener('input', updatePlanet);
+document.getElementById('ringColor1').addEventListener('input', updatePlanet);
+document.getElementById('ringColor2').addEventListener('input', updatePlanet);
+document.getElementById('ringColor3').addEventListener('input', updatePlanet);
+document.getElementById('ringAxisTilt').addEventListener('input', updatePlanet);
+document.getElementById('starCount').addEventListener('input', updatePlanet);
+document.getElementById('starSeed').addEventListener('input', updatePlanet);
+document.getElementById('disableSea').addEventListener('change', updatePlanet);
+document.getElementById('disableRing').addEventListener('change', updatePlanet);
+document.getElementById('cloudCoverage').addEventListener('input', updatePlanet);
+document.getElementById('cloudDistance').addEventListener('input', updatePlanet);
+document.getElementById('cloudColor').addEventListener('input', updatePlanet);
+document.getElementById('cloudSeed').addEventListener('input', updatePlanet);
+document.getElementById('disableClouds').addEventListener('change', updatePlanet);
+document.getElementById('seed').addEventListener('input', updatePlanet);
+document.getElementById('lightTint').addEventListener('input', updateLightTint);
+document.getElementById('lightTintIntensity').addEventListener('input', updateLightTint);
+document.getElementById('randomSeed').addEventListener('click', () => {
+    const randomSeed = Math.floor(Math.random() * 10000000);
+    document.getElementById('seed').value = randomSeed;
+    updatePlanet();
+});
+document.getElementById('rotationSpeed').addEventListener('input', updateRotationSpeed);
+document.getElementById('moonCount').addEventListener('input', updateMoons);
+document.getElementById('moonSize').addEventListener('input', updateMoons);
+document.getElementById('moonDistance').addEventListener('input', updateMoons);
+document.getElementById('moonRotationSpeed').addEventListener('input', updateMoons);
+document.getElementById('moonOrbitSpeed').addEventListener('input', updateMoons);
+document.getElementById('moonRoughness').addEventListener('input', updateMoons);
+document.getElementById('moonFlattening').addEventListener('input', updateMoons);
+document.getElementById('moonColor1').addEventListener('input', updateMoons);
+document.getElementById('moonColor2').addEventListener('input', updateMoons);
+document.getElementById('moonColor3').addEventListener('input', updateMoons);
+document.getElementById('moonSeed').addEventListener('input', updateMoons);
+document.getElementById('moonCraters').addEventListener('input', updateMoons);
+document.getElementById('moonLocationSeed').addEventListener('input', updateMoons);
+document.getElementById('moonCraterSize').addEventListener('input', updateMoons);
+document.getElementById('moonCraterDepth').addEventListener('input', updateMoons);
+document.getElementById('randomizeMoonLocationSeed').addEventListener('click', () => {
+    document.getElementById('moonLocationSeed').value = Math.floor(Math.random() * 10000000);
+    updateMoons();
+});
+
+init();
+</script>
+
+</body></html>
