@@ -1,0 +1,615 @@
+<html><head><base href="https://minecraft.fun">
+<meta charset="UTF-8">
+<title>Minecraft World Explorer</title>
+<style>
+    body { margin: 0; overflow: hidden; font-family: Arial, sans-serif; }
+    canvas { width: 100%; height: 100%; }
+    #hud, #worldTypeMenu { position: absolute; color: white; text-shadow: 1px 1px 2px black; }
+    #hud { top: 10px; left: 10px; }
+    #worldTypeMenu { top: 10px; right: 10px; background-color: rgba(0, 0, 0, 0.7); padding: 10px; border-radius: 5px; }
+    #crosshair { position: absolute; top: 50%; left: 50%; width: 20px; height: 20px; transform: translate(-50%, -50%); pointer-events: none; }
+    #crosshair::before, #crosshair::after { content: ""; position: absolute; background-color: white; }
+    #crosshair::before { width: 2px; height: 20px; left: 9px; }
+    #crosshair::after { width: 20px; height: 2px; top: 9px; }
+    #inventory { position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%); display: flex; background-color: rgba(0, 0, 0, 0.5); padding: 5px; border-radius: 5px; }
+    .inventory-slot { width: 50px; height: 50px; background-color: rgba(255, 255, 255, 0.2); margin: 0 5px; display: flex; justify-content: center; align-items: center; border: 2px solid #fff; border-radius: 5px; }
+    .inventory-slot img { max-width: 80%; max-height: 80%; }
+    .inventory-slot.selected { border-color: #ffff00; }
+    #worldSizeSlider, #timeScaleSlider { width: 100%; }
+    #worldSizeLabel, #timeScaleLabel { color: white; text-align: center; margin-top: 5px; }
+</style>
+</head>
+<body>
+<canvas id="gameCanvas"></canvas>
+<div id="hud">
+    <p>Minecraft World Explorer</p>
+    <p>Use WASD to move, Space/Shift for up/down, Mouse to look around</p>
+    <p>Left click: Remove block, Right click: Place selected block</p>
+    <p>Use number keys or mouse wheel to select inventory item</p>
+</div>
+<div id="crosshair"></div>
+<div id="worldTypeMenu">
+    <select id="worldTypeSelect">
+        <option value="natural">Natural</option>
+        <option value="flatgrass">Flatgrass</option>
+        <option value="cavegame">Cavegame</option>
+        <option value="heaven">Heaven</option>
+        <option value="matrix">Matrix</option>
+        <option value="multiverse">Multiverse</option>
+    </select>
+    <input type="range" id="worldSizeSlider" min="50" max="200" value="100">
+    <div id="worldSizeLabel">World Size: 100</div>
+    <input type="range" id="timeScaleSlider" min="0" max="100" value="50">
+    <div id="timeScaleLabel">Time Scale: 1x</div>
+    <button id="genWorldBtn">Generate New World</button>
+</div>
+<div id="inventory">
+    <div class="inventory-slot selected"><img src="https://i.imgur.com/DqcP8Qk.png" alt="Stone"></div>
+    <div class="inventory-slot"><img src="https://i.imgur.com/rcQSy93.png" alt="Grass"></div>
+    <div class="inventory-slot"><img src="https://i.imgur.com/CcJfu3E.png" alt="Cobblestone"></div>
+    <div class="inventory-slot"><img src="https://huggingface.co/TechieCrow/minecraft-log-textures/resolve/main/sample_images/minecraft_log_side_textures_(1).jpg" alt="Log"></div>
+    <div class="inventory-slot"><img src="https://media2.cgtrader.com/variants/5b3PHGc216p5qTqXfEmVp2jW/40073f86dea5cc27b3e46b911284f10ff35833da74046da55f55f229c8993de7/Leaves.png" alt="Leaves"></div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/simplex-noise/2.4.0/simplex-noise.min.js"></script>
+<script>
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+const renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('gameCanvas'), alpha: true });
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+const cubeSize = 1;
+const instancedGeometry = new THREE.BoxGeometry(cubeSize, cubeSize, cubeSize);
+
+const textureLoader = new THREE.TextureLoader();
+const textures = {
+    stone: textureLoader.load('https://i.imgur.com/DqcP8Qk.png'),
+    grass: textureLoader.load('https://i.imgur.com/rcQSy93.png'),
+    cobblestone: textureLoader.load('https://i.imgur.com/CcJfu3E.png'),
+    logSide: textureLoader.load('https://huggingface.co/TechieCrow/minecraft-log-textures/resolve/main/sample_images/minecraft_log_side_textures_(1).jpg'),
+    logTop: textureLoader.load('https://huggingface.co/TechieCrow/minecraft-log-textures/resolve/main/sample_images/minecraft_log_top_textures_(5).jpg'),
+    leaves: textureLoader.load('https://media2.cgtrader.com/variants/5b3PHGc216p5qTqXfEmVp2jW/40073f86dea5cc27b3e46b911284f10ff35833da74046da55f55f229c8993de7/Leaves.png')
+};
+
+Object.values(textures).forEach(texture => {
+    texture.magFilter = THREE.NearestFilter;
+    texture.minFilter = THREE.NearestFilter;
+});
+
+const materials = {
+    stone: new THREE.MeshLambertMaterial({ map: textures.stone }),
+    grass: new THREE.MeshLambertMaterial({ map: textures.grass }),
+    cobblestone: new THREE.MeshLambertMaterial({ map: textures.cobblestone }),
+    log: [
+        new THREE.MeshLambertMaterial({ map: textures.logSide }),
+        new THREE.MeshLambertMaterial({ map: textures.logSide }),
+        new THREE.MeshLambertMaterial({ map: textures.logTop }),
+        new THREE.MeshLambertMaterial({ map: textures.logTop }),
+        new THREE.MeshLambertMaterial({ map: textures.logSide }),
+        new THREE.MeshLambertMaterial({ map: textures.logSide })
+    ],
+    leaves: new THREE.MeshLambertMaterial({ map: textures.leaves, transparent: true, alphaTest: 0.5 })
+};
+
+Object.values(materials).flat().forEach(material => material.side = THREE.FrontSide);
+
+const ambientLight = new THREE.AmbientLight(0xffffff, 0.2);
+scene.add(ambientLight);
+
+const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+directionalLight.position.set(100, 100, 100);
+directionalLight.castShadow = true;
+directionalLight.shadow.mapSize.width = 2048;
+directionalLight.shadow.mapSize.height = 2048;
+directionalLight.shadow.camera.near = 0.5;
+directionalLight.shadow.camera.far = 500;
+directionalLight.shadow.camera.left = -100;
+directionalLight.shadow.camera.right = 100;
+directionalLight.shadow.camera.top = 100;
+directionalLight.shadow.camera.bottom = -100;
+scene.add(directionalLight);
+
+camera.position.set(0, 5, 0);
+
+let blocks = [];
+let instancedMeshes = {};
+
+const blockTypes = [materials.stone, materials.grass, materials.cobblestone, materials.log, materials.leaves];
+let selectedBlockIndex = 0;
+
+const skyShader = {
+    vertexShader: `
+        varying vec3 vWorldPosition;
+        void main() {
+            vec4 worldPosition = modelMatrix * vec4(position, 1.0);
+            vWorldPosition = worldPosition.xyz;
+            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+        }`,
+    fragmentShader: `
+        uniform vec3 topColor;
+        uniform vec3 bottomColor;
+        uniform float offset;
+        uniform float exponent;
+        uniform vec3 sunPosition;
+        uniform vec3 moonPosition;
+        varying vec3 vWorldPosition;
+        
+        void main() {
+            float h = normalize(vWorldPosition + offset).y;
+            vec3 sky = mix(bottomColor, topColor, max(pow(max(h, 0.0), exponent), 0.0));
+            
+            vec3 sunDir = normalize(sunPosition);
+            vec3 viewDir = normalize(vWorldPosition);
+            float sunSize = 0.03;
+            float sunIntensity = 1.0 - smoothstep(sunSize, sunSize * 1.2, distance(viewDir, sunDir));
+            vec3 sunColor = vec3(1.0, 0.9, 0.7);
+            
+            vec3 moonDir = normalize(moonPosition);
+            float moonSize = 0.02;
+            float moonIntensity = 1.0 - smoothstep(moonSize, moonSize * 1.2, distance(viewDir, moonDir));
+            vec3 moonColor = vec3(0.9, 0.9, 1.0);
+            
+            float sunFade = smoothstep(-0.2, 0.2, sunPosition.y / length(sunPosition));
+            float moonFade = smoothstep(-0.2, 0.2, moonPosition.y / length(moonPosition));
+            
+            sky = mix(sky, sunColor, sunIntensity * sunFade);
+            sky = mix(sky, moonColor, moonIntensity * moonFade);
+            
+            gl_FragColor = vec4(sky, 1.0);
+        }`
+};
+
+const uniforms = {
+    topColor: { value: new THREE.Color(0x0077ff) },
+    bottomColor: { value: new THREE.Color(0x89CFF0) },
+    offset: { value: 33 },
+    exponent: { value: 0.6 },
+    sunPosition: { value: new THREE.Vector3() },
+    moonPosition: { value: new THREE.Vector3() }
+};
+
+const skyMaterial = new THREE.ShaderMaterial({
+    uniforms: uniforms,
+    vertexShader: skyShader.vertexShader,
+    fragmentShader: skyShader.fragmentShader,
+    side: THREE.BackSide
+});
+
+const skyGeometry = new THREE.SphereGeometry(400, 32, 15);
+const skyMesh = new THREE.Mesh(skyGeometry, skyMaterial);
+scene.add(skyMesh);
+
+const cloudGeometry = new THREE.BoxGeometry(8, 2, 8);
+const cloudMaterial = new THREE.MeshLambertMaterial({ color: 0xffffff, transparent: true, opacity: 0.7 });
+const clouds = [];
+
+function createCloud(x, y, z) {
+    const cloud = new THREE.Mesh(cloudGeometry, cloudMaterial);
+    cloud.position.set(x, y, z);
+    cloud.castShadow = false;
+    scene.add(cloud);
+    clouds.push(cloud);
+}
+
+let timeScale = 1;
+let worldSize = 100;
+
+function generateClouds(worldSize) {
+    clouds.forEach(cloud => scene.remove(cloud));
+    clouds.length = 0;
+    const cloudCount = Math.floor(worldSize / 5);
+    const cloudHeight = 40;
+    const cloudSpread = worldSize * 2;
+    for (let i = 0; i < cloudCount; i++) {
+        createCloud(Math.random() * cloudSpread - cloudSpread / 2, cloudHeight + Math.random() * 10, Math.random() * cloudSpread - cloudSpread / 2);
+    }
+}
+
+function updateClouds(deltaTime, sunPosition) {
+    const sunHeight = sunPosition.y / 200;
+    const cloudOpacity = Math.max(0, Math.min(0.7, sunHeight));
+    clouds.forEach(cloud => {
+        cloud.position.x += 0.02 * timeScale * deltaTime;
+        if (cloud.position.x > worldSize) cloud.position.x = -worldSize;
+        cloud.material.opacity = cloudOpacity;
+    });
+}
+
+function updateDayNightCycle(deltaTime) {
+    const time = Date.now() * 0.0001 * timeScale;
+    const radius = 200;
+    const sunPosition = new THREE.Vector3(Math.cos(time) * radius, Math.sin(time) * radius, 0);
+    const moonPosition = new THREE.Vector3(Math.cos(time + Math.PI) * radius, Math.sin(time + Math.PI) * radius, 0);
+    uniforms.sunPosition.value.copy(sunPosition);
+    uniforms.moonPosition.value.copy(moonPosition);
+
+    const dayTopColor = new THREE.Color(0x0077ff);
+    const dayBottomColor = new THREE.Color(0x89CFF0);
+    const nightTopColor = new THREE.Color(0x000033);
+    const nightBottomColor = new THREE.Color(0x000011);
+
+    const t = (sunPosition.y + radius) / (2 * radius);
+    uniforms.topColor.value.lerpColors(nightTopColor, dayTopColor, t);
+    uniforms.bottomColor.value.lerpColors(nightBottomColor, dayBottomColor, t);
+
+    directionalLight.position.copy(sunPosition);
+    directionalLight.intensity = Math.max(0, Math.min(1, (sunPosition.y + 50) / 100));
+    ambientLight.intensity = 0.2 + 0.3 * Math.max(0, Math.min(1, (sunPosition.y + 50) / 100));
+    if (moonPosition.y > 0) ambientLight.intensity += 0.1 * (moonPosition.y / radius);
+
+    updateClouds(deltaTime, sunPosition);
+}
+
+function createWorld(type, size) {
+    worldSize = size;
+    blocks = [];
+    const simplex = new SimplexNoise();
+
+    switch (type) {
+        case 'natural':
+            generateNaturalTerrain(simplex);
+            break;
+        case 'flatgrass':
+            generateFlatgrassTerrain();
+            break;
+        case 'cavegame':
+            generateCaveTerrain(simplex);
+            break;
+        case 'heaven':
+            generateHeavenTerrain(simplex);
+            break;
+        case 'matrix':
+            generateMatrixTerrain();
+            break;
+        case 'multiverse':
+            generateMultiverseTerrain(simplex);
+            break;
+    }
+    generateClouds(worldSize);
+    updateInstancedMeshes();
+}
+
+function generateNaturalTerrain(simplex) {
+    const heightMap = Array(2 * worldSize + 1).fill().map(() => Array(2 * worldSize + 1).fill(0));
+    for (let x = -worldSize; x <= worldSize; x++) {
+        for (let z = -worldSize; z <= worldSize; z++) {
+            let height = 0;
+            let frequency = 0.01;
+            let amplitude = 10;
+            for (let i = 0; i < 4; i++) {
+                height += simplex.noise2D(x * frequency, z * frequency) * amplitude;
+                frequency *= 2;
+                amplitude *= 0.5;
+            }
+            heightMap[x + worldSize][z + worldSize] = Math.round(height);
+            blocks.push({ x, y: Math.round(height), z, material: materials.grass });
+            for (let y = Math.round(height) - 1; y > Math.round(height) - 5; y--) {
+                blocks.push({ x, y, z, material: materials.stone });
+            }
+            if (Math.random() < 0.02) {
+                const blockUnder = blocks.find(b => b.x === x && b.y === Math.round(height) && b.z === z && b.material === materials.grass);
+                if (blockUnder) {
+                    generateTree(x, Math.round(height), z);
+                }
+            }
+        }
+    }
+    camera.position.set(0, Math.max(...heightMap.flat()) + 2, 0);
+}
+
+function generateFlatgrassTerrain() {
+    for (let x = -worldSize; x <= worldSize; x++) {
+        for (let z = -worldSize; z <= worldSize; z++) {
+            blocks.push({ x, y: 0, z, material: materials.grass });
+            blocks.push({ x, y: -1, z, material: materials.stone });
+        }
+    }
+    camera.position.set(0, 2, 0);
+}
+
+function generateCaveTerrain(simplex) {
+    for (let x = -worldSize; x <= worldSize; x++) {
+        for (let z = -worldSize; z <= worldSize; z++) {
+            const baseHeight = 10;
+            const noise = simplex.noise2D(x * 0.1, z * 0.1) * 5;
+            const height = Math.round(baseHeight + noise);
+            for (let y = 0; y <= height; y++) {
+                blocks.push({ x, y, z, material: y === height ? materials.cobblestone : materials.stone });
+            }
+        }
+    }
+    camera.position.set(0, 15, 0);
+}
+
+function generateHeavenTerrain(simplex) {
+    for (let x = -worldSize; x <= worldSize; x++) {
+        for (let z = -worldSize; z <= worldSize; z++) {
+            let islandNoise = 0;
+            let frequency = 0.01;
+            let amplitude = 1;
+            for (let i = 0; i < 4; i++) {
+                islandNoise += simplex.noise2D(x * frequency, z * frequency) * amplitude;
+                frequency *= 2;
+                amplitude *= 0.5;
+            }
+            islandNoise = (islandNoise + 1) / 2;
+            if (islandNoise > 0.6) {
+                const islandHeight = Math.floor((islandNoise - 0.6) * 50) + 30;
+                for (let y = 0; y < islandHeight; y++) {
+                    const taperNoise = simplex.noise3D(x * 0.1, y * 0.1, z * 0.1);
+                    const taperThreshold = 1 - (y / islandHeight);
+                    if (taperNoise > taperThreshold) {
+                        blocks.push({ x, y, z, material: y === islandHeight - 1 ? materials.grass : materials.stone });
+                    }
+                }
+                if (Math.random() < 0.1) {
+                    const blockUnder = blocks.find(b => b.x === x && b.y === islandHeight - 1 && b.z === z && b.material === materials.grass);
+                    if (blockUnder) {
+                        generateTree(x, islandHeight - 1, z);
+                    }
+                }
+            }
+        }
+    }
+    camera.position.set(0, 50, 0);
+}
+
+function generateMatrixTerrain() {
+    const spacing = 3;
+    for (let x = -worldSize; x <= worldSize; x += spacing) {
+        for (let y = -worldSize; y <= worldSize; y += spacing) {
+            for (let z = -worldSize; z <= worldSize; z += spacing) {
+                const randomMaterial = blockTypes[Math.floor(Math.random() * blockTypes.length)];
+                blocks.push({ x, y, z, material: randomMaterial });
+            }
+        }
+    }
+    camera.position.set(0, 0, worldSize + 10);
+}
+
+function generateMultiverseTerrain(simplex) {
+    // Generate Cavegame at the bottom
+    for (let x = -worldSize; x <= worldSize; x++) {
+        for (let z = -worldSize; z <= worldSize; z++) {
+            const baseHeight = 10;
+            const noise = simplex.noise2D(x * 0.1, z * 0.1) * 5;
+            const height = Math.round(baseHeight + noise);
+            for (let y = -20; y <= height; y++) {
+                blocks.push({ x, y, z, material: y === height ? materials.cobblestone : materials.stone });
+            }
+        }
+    }
+
+    // Generate Natural terrain on top
+    const heightMap = Array(2 * worldSize + 1).fill().map(() => Array(2 * worldSize + 1).fill(0));
+    for (let x = -worldSize; x <= worldSize; x++) {
+        for (let z = -worldSize; z <= worldSize; z++) {
+            let height = 0;
+            let frequency = 0.01;
+            let amplitude = 10;
+            for (let i = 0; i < 4; i++) {
+                height += simplex.noise2D(x * frequency, z * frequency) * amplitude;
+                frequency *= 2;
+                amplitude *= 0.5;
+            }
+            height = Math.round(height) + 20; // Offset by 20 to place it above the cave layer
+            heightMap[x + worldSize][z + worldSize] = height;
+            blocks.push({ x, y: height, z, material: materials.grass });
+            for (let y = height - 1; y > height - 5; y--) {
+                blocks.push({ x, y, z, material: materials.stone });
+            }
+            if (Math.random() < 0.02) {
+                const blockUnder = blocks.find(b => b.x === x && b.y === height && b.z === z && b.material === materials.grass);
+                if (blockUnder) {
+                    generateTree(x, height, z);
+                }
+            }
+        }
+    }
+
+    // Generate Heaven floating islands
+    for (let x = -worldSize; x <= worldSize; x++) {
+        for (let z = -worldSize; z <= worldSize; z++) {
+            let islandNoise = 0;
+            let frequency = 0.01;
+            let amplitude = 1;
+            for (let i = 0; i < 4; i++) {
+                islandNoise += simplex.noise2D(x * frequency, z * frequency) * amplitude;
+                frequency *= 2;
+                amplitude *= 0.5;
+            }
+            islandNoise = (islandNoise + 1) / 2;
+            if (islandNoise > 0.6) {
+                const islandHeight = Math.floor((islandNoise - 0.6) * 50) + 70; // Offset by 70 to place it high in the sky
+                for (let y = islandHeight - 10; y < islandHeight; y++) {
+                    const taperNoise = simplex.noise3D(x * 0.1, y * 0.1, z * 0.1);
+                    const taperThreshold = 1 - ((y - (islandHeight - 10)) / 10);
+                    if (taperNoise > taperThreshold) {
+                        blocks.push({ x, y, z, material: y === islandHeight - 1 ? materials.grass : materials.stone });
+                    }
+                }
+                if (Math.random() < 0.1) {
+                    const blockUnder = blocks.find(b => b.x === x && b.y === islandHeight - 1 && b.z === z && b.material === materials.grass);
+                    if (blockUnder) {
+                        generateTree(x, islandHeight - 1, z);
+                    }
+                }
+            }
+        }
+    }
+
+    camera.position.set(0, Math.max(...heightMap.flat()) + 2, 0);
+}
+
+function generateTree(x, y, z) {
+    const treeHeight = Math.floor(Math.random() * 3) + 4;
+    for (let dy = 1; dy <= treeHeight; dy++) {
+        blocks.push({ x, y: y + dy, z, material: materials.log });
+    }
+    for (let dx = -2; dx <= 2; dx++) {
+        for (let dz = -2; dz <= 2; dz++) {
+            for (let dy = treeHeight - 1; dy <= treeHeight; dy++) {
+                blocks.push({ x: x + dx, y: y + dy, z: z + dz, material: materials.leaves });
+            }
+        }
+    }
+    const topCorners = [{ dx: -1, dz: -1 }, { dx: -1, dz: 1 }, { dx: 1, dz: -1 }, { dx: 1, dz: 1 }]
+        .sort(() => Math.random() - 0.5).slice(1);
+    for (let dx = -1; dx <= 1; dx++) {
+        for (let dz = -1; dz <= 1; dz++) {
+            for (let dy = treeHeight + 1; dy <= treeHeight + 2; dy++) {
+                if (dy === treeHeight + 2 && topCorners.some(corner => corner.dx === dx && corner.dz === dz)) continue;
+                blocks.push({ x: x + dx, y: y + dy, z: z + dz, material: materials.leaves });
+            }
+        }
+    }
+}
+
+function updateInstancedMeshes() {
+    Object.values(instancedMeshes).forEach(mesh => scene.remove(mesh));
+    instancedMeshes = {};
+    blockTypes.forEach(material => {
+        const blocksByType = blocks.filter(block => block.material === material);
+        if (blocksByType.length > 0) {
+            const mesh = new THREE.InstancedMesh(instancedGeometry, material, blocksByType.length);
+            mesh.castShadow = true;
+            mesh.receiveShadow = true;
+            blocksByType.forEach((block, index) => {
+                mesh.setMatrixAt(index, new THREE.Matrix4().setPosition(block.x, block.y, block.z));
+            });
+            scene.add(mesh);
+            instancedMeshes[material.uuid] = mesh;
+        }
+    });
+}
+
+const raycaster = new THREE.Raycaster();
+const mouse = new THREE.Vector2();
+
+function handleBlockInteraction(event) {
+    raycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
+    const intersects = Object.values(instancedMeshes)
+        .flatMap(mesh => raycaster.intersectObject(mesh))
+        .sort((a, b) => a.distance - b.distance);
+
+    if (intersects.length > 0) {
+        const clickedPoint = intersects[0].point;
+        const clickedNormal = intersects[0].face.normal;
+        if (event.button === 0) {
+            removeBlock(new THREE.Vector3().copy(clickedPoint).sub(clickedNormal.multiplyScalar(0.5)).round());
+        } else if (event.button === 2) {
+            addBlock(new THREE.Vector3().copy(clickedPoint).add(clickedNormal.multiplyScalar(0.5)).round(), blockTypes[selectedBlockIndex]);
+        }
+    }
+}
+
+function removeBlock(position) {
+    const index = blocks.findIndex(block => 
+        block.x === position.x && block.y === position.y && block.z === position.z
+    );
+    if (index !== -1) {
+        blocks.splice(index, 1);
+        updateInstancedMeshes();
+    }
+}
+
+function addBlock(position, material) {
+    blocks.push({ x: position.x, y: position.y, z: position.z, material });
+    updateInstancedMeshes();
+}
+
+document.getElementById('genWorldBtn').addEventListener('click', () => {
+    createWorld(
+        document.getElementById('worldTypeSelect').value,
+        parseInt(document.getElementById('worldSizeSlider').value)
+    );
+});
+
+document.getElementById('worldSizeSlider').addEventListener('input', function() {
+    document.getElementById('worldSizeLabel').textContent = `World Size: ${this.value}`;
+});
+
+document.getElementById('timeScaleSlider').addEventListener('input', function() {
+    timeScale = this.value / 50;
+    document.getElementById('timeScaleLabel').textContent = `Time Scale: ${timeScale.toFixed(2)}x`;
+});
+
+createWorld('natural', 100);
+
+window.addEventListener('mousedown', handleBlockInteraction);
+window.addEventListener('contextmenu', event => event.preventDefault());
+
+const keys = {};
+document.addEventListener('keydown', event => {
+    keys[event.code] = true;
+    if (event.code.startsWith('Digit')) {
+        const digit = parseInt(event.code.slice(-1)) - 1;
+        if (digit >= 0 && digit < blockTypes.length) {
+            selectedBlockIndex = digit;
+            updateInventorySelection();
+        }
+    }
+});
+document.addEventListener('keyup', event => keys[event.code] = false);
+
+let pitch = 0;
+let yaw = 0;
+document.addEventListener('mousemove', event => {
+    yaw -= event.movementX * 0.002;
+    pitch = Math.max(-Math.PI/2, Math.min(Math.PI/2, pitch - event.movementY * 0.002));
+});
+
+document.addEventListener('click', () => document.body.requestPointerLock());
+
+document.addEventListener('wheel', event => {
+    selectedBlockIndex = (selectedBlockIndex + Math.sign(event.deltaY) + blockTypes.length) % blockTypes.length;
+    updateInventorySelection();
+});
+
+function updateInventorySelection() {
+    document.querySelectorAll('.inventory-slot').forEach((slot, index) => {
+        slot.classList.toggle('selected', index === selectedBlockIndex);
+    });
+}
+
+let lastTime = performance.now();
+
+function animate() {
+    requestAnimationFrame(animate);
+    const currentTime = performance.now();
+    const deltaTime = (currentTime - lastTime) / 1000;
+    lastTime = currentTime;
+
+    const speed = 10;
+    const direction = new THREE.Vector3();
+    const rotation = new THREE.Euler(0, yaw, 0, 'YXZ');
+    const forward = new THREE.Vector3(0, 0, -1).applyEuler(rotation);
+    const right = new THREE.Vector3(1, 0, 0).applyEuler(rotation);
+    const up = new THREE.Vector3(0, 1, 0);
+
+    if (keys['KeyW']) direction.add(forward);
+    if (keys['KeyS']) direction.sub(forward);
+    if (keys['KeyA']) direction.sub(right);
+    if (keys['KeyD']) direction.add(right);
+    if (keys['Space']) direction.add(up);
+    if (keys['ShiftLeft']) direction.sub(up);
+    
+    camera.position.add(direction.normalize().multiplyScalar(speed * deltaTime));
+    camera.rotation.set(pitch, yaw, 0, 'YXZ');
+
+    updateDayNightCycle(deltaTime);
+    renderer.render(scene, camera);
+}
+
+animate();
+
+window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+});
+</script>
+</body></html>
