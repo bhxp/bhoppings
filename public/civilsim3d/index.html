@@ -1,0 +1,681 @@
+<html><head><base href="butthole.com" /><title>CivilSim3D - Enhanced Global Population Distribution (Debug Mode)</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<style>
+body {
+  margin: 0;
+  overflow: hidden;
+  font-family: Arial, sans-serif;
+}
+#info {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  color: white;
+  background: rgba(0,0,0,0.7);
+  padding: 10px;
+  border-radius: 5px;
+  max-width: 300px;
+}
+#controls {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  color: white;
+  background: rgba(0,0,0,0.7);
+  padding: 10px;
+  border-radius: 5px;
+}
+#sliders {
+  position: absolute;
+  top: 50px;
+  right: 10px;
+  color: white;
+  background: rgba(0,0,0,0.7);
+  padding: 10px;
+  border-radius: 5px;
+  width: 250px;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+.slider-container {
+  margin-bottom: 10px;
+}
+.slider-container label {
+  display: inline-block;
+  width: 100%;
+  margin-bottom: 5px;
+}
+.slider-container input {
+  width: 100%;
+}
+#canvas-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+#debug-info {
+  position: absolute;
+  bottom: 10px;
+  left: 10px;
+  color: white;
+  background: rgba(0,0,0,0.7);
+  padding: 10px;
+  border-radius: 5px;
+  max-width: 300px;
+  font-family: monospace;
+}
+</style>
+</head>
+<body>
+<div id="canvas-container"></div>
+<div id="info">
+  <h2>CivilSim3D Enhanced (Debug Mode)</h2>
+  <p>Year: <span id="year">-10000</span></p>
+  <p>Total Population: <span id="population">0</span></p>
+  <p>Males: <span id="males">0</span></p>
+  <p>Females: <span id="females">0</span></p>
+  <p>Global Technology Level: <span id="tech">1.00</span></p>
+  <p>Global Happiness: <span id="happiness">0.50</span></p>
+  <p>Events: <span id="events"></span></p>
+</div>
+<div id="controls">
+  <button onclick="toggleSimulation()">Start/Stop Simulation</button>
+  <button onclick="resetSimulation()">Reset Simulation</button>
+</div>
+<div id="sliders">
+  <!-- Sliders will be dynamically added here -->
+</div>
+<div id="debug-info">
+  <h3>Debug Information</h3>
+  <p>Scene Children: <span id="scene-children">0</span></p>
+  <p>Civilizations: <span id="civ-count">0</span></p>
+  <p>Rural Dots: <span id="rural-dots">0</span></p>
+  <p>Renderer Info: <span id="renderer-info"></span></p>
+  <p>Errors: <span id="error-log"></span></p>
+  <p>Earth Radius: <span id="earth-radius"></span></p>
+  <p>Dot Size: <span id="current-dot-size"></span></p>
+</div>
+<script>
+let scene, camera, renderer, earth, clouds, simulationRunning = false;
+let year = -10000, totalPopulation = 0, globalTechnology = 1, globalHappiness = 0.5;
+let civilizations = [];
+let orbitControls;
+let landGeometry;
+
+const EARTH_RADIUS = 5;
+
+// Simulation parameters
+let params = {
+  populationGrowthRate: 0.001,
+  technologyAdvancementRate: 0.0001,
+  disasterProbability: 0.005,
+  conflictProbability: 0.01,
+  simulationSpeed: 1,
+  populationPerDot: 100000,
+  birthRatio: 1.05,
+  lifeExpectancy: 25,
+  educationLevel: 0.1,
+  healthcareQuality: 0.1,
+  economicGrowth: 0.001,
+  polutionRate: 0.001,
+  dotSize: 0.01,
+  ruralPopulation: 0.9
+};
+
+// Initial civilization centers (ancient cities/regions)
+const ancientCenters = [
+  { name: "Mesopotamia", lat: 33.2232, lon: 43.6793, population: 500000, area: 50000 },
+  { name: "Egypt", lat: 26.8206, lon: 30.8025, population: 400000, area: 40000 },
+  { name: "Indus Valley", lat: 24.8607, lon: 67.0011, population: 300000, area: 30000 },
+  { name: "Yellow River", lat: 34.6937, lon: 113.5023, population: 350000, area: 35000 },
+  { name: "Mesoamerica", lat: 19.4326, lon: -99.1332, population: 200000, area: 20000 },
+];
+
+function init() {
+  try {
+    scene = new THREE.Scene();
+    camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(window.devicePixelRatio);
+    document.getElementById('canvas-container').appendChild(renderer.domElement);
+
+    // Earth
+    const earthGeometry = new THREE.SphereGeometry(EARTH_RADIUS, 64, 64);
+    const earthTexture = new THREE.TextureLoader().load('https://threejs.org/examples/textures/land_ocean_ice_cloud_2048.jpg');
+    const earthMaterial = new THREE.MeshPhongMaterial({ 
+      map: earthTexture,
+      bumpMap: earthTexture,
+      bumpScale: 0.05,
+    });
+    earth = new THREE.Mesh(earthGeometry, earthMaterial);
+    scene.add(earth);
+
+    // Clouds
+    const cloudGeometry = new THREE.SphereGeometry(EARTH_RADIUS + 0.03, 64, 64);
+    const cloudTexture = new THREE.TextureLoader().load('https://threejs.org/examples/textures/fair_clouds_4k.png');
+    const cloudMaterial = new THREE.MeshPhongMaterial({ 
+      map: cloudTexture, 
+      transparent: true, 
+      opacity: 0.4,
+      blending: THREE.AdditiveBlending
+    });
+    clouds = new THREE.Mesh(cloudGeometry, cloudMaterial);
+    scene.add(clouds);
+
+    // Lighting
+    const ambientLight = new THREE.AmbientLight(0x404040, 0.5);
+    scene.add(ambientLight);
+    const pointLight = new THREE.PointLight(0xffffff, 1, 100);
+    pointLight.position.set(10, 10, 10);
+    scene.add(pointLight);
+
+    // Add a subtle blue atmosphere
+    const atmosphereGeometry = new THREE.SphereGeometry(EARTH_RADIUS + 0.1, 64, 64);
+    const atmosphereMaterial = new THREE.ShaderMaterial({
+      vertexShader: `
+        varying vec3 vNormal;
+        void main() {
+          vNormal = normalize(normalMatrix * normal);
+          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+        }
+      `,
+      fragmentShader: `
+        varying vec3 vNormal;
+        void main() {
+          float intensity = pow(0.7 - dot(vNormal, vec3(0.0, 0.0, 1.0)), 2.0);
+          gl_FragColor = vec4(0.3, 0.6, 1.0, 1.0) * intensity;
+        }
+      `,
+      blending: THREE.AdditiveBlending,
+      side: THREE.BackSide
+    });
+    const atmosphere = new THREE.Mesh(atmosphereGeometry, atmosphereMaterial);
+    scene.add(atmosphere);
+
+    camera.position.z = 15;
+
+    // Orbit controls for free rotation and zoom
+    orbitControls = new THREE.OrbitControls(camera, renderer.domElement);
+    orbitControls.enableDamping = true;
+    orbitControls.dampingFactor = 0.25;
+    orbitControls.enableZoom = true;
+
+    // Load land geometry for more accurate dot placement
+    loadLandGeometry();
+
+    // Initialize civilizations based on ancient centers
+    ancientCenters.forEach(createCivilization);
+
+    // Add rural population
+    addRuralPopulation();
+
+    // Setup sliders
+    setupSliders();
+
+    animate();
+    
+    updateDebugInfo();
+  } catch (error) {
+    console.error("Error in init function:", error);
+    document.getElementById('error-log').textContent = error.message;
+  }
+}
+
+function loadLandGeometry() {
+  const loader = new THREE.FileLoader();
+  loader.load('https://raw.githubusercontent.com/mrdoob/three.js/master/examples/models/json/world/world.json', function(data) {
+    try {
+      const worldGeometry = JSON.parse(data);
+      landGeometry = new THREE.BufferGeometry();
+      landGeometry.setAttribute('position', new THREE.Float32BufferAttribute(worldGeometry.vertices, 3));
+      landGeometry.setIndex(new THREE.Uint16BufferAttribute(worldGeometry.faces, 1));
+      landGeometry.computeVertexNormals();
+    } catch (error) {
+      console.error("Error loading land geometry:", error);
+      document.getElementById('error-log').textContent = "Land geometry loading error: " + error.message;
+    }
+  });
+}
+
+function latLonToVector3(lat, lon, radius) {
+  const phi = (90 - lat) * (Math.PI / 180);
+  const theta = (lon + 180) * (Math.PI / 180);
+  const x = -(radius * Math.sin(phi) * Math.cos(theta));
+  const z = (radius * Math.sin(phi) * Math.sin(theta));
+  const y = (radius * Math.cos(phi));
+  return new THREE.Vector3(x, y, z);
+}
+
+function createCivilization(center) {
+  try {
+    const position = latLonToVector3(center.lat, center.lon, EARTH_RADIUS);
+    const urbanPopulation = center.population * (1 - params.ruralPopulation);
+    const males = urbanPopulation / (1 + 1/params.birthRatio);
+    const females = urbanPopulation / (1 + params.birthRatio);
+    const maleDotCount = Math.ceil(males / params.populationPerDot);
+    const femaleDotCount = Math.ceil(females / params.populationPerDot);
+
+    const dots = new THREE.Group();
+    
+    // Calculate spread based on center area
+    const spread = Math.sqrt(center.area) / 1000;
+
+    for (let i = 0; i < maleDotCount + femaleDotCount; i++) {
+      const dotGeometry = new THREE.SphereGeometry(params.dotSize, 8, 8);
+      const dotMaterial = new THREE.MeshBasicMaterial({ color: i < maleDotCount ? 0x0000ff : 0xff69b4 });
+      const dot = new THREE.Mesh(dotGeometry, dotMaterial);
+      
+      let offset;
+      do {
+        offset = new THREE.Vector3(
+          (Math.random() - 0.5) * spread,
+          (Math.random() - 0.5) * spread,
+          (Math.random() - 0.5) * spread
+        );
+      } while (!isOnLand(position.clone().add(offset).normalize().multiplyScalar(EARTH_RADIUS)));
+      
+      dot.position.copy(position).add(offset);
+      
+      dots.add(dot);
+    }
+
+    scene.add(dots);
+
+    civilizations.push({
+      dots: dots,
+      name: center.name,
+      population: urbanPopulation,
+      males: males,
+      females: females,
+      technology: 1,
+      happiness: 0.5,
+      position: position,
+      lat: center.lat,
+      lon: center.lon,
+      area: center.area
+    });
+  } catch (error) {
+    console.error("Error creating civilization:", error);
+    document.getElementById('error-log').textContent = "Civilization creation error: " + error.message;
+  }
+}
+
+function isOnLand(position) {
+  if (!landGeometry) return true; // If land geometry hasn't loaded yet, allow all positions
+
+  const raycaster = new THREE.Raycaster(position, position.clone().negate().normalize());
+  const intersects = raycaster.intersectObject(earth);
+
+  if (intersects.length > 0) {
+    const faceIndex = intersects[0].faceIndex;
+    const face = new THREE.Face3(
+      landGeometry.index.array[faceIndex * 3],
+      landGeometry.index.array[faceIndex * 3 + 1],
+      landGeometry.index.array[faceIndex * 3 + 2]
+    );
+    return face.normal.dot(position.normalize()) > 0.9; // Consider it land if the normal is close to the position vector
+  }
+
+  return false;
+}
+
+function addRuralPopulation() {
+  try {
+    const totalPopulation = ancientCenters.reduce((sum, center) => sum + center.population, 0);
+    const ruralPopulation = totalPopulation * params.ruralPopulation;
+    const ruralDots = Math.ceil(ruralPopulation / params.populationPerDot);
+
+    for (let i = 0; i < ruralDots; i++) {
+      let position;
+      do {
+        const lat = (Math.random() - 0.5) * 180;
+        const lon = (Math.random() - 0.5) * 360;
+        position = latLonToVector3(lat, lon, EARTH_RADIUS);
+      } while (!isOnLand(position));
+
+      const dotGeometry = new THREE.SphereGeometry(params.dotSize, 8, 8);
+      const dotMaterial = new THREE.MeshBasicMaterial({ color: Math.random() < 0.5 ? 0x0000ff : 0xff69b4 });
+      const dot = new THREE.Mesh(dotGeometry, dotMaterial);
+      dot.position.copy(position);
+
+      scene.add(dot);
+    }
+  } catch (error) {
+    console.error("Error adding rural population:", error);
+    document.getElementById('error-log').textContent = "Rural population error: " + error.message;
+  }
+}
+
+function animate() {
+  requestAnimationFrame(animate);
+  try {
+    orbitControls.update();
+    clouds.rotation.y += 0.0005;
+    renderer.render(scene, camera);
+    updateDebugInfo();
+""
+  } catch (error) {
+    console.error("Error in animate function:", error);
+    document.getElementById('error-log').textContent = "Animation error: " + error.message;
+  }
+}
+
+function updateInfo() {
+  document.getElementById('year').textContent = year;
+  document.getElementById('population').textContent = Math.round(totalPopulation).toLocaleString();
+  document.getElementById('males').textContent = Math.round(civilizations.reduce((sum, civ) => sum + civ.males, 0)).toLocaleString();
+  document.getElementById('females').textContent = Math.round(civilizations.reduce((sum, civ) => sum + civ.females, 0)).toLocaleString();
+  document.getElementById('tech').textContent = globalTechnology.toFixed(2);
+  document.getElementById('happiness').textContent = globalHappiness.toFixed(2);
+}
+
+function simulationStep() {
+  if (!simulationRunning) return;
+
+  try {
+    year++;
+    totalPopulation = 0;
+    globalTechnology = 0;
+    globalHappiness = 0;
+
+    civilizations.forEach((civ) => {
+      // Population growth
+      const births = (civ.males + civ.females) * params.populationGrowthRate;
+      const maleBirths = births * (params.birthRatio / (1 + params.birthRatio));
+      const femaleBirths = births * (1 / (1 + params.birthRatio));
+      
+      civ.males += maleBirths - (civ.males / params.lifeExpectancy);
+      civ.females += femaleBirths - (civ.females / params.lifeExpectancy);
+      
+      civ.population = civ.males + civ.females;
+      
+      // Technology advancement
+      civ.technology *= 1 + (params.technologyAdvancementRate * params.educationLevel);
+
+      // Happiness calculation
+      civ.happiness = (params.healthcareQuality + params.educationLevel + params.economicGrowth - params.polutionRate) / 3;
+      civ.happiness = Math.max(0, Math.min(1, civ.happiness));
+
+      // Random events
+      if (Math.random() < params.disasterProbability) {
+        const disasterImpact = 0.05 + (1 - params.healthcareQuality) * 0.1;
+        civ.males *= 1 - disasterImpact;
+        civ.females *= 1 - disasterImpact;
+        civ.population = civ.males + civ.females;
+        civ.happiness *= 0.9;
+        civ.dots.children.forEach(dot => dot.material.color.setHex(0xff0000)); // Red for disaster
+        document.getElementById('events').textContent = `Natural disaster in ${civ.name}!`;
+      } else if (Math.random() < params.conflictProbability) {
+        const conflictImpact = 0.02 + (1 - params.educationLevel) * 0.05;
+        civ.males *= 1 - conflictImpact;
+        civ.females *= 1 - conflictImpact;
+        civ.population = civ.males + civ.females;
+        civ.happiness *= 0.95;
+        civ.dots.children.forEach(dot => dot.material.color.setHex(0xff8c00)); // Orange for conflict
+        document.getElementById('events').textContent = `Conflict in ${civ.name}!`;
+      } else {
+        updateDotColors(civ);
+        document.getElementById('events').textContent = '';
+      }
+
+      updateDotCount(civ);
+
+      totalPopulation += civ.population;
+      globalTechnology += civ.technology;
+      globalHappiness += civ.happiness;
+    });
+
+    // Update rural population
+    updateRuralPopulation();
+
+    globalTechnology /= civilizations.length;
+    globalHappiness /= civilizations.length;
+
+    updateInfo();
+    updateDebugInfo();
+  } catch (error) {
+    console.error("Error in simulation step:", error);
+    document.getElementById('error-log').textContent = "Simulation step error: " + error.message;
+  }
+
+  setTimeout(simulationStep, 100 / params.simulationSpeed);
+}
+
+function updateDotColors(civ) {
+  const maleDotCount = Math.ceil(civ.males / params.populationPerDot);
+  civ.dots.children.forEach((dot, index) => {
+    if (index < maleDotCount) {
+      dot.material.color.setHex(0x0000ff); // Blue for males
+    } else {
+      dot.material.color.setHex(0xff69b4); // Pink for females
+    }
+  });
+}
+
+function updateDotCount(civ) {
+  const newDotCount = Math.ceil(civ.population / params.populationPerDot);
+  const currentDotCount = civ.dots.children.length;
+
+  if (newDotCount > currentDotCount) {
+    // Add new dots
+    for (let i = 0; i < newDotCount - currentDotCount; i++) {
+      const dotGeometry = new THREE.SphereGeometry(params.dotSize, 8, 8);
+      const dotMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff }); // White initially, color will be set in updateDotColors
+      const dot = new THREE.Mesh(dotGeometry, dotMaterial);
+      
+      let offset;
+      do {
+        const spread = Math.sqrt(civ.area) / 1000;
+        offset = new THREE.Vector3(
+          (Math.random() - 0.5) * spread,
+          (Math.random() - 0.5) * spread,
+          (Math.random() - 0.5) * spread
+        );
+      } while (!isOnLand(civ.position.clone().add(offset).normalize().multiplyScalar(EARTH_RADIUS)));
+      
+      dot.position.copy(civ.position).add(offset);
+      
+      civ.dots.add(dot);
+    }
+  } else if (newDotCount < currentDotCount) {
+    // Remove excess dots
+    for (let i = 0; i < currentDotCount - newDotCount; i++) {
+      const dotToRemove = civ.dots.children[civ.dots.children.length - 1];
+      civ.dots.remove(dotToRemove);
+    }
+  }
+
+  updateDotColors(civ);
+}
+
+function toggleSimulation() {
+  simulationRunning = !simulationRunning;
+  if (simulationRunning) {
+    simulationStep();
+  }
+}
+
+function resetSimulation() {
+  try {
+    simulationRunning = false;
+    year = -10000;
+    totalPopulation = 0;
+    globalTechnology = 1;
+    globalHappiness = 0.5;
+
+    // Remove all existing dots
+    civilizations.forEach(civ => {
+      scene.remove(civ.dots);
+    });
+    scene.children.filter(child => child instanceof THREE.Mesh && child !== earth && child !== clouds).forEach(dot => {
+      scene.remove(dot);
+    });
+
+    civilizations = [];
+
+    // Reinitialize civilizations
+    ancientCenters.forEach(createCivilization);
+
+    // Add rural population
+    addRuralPopulation();
+
+    updateInfo();
+    updateDebugInfo();
+    document.getElementById('events').textContent = '';
+    document.getElementById('error-log').textContent = '';
+  } catch (error) {
+    console.error("Error resetting simulation:", error);
+    document.getElementById('error-log').textContent = "Reset error: " + error.message;
+  }
+}
+
+function setupSliders() {
+  const sliders = [
+    { id: 'growthRate', param: 'populationGrowthRate', min: 0, max: 0.05, step: 0.001, initial: 0.001 },
+    { id: 'techRate', param: 'technologyAdvancementRate', min: 0, max: 0.05, step: 0.0001, initial: 0.0001 },
+    { id: 'disasterProb', param: 'disasterProbability', min: 0, max: 0.1, step: 0.001, initial: 0.005 },
+    { id: 'conflictProb', param: 'conflictProbability', min: 0, max: 0.1, step: 0.001, initial: 0.01 },
+    { id: 'simSpeed', param: 'simulationSpeed', min: 0.1, max: 5, step: 0.1, initial: 1 },
+    { id: 'birthRatio', param: 'birthRatio', min: 0, max: 2, step: 0.01, initial: 1.05 },
+    { id: 'lifeExpectancy', param: 'lifeExpectancy', min: 20, max: 100, step: 1, initial: 25 },
+    { id: 'educationLevel', param: 'educationLevel', min: 0, max: 1, step: 0.01, initial: 0.1 },
+    { id: 'healthcareQuality', param: 'healthcareQuality', min: 0, max: 1, step: 0.01, initial: 0.1 },
+    { id: 'economicGrowth', param: 'economicGrowth', min: -0.05, max: 0.1, step: 0.001, initial: 0.001 },
+    { id: 'polutionRate', param: 'polutionRate', min: 0, max: 0.1, step: 0.001, initial: 0.001 },
+    { id: 'populationPerDot', param: 'populationPerDot', min: 1, max: 1000000, step: 1, initial: 100000 },
+    { id: 'dotSize', param: 'dotSize', min: 0.001, max: 0.05, step: 0.001, initial: 0.01 },
+    { id: 'ruralPopulation', param: 'ruralPopulation', min: 0.5, max: 0.99, step: 0.01, initial: 0.9 }
+  ];
+
+  const slidersContainer = document.getElementById('sliders');
+  sliders.forEach(slider => {
+    const container = document.createElement('div');
+    container.className = 'slider-container';
+    
+    const label = document.createElement('label');
+    label.htmlFor = slider.id;
+    label.textContent = `${slider.param}: `;
+    
+    const span = document.createElement('span');
+    span.id = `${slider.id}Value`;
+    span.textContent = slider.initial;
+    
+    label.appendChild(span);
+    
+    const input = document.createElement('input');
+    input.type = 'range';
+    input.id = slider.id;
+    input.min = slider.min;
+    input.max = slider.max;
+    input.step = slider.step;
+    input.value = slider.initial;
+    
+    input.addEventListener('input', function() {
+      params[slider.param] = parseFloat(this.value);
+      span.textContent = this.value;
+      if (slider.id === 'populationPerDot' || slider.id === 'dotSize') {
+        updateAllDots();
+      }
+      if (slider.id === 'ruralPopulation') {
+        updateRuralPopulation();
+      }
+      updateDebugInfo();
+    });
+    
+    container.appendChild(label);
+    container.appendChild(input);
+    slidersContainer.appendChild(container);
+  });
+}
+
+function updateAllDots() {
+  civilizations.forEach(civ => {
+    updateDotCount(civ);
+    updateDotSizes(civ);
+  });
+  updateRuralPopulation();
+}
+
+function updateDotSizes(civ) {
+  const newGeometry = new THREE.SphereGeometry(params.dotSize, 8, 8);
+  civ.dots.children.forEach(dot => {
+    const oldPosition = dot.position.clone();
+    dot.geometry.dispose();
+    dot.geometry = newGeometry;
+    dot.position.copy(oldPosition);
+  });
+}
+
+function updateRuralPopulation() {
+  try {
+    const totalPopulation = civilizations.reduce((sum, civ) => sum + civ.population, 0);
+    const ruralPopulation = totalPopulation * params.ruralPopulation;
+    const ruralDots = Math.ceil(ruralPopulation / params.populationPerDot);
+    const currentRuralDots = scene.children.filter(child => !civilizations.some(civ => civ.dots === child) && child instanceof THREE.Mesh && child !== earth && child !== clouds).length;
+
+    if (ruralDots > currentRuralDots) {
+      for (let i = 0; i < ruralDots - currentRuralDots; i++) {
+        let position;
+        do {
+          const lat = (Math.random() - 0.5) * 180;
+          const lon = (Math.random() - 0.5) * 360;
+          position = latLonToVector3(lat, lon, EARTH_RADIUS);
+        } while (!isOnLand(position));
+
+        const dotGeometry = new THREE.SphereGeometry(params.dotSize, 8, 8);
+        const dotMaterial = new THREE.MeshBasicMaterial({ color: Math.random() < 0.5 ? 0x0000ff : 0xff69b4 });
+        const dot = new THREE.Mesh(dotGeometry, dotMaterial);
+        dot.position.copy(position);
+
+        scene.add(dot);
+      }
+    } else if (ruralDots < currentRuralDots) {
+      const ruralDotsToRemove = scene.children.filter(child => !civilizations.some(civ => civ.dots === child) && child instanceof THREE.Mesh && child !== earth && child !== clouds).slice(ruralDots);
+      ruralDotsToRemove.forEach(dot => {
+        dot.geometry.dispose();
+        dot.material.dispose();
+        scene.remove(dot);
+      });
+    }
+
+    // Update sizes of existing rural dots
+    scene.children.filter(child => !civilizations.some(civ => civ.dots === child) && child instanceof THREE.Mesh && child !== earth && child !== clouds).forEach(dot => {
+      const oldPosition = dot.position.clone();
+      dot.geometry.dispose();
+      dot.geometry = new THREE.SphereGeometry(params.dotSize, 8, 8);
+      dot.position.copy(oldPosition);
+    });
+  } catch (error) {
+    console.error("Error updating rural population:", error);
+    document.getElementById('error-log').textContent = "Rural population update error: " + error.message;
+  }
+}
+
+function updateDebugInfo() {
+  document.getElementById('scene-children').textContent = scene.children.length;
+  document.getElementById('civ-count').textContent = civilizations.length;
+  document.getElementById('rural-dots').textContent = scene.children.filter(child => !civilizations.some(civ => civ.dots === child) && child instanceof THREE.Mesh && child !== earth && child !== clouds).length;
+  
+  const rendererInfo = renderer.info;
+  document.getElementById('renderer-info').textContent = `Geometries: ${rendererInfo.memory.geometries}, Textures: ${rendererInfo.memory.textures}`;
+  
+  document.getElementById('earth-radius').textContent = EARTH_RADIUS;
+  document.getElementById('current-dot-size').textContent = params.dotSize;
+}
+
+window.addEventListener('resize', onWindowResize, false);
+
+function onWindowResize(){
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+}
+
+init();
+</script>
+</body>
+</html>
