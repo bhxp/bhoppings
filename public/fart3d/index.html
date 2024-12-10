@@ -1,0 +1,481 @@
+<html><head><base href="." /></head>
+<title>Fart Propulsion 3D</title>
+<style>
+body { margin: 0; overflow: hidden; }
+#gameContainer {
+    width: 100vw;
+    height: 100vh;
+    background: linear-gradient(#87CEEB, #E0FFFF);
+}
+.hud {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    color: #fff;
+    font-family: 'Arial', sans-serif;
+    font-size: 24px;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+}
+#instructions {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: #fff;
+    font-family: 'Arial', sans-serif;
+    text-align: center;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+}
+.cloud {
+    position: absolute;
+    filter: blur(3px);
+    opacity: 0.8;
+}
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<body>
+<div id="gameContainer">
+    <div class="hud">Altitude: <span id="altitude">0</span>m</div>
+    <div id="instructions">
+        Press SPACE to fart!<br>
+        Use WASD or Arrow Keys to move horizontally
+    </div>
+</div>
+
+<script>
+let scene, camera, renderer, player;
+let velocity = new THREE.Vector3();
+let fartPower = 0;
+let altitude = 0;
+let clouds = [];
+let moon;
+let sun;
+let spaceObjects = [];
+let hasReachedMoon = false;
+let isBeingAbsorbed = false;
+
+// Updated fartSounds array with properly encoded sound effects
+const fartSounds = [
+    'data:audio/mpeg;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4LjIwLjEwMAAAAAAAAAAAAAAA//tQwAAAAAAAAAAAAAAAAAAAAAAASW5mbwAAAA8AAAAGAAADQAAYGBgYJCQkJCQwMDAwMDw8PDw8SUlJSUlVVVVVVWFhYWFhbW1tbW15eXl5eYaGhoaGkpKSkpKenp6enqqqqqqqtra2trbDw8PDw8/Pz8/Pz29vb29vn5+fn5/Pz8/Pz//////////8AAAAATGF2YzU4LjM1AAAAAAAAAAAAAAAAJAAAAAAAAAAAQx7KsEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//tQxAADwAABpAAAACAAADQAAAAEVWFV/4XB/8Lgv4XB8Hg/EP8uD+IX/KBf/E4P/+D4Pg///E4Pg+D4Ph//+UHwfB8HwfB8H/lAfB8HwfCIAAAABQAAAAgAABQAAMSxpJ3EQA',
+    'data:audio/mpeg;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4LjIwLjEwMAAAAAAAAAAAAAAA//tQwAAAAAAAAAAAAAAAAAAAAAAASW5mbwAAAA8AAAAGAAADQAAwMDAwPDw8PDxISEhISFRUVFRUYGBgYGBsbGxsbHh4eHh4hISEhISQkJCQkJycnJycqKioqKi0tLS0tMDAwMDAzMzMzMzY2NjY2OTk5OTk9PT09PT//////////wAAAABMYXZjNTguMzUAAAAAAAAAAAAAAAAkAAAAAAAAAAAAdahUUQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD//tQxAADwAABpAAAACAAADQAAAAEyZVX/hcH/wuC/hcHweD8Q/y4X8Qv+UC/8Tg//4Pg+D//8Tg+D4Pg+H//5QfB8HwfB8Hwf+UB8HwfB8IgAAAAFAAAACAAAFAAAxLGkncRA',
+    'data:audio/mpeg;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4LjIwLjEwMAAAAAAAAAAAAAAA//tQwAAAAAAAAAAAAAAAAAAAAAAASW5mbwAAAA8AAAAGAAADQABISEhIVFRUVFRgYGBgYGxsbGxseHh4eHiEhISEhJCQkJCQnJycnJyoqKioqLS0tLS0wMDAwMDMzMzMzNjY2NjY5OTk5OT09PT09P//////////AAAAATGF2YzU4LjM1AAAAAAAAAAAAAAAAJAAAAAAAAAAAANEObGcAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//tQxAADwAABpAAAACAAADQAAAAETGZX/hcH/wuC/hcHweD8Q/y4P4hf8oF/4nB//wfB8H//xOD4Pg+D4f//lB8HwfB8HwfB/5QHwfB8HwiAAAAAgAAAAQAAAgAAxLGkncRA'
+];
+
+// Update the playRandomFartSound function
+function playRandomFartSound() {
+    const audio = new Audio();
+    audio.src = fartSounds[Math.floor(Math.random() * fartSounds.length)];
+    audio.volume = 0.3;
+    
+    // Add error handling
+    audio.onerror = (e) => {
+        console.log("Error loading sound:", e);
+    };
+    
+    // Play the sound
+    audio.play().catch(err => {
+        console.log("Error playing sound:", err);
+    });
+}
+
+function init() {
+    scene = new THREE.Scene();
+    camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    renderer = new THREE.WebGLRenderer();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.getElementById('gameContainer').appendChild(renderer.domElement);
+
+    // Create low poly character model
+    const bodyGeometry = new THREE.BoxGeometry(1, 1.5, 0.8);
+    const headGeometry = new THREE.BoxGeometry(0.6, 0.6, 0.6);
+    const armGeometry = new THREE.BoxGeometry(0.3, 0.8, 0.3);
+    const legGeometry = new THREE.BoxGeometry(0.3, 0.8, 0.3);
+    
+    const material = new THREE.MeshPhongMaterial({ color: 0xff9999 });
+    const headMaterial = new THREE.MeshPhongMaterial({ color: 0xffcccc });
+    
+    // Create body parts
+    const body = new THREE.Mesh(bodyGeometry, material);
+    const head = new THREE.Mesh(headGeometry, headMaterial);
+    const leftArm = new THREE.Mesh(armGeometry, material);
+    const rightArm = new THREE.Mesh(armGeometry, material);
+    const leftLeg = new THREE.Mesh(legGeometry, material);
+    const rightLeg = new THREE.Mesh(legGeometry, material);
+    
+    // Position body parts
+    head.position.y = 1.05;
+    leftArm.position.set(-0.65, 0.2, 0);
+    rightArm.position.set(0.65, 0.2, 0);
+    leftLeg.position.set(-0.25, -1.15, 0);
+    rightLeg.position.set(0.25, -1.15, 0);
+    
+    // Create character group
+    player = new THREE.Group();
+    player.add(body);
+    player.add(head);
+    player.add(leftArm);
+    player.add(rightArm);
+    player.add(leftLeg);
+    player.add(rightLeg);
+    
+    scene.add(player);
+
+    // Add lights
+    const ambientLight = new THREE.AmbientLight(0x404040);
+    scene.add(ambientLight);
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+    directionalLight.position.set(5, 5, 5);
+    scene.add(directionalLight);
+
+    // Set initial camera position
+    camera.position.z = 10;
+    camera.position.y = 2;
+
+    // Add ground
+    const groundGeometry = new THREE.PlaneGeometry(100, 100);
+    const groundMaterial = new THREE.MeshPhongMaterial({ color: 0x33cc33 });
+    const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+    ground.rotation.x = -Math.PI / 2;
+    ground.position.y = -10;
+    scene.add(ground);
+
+    // Create clouds
+    for(let i = 0; i < 20; i++) {
+        createCloud();
+    }
+
+    // Add moon
+    const moonGeometry = new THREE.SphereGeometry(15, 32, 32);
+    const moonTexture = new THREE.MeshPhongMaterial({ 
+        color: 0xCCCCCC,
+        roughness: 0.8,
+    });
+    moon = new THREE.Mesh(moonGeometry, moonTexture);
+    moon.position.set(0, 20000, -100);
+    scene.add(moon);
+
+    // Add sun
+    const sunGeometry = new THREE.SphereGeometry(50, 32, 32);
+    const sunMaterial = new THREE.MeshPhongMaterial({ 
+        color: 0xFFFF00,
+        emissive: 0xFFFF00,
+        emissiveIntensity: 1
+    });
+    sun = new THREE.Mesh(sunGeometry, sunMaterial);
+    sun.position.set(0, 100000, -200);
+    scene.add(sun);
+
+    // Add sun glow
+    const sunGlow = new THREE.PointLight(0xFFFF00, 2, 1000);
+    sun.add(sunGlow);
+
+    // Add space objects (satellites, asteroids, etc)
+    for(let i = 0; i < 50; i++) {
+        createSpaceObject();
+    }
+}
+
+function createCloud() {
+    const cloudGeometry = new THREE.SphereGeometry(Math.random() * 2 + 1, 8, 8);
+    const cloudMaterial = new THREE.MeshPhongMaterial({ color: 0xffffff, transparent: true, opacity: 0.8 });
+    const cloud = new THREE.Mesh(cloudGeometry, cloudMaterial);
+    cloud.position.set(
+        Math.random() * 100 - 50,
+        Math.random() * 100,
+        Math.random() * 100 - 50
+    );
+    scene.add(cloud);
+    clouds.push(cloud);
+}
+
+function createSpaceObject() {
+    const types = [
+        { geometry: new THREE.TetrahedronGeometry(1), color: 0x666666 }, // Asteroid
+        { geometry: new THREE.BoxGeometry(2, 0.5, 0.5), color: 0x999999 }, // Satellite
+        { geometry: new THREE.IcosahedronGeometry(0.5), color: 0x444444 }, // Space debris
+    ];
+    
+    const randomType = types[Math.floor(Math.random() * types.length)];
+    const material = new THREE.MeshPhongMaterial({ color: randomType.color });
+    const object = new THREE.Mesh(randomType.geometry, material);
+    
+    // Position randomly but more frequent at higher altitudes
+    object.position.set(
+        Math.random() * 200 - 100,
+        Math.random() * 19000 + 1000, // Between 1000m and 20000m
+        Math.random() * 200 - 100
+    );
+    
+    // Add random rotation
+    object.rotation.set(
+        Math.random() * Math.PI,
+        Math.random() * Math.PI,
+        Math.random() * Math.PI
+    );
+    
+    scene.add(object);
+    spaceObjects.push({
+        mesh: object,
+        rotationSpeed: {
+            x: Math.random() * 0.02 - 0.01,
+            y: Math.random() * 0.02 - 0.01,
+            z: Math.random() * 0.02 - 0.01
+        }
+    });
+}
+
+function createFartParticles() {
+    // Create a fart cloud texture
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = 64;
+    canvas.height = 64;
+    
+    // Create radial gradient for cloudy effect
+    const gradient = ctx.createRadialGradient(32, 32, 0, 32, 32, 32);
+    gradient.addColorStop(0, 'rgba(153, 255, 153, 0.8)');
+    gradient.addColorStop(0.4, 'rgba(120, 200, 120, 0.6)');
+    gradient.addColorStop(1, 'rgba(100, 180, 100, 0)');
+    
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, 64, 64);
+    
+    // Create sprite material with the texture
+    const texture = new THREE.CanvasTexture(canvas);
+    const spriteMaterial = new THREE.SpriteMaterial({
+        map: texture,
+        transparent: true,
+        blending: THREE.AdditiveBlending
+    });
+
+    // Create multiple particles
+    for (let i = 0; i < 3; i++) {
+        const sprite = new THREE.Sprite(spriteMaterial);
+        sprite.scale.set(0.5, 0.5, 0.5);
+        sprite.position.copy(player.position);
+        sprite.position.y -= 0.5;
+        scene.add(sprite);
+
+        // Add random rotation
+        sprite.rotation = Math.random() * Math.PI * 2;
+
+        // Animate particle
+        const direction = new THREE.Vector3(
+            Math.random() * 0.2 - 0.1,
+            -0.2,
+            Math.random() * 0.2 - 0.1
+        );
+        
+        const initialScale = 0.5;
+        let opacity = 1;
+        
+        function animateParticle() {
+            sprite.position.add(direction);
+            opacity -= 0.02;
+            sprite.scale.set(
+                initialScale * (1 + (1 - opacity) * 0.5),
+                initialScale * (1 + (1 - opacity) * 0.5),
+                initialScale
+            );
+            sprite.material.opacity = opacity;
+            
+            if(opacity > 0) {
+                requestAnimationFrame(animateParticle);
+            } else {
+                scene.remove(sprite);
+                sprite.material.dispose();
+            }
+        }
+        animateParticle();
+    }
+}
+
+function update() {
+    // Apply gravity
+    velocity.y -= 0.01;
+
+    // Apply fart power
+    if(fartPower > 0) {
+        velocity.y += fartPower;
+        fartPower *= 0.95;
+        createFartParticles();
+        
+        // Add character animation when farting
+        player.children.forEach((part, index) => {
+            if (index > 1) { // Skip body and head
+                part.rotation.x = Math.sin(Date.now() * 0.01) * 0.2;
+            }
+        });
+    } else {
+        // Reset character animation
+        player.children.forEach((part, index) => {
+            if (index > 1) {
+                part.rotation.x *= 0.95;
+            }
+        });
+    }
+
+    // Update position
+    player.position.add(velocity);
+    velocity.multiplyScalar(0.99); // Add air resistance
+
+    // Update camera
+    camera.position.y = player.position.y + 2;
+    camera.lookAt(player.position);
+
+    // Update altitude display
+    altitude = Math.max(0, player.position.y + 10);
+    document.getElementById('altitude').textContent = Math.floor(altitude);
+
+    // Prevent going below ground
+    if(player.position.y < -9) {
+        player.position.y = -9;
+        velocity.y = 0;
+    }
+
+    // Update atmosphere color based on altitude
+    const atmosphereProgress = Math.min(altitude / 100000, 1);
+    const skyColor = new THREE.Color(0x87CEEB)
+        .lerp(new THREE.Color(0x000020), Math.min(altitude / 20000, 1))
+        .lerp(new THREE.Color(0xFF4400), Math.max(0, (altitude - 20000) / 80000));
+    scene.background = skyColor;
+
+    // Update space objects
+    spaceObjects.forEach(obj => {
+        obj.mesh.rotation.x += obj.rotationSpeed.x;
+        obj.mesh.rotation.y += obj.rotationSpeed.y;
+        obj.mesh.rotation.z += obj.rotationSpeed.z;
+    });
+
+    // Check for moon landing
+    if(altitude >= 20000 && !hasReachedMoon) {
+        hasReachedMoon = true;
+        const victoryText = document.createElement('div');
+        victoryText.style.position = 'fixed';
+        victoryText.style.top = '50%';
+        victoryText.style.left = '50%';
+        victoryText.style.transform = 'translate(-50%, -50%)';
+        victoryText.style.color = '#fff';
+        victoryText.style.fontSize = '48px';
+        victoryText.style.fontFamily = 'Arial, sans-serif';
+        victoryText.style.textAlign = 'center';
+        victoryText.style.textShadow = '2px 2px 4px rgba(0,0,0,0.5)';
+        victoryText.innerHTML = 'Congratulations!<br>You\'ve reached the moon!';
+        document.body.appendChild(victoryText);
+        
+        // Victory particle effect
+        for(let i = 0; i < 50; i++) {
+            const particle = new THREE.Mesh(
+                new THREE.SphereGeometry(0.1),
+                new THREE.MeshPhongMaterial({ color: 0xFFFF00 })
+            );
+            particle.position.copy(player.position);
+            scene.add(particle);
+            
+            const velocity = new THREE.Vector3(
+                Math.random() * 2 - 1,
+                Math.random() * 2 - 1,
+                Math.random() * 2 - 1
+            ).normalize().multiplyScalar(0.2);
+            
+            function animateParticle() {
+                particle.position.add(velocity);
+                particle.scale.multiplyScalar(0.98);
+                
+                if(particle.scale.x > 0.01) {
+                    requestAnimationFrame(animateParticle);
+                } else {
+                    scene.remove(particle);
+                }
+            }
+            animateParticle();
+        }
+    }
+
+    // Check for sun absorption
+    if(altitude >= 100000) {
+        const speed = velocity.length();
+        if(speed < 0.5 && !isBeingAbsorbed) {
+            isBeingAbsorbed = true;
+            
+            // Animation for being absorbed
+            function absorb() {
+                // Move towards sun
+                const directionToSun = new THREE.Vector3().subVectors(sun.position, player.position).normalize();
+                player.position.add(directionToSun.multiplyScalar(2));
+                
+                // Shrink player
+                player.scale.multiplyScalar(0.98);
+                
+                if(player.scale.x > 0.01) {
+                    requestAnimationFrame(absorb);
+                } else {
+                    // Reset player
+                    player.position.set(0, -9, 0);
+                    player.scale.set(1, 1, 1);
+                    velocity.set(0, 0, 0);
+                    fartPower = 0;
+                    altitude = 0;
+                    isBeingAbsorbed = false;
+                    hasReachedMoon = false; // Allow reaching moon again
+                    
+                    // Remove victory text if it exists
+                    const victoryText = document.querySelector('div[style*="translate(-50%, -50%)"]');
+                    if(victoryText) victoryText.remove();
+                }
+            }
+            absorb();
+        }
+    }
+
+    // Animate clouds
+    clouds.forEach(cloud => {
+        cloud.position.x += 0.01;
+        if(cloud.position.x > 50) cloud.position.x = -50;
+    });
+}
+
+function animate() {
+    requestAnimationFrame(animate);
+    update();
+    renderer.render(scene, camera);
+}
+
+init();
+animate();
+
+// Handle controls
+document.addEventListener('keydown', (event) => {
+    switch(event.code) {
+        case 'Space':
+            fartPower = 0.1;
+            playRandomFartSound();
+            break;
+        case 'KeyA':
+        case 'ArrowLeft':
+            velocity.x = -0.1;
+            break;
+        case 'KeyD':
+        case 'ArrowRight':
+            velocity.x = 0.1;
+            break;
+        case 'KeyW':
+        case 'ArrowUp':
+            velocity.z = -0.1;
+            break;
+        case 'KeyS':
+        case 'ArrowDown':
+            velocity.z = 0.1;
+            break;
+    }
+});
+
+// Handle window resize
+window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+});
+</script>
+</body>
+</html>
