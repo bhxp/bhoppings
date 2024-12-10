@@ -1,0 +1,874 @@
+<html><head><base href="https://www.macos-web.app/"><style>
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+:root {
+  --window-bg: rgba(28, 28, 28, 0.85);
+  --window-border: rgba(255, 255, 255, 0.2);
+}
+
+:root[data-theme="light"] {
+  --window-bg: rgba(255, 255, 255, 0.85);
+  --window-border: rgba(0, 0, 0, 0.2);
+}
+
+body {
+  background: url('https://images.unsplash.com/photo-1506744038136-46273834b3fb') center/cover;
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.menubar {
+  height: 24px;
+  background: var(--window-bg);
+  backdrop-filter: blur(12px);
+  display: flex;
+  align-items: center;
+  padding: 0 10px;
+  justify-content: space-between;
+}
+
+.menu-left {
+  display: flex;
+  align-items: center;
+}
+
+.menu-right {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  color: white;
+  font-size: 13px;
+}
+
+.apple-logo {
+  color: white;
+  font-size: 16px;
+  margin-right: 15px;
+}
+
+.menu-item {
+  color: white;
+  font-size: 13px;
+  padding: 0 10px;
+  cursor: pointer;
+}
+
+.menu-right-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+}
+
+.search-icon {
+  width: 14px;
+  height: 14px;
+}
+
+.dark-mode-toggle {
+  cursor: pointer;
+}
+
+.dock {
+  margin-top: auto;
+  height: 70px;
+  background: var(--window-bg);
+  backdrop-filter: blur(12px);
+  margin: auto 15% 15px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 0 12px;
+}
+
+.dock-icon {
+  width: 50px;
+  height: 50px;
+  background: rgba(255,255,255,0.15);
+  border-radius: 12px;
+  transition: all 0.2s;
+  cursor: pointer;
+}
+
+.dock-icon:hover {
+  transform: scale(1.1);
+  background: rgba(255,255,255,0.25);
+}
+
+.finder-icon {
+  background: url('https://e7.pngegg.com/pngimages/712/776/png-clipart-finder-computer-icons-apple-logo-miscellaneous-smiley.png') center/cover;
+  background-size: 80%;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-color: transparent;
+}
+
+.messages-icon {
+  background: url('https://upload.wikimedia.org/wikipedia/commons/5/51/IMessage_logo.svg') center/cover;
+  background-size: 80%;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-color: transparent;
+}
+
+.mail-icon {
+  background: url('https://upload.wikimedia.org/wikipedia/commons/d/de/Mail_%28iOS%29.svg') center/cover;
+  background-size: 80%;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-color: transparent;
+}
+
+.photos-icon {
+  background: url('https://upload.wikimedia.org/wikipedia/commons/8/8d/Apple_Photos_icon.svg') center/cover;
+  background-size: 80%;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-color: transparent;
+}
+
+.calendar-icon {
+  background: url('https://upload.wikimedia.org/wikipedia/commons/5/5e/Calendar_Icon_iOS.svg') center/cover;
+  background-size: 80%;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-color: transparent;
+}
+
+.appstore-icon {
+  background: url('https://upload.wikimedia.org/wikipedia/commons/3/3c/Download_on_the_App_Store_Badge.svg') center/cover;
+  background-size: 80%;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-color: transparent;
+}
+
+.notes-icon {
+  background: url('https://upload.wikimedia.org/wikipedia/commons/1/1d/Apple_Notes_icon.svg') center/cover;
+  background-size: 80%;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-color: transparent;
+}
+
+.window {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 600px;
+  height: 400px;
+  background: var(--window-bg);
+  backdrop-filter: blur(12px);
+  border-radius: 10px;
+  border: 1px solid var(--window-border);
+  transition: all 0.3s;
+}
+
+.window.minimized {
+  transform: translate(-50%, 100vh) scale(0.1);
+  opacity: 0;
+}
+
+.window-header {
+  height: 32px;
+  border-bottom: 1px solid var(--window-border);
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  gap: 8px;
+}
+
+.window-btn {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.close { background: #ff5f57; }
+.minimize { background: #febc2e; }
+.maximize { background: #28c840; }
+
+.menu-dropdown {
+  position: absolute;
+  top: 24px;
+  background: var(--window-bg);
+  backdrop-filter: blur(12px);
+  border-radius: 5px;
+  padding: 5px 0;
+  display: none;
+}
+
+.menu-dropdown.active {
+  display: block;
+}
+
+.menu-dropdown-item {
+  color: white;
+  padding: 5px 20px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.safari-window {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 800px;
+  height: 500px;
+  background: var(--window-bg);
+  backdrop-filter: blur(12px);
+  border-radius: 10px;
+  border: 1px solid var(--window-border);
+  display: none;
+  opacity: 0;
+  transition: all 0.3s;
+}
+
+.safari-toolbar {
+  height: 40px;
+  border-bottom: 1px solid var(--window-border);
+  display: flex;
+  align-items: center;
+  padding: 0 10px;
+  gap: 10px;
+}
+
+.url-bar {
+  flex: 1;
+  height: 28px;
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 5px;
+  border: none;
+  color: white;
+  padding: 0 10px;
+  font-size: 13px;
+}
+
+.safari-content {
+  height: calc(100% - 72px);
+  background: white;
+}
+
+.safari-content iframe {
+  background: white;
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
+.safari-icon {
+  background: url('https://upload.wikimedia.org/wikipedia/commons/5/52/Safari_browser_logo.svg') center/cover;
+  background-size: 80%;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-color: transparent;
+}
+
+/* Add styles for Finder content */
+.finder-content {
+  display: flex;
+  height: calc(100% - 32px);
+  color: white;
+}
+
+.finder-sidebar {
+  width: 200px;
+  padding: 10px;
+  border-right: 1px solid var(--window-border);
+}
+
+.finder-main {
+  flex: 1;
+  padding: 10px;
+  overflow-y: auto;
+}
+
+.sidebar-item {
+  padding: 5px 10px;
+  margin: 2px 0;
+  border-radius: 5px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sidebar-item:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.tag-color {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.files-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 15px;
+}
+
+.file-item {
+  text-align: center;
+  padding: 10px;
+  border-radius: 5px;
+}
+
+.file-item:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.file-icon {
+  width: 48px;
+  height: 48px;
+  margin: 0 auto 5px;
+}
+
+.file-name {
+  font-size: 12px;
+  word-wrap: break-word;
+}
+</style>
+</head>
+<body>
+
+<div class="menubar">
+  <div class="menu-left">
+    <div class="apple-logo">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+        <path d="M12.367 8.538c-.02-2.006 1.637-2.97 1.711-3.019-.931-1.362-2.382-1.548-2.901-1.569-1.235-.125-2.41.727-3.037.727-.627 0-1.596-.708-2.623-.69-1.35.02-2.595.785-3.288 1.995-1.401 2.43-.359 6.03 1.007 8.001.667.964 1.462 2.047 2.506 2.008 1.006-.04 1.387-.65 2.603-.65 1.216 0 1.558.65 2.623.63 1.084-.02 1.771-.985 2.434-1.95.767-1.121 1.082-2.207 1.101-2.263-.024-.01-2.112-.812-2.133-3.22zM10.726 3.96c.554-.672.928-1.607.826-2.538-.798.033-1.764.532-2.337 1.204-.514.595-.963 1.547-.842 2.459.89.069 1.799-.452 2.353-1.125z"/>
+      </svg>
+    </div>
+    <div class="menu-item" data-menu="finder">Finder</div>
+    <div class="menu-item" data-menu="safari">Safari</div>
+    <div class="menu-item" data-menu="file">File</div>
+    <div class="menu-item" data-menu="edit">Edit</div>
+    <div class="menu-item" data-menu="view">View</div>
+    <div class="menu-item" data-menu="go">Go</div>
+    <div class="menu-item" data-menu="window">Window</div>
+    <div class="menu-item" data-menu="help">Help</div>
+  </div>
+  
+  <div class="menu-right">
+    <div class="menu-right-item">
+      <svg class="search-icon" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+      </svg>
+    </div>
+    <div class="menu-right-item wifi-status">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M1 9l2 2c4.97-4.97 13.03-4.97 18 0l2-2C16.93 2.93 7.08 2.93 1 9zm8 8l3 3 3-3c-1.65-1.66-4.34-1.66-6 0zm-4-4l2 2c2.76-2.76 7.24-2.76 10 0l2-2C15.14 9.14 8.87 9.14 5 13z"/>
+      </svg>
+    </div>
+    <div class="menu-right-item dark-mode-toggle">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M20 8.69V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12 20 8.69zM12 18c-3.31 0-6-2.69-6-6s2.69-6 6-6 6 2.69 6 6-2.69 6-6 6zm0-10c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4z"/>
+      </svg>
+    </div>
+    <div class="menu-right-item date"></div>
+    <div class="menu-right-item clock"></div>
+  </div>
+</div>
+
+<div class="window">
+  <div class="window-header">
+    <div class="window-btn close"></div>
+    <div class="window-btn minimize"></div>
+    <div class="window-btn maximize"></div>
+  </div>
+  <div class="finder-content">
+    <div class="finder-sidebar">
+      <div class="sidebar-item" data-location="favorites">
+        <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+          <path d="M8 2l2 4 4 .5-3 3 .5 4L8 12l-3.5 1.5.5-4-3-3 4-.5z"/>
+        </svg>
+        Favorites
+      </div>
+      <div class="sidebar-item" data-location="downloads">
+        <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+          <path d="M8 2a.5.5 0 0 1 .5.5v11.793l3.146-3.147a.5.5 0 0 1 .708.708l-4 4a.5.5 0 0 1-.708 0l-4-4a.5.5 0 0 1 .708-.708L7.5 14.293V2.5A.5.5 0 0 1 8 2z"/>
+        </svg>
+        Downloads
+      </div>
+      <div class="sidebar-item" data-location="recents">
+        <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+          <path d="M8 3.5a.5.5 0 0 0-1 0V9a.5.5 0 0 0 .252.434l3.5 2a.5.5 0 0 0 .496-.868L8 8.71V3.5z"/>
+          <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm7-8A7 7 0 1 1 1 8a7 7 0 0 1 14 0z"/>
+        </svg>
+        Recents
+      </div>
+      <div class="sidebar-item" data-location="applications">
+        <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+          <path d="M4 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2zm0 1v10h8V3H4z"/>
+        </svg>
+        Applications
+      </div>
+      <div class="sidebar-item" data-location="desktop">
+        <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+          <path d="M0 4s0-2 2-2h12s2 0 2 2v6s0 2-2 2h-4c0 .667.083 1.167.25 1.5H11a.5.5 0 0 1 0 1H5a.5.5 0 0 1 0-1h.75c.167-.333.25-.833.25-1.5H2s-2 0-2-2V4zm1.398-.855a.758.758 0 0 0-.254.302A1.46 1.46 0 0 0 1 4.01V10c0 .325.078.502.145.602.07.105.17.188.302.254a1.464 1.464 0 0 0 .538.143L2.01 11H14c.325 0 .502-.078.602-.145a.758.758 0 0 0 .254-.302 1.464 1.464 0 0 0 .143-.538L15 9.99V4c0-.325-.078-.502-.145-.602a.757.757 0 0 0-.302-.254A1.46 1.46 0 0 0 13.99 3H2c-.325 0-.502.078-.602.145z"/>
+        </svg>
+        Desktop
+      </div>
+      <div class="sidebar-item" data-location="documents">
+        <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+          <path d="M4 1h8a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2zm0 1v12h8V2H4z"/>
+        </svg>
+        Documents
+      </div>
+      
+      <div style="margin: 15px 0 5px 10px; opacity: 0.7;">Tags</div>
+      <div class="sidebar-item">
+        <span class="tag-color" style="background: #ff6b6b;"></span>
+        Red
+      </div>
+      <div class="sidebar-item">
+        <span class="tag-color" style="background: #4ecdc4;"></span>
+        Green
+      </div>
+      <div class="sidebar-item">
+        <span class="tag-color" style="background: #45b7d1;"></span>
+        Blue
+      </div>
+    </div>
+    
+    <div class="finder-main">
+      <div class="files-list">
+        <!-- Content will be populated by JavaScript -->
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="safari-window">
+  <div class="window-header">
+    <div class="window-btn close"></div>
+    <div class="window-btn minimize"></div>
+    <div class="window-btn maximize"></div>
+  </div>
+  <div class="safari-toolbar">
+    <input type="text" class="url-bar" placeholder="Search or enter website name">
+  </div>
+  <div class="safari-content"></div>
+</div>
+
+<div class="dock">
+  <div class="dock-icon finder-icon"></div>
+  <div class="dock-icon safari-icon"></div>
+  <div class="dock-icon mail-icon"></div>
+  <div class="dock-icon messages-icon"></div>
+  <div class="dock-icon photos-icon"></div>
+  <div class="dock-icon calendar-icon"></div>
+  <div class="dock-icon notes-icon"></div>
+  <div class="dock-icon appstore-icon"></div>
+</div>
+
+<script>
+const windowElement = document.querySelector('.window');
+const windowHeader = document.querySelector('.window-header');
+let isDragging = false;
+let currentX;
+let currentY;
+let initialX;
+let initialY;
+let xOffset = 0;
+let yOffset = 0;
+
+// Window dragging functionality
+windowHeader.addEventListener('mousedown', dragStart);
+document.addEventListener('mousemove', drag);
+document.addEventListener('mouseup', dragEnd);
+
+function dragStart(e) {
+  if (e.target.classList.contains('window-btn')) return;
+  
+  initialX = e.clientX - xOffset;
+  initialY = e.clientY - yOffset;
+
+  if (e.target === windowHeader || e.target.parentElement === windowHeader) {
+    isDragging = true;
+  }
+}
+
+function drag(e) {
+  if (isDragging) {
+    e.preventDefault();
+    
+    currentX = e.clientX - initialX;
+    currentY = e.clientY - initialY;
+
+    xOffset = currentX;
+    yOffset = currentY;
+
+    setTranslate(currentX, currentY, windowElement);
+  }
+}
+
+function dragEnd(e) {
+  initialX = currentX;
+  initialY = currentY;
+  isDragging = false;
+}
+
+function setTranslate(xPos, yPos, el) {
+  el.style.transform = `translate(${xPos}px, ${yPos}px)`;
+}
+
+// Window button functionality
+const closeBtn = document.querySelector('.close');
+const minimizeBtn = document.querySelector('.minimize');
+const maximizeBtn = document.querySelector('.maximize');
+let isMaximized = false;
+let previousDimensions = {};
+
+closeBtn.addEventListener('click', () => {
+  windowElement.style.opacity = '0';
+  setTimeout(() => {
+    windowElement.style.display = 'none';
+  }, 300);
+});
+
+minimizeBtn.addEventListener('click', () => {
+  windowElement.classList.add('minimized');
+});
+
+maximizeBtn.addEventListener('click', () => {
+  if (!isMaximized) {
+    previousDimensions = {
+      width: windowElement.style.width,
+      height: windowElement.style.height,
+      top: windowElement.style.top,
+      left: windowElement.style.left,
+      transform: windowElement.style.transform
+    };
+    
+    windowElement.style.width = '100%';
+    windowElement.style.height = 'calc(100vh - 24px)';
+    windowElement.style.top = '24px';
+    windowElement.style.left = '0';
+    windowElement.style.transform = 'none';
+    windowElement.style.borderRadius = '0';
+    
+    isMaximized = true;
+  } else {
+    Object.assign(windowElement.style, previousDimensions);
+    windowElement.style.borderRadius = '10px';
+    isMaximized = false;
+  }
+});
+
+// Dock icon functionality
+const dockIcons = document.querySelectorAll('.dock-icon');
+const safariWindow = document.querySelector('.safari-window');
+
+dockIcons.forEach(icon => {
+  icon.addEventListener('click', () => {
+    if (icon.classList.contains('finder-icon')) {
+      windowElement.style.display = 'block';
+      windowElement.style.opacity = '1';
+      windowElement.classList.remove('minimized');
+    }
+    if (icon.classList.contains('safari-icon')) {
+      safariWindow.style.display = 'block';
+      setTimeout(() => {
+        safariWindow.style.opacity = '1';
+      }, 0);
+    }
+    // For other apps, we can show a "coming soon" or "app not available" message
+    if (icon.classList.contains('mail-icon') || 
+        icon.classList.contains('messages-icon') ||
+        icon.classList.contains('photos-icon') ||
+        icon.classList.contains('calendar-icon') ||
+        icon.classList.contains('notes-icon') ||
+        icon.classList.contains('appstore-icon')) {
+      
+      const appName = icon.className.split('-')[0].charAt(0).toUpperCase() + 
+                      icon.className.split('-')[0].slice(1);
+      
+      const demoWindow = windowElement.cloneNode(true);
+      demoWindow.style.display = 'block';
+      demoWindow.style.opacity = '1';
+      demoWindow.classList.remove('minimized');
+      demoWindow.style.zIndex = '1000';
+      
+      // Add content to show it's a demo
+      const content = document.createElement('div');
+      content.style.padding = '20px';
+      content.style.color = '#fff';
+      content.innerHTML = `<h2>${appName}</h2><p>This is a demo version. App functionality coming soon!</p>`;
+      demoWindow.appendChild(content);
+      
+      document.body.appendChild(demoWindow);
+      
+      // Handle close button for demo window
+      demoWindow.querySelector('.close').addEventListener('click', () => {
+        demoWindow.style.opacity = '0';
+        setTimeout(() => {
+          demoWindow.remove();
+        }, 300);
+      });
+    }
+  });
+});
+
+// Add Safari window functionality
+const safariClose = safariWindow.querySelector('.close');
+const safariMinimize = safariWindow.querySelector('.minimize');
+const safariMaximize = safariWindow.querySelector('.maximize');
+let isSafariMaximized = false;
+let safariPreviousDimensions = {};
+
+safariClose.addEventListener('click', () => {
+  safariWindow.style.opacity = '0';
+  setTimeout(() => {
+    safariWindow.style.display = 'none';
+  }, 300);
+});
+
+safariMinimize.addEventListener('click', () => {
+  safariWindow.classList.add('minimized');
+});
+
+safariMaximize.addEventListener('click', () => {
+  if (!isSafariMaximized) {
+    safariPreviousDimensions = {
+      width: safariWindow.style.width,
+      height: safariWindow.style.height,
+      top: safariWindow.style.top,
+      left: safariWindow.style.left,
+      transform: safariWindow.style.transform
+    };
+    
+    safariWindow.style.width = '100%';
+    safariWindow.style.height = 'calc(100vh - 24px)';
+    safariWindow.style.top = '24px';
+    safariWindow.style.left = '0';
+    safariWindow.style.transform = 'none';
+    safariWindow.style.borderRadius = '0';
+    
+    isSafariMaximized = true;
+  } else {
+    Object.assign(safariWindow.style, safariPreviousDimensions);
+    safariWindow.style.borderRadius = '10px';
+    isSafariMaximized = false;
+  }
+});
+
+// Add Safari window dragging
+const safariHeader = safariWindow.querySelector('.window-header');
+let isSafariDragging = false;
+let safariCurrentX;
+let safariCurrentY;
+let safariInitialX;
+let safariInitialY;
+let safariXOffset = 0;
+let safariYOffset = 0;
+
+safariHeader.addEventListener('mousedown', safariDragStart);
+document.addEventListener('mousemove', safariDrag);
+document.addEventListener('mouseup', safariDragEnd);
+
+function safariDragStart(e) {
+  if (e.target.classList.contains('window-btn')) return;
+  
+  safariInitialX = e.clientX - safariXOffset;
+  safariInitialY = e.clientY - safariYOffset;
+
+  if (e.target === safariHeader || e.target.parentElement === safariHeader) {
+    isSafariDragging = true;
+  }
+}
+
+function safariDrag(e) {
+  if (isSafariDragging) {
+    e.preventDefault();
+    
+    safariCurrentX = e.clientX - safariInitialX;
+    safariCurrentY = e.clientY - safariInitialY;
+
+    safariXOffset = safariCurrentX;
+    safariYOffset = safariCurrentY;
+
+    setSafariTranslate(safariCurrentX, safariCurrentY, safariWindow);
+  }
+}
+
+function safariDragEnd(e) {
+  safariInitialX = safariCurrentX;
+  safariInitialY = safariCurrentY;
+  isSafariDragging = false;
+}
+
+function setSafariTranslate(xPos, yPos, el) {
+  el.style.transform = `translate(${xPos}px, ${yPos}px)`;
+}
+
+// Add clock and date functionality
+function updateDateTime() {
+  const clockElement = document.querySelector('.clock');
+  const dateElement = document.querySelector('.date');
+  
+  const now = new Date();
+  
+  // Update clock
+  clockElement.textContent = now.toLocaleTimeString('en-US', {
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true
+  });
+  
+  // Update date
+  dateElement.textContent = now.toLocaleDateString('en-US', {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric'
+  });
+}
+
+// Update every second
+setInterval(updateDateTime, 1000);
+updateDateTime(); // Initial call
+
+// Dark mode toggle
+const darkModeToggle = document.querySelector('.dark-mode-toggle');
+let isDarkMode = true;
+
+darkModeToggle.addEventListener('click', () => {
+  isDarkMode = !isDarkMode;
+  document.documentElement.setAttribute('data-theme', isDarkMode ? 'dark' : 'light');
+});
+
+// Simulate wifi status check
+function updateWifiStatus() {
+  const wifiIcon = document.querySelector('.wifi-status');
+  // In a real app, you would check actual connection status
+  const isConnected = true;
+  wifiIcon.style.opacity = isConnected ? '1' : '0.5';
+}
+
+updateWifiStatus();
+setInterval(updateWifiStatus, 5000); // Check every 5 seconds
+
+// Improved Safari URL bar functionality
+const urlBar = document.querySelector('.url-bar');
+const safariContent = document.querySelector('.safari-content');
+
+urlBar.addEventListener('keypress', (e) => {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    let url = urlBar.value.trim();
+    
+    // Check if it's a search query or URL
+    if (!url.includes('.') || url.includes(' ')) {
+      // Treat as search query
+      url = `https://www.google.com/search?q=${encodeURIComponent(url)}`;
+    } else {
+      // Add https:// if not present
+      if (!url.startsWith('http://') && !url.startsWith('https://')) {
+        url = 'https://' + url;
+      }
+    }
+    
+    try {
+      // Create iframe for website content
+      const iframe = document.createElement('iframe');
+      iframe.style.width = '100%';
+      iframe.style.height = '100%';
+      iframe.style.border = 'none';
+      iframe.src = url;
+      
+      // Clear previous content and add new iframe
+      safariContent.innerHTML = '';
+      safariContent.appendChild(iframe);
+      
+      // Update URL bar with final URL
+      urlBar.value = url;
+      
+      // Add error handling for iframe load
+      iframe.onerror = () => {
+        safariContent.innerHTML = `
+          <div style="padding: 20px; color: #333;">
+            <h2>Unable to load website</h2>
+            <p>The website "${url}" could not be loaded. Please check the URL and try again.</p>
+          </div>
+        `;
+      };
+    } catch (err) {
+      safariContent.innerHTML = `
+        <div style="padding: 20px; color: #333;">
+          <h2>Error loading website</h2>
+          <p>${err.message}</p>
+        </div>
+      `;
+    }
+  }
+});
+
+// Finder content functionality
+const finderContent = {
+  favorites: [],
+  downloads: [
+    { name: 'Downloaded File 1.pdf', icon: '📄' },
+    { name: 'Downloaded File 2.jpg', icon: '🖼️' },
+    { name: 'Download.zip', icon: '📦' }
+  ],
+  recents: [
+    { name: 'Recent Document.pdf', icon: '📄' },
+    { name: 'Recent Image.png', icon: '🖼️' },
+    { name: 'Recent File.txt', icon: '📝' }
+  ],
+  applications: [
+    { name: 'Safari', icon: '🌐' },
+    { name: 'Messages', icon: '💬' },
+    { name: 'Mail', icon: '✉️' },
+    { name: 'Calendar', icon: '📅' },
+    { name: 'Photos', icon: '🖼️' },
+    { name: 'Notes', icon: '📝' },
+  ],
+  desktop: [],
+  documents: [
+    { name: 'Recent Document.pdf', icon: '📄' },
+    { name: 'Document 1.pdf', icon: '📄' },
+    { name: 'Document 2.pdf', icon: '📄' },
+    { name: 'Notes.txt', icon: '📝' }
+  ]
+};
+
+const sidebarItems = document.querySelectorAll('.sidebar-item[data-location]');
+const filesList = document.querySelector('.files-list');
+
+sidebarItems.forEach(item => {
+  item.addEventListener('click', () => {
+    const location = item.dataset.location;
+    const files = finderContent[location];
+    
+    filesList.innerHTML = '';
+    files.forEach(file => {
+      const fileEl = document.createElement('div');
+      fileEl.className = 'file-item';
+      fileEl.innerHTML = `
+        <div class="file-icon">${file.icon}</div>
+        <div class="file-name">${file.name}</div>
+      `;
+      filesList.appendChild(fileEl);
+    });
+  });
+});
+
+// Trigger click on Applications by default
+document.querySelector('.sidebar-item[data-location="applications"]').click();
+</script>
+</body></html>
