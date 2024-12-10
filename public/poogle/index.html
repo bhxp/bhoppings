@@ -1,0 +1,350 @@
+<html><head><base href="https://example.com"><title>Poogle - The Poo Search Engine</title>
+<style>
+body {
+  font-family: sans-serif;
+  background-color: #C69C6D;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 100vh;
+  margin: 0;
+  overflow: hidden;
+}
+
+.search-container {
+  display: flex;
+  align-items: center;
+  margin-top: 50px;
+  border: 2px solid #8B4513;
+  border-radius: 20px;
+  padding: 10px;
+  background-color: white;
+}
+.search-container input[type="text"] {
+  padding: 10px;
+  border: none;
+  border-radius: 20px 0 0 20px;
+  flex-grow: 1;
+  color: #8B4513;
+}
+.search-container button {
+  padding: 10px 20px;
+  border: none;
+  background-color: #8B4513;
+  color: white;
+  border-radius: 0 20px 20px 0;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+.search-container button:hover {
+    background-color: #5e3117;
+}
+
+.poogle-svg {
+  width: 200px;
+  height: 100px;
+  margin-bottom: 20px;
+}
+
+.poogle-text {
+  font-family: 'Arial Black', sans-serif;
+  font-size: 3em;
+  fill: #8B4513;
+  text-anchor: middle;
+  dominant-baseline: middle;
+  animation: wiggle 2s infinite;
+}
+
+@keyframes wiggle {
+  0% { transform: rotate(0deg); }
+  25% { transform: rotate(5deg); }
+  50% { transform: rotate(0deg); }
+  75% { transform: rotate(-5deg); }
+  100% { transform: rotate(0deg); }
+}
+
+.search-results {
+  margin-top: 20px;
+  width: 80%;
+  max-width: 600px;
+  text-align: center;
+}
+
+.search-results ul {
+  list-style: none;
+  padding: 0;
+}
+.search-results li {
+  border: 1px solid #8B4513;
+  border-radius: 5px;
+  padding: 10px;
+  margin-bottom: 10px;
+  background-color: white;
+  color: #8B4513;
+}
+
+.cartoon-poo {
+  position: absolute;
+  width: 100px;
+  height: 100px;
+  animation: float 10s linear infinite;
+}
+
+.poo1 {
+    top: 20px;
+    right: 20px;
+    animation-delay: 0s;
+    animation-name: float1;
+}
+.poo2 {
+    bottom: 20px;
+    left: 20px;
+    animation-delay: 2.5s;
+    animation-name: float2;
+}
+.poo3 {
+    top: calc(50% - 50px);
+    left: calc(50% - 50px);
+    animation-delay: 5s;
+    animation-name: float3;
+}
+.poo4 {
+    top: 10%;
+    left: 80%;
+    animation-delay: 7.5s;
+    animation-name: float4;
+}
+
+@keyframes float1 {
+    0% { transform: translate(0, 0) rotate(90deg); }
+    50% { transform: translate(0, -250px) rotate(120deg); }
+    100% { transform: translate(0, 0) rotate(90deg); }
+}
+
+@keyframes float2 {
+    0% { transform: translate(0, 0) rotate(90deg); }
+    50% { transform: translate(250px, 0px) rotate(60deg); }
+    100% { transform: translate(0, 0) rotate(90deg); }
+}
+@keyframes float3 {
+    0% { transform: translate(0, 0) rotate(90deg); }
+    25% { transform: translate(125px, -125px) rotate(60deg); }
+    50% { transform: translate(250px, -250px) rotate(30deg); }
+    75% { transform: translate(125px, -125px) rotate(60deg); }
+    100% { transform: translate(0, 0) rotate(90deg); }
+}
+@keyframes float4 {
+    0% { transform: translate(0, 0) rotate(90deg); }
+    50% { transform: translate(-100px, -100px) rotate(120deg); }
+    100% { transform: translate(0, 0) rotate(90deg); }
+}
+
+.cartoon-poo-path {
+  fill: #8B4513;
+  stroke: #5e3117;
+  stroke-width: 2;
+}
+
+.results-image {
+    width: 100px;
+    height: 100px;
+}
+
+.results-image path {
+    stroke: #5e3117;
+    stroke-width: 2;
+}
+
+/* New styles for poo textures */
+.poo-texture {
+  stroke: #381e0b;
+  stroke-width: 1.5;
+}
+</style>
+</head>
+<body>
+
+<svg class="poogle-svg" viewBox="0 0 200 100">
+    <text class="poogle-text" x="100" y="50">Poogle</text>
+</svg>
+
+<div class="search-container">
+  <input type="text" id="search-input" placeholder="Search about poo...">
+  <button id="search-button">Search</button>
+</div>
+
+<div class="search-results">
+  <ul id="results-list"></ul>
+</div>
+
+<svg class="cartoon-poo poo1" viewBox="0 0 100 100">
+  <path class="cartoon-poo-path"  d="M20,80 C 30,70 40,40 50,35 C 60,30 70,45 80,60 A 10 15 0 0 1 65,80 A 15 20 0 0 1 50,85 C 45,87 40,90 30,80 C 25,75 20,78 20,80" />
+</svg>
+<svg class="cartoon-poo poo2" viewBox="0 0 100 100">
+  <path class="cartoon-poo-path"  d="M20,80 C 30,70 40,40 50,35 C 60,30 70,45 80,60 A 10 15 0 0 1 65,80 A 15 20 0 0 1 50,85 C 45,87 40,90 30,80 C 25,75 20,78 20,80" />
+</svg>
+<svg class="cartoon-poo poo3" viewBox="0 0 100 100">
+  <path class="cartoon-poo-path"  d="M20,80 C 30,70 40,40 50,35 C 60,30 70,45 80,60 A 10 15 0 0 1 65,80 A 15 20 0 0 1 50,85 C 45,87 40,90 30,80 C 25,75 20,78 20,80" />
+</svg>
+<svg class="cartoon-poo poo4" viewBox="0 0 100 100">
+  <path class="cartoon-poo-path" d="M20,80 C 30,70 40,40 50,35 C 60,30 70,45 80,60 A 10 15 0 0 1 65,80 A 15 20 0 0 1 50,85 C 45,87 40,90 30,80 C 25,75 20,78 20,80" />
+</svg>
+
+<script>
+  const searchInput = document.getElementById('search-input');
+  const searchButton = document.getElementById('search-button');
+  const resultsList = document.getElementById('results-list');
+
+  const pooHistory = {};
+
+    const pooPaths = {
+        "basic": "M20,80 C 30,70 40,40 50,35 C 60,30 70,45 80,60 A 10 15 0 0 1 65,80 A 15 20 0 0 1 50,85 C 45,87 40,90 30,80 C 25,75 20,78 20,80",
+        "corn": "M20,80 C 30,70 40,40 50,35 C 60,30 70,45 80,60 A 10 15 0 0 1 65,80 A 15 20 0 0 1 50,85 C 45,87 40,90 30,80 C 25,75 20,78 20,80 L30,75 L40,65 L50,60 L60,65 L70,75 Z",
+      "pebbles":"M20,80 C 30,70 40,40 50,35 C 60,30 70,45 80,60 A 10 15 0 0 1 65,80 A 15 20 0 0 1 50,85 C 45,87 40,90 30,80 C 25,75 20,78 20,80 M30,60 a 5,5 0 0,0 5,5 M 50,50 a 3,3 0 0,0 3,3 m 15,10 a 7,7 0 0,1 -7,-7" ,
+        "fluffy": "M20,80 C 30,70 40,40 50,35 C 60,30 70,45 80,60 A 10 15 0 0 1 65,80 A 15 20 0 0 1 50,85 C 45,87 40,90 30,80 C 25,75 20,78 20,80 M 25 70 a 3,3 0 0,0 4,4 m 10 0 a 5,5 0 0,0 6,-2 m 20 -5 a 2,2 0 0,1 1,3"
+    };
+
+
+  searchButton.addEventListener('click', performSearch);
+
+  function performSearch() {
+    const searchTerm = searchInput.value.toLowerCase();
+
+    if (searchTerm === 'poo' || searchTerm === 'regular poo' || searchTerm === 'normal poo') {
+       displayRegularPoo();
+    } else if (pooHistory[searchTerm]) {
+      displayResults(pooHistory[searchTerm]);
+    } else {
+      const generatedPoo = generatePoo(searchTerm);
+      pooHistory[searchTerm] = generatedPoo;
+      displayResults(generatedPoo);
+    }
+  }
+
+    function displayRegularPoo() {
+        resultsList.innerHTML = '';
+        const listItem = document.createElement('li');
+        listItem.innerHTML = `
+          <h3>Regular Poo</h3>
+          <svg class="results-image" viewBox="0 0 100 100">
+            <path d="M20,80 C 30,70 40,40 50,35 C 60,30 70,45 80,60 A 10 15 0 0 1 65,80 A 15 20 0 0 1 50,85 C 45,87 40,90 30,80 C 25,75 20,78 20,80" fill="brown"/>
+          </svg>
+          <p>This is the most basic type of poo, a normal bodily waste product. It's typically brown and can vary in consistency.  Changes in its characteristics can sometimes indicate health issues.</p>
+        `;
+        resultsList.appendChild(listItem);
+    }
+
+  function displayResults(poo) {
+    resultsList.innerHTML = '';
+    const listItem = document.createElement('li');
+
+    // Add poo textures
+    let pooTexture = "";
+    if (poo.texture) {
+       pooTexture = `<path class="poo-texture" d="${poo.texture}" fill="transparent" />`;
+    }
+
+
+    const pooImage = `
+      <svg class="results-image" viewBox="0 0 100 100">
+        <path d="${poo.path}" fill="${poo.color}" />
+        ${pooTexture}
+      </svg>
+    `;
+
+    listItem.innerHTML = `
+      <h3>${poo.title}</h3>
+      ${pooImage}
+      <p>${poo.description}</p>
+      <p>${poo.fact}</p>
+    `;
+    resultsList.appendChild(listItem);
+  }
+
+
+  function generatePoo(searchTerm) {
+    const facts = [
+      "This poo is surprisingly buoyant.",
+      "Ancient civilizations used this poo as currency.",
+      "This poo glows in the dark.",
+      "This poo can be used to power small appliances.",
+      "This poo is a delicacy in some cultures.",
+      "This poo is said to have medicinal properties.",
+      "This poo is highly flammable.",
+      "This poo is a natural insect repellent.",
+      "This poo is a good source of fiber.",
+      "This poo can be sculpted into intricate shapes.",
+      "This poo is surprisingly magnetic.",
+      "This poo can be used to make a surprisingly durable adhesive.",
+      "This poo has been known to attract unicorns.",
+      "This poo is said to grant wishes.",
+      "This poo is the key to eternal life.",
+      "This poo is rumored to be the source of a mysterious energy field.",
+      "This poo is the missing link in the theory of evolution.",
+      "This poo is the inspiration for a popular children's book.",
+      "This poo is the subject of a controversial documentary.",
+      "This poo is a national treasure."
+    ];
+
+    const randomFact = facts[Math.floor(Math.random() * facts.length)];
+
+    const pooName = `${searchTerm.charAt(0).toUpperCase() + searchTerm.slice(1)} Poo`;
+
+    let pooColor = "";
+    const colors = ['#7b522d', '#5c3a1e', '#402911', '#BF40BF', '#7F00FF', '#5D00D9','#114029','#2d7b52'];
+    const colorMap = {
+        "red": "red",
+        "orange": "orange",
+        "yellow": "yellow",
+        "green": "green",
+        "blue": "blue",
+        "purple": "purple",
+        "pink": "pink"
+    };
+
+    for (const colorName in colorMap) {
+        if (searchTerm.includes(colorName)) {
+            pooColor = colorMap[colorName];
+            break;
+        }
+    }
+
+    if (!pooColor) {
+        pooColor = colors[Math.floor(Math.random() * colors.length)];
+    }
+
+
+    let randomPath = "";
+    let pooTexture = "";
+    const searchTermLower = searchTerm.toLowerCase();
+
+
+    if (searchTermLower.includes("corn")) {
+        randomPath = pooPaths["corn"];
+        pooTexture = "M25,75 L35,65 L45,55 L55,50 L65,55 L75,65 Z";
+
+    } else if (searchTermLower.includes("pebble")) {
+        randomPath = pooPaths["pebbles"];
+        pooTexture = "M30,60 a 5,5 0 0,0 5,5 M 50,50 a 3,3 0 0,0 3,3 m 15,10 a 7,7 0 0,1 -7,-7";
+
+    } else if (searchTermLower.includes("fluffy") || searchTermLower.includes("cloud")) {
+        randomPath = pooPaths["fluffy"];
+         pooTexture = "M 25 70 a 3,3 0 0,0 4,4 m 10 0 a 5,5 0 0,0 6,-2 m 20 -5 a 2,2 0 0,1 1,3";
+    } else {
+         randomPath = pooPaths["basic"];
+    }
+
+
+
+    return {
+      title: pooName,
+      description: `You searched for "${searchTerm}" and we found this fascinating poo!`,
+      fact: randomFact,
+      color: pooColor,
+      path: randomPath,
+      texture: pooTexture // Added texture property
+    };
+  }
+</script>
+
+</body></html>
