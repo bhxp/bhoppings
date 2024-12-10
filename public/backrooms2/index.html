@@ -1,0 +1,665 @@
+<html><head><base href="https://backroomsgame.net/"><title>Backrooms 3D Maze Game</title><style>
+  body, html {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    overflow: hidden;
+    font-family: Arial, sans-serif;
+  }
+  #gameCanvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+  #instructions {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    color: #fff;
+    background-color: rgba(0,0,0,0.5);
+    padding: 10px;
+    border-radius: 5px;
+  }
+  #staminaBar, #insanityBar {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 200px;
+    height: 10px;
+    background-color: #333;
+    border-radius: 5px;
+    overflow: hidden;
+  }
+  #insanityBar {
+    bottom: 40px;
+  }
+  #staminaFill, #insanityFill {
+    width: 100%;
+    height: 100%;
+    transition: width 0.1s linear;
+  }
+  #staminaFill {
+    background-color: #0f0;
+  }
+  #insanityFill {
+    background-color: #f0f;
+  }
+  #distortionOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.5s;
+  }
+  #messageOverlay {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 36px;
+    color: #ff0000;
+    text-shadow: 2px 2px 4px #000000;
+    opacity: 0;
+    transition: opacity 0.5s;
+  }
+  #gameOverScreen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.8);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    color: #fff;
+    font-size: 48px;
+    display: none;
+  }
+  #restartButton {
+    margin-top: 20px;
+    padding: 10px 20px;
+    font-size: 24px;
+    background-color: #f00;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+  #survivalTime {
+    margin-top: 10px;
+    font-size: 24px;
+    color: #fff;
+  }
+</style></head><body>
+<canvas id="gameCanvas"></canvas>
+<div id="instructions">
+  WASD: Move | Mouse: Look | F: Toggle Flashlight | Shift: Sprint | ESC: Exit Pointer Lock | Click Almond Water to restore sanity
+</div>
+<div id="staminaBar"><div id="staminaFill"></div></div>
+<div id="insanityBar"><div id="insanityFill"></div></div>
+<div id="distortionOverlay"></div>
+<div id="messageOverlay"></div>
+<div id="gameOverScreen">
+  <div>Game Over</div>
+  <button id="restartButton">Restart</button>
+  <div id="survivalTime"></div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.7.7/dat.gui.min.js"></script>
+<script>
+const scene = new THREE.Scene();
+scene.fog = new THREE.FogExp2(0x000000, 0.1);
+
+const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+const renderer = new THREE.WebGLRenderer({canvas: document.getElementById('gameCanvas')});
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+// Survival timer
+let startTime;
+let survivalTime = 0;
+
+function startTimer() {
+  startTime = Date.now();
+}
+
+function updateTimer() {
+  const currentTime = Date.now();
+  survivalTime = (currentTime - startTime) / 1000; // Convert to seconds
+}
+
+function formatTime(seconds) {
+  const minutes = Math.floor(seconds / 60);
+  const remainingSeconds = Math.floor(seconds % 60);
+  return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+}
+
+// Infinite maze generation
+const chunkSize = 20;
+const visibleChunks = 3;
+const chunks = new Map();
+
+function generateChunk(chunkX, chunkZ) {
+  const key = `${chunkX},${chunkZ}`;
+  if (chunks.has(key)) return chunks.get(key);
+
+  const chunk = [];
+  for (let i = 0; i < chunkSize; i++) {
+    chunk[i] = [];
+    for (let j = 0; j < chunkSize; j++) {
+      chunk[i][j] = Math.random() < 0.3 ? 1 : 0;
+    }
+  }
+  chunks.set(key, chunk);
+  return chunk;
+}
+
+// Backrooms textures
+const wallTexture = new THREE.TextureLoader().load('https://i.imgur.com/WdIs1T1.png');
+const floorTexture = new THREE.TextureLoader().load('https://i.imgur.com/NWbdEF8.jpeg');
+const ceilingTexture = new THREE.TextureLoader().load('https://i.imgur.com/pGDxLuW.jpg');
+wallTexture.wrapS = wallTexture.wrapT = THREE.RepeatWrapping;
+floorTexture.wrapS = floorTexture.wrapT = THREE.RepeatWrapping;
+ceilingTexture.wrapS = ceilingTexture.wrapT = THREE.RepeatWrapping;
+wallTexture.repeat.set(1, 1);
+floorTexture.repeat.set(chunkSize * visibleChunks, chunkSize * visibleChunks);
+ceilingTexture.repeat.set(chunkSize * visibleChunks, chunkSize * visibleChunks);
+
+// Create floor
+const floorGeometry = new THREE.PlaneGeometry(chunkSize * visibleChunks, chunkSize * visibleChunks);
+const floorMaterial = new THREE.MeshPhongMaterial({map: floorTexture});
+const floor = new THREE.Mesh(floorGeometry, floorMaterial);
+floor.rotation.x = -Math.PI / 2;
+floor.receiveShadow = true;
+scene.add(floor);
+
+// Create ceiling
+const ceilingGeometry = new THREE.PlaneGeometry(chunkSize * visibleChunks, chunkSize * visibleChunks);
+const ceilingMaterial = new THREE.MeshPhongMaterial({map: ceilingTexture});
+const ceiling = new THREE.Mesh(ceilingGeometry, ceilingMaterial);
+ceiling.rotation.x = Math.PI / 2;
+ceiling.position.y = 2.5; // Adjust this value to change the ceiling height
+ceiling.receiveShadow = true;
+scene.add(ceiling);
+
+// Lighting (reduced ambient light)
+const ambientLight = new THREE.AmbientLight(0x101010);
+scene.add(ambientLight);
+
+// Flashlight (reduced intensity and range)
+const flashlight = new THREE.SpotLight(0xffffcc, 0.8, 8, Math.PI / 4, 0.5);
+flashlight.position.set(0, 0.5, 0);
+flashlight.castShadow = true;
+flashlight.shadow.mapSize.width = 1024;
+flashlight.shadow.mapSize.height = 1024;
+flashlight.shadow.camera.near = 0.5;
+flashlight.shadow.camera.far = 8;
+
+// Create a target object for the flashlight
+const flashlightTarget = new THREE.Object3D();
+flashlight.target = flashlightTarget;
+scene.add(flashlightTarget);
+
+camera.add(flashlight);
+scene.add(camera);
+
+let flashlightOn = true;
+const toggleFlashlight = () => {
+  flashlightOn = !flashlightOn;
+  flashlight.intensity = flashlightOn ? 0.8 : 0;
+};
+
+// Player movement
+const normalMoveSpeed = 0.05;
+const sprintMoveSpeed = 0.1;
+const exhaustedMoveSpeed = 0.03;
+let currentMoveSpeed = normalMoveSpeed;
+const keys = {};
+document.addEventListener('keydown', (e) => keys[e.code] = true);
+document.addEventListener('keyup', (e) => keys[e.code] = false);
+document.addEventListener('keydown', (e) => {
+  if (e.code === 'KeyF') toggleFlashlight();
+});
+
+// Sprinting mechanism
+let stamina = 100;
+const maxStamina = 100;
+const staminaDrain = 0.5;
+const staminaRegen = 0.2;
+let isSprinting = false;
+let isExhausted = false;
+
+// Insanity mechanism
+let insanity = 100;
+const maxInsanity = 100;
+const insanityDrain = 0.02;
+const lowInsanityThreshold = 30; // Threshold for low insanity
+
+// Monster
+const monsterTexture = new THREE.TextureLoader().load('https://i.imgur.com/5oGzIIF.png');
+const monsterGeometry = new THREE.PlaneGeometry(2, 2);
+const monsterMaterial = new THREE.MeshBasicMaterial({map: monsterTexture, transparent: true, side: THREE.DoubleSide});
+const monster = new THREE.Mesh(monsterGeometry, monsterMaterial);
+monster.position.set(0, 1, 0);
+let monsterActive = false;
+const monsterSpeed = 0.03;
+
+// UI elements
+const staminaFill = document.getElementById('staminaFill');
+const insanityFill = document.getElementById('insanityFill');
+const distortionOverlay = document.getElementById('distortionOverlay');
+const messageOverlay = document.getElementById('messageOverlay');
+const gameOverScreen = document.getElementById('gameOverScreen');
+const restartButton = document.getElementById('restartButton');
+const survivalTimeElement = document.getElementById('survivalTime');
+
+function updateStaminaBar() {
+  staminaFill.style.width = `${stamina}%`;
+  staminaFill.style.backgroundColor = stamina > 20 ? '#0f0' : '#f00';
+}
+
+function updateInsanityBar() {
+  insanityFill.style.width = `${insanity}%`;
+  
+  // Update distortion effect
+  const distortionIntensity = 1 - (insanity / 100);
+  distortionOverlay.style.opacity = distortionIntensity;
+  
+  // Create a wavy effect using CSS
+  const waveAmplitude = 10 * distortionIntensity;
+  const waveFrequency = 5 + (20 * distortionIntensity);
+  distortionOverlay.style.backdropFilter = `blur(${distortionIntensity * 5}px) hue-rotate(${distortionIntensity * 360}deg)`;
+  distortionOverlay.style.background = `
+    repeating-linear-gradient(
+      0deg,
+      rgba(0,0,0,${0.1 * distortionIntensity}),
+      rgba(0,0,0,0),
+      rgba(0,0,0,${0.1 * distortionIntensity}) ${waveFrequency}px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      rgba(255,0,255,${0.05 * distortionIntensity}),
+      rgba(255,0,255,0),
+      rgba(255,0,255,${0.05 * distortionIntensity}) ${waveFrequency}px
+    )
+  `;
+}
+
+// Function to show messages
+function showMessage(text) {
+  messageOverlay.textContent = text;
+  messageOverlay.style.opacity = 1;
+  setTimeout(() => {
+    messageOverlay.style.opacity = 0;
+  }, 2000);
+}
+
+// Mouse look
+let pitch = 0;
+let yaw = 0;
+const sensitivity = 0.002;
+
+const onMouseMove = (event) => {
+  if (document.pointerLockElement === renderer.domElement) {
+    yaw -= event.movementX * sensitivity;
+    pitch -= event.movementY * sensitivity;
+    pitch = Math.max(-Math.PI/2, Math.min(Math.PI/2, pitch));
+    camera.quaternion.setFromEuler(new THREE.Euler(pitch, yaw, 0, 'YXZ'));
+    
+    // Update flashlight target position
+    const direction = new THREE.Vector3();
+    camera.getWorldDirection(direction);
+    flashlightTarget.position.copy(camera.position).add(direction.multiplyScalar(5));
+  }
+};
+
+renderer.domElement.addEventListener('click', () => {
+  renderer.domElement.requestPointerLock();
+});
+
+document.addEventListener('mousemove', onMouseMove);
+
+// Set initial player position
+camera.position.set(0, 1, 0);
+
+// Chunk management
+const wallGeometry = new THREE.BoxGeometry(1, 2.5, 1); // Increased wall height
+const wallMaterial = new THREE.MeshPhongMaterial({map: wallTexture});
+const wallMeshes = new Map();
+
+// Almond water
+const almondWaterTexture = new THREE.TextureLoader().load('https://i.imgur.com/oBcSQ6b.png');
+const almondWaterGeometry = new THREE.PlaneGeometry(0.5, 0.5);
+const almondWaterMaterial = new THREE.MeshBasicMaterial({map: almondWaterTexture, transparent: true, side: THREE.DoubleSide});
+const almondWaters = [];
+
+function spawnAlmondWater() {
+  if (Math.random() < 0.002) { // 0.2% chance to spawn almond water
+    const water = new THREE.Mesh(almondWaterGeometry, almondWaterMaterial);
+    const angle = Math.random() * Math.PI * 2;
+    const distance = Math.random() * 5 + 5; // Between 5 and 10 units away
+    water.position.set(
+      camera.position.x + Math.cos(angle) * distance,
+      1,
+      camera.position.z + Math.sin(angle) * distance
+    );
+    water.rotation.y = Math.random() * Math.PI * 2;
+    scene.add(water);
+    almondWaters.push(water);
+  }
+}
+
+function updateChunks() {
+  const playerChunkX = Math.floor(camera.position.x / chunkSize);
+  const playerChunkZ = Math.floor(camera.position.z / chunkSize);
+
+  for (let dx = -visibleChunks; dx <= visibleChunks; dx++) {
+    for (let dz = -visibleChunks; dz <= visibleChunks; dz++) {
+      const chunkX = playerChunkX + dx;const chunkZ = playerChunkZ + dz;
+      const key = `${chunkX},${chunkZ}`;
+
+      if (!wallMeshes.has(key)) {
+        const chunk = generateChunk(chunkX, chunkZ);
+        const chunkMeshes = [];
+
+        for (let i = 0; i < chunkSize; i++) {
+          for (let j = 0; j < chunkSize; j++) {
+            if (chunk[i][j] === 1) {
+              const wall = new THREE.Mesh(wallGeometry, wallMaterial);
+              wall.position.set(
+                chunkX * chunkSize + i + 0.5,
+                1.25, // Adjusted y-position for taller walls
+                chunkZ * chunkSize + j + 0.5
+              );
+              wall.castShadow = true;
+              wall.receiveShadow = true;
+              scene.add(wall);
+              chunkMeshes.push(wall);
+            }
+          }
+        }
+
+        wallMeshes.set(key, chunkMeshes);
+      }
+    }
+  }
+
+  // Remove far chunks
+  for (const [key, meshes] of wallMeshes.entries()) {
+    const [chunkX, chunkZ] = key.split(',').map(Number);
+    if (
+      Math.abs(chunkX - playerChunkX) > visibleChunks ||
+      Math.abs(chunkZ - playerChunkZ) > visibleChunks
+    ) {
+      meshes.forEach((mesh) => scene.remove(mesh));
+      wallMeshes.delete(key);
+    }
+  }
+
+  // Update floor and ceiling position
+  floor.position.set(
+    playerChunkX * chunkSize,
+    0,
+    playerChunkZ * chunkSize
+  );
+  ceiling.position.set(
+    playerChunkX * chunkSize,
+    2.5,
+    playerChunkZ * chunkSize
+  );
+}
+
+function isColliding(position) {
+  const playerRadius = 0.3;
+  const chunkX = Math.floor(position.x / chunkSize);
+  const chunkZ = Math.floor(position.z / chunkSize);
+  const chunk = generateChunk(chunkX, chunkZ);
+  const localX = (position.x % chunkSize + chunkSize) % chunkSize;
+  const localZ = (position.z % chunkSize + chunkSize) % chunkSize;
+
+  for (let i = -1; i <= 1; i++) {
+    for (let j = -1; j <= 1; j++) {
+      const checkX = Math.floor(localX + i);
+      const checkZ = Math.floor(localZ + j);
+      if (checkX >= 0 && checkX < chunkSize && checkZ >= 0 && checkZ < chunkSize && chunk[checkX][checkZ] === 1) {
+        const wallPos = new THREE.Vector3(
+          chunkX * chunkSize + checkX + 0.5,
+          1,
+          chunkZ * chunkSize + checkZ + 0.5
+        );
+        const distanceToWall = new THREE.Vector2(position.x, position.z).distanceTo(new THREE.Vector2(wallPos.x, wallPos.z));
+        if (distanceToWall < playerRadius + 0.5) {
+          return true;
+        }
+      }
+    }
+  }
+  return false;
+}
+
+// Raycaster for almond water interaction
+const raycaster = new THREE.Raycaster();
+const mouse = new THREE.Vector2();
+
+function onMouseClick(event) {
+  if (document.pointerLockElement === renderer.domElement) {
+    mouse.x = 0;
+    mouse.y = 0;
+    raycaster.setFromCamera(mouse, camera);
+
+    const intersects = raycaster.intersectObjects(almondWaters);
+
+    if (intersects.length > 0) {
+      const clickedWater = intersects[0].object;
+      scene.remove(clickedWater);
+      almondWaters.splice(almondWaters.indexOf(clickedWater), 1);
+      insanity = Math.min(maxInsanity, insanity + 20);
+      updateInsanityBar();
+      showMessage("Sanity restored!");
+    }
+  }
+}
+
+document.addEventListener('click', onMouseClick);
+
+function spawnMonster() {
+  if (!monsterActive) {
+    monsterActive = true;
+    const angle = Math.random() * Math.PI * 2;
+    const distance = 10;
+    monster.position.set(
+      camera.position.x + Math.cos(angle) * distance,
+      1,
+      camera.position.z + Math.sin(angle) * distance
+    );
+    scene.add(monster);
+    showMessage("It's coming for you!");
+  }
+}
+
+function updateMonster() {
+  if (monsterActive) {
+    const direction = new THREE.Vector3().subVectors(camera.position, monster.position).normalize();
+    monster.position.add(direction.multiplyScalar(monsterSpeed));
+    monster.lookAt(camera.position);
+
+    // Check if monster caught the player
+    if (monster.position.distanceTo(camera.position) < 0.5) {
+      gameOver();
+    }
+  }
+}
+
+function gameOver() {
+  updateTimer();
+  gameOverScreen.style.display = 'flex';
+  survivalTimeElement.textContent = `You survived for ${formatTime(survivalTime)}`;
+  document.exitPointerLock();
+}
+
+function restartGame() {
+  insanity = maxInsanity;
+  stamina = maxStamina;
+  camera.position.set(0, 1, 0);
+  monsterActive = false;
+  scene.remove(monster);
+  gameOverScreen.style.display = 'none';
+  updateStaminaBar();
+  updateInsanityBar();
+  startTimer();
+}
+
+restartButton.addEventListener('click', restartGame);
+
+function animate() {
+  requestAnimationFrame(animate);
+
+  // Update timer
+  updateTimer();
+
+  // Player movement
+  const direction = new THREE.Vector3();
+  if (keys['KeyW']) direction.z -= 1;
+  if (keys['KeyS']) direction.z += 1;
+  if (keys['KeyA']) direction.x -= 1;
+  if (keys['KeyD']) direction.x += 1;
+
+  // Sprint logic
+  isSprinting = keys['ShiftLeft'] && stamina > 0 && !isExhausted;
+  if (isSprinting && direction.length() > 0) {
+    if (insanity <= lowInsanityThreshold) {
+      showMessage("You can't escape");
+      isSprinting = false;
+    } else {
+      currentMoveSpeed = sprintMoveSpeed;
+      stamina = Math.max(0, stamina - staminaDrain);
+      if (stamina === 0) {
+        isExhausted = true;
+      }
+    }
+  } else {
+    if (isExhausted) {
+      currentMoveSpeed = exhaustedMoveSpeed;
+      if (stamina >= maxStamina * 0.3) {
+        isExhausted = false;
+      }
+    } else {
+      currentMoveSpeed = normalMoveSpeed;
+    }
+    stamina = Math.min(maxStamina, stamina + staminaRegen);
+  }
+
+  // Update insanity
+  insanity = Math.max(0, insanity - insanityDrain);
+
+  updateStaminaBar();
+  updateInsanityBar();
+
+  if (direction.length() > 0) {
+    direction.normalize();
+    direction.applyAxisAngle(new THREE.Vector3(0, 1, 0), yaw);
+    const movement = direction.multiplyScalar(currentMoveSpeed);
+    const newPosition = camera.position.clone().add(movement);
+    
+    // Improved collision detection
+    if (!isColliding(newPosition)) {
+      camera.position.copy(newPosition);
+    } else {
+      // Try to slide along walls
+      const slideX = camera.position.clone().add(new THREE.Vector3(movement.x, 0, 0));
+      const slideZ = camera.position.clone().add(new THREE.Vector3(0, 0, movement.z));
+      
+      if (!isColliding(slideX)) {
+        camera.position.copy(slideX);
+      } else if (!isColliding(slideZ)) {
+        camera.position.copy(slideZ);
+      }
+    }
+  }
+
+  updateChunks();
+  spawnAlmondWater();
+
+  // Update flashlight target position
+  const flashlightDirection = new THREE.Vector3();
+  camera.getWorldDirection(flashlightDirection);
+  flashlightTarget.position.copy(camera.position).add(flashlightDirection.multiplyScalar(5));
+
+  // Rotate almond waters to face the camera
+  almondWaters.forEach(water => {
+    water.lookAt(camera.position);
+  });
+
+  // Monster logic
+  if (insanity <= lowInsanityThreshold) {
+    spawnMonster();
+  }
+  updateMonster();
+
+  flashlight.target.updateMatrixWorld();
+  renderer.render(scene, camera);
+}
+
+startTimer();
+animate();
+
+// Resize handler
+window.addEventListener('resize', () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+// Add some random events to increase insanity
+function addRandomEvents() {
+  setInterval(() => {
+    if (Math.random() < 0.05) { // 5% chance every second
+      const event = Math.random();
+      if (event < 0.3) {
+        // Sudden sound
+        const audio = new Audio('https://freesound.org/data/previews/415/415209_5121236-lq.mp3');
+        audio.volume = 0.2;
+        audio.play();
+      } else if (event < 0.6) {
+        // Flickering lights
+        const flicker = setInterval(() => {
+          ambientLight.intensity = Math.random() * 0.2;
+        }, 50);
+        setTimeout(() => {
+          clearInterval(flicker);
+          ambientLight.intensity = 0.1;
+        }, 500);
+      } else {
+        // Shadow figure
+        const figure = new THREE.Mesh(
+          new THREE.BoxGeometry(0.5, 1.8, 0.5),
+          new THREE.MeshBasicMaterial({color: 0x000000})
+        );
+        const angle = Math.random() * Math.PI * 2;
+        figure.position.set(
+          camera.position.x + Math.cos(angle) * 5,
+          1,
+          camera.position.z + Math.sin(angle) * 5
+        );
+        scene.add(figure);
+        setTimeout(() => {
+          scene.remove(figure);
+        }, 1000);
+      }
+      insanity = Math.max(0, insanity - 5); // Decrease insanity on event
+    }
+  }, 1000);
+}
+
+addRandomEvents();
+
+</script>
+</body></html>
