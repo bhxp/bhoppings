@@ -1,0 +1,242 @@
+<html><head><base href="your_base_url" ><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Poogle Phootos - The #1 Site for #2</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background: #f4e9e1;
+  }
+  
+  .header {
+    background: #8b4513;
+    padding: 1rem;
+    text-align: center;
+    color: white;
+  }
+  
+  .search-bar {
+    padding: 1rem;
+    text-align: center;
+    background: #d2691e;
+  }
+  
+  #search-input {
+    padding: 0.5rem;
+    width: 300px;
+    border-radius: 20px;
+    border: none;
+    font-size: 16px;
+  }
+  
+  .photo-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1rem;
+    padding: 1rem;
+  }
+  
+  .photo-card {
+    background: white;
+    padding: 1rem;
+    border-radius: 10px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+    position: relative;
+  }
+  
+  .photo-card.hidden {
+    display: none;
+  }
+  
+  .photo-card:hover {
+    transform: scale(1.05);
+  }
+  
+  .poo-icon {
+    width: 100%;
+    height: 150px;
+  }
+  
+  .background-element {
+    position: absolute;
+    z-index: 1;
+  }
+  
+  .poo-container {
+    position: relative;
+    width: 100%;
+    height: 150px;
+  }
+  
+  .logo {
+    font-size: 2.5rem;
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+  }
+  
+  .logo span {
+    color: #d2691e;
+  }
+  
+  .suggestions {
+    position: absolute;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 10px;
+    margin-top: 5px;
+    width: 300px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1000;
+  }
+  
+  .suggestions p {
+    margin: 5px 0;
+    cursor: pointer;
+    padding: 5px;
+  }
+  
+  .suggestions p:hover {
+    background: #f0f0f0;
+  }
+</style>
+</head>
+<body>
+  <div class="header">
+    <div class="logo">Poogle <span>Phootos</span></div>
+    <div>The #1 Site for #2</div>
+  </div>
+  
+  <div class="search-bar">
+    <input type="text" id="search-input" placeholder="Search poo-related photos...">
+  </div>
+  
+  <div class="photo-grid" id="photo-grid">
+    <!-- Photo cards will be generated dynamically -->
+  </div>
+
+<script>
+async function generateBackgroundForSearch(searchTerm) {
+  try {
+    const response = await fetch('/api/ai_completion', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        prompt: `Generate SVG elements to represent the background for "${searchTerm}". 
+        Return a JSON object with SVG paths and descriptions.
+        
+        <typescript-interface>
+        interface Response {
+          svgElements: string;
+          backgroundColor: string;
+        }
+        </typescript-interface>
+        
+        <example>
+        {
+          "svgElements": "<path d='M10 10L20 20' stroke='green' fill='none'/>",
+          "backgroundColor": "#90EE90"
+        }
+        </example>`,
+        data: searchTerm
+      })
+    });
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error generating background:', error);
+    return { svgElements: '', backgroundColor: '#ffffff' };
+  }
+}
+
+function createPooIcon(color, expression) {
+  const svg = `<svg class="poo-icon" viewBox="0 0 100 100">
+    <path d="M50 20c-8.284 0-15 6.716-15 15 0-8.284-6.716-15-15-15-8.284 0-15 6.716-15 15 0 30 30 45 45 45s45-15 45-45c0-8.284-6.716-15-15-15-8.284 0-15 6.716-15 15 0-8.284-6.716-15-15-15z" fill="${color}"/>
+    <circle cx="35" cy="40" r="3" fill="white"/>
+    <circle cx="65" cy="40" r="3" fill="white"/>
+    ${expression === 'happy' ? '<path d="M40 60q10 10 20 0" stroke="white" fill="none" stroke-width="2"/>' :
+      expression === 'stern' ? '<path d="M40 55h20" stroke="white" fill="none" stroke-width="2"/>' :
+      '<path d="M50 60c-5.523 0-10-4.477-10-10" stroke="white" fill="none" stroke-width="2"/>'}
+  </svg>`;
+  return svg;
+}
+
+async function displayPhotos(searchTerm = '') {
+  const photoGrid = document.getElementById('photo-grid');
+  photoGrid.innerHTML = '';
+  
+  const normalPooTerms = ['poo', 'normal poo', 'generic poo', 'regular poo'];
+  const normalizedSearch = searchTerm.toLowerCase().trim();
+  
+  if (normalPooTerms.includes(normalizedSearch)) {
+    const card = document.createElement('div');
+    card.className = 'photo-card';
+    
+    const pooContainer = document.createElement('div');
+    pooContainer.className = 'poo-container';
+    
+    const pooSvg = createPooIcon('#8b4513', 'happy');
+    pooContainer.innerHTML = pooSvg;
+    
+    card.appendChild(pooContainer);
+    card.innerHTML += `<p>Normal Poo</p>`;
+    
+    photoGrid.appendChild(card);
+    return;
+  }
+  
+  const background = searchTerm ? await generateBackgroundForSearch(searchTerm) : null;
+  
+  const card = document.createElement('div');
+  card.className = 'photo-card';
+  
+  const pooContainer = document.createElement('div');
+  pooContainer.className = 'poo-container';
+  
+  if (background) {
+    const backgroundSvg = `<svg class="poo-icon" viewBox="0 0 100 100" style="position: absolute; top: 0; left: 0;">
+      ${background.svgElements}
+    </svg>`;
+    pooContainer.innerHTML = backgroundSvg;
+  }
+  
+  const pooSvg = createPooIcon('#8b4513', 'happy');
+  pooContainer.innerHTML += pooSvg;
+  
+  card.appendChild(pooContainer);
+  card.innerHTML += `<p>${searchTerm ? `${searchTerm} Poo` : 'Generic Poo'}</p>`;
+  
+  if (background) {
+    card.style.backgroundColor = background.backgroundColor;
+  }
+  
+  photoGrid.appendChild(card);
+}
+
+// Initial display
+displayPhotos();
+
+let searchTimeout;
+
+document.getElementById('search-input').addEventListener('input', function(e) {
+  const searchTerm = e.target.value;
+  
+  clearTimeout(searchTimeout);
+  searchTimeout = setTimeout(() => {
+    displayPhotos(searchTerm);
+  }, 500);
+  
+  // Clear previous suggestions
+  const existingSuggestions = document.querySelector('.suggestions');
+  if (existingSuggestions) {
+    existingSuggestions.remove();
+  }
+});
+</script>
+
+</body>
+</html>
