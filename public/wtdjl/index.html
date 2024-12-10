@@ -1,0 +1,1265 @@
+<html><head><base href="WTDJL" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<style>
+  body { margin: 0; overflow: hidden; }
+  canvas { display: block; }
+  #info {
+    position: absolute;
+    top: 2vh;
+    left: 2vw;
+    color: white;
+    font-family: monospace;
+    background: rgba(0,0,0,0.5);
+    padding: 1vh;
+    font-size: 1.5vh;  /* Reduced from 1.8vh */
+  }
+  #compass {
+    position: absolute;
+    top: 2vh;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80vw;
+    height: 4vh;
+    background: rgba(0,0,0,0.5);
+    border-radius: 2vh;
+    max-width: 1200px;
+  }
+  #compass-center {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0.2vw;
+    height: 4vh;
+    background: yellow;
+    z-index: 2;
+  }
+  #compass-marker {
+    position: absolute;
+    top: 0.7vh;
+    left: 50%;
+    width: 2.5vh;
+    height: 2.5vh;
+    background: #ff0000;
+    border-radius: 50%;
+    transform: translateX(-50%);
+  }
+  .cardinal-marker {
+    position: absolute;
+    top: 0.7vh;
+    width: 2.5vh;
+    height: 2.5vh;
+    background: #ffffff;
+    border-radius: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: black;
+    font-family: monospace;
+    font-weight: bold;
+    font-size: 1.5vh;
+  }
+  .pumpkin-marker {
+    position: absolute;
+    top: 1.4vh;
+    width: 1.2vh;
+    height: 1.2vh;
+    border-radius: 50%;
+    transform: translateX(-50%);
+  }
+  #hotbar {
+    position: fixed;
+    bottom: 3vh;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 1vw;
+    background: rgba(0,0,0,0.7);
+    padding: 1vh;
+    border-radius: 1vh;
+  }
+  .hotbar-slot {
+    width: 6vh;
+    height: 6vh;
+    background: rgba(255,255,255,0.1);
+    border: 0.1vh solid rgba(255,255,255,0.3);
+    border-radius: 0.6vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-family: monospace;
+    position: relative;
+  }
+  #sprint-meter {
+    position: fixed;
+    bottom: 11vh;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 30vw;
+    height: 1.2vh;
+    background: rgba(0,0,0,0.7);
+    border-radius: 0.6vh;
+    overflow: hidden;
+    max-width: 300px;
+  }
+  #sprint-fill {
+    width: 100%;
+    height: 100%;
+    background: #00ff00;
+    transition: width 0.1s linear;
+  }
+  #warning-message {
+    position: fixed;
+    bottom: 14vh;
+    left: 50%;
+    transform: translateX(-50%);
+    color: #ff6600;
+    font-family: monospace;
+    background: rgba(0,0,0,0.7);
+    padding: 1vh;
+    border-radius: 0.6vh;
+    display: none;
+    font-size: 1.8vh;
+  }
+  .mobile-control {
+    display: none;
+    position: fixed;
+    width: 30vh;  /* Increased from 20vh */
+    height: 30vh;  /* Increased from 20vh */
+    background: rgba(0,0,0,0.5);
+    border-radius: 50%;
+  }
+  #move-stick {
+    bottom: 3vh;
+    left: 3vh;
+  }
+  #look-stick {
+    bottom: 3vh;
+    right: 3vh;
+  }
+    .stick {
+    position: absolute;
+    width: 10vh;  /* Increased from 7vh */
+    height: 10vh;  /* Increased from 7vh */
+
+    background: rgba(255,255,255,0.8);
+    border-radius: 50%;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+  }
+  .mobile-button {
+    display: none;
+    position: fixed;
+    width: 10vh;
+    height: 10vh;
+    background: rgba(0,0,0,0.5);
+    border-radius: 1.5vh;
+    color: white;
+    font-family: monospace;
+    border: 0.2vh solid white;
+    cursor: pointer;
+    font-size: 1.8vh;
+  }
+  #sprint-button {
+    bottom: 24vh;
+    right: 3vh;
+  }
+  #interact-button {
+    bottom: 24vh;
+    left: 3vh;
+  }
+  .show-mobile {
+    display: block !important;
+  }
+</style>
+</head>
+<body>
+<div id="info">Use WASD or Arrow Keys to move<br>Mouse to look around<br>Shift to sprint<br>E to interact<br>Search for all five pumpkins. Use the compass rose at the top of your screen to find them.<br><button id="mobile-toggle">Mobile Controls Mode</button></div>
+<div id="compass">
+  <div id="compass-center"></div>
+  <div id="compass-marker"></div>
+  <div class="cardinal-marker" id="north-marker">N</div>
+  <div class="cardinal-marker" id="south-marker">S</div>
+  <div class="cardinal-marker" id="east-marker">E</div>
+  <div class="cardinal-marker" id="west-marker">W</div>
+</div>
+<div id="hotbar">
+  <div class="hotbar-slot"></div>
+  <div class="hotbar-slot"></div>
+  <div class="hotbar-slot"></div>
+  <div class="hotbar-slot"></div>
+  <div class="hotbar-slot"></div>
+</div>
+<div id="sprint-meter">
+  <div id="sprint-fill"></div>
+</div>
+<div id="warning-message">The dark jack-o'-lantern awakens to find the pumpkin thief...</div>
+<div id="move-stick" class="mobile-control">
+  <div class="stick"></div>
+</div>
+<div id="look-stick" class="mobile-control">
+  <div class="stick"></div>
+</div>
+<button id="sprint-button" class="mobile-button">Sprint</button>
+<button id="interact-button" class="mobile-button">Interact</button>
+<script>
+const scene = new THREE.Scene();
+scene.fog = new THREE.FogExp2(0x000000, 0.15);
+const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+const renderer = new THREE.WebGLRenderer();
+renderer.setClearColor(0x000000);
+renderer.setSize(window.innerWidth, window.innerHeight);
+document.body.appendChild(renderer.domElement);
+
+const listener = new THREE.AudioListener();
+camera.add(listener);
+
+const raycaster = new THREE.Raycaster();
+let hoveredPumpkin = null;
+let cursorRange = 3;
+
+const GRAVITY = -20;
+const JUMP_FORCE = 8;
+const PLAYER_HEIGHT = 1.7;
+const PLAYER_WIDTH = 0.6;
+const PLAYER_DEPTH = 0.6;
+
+const PLAYER_SPEED = 3.0;  // This is our "n" value
+const ENEMY_SPEED = PLAYER_SPEED * 0.6; // Initial enemy speed is 0.6n
+let playerVelocity = new THREE.Vector3();
+let canJump = true;
+
+const playerGeometry = new THREE.BoxGeometry(PLAYER_WIDTH, PLAYER_HEIGHT, PLAYER_DEPTH);
+const playerMaterial = new THREE.MeshBasicMaterial({
+    visible: false
+});
+const player = new THREE.Mesh(playerGeometry, playerMaterial);
+scene.add(player);
+
+const chunkSize = 20;
+const tileSize = 1;
+const loadedChunks = new Map();
+const PUMPKIN_COLORS = {
+    orange: 0xff6600,
+    pink: 0xff66cc,
+    teal: 0x00cccc,
+    purple: 0x9933ff,
+    yellow: 0xffcc00
+};
+
+const pumpkins = new Map();
+const enemySphere = new THREE.Group();
+let enemyInitialized = false;
+let enemySpawned = false;
+
+const sound = new THREE.PositionalAudio(listener);
+const audioLoader = new THREE.AudioLoader();
+audioLoader.load('https://file.garden/ZyQx4ztO7TTyC-0H/Creepy%20Ambient%20Drone%20Sound%20Effect-KtbO7Wdyny4.mp4', function(buffer) {
+    sound.setBuffer(buffer);
+    sound.setRefDistance(5);
+    sound.setRolloffFactor(2);
+    sound.setLoop(true);
+    sound.setVolume(0.5);
+    sound.setLoopStart(0);
+    sound.setLoopEnd(30);
+});
+
+const backgroundMusic = new THREE.Audio(listener);
+const backgroundMusicLoader = new THREE.AudioLoader();
+backgroundMusicLoader.load('https://file.garden/ZyQx4ztO7TTyC-0H/Wizard101%20OST%EF%BC%9A%20Wizard%20City%20-%20Dark-RXfZbkbe4_U.mp4', function(buffer) {
+    backgroundMusic.setBuffer(buffer);
+    backgroundMusic.setVolume(0.25);  // Reduced from 0.5
+    backgroundMusic.setLoop(true);
+});
+
+const dangerMusic = new THREE.Audio(listener);
+const dangerMusicLoader = new THREE.AudioLoader();
+dangerMusicLoader.load('https://file.garden/ZyQx4ztO7TTyC-0H/Wizard101%EF%BC%9A%20Castle%20Darkmoor%20%EF%BD%9C%20Combat%20Theme-Dt5y4EWZdXI.mp4', function(buffer) {
+    dangerMusic.setBuffer(buffer);
+    dangerMusic.setVolume(0.25);  // Reduced from 0.5
+    dangerMusic.setLoop(true);
+});
+
+const collectionSound = new THREE.Audio(listener);
+const victoryMusic = new THREE.Audio(listener);
+const victoryMusicLoader = new THREE.AudioLoader();
+victoryMusicLoader.load('https://file.garden/ZyQx4ztO7TTyC-0H/NSMB%20Overworld%20theme%20but%20in%20minor-XlO_3OVYkhs.mp4', function(buffer) {
+    victoryMusic.setBuffer(buffer);
+    victoryMusic.setVolume(0.5);  // Reduced from 1.0
+    victoryMusic.setLoop(true);
+});
+const collectionAudioLoader = new THREE.AudioLoader();
+collectionAudioLoader.load('https://file.garden/ZyQx4ztO7TTyC-0H/Cinematic%20Boom%20-%20sound%20effect%20-%20%5BHigh%20quality%5D-dz6Lp_PyX_Q.mp4', function(buffer) {
+    collectionSound.setBuffer(buffer);
+    collectionSound.setVolume(0.5);
+});
+
+let enemySpeedMultiplier = 1.3; // Initial speed will be ENEMY_SPEED * 1.3
+let pumpkinsCollected = 0;
+let fifthPumpkinTime = 0;
+let gameWon = false;
+let isGameOver = false;
+let isSpinning = false;
+const SPIN_DURATION = 2000;
+const SPIN_SPEED = Math.PI * 4;
+
+const CHEAT_CODE = ['ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight', 'b', 'a', 'Enter'];
+let currentCheatSequence = [];
+
+// Add mobile controls variables
+let mobileControlsEnabled = false;
+let moveStickActive = false;
+let lookStickActive = false;
+let moveStickOrigin = {x: 0, y: 0};
+let lookStickOrigin = {x: 0, y: 0};
+let currentMoveOffset = {x: 0, y: 0};
+let currentLookOffset = {x: 0, y: 0};
+
+const chunkGeometryCache = new Map();
+
+function createEnemySphere() {
+    const geometry = new THREE.SphereGeometry(0.4, 16, 16);
+    const material = new THREE.MeshPhongMaterial({ 
+        color: 0x000000,
+        emissive: 0x000000,
+        emissiveIntensity: 1,
+        shininess: 0
+    });
+    const sphere = new THREE.Mesh(geometry, material);
+    enemySphere.add(sphere);
+    sphere.add(sound); 
+
+    const leftEyeGeometry = new THREE.ConeGeometry(0.1, 0.15, 3);
+    const glowingMaterial = new THREE.MeshPhongMaterial({
+        color: 0xffff00,
+        emissive: 0xffff00,
+        emissiveIntensity: 1
+    });
+    const leftEye = new THREE.Mesh(leftEyeGeometry, glowingMaterial);
+    leftEye.position.set(-0.2, 0.1, -0.4);
+    leftEye.rotation.x = Math.PI / 2;
+    sphere.add(leftEye);
+
+    const rightEyeGeometry = new THREE.ConeGeometry(0.1, 0.15, 3);
+    const rightEye = new THREE.Mesh(rightEyeGeometry, glowingMaterial);
+    rightEye.position.set(0.2, 0.1, -0.4);
+    rightEye.rotation.x = Math.PI / 2;
+    sphere.add(rightEye);
+
+    const smilePoints = [
+        { x: -0.25, y: -0.1, z: -0.4, rotY: -0.3 },
+        { x: -0.15, y: -0.15, z: -0.4, rotY: -0.15 },
+        { x: 0, y: -0.17, z: -0.4, rotY: 0 },
+        { x: 0.15, y: -0.15, z: -0.4, rotY: 0.15 },
+        { x: 0.25, y: -0.1, z: -0.4, rotY: 0.3 }
+    ];
+
+    smilePoints.forEach(point => {
+        const smilePartGeometry = new THREE.ConeGeometry(0.08, 0.12, 3);
+        const smilePart = new THREE.Mesh(smilePartGeometry, glowingMaterial);
+        smilePart.position.set(point.x, point.y, point.z);
+        smilePart.rotation.x = Math.PI / 2;
+        smilePart.rotation.y = point.rotY;
+        sphere.add(smilePart);
+    });
+
+    enemySphere.position.set(0, PLAYER_HEIGHT, 0);
+    scene.add(enemySphere);
+    enemyInitialized = true;
+}
+
+function updateEnemyRotation() {
+    const enemyToPlayer = new THREE.Vector3();
+    enemyToPlayer.subVectors(player.position, enemySphere.position);
+    enemyToPlayer.y = 0;
+
+    const targetAngle = Math.atan2(enemyToPlayer.x, enemyToPlayer.z) + Math.PI;
+    const currentAngle = enemySphere.rotation.y;
+
+    let angleDiff = targetAngle - currentAngle;
+
+    while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
+    while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
+
+    const maxRotation = (30 * Math.PI / 180) * (1/60);
+    const rotation = Math.sign(angleDiff) * Math.min(Math.abs(angleDiff), maxRotation);
+    
+    enemySphere.rotation.y += rotation;
+}
+
+function updateEnemy() {
+    if (!enemySpawned || gameWon || isGameOver) {
+        return;
+    }
+
+    const distanceToPlayer = enemySphere.position.distanceTo(player.position);
+    if (distanceToPlayer < 1 && !isGameOver) {
+        triggerGameOver();
+    }
+
+    if (!enemyInitialized) {
+        createEnemySphere();
+    }
+
+    // Calculate speed multiplier based on pumpkins collected
+    let speedMultiplier = 1.0; // Default to 1.0 * n
+    if (pumpkinsCollected >= 2) speedMultiplier = 1.1;  // 1.1 * n
+    if (pumpkinsCollected >= 3) speedMultiplier = 1.4;  // 1.4 * n
+    if (pumpkinsCollected >= 4) speedMultiplier = 1.7;  // 1.7 * n
+    if (pumpkinsCollected >= 5) speedMultiplier = 2.1;  // 2.1 * n
+
+    let currentSpeed = ENEMY_SPEED * speedMultiplier;
+
+    if (pumpkinsCollected === 5) {
+        const elapsedTime = (performance.now() - fifthPumpkinTime) / 1000;
+        const slowdownDuration = 30; // Total duration (25 + 5 seconds)
+        const dropoffPoint = 25; // When rapid slowdown begins
+        
+        if (elapsedTime <= dropoffPoint) {
+            currentSpeed *= Math.max(0, 1 - (elapsedTime / slowdownDuration));
+        } else if (elapsedTime <= dropoffPoint + 5) {
+            const remainingTime = elapsedTime - dropoffPoint;
+            const speedAtDropoff = currentSpeed * (1 - (dropoffPoint / slowdownDuration));
+            currentSpeed = speedAtDropoff * Math.max(0, 1 - (remainingTime / 5));
+        } else {
+            currentSpeed = 0;
+        }
+
+        if (currentSpeed <= 0) {
+            triggerWin();
+        }
+    }
+
+    enemySphere.position.y = player.position.y + PLAYER_HEIGHT/2;
+    updateEnemyRotation();
+    
+    const forward = new THREE.Vector3(0, 0, -1);
+    forward.applyAxisAngle(new THREE.Vector3(0, 1, 0), enemySphere.rotation.y);
+    
+    enemySphere.position.x += forward.x * currentSpeed * 0.03;
+    enemySphere.position.z += forward.z * currentSpeed * 0.03;
+
+    updateEnemyRotation();
+}
+
+function triggerGameOver() {
+    isGameOver = true;
+    collectionSound.play();
+    backgroundMusic.stop();
+    dangerMusic.stop();
+    playerVelocity.set(0, 0, 0);
+
+    const cameraDirection = new THREE.Vector3(0, 0, -1);
+    cameraDirection.applyQuaternion(camera.quaternion);
+    const spawnPos = player.position.clone().add(cameraDirection.multiplyScalar(3));
+
+    enemySphere.position.copy(spawnPos);
+    enemySphere.position.y = player.position.y + PLAYER_HEIGHT / 2;
+
+    isSpinning = true;
+    const startTime = performance.now();
+
+    function spinAnimation() {
+        const elapsed = performance.now() - startTime;
+        if (elapsed < SPIN_DURATION) {
+            enemySphere.rotation.y += SPIN_SPEED * (1/60);
+            requestAnimationFrame(spinAnimation);
+        } else {
+            showGameOverScreen();
+        }
+    }
+    spinAnimation();
+}
+
+function showGameOverScreen() {
+    const gameOverScreen = document.createElement('div');
+    gameOverScreen.style.cssText = `
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: rgba(0,0,0,0.8);
+        padding: 20px;
+        border-radius: 10px;
+        text-align: center;
+        color: white;
+        font-family: monospace;
+    `;
+    gameOverScreen.innerHTML = `
+        <h1>GAME OVER</h1>
+        <p>The dark jack-o'-lantern claims another victim... The next pumpkin thief should know to dodge! Tip: Its speed increases each time you anger it.</p>
+        <button onclick="location.reload()" style="
+            padding: 10px 20px;
+            font-size: 16px;
+            background: #ff6600;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        ">Restart Game</button>
+    `;
+    document.body.appendChild(gameOverScreen);
+}
+
+function triggerCheatWin() {
+    currentCheatSequence = [];  // Reset the cheat code sequence
+
+    // Collect all remaining pumpkins
+    const remainingPumpkins = Array.from(pumpkins.keys());
+    for (const color of remainingPumpkins) {
+        collectPumpkin(color);
+    }
+
+    // Ensure the enemy is spawned
+    if (!enemySpawned) {
+        enemySpawned = true;
+        enemySphere.position.set(0, PLAYER_HEIGHT, 0);
+        sound.play();
+        backgroundMusic.stop();
+        dangerMusic.play();
+    }
+
+    // Set fifthPumpkinTime so the enemy's power wanes instantly
+    fifthPumpkinTime = performance.now() - 31 * 1000; // 31 seconds ago
+}
+
+function collectPumpkin(color) {
+    const slots = document.querySelectorAll('.hotbar-slot');
+    for (let i = 0; i < slots.length; i++) {
+        if (!slots[i].hasAttribute('data-pumpkin')) {
+            const pumpkinGroup = pumpkins.get(color);
+            if (pumpkinGroup) {
+                const hexColor = PUMPKIN_COLORS[color].toString(16).padStart(6, '0');
+                slots[i].style.backgroundColor = `#${hexColor}`; 
+                slots[i].setAttribute('data-pumpkin', color);
+                
+                scene.remove(pumpkinGroup);
+                pumpkins.delete(color);
+                const marker = pumpkinMarkers.get(color);
+                if (marker) {
+                    marker.remove();
+                    pumpkinMarkers.delete(color);
+                }
+
+                pumpkinsCollected++;
+
+                const warning = document.getElementById('warning-message');
+                warning.style.display = 'block';
+
+                // Update warning messages and enemy speed based on pumpkins collected
+                if (pumpkinsCollected === 1) {
+                    enemySpawned = true;
+                    enemySphere.position.set(0, PLAYER_HEIGHT, 0);
+                    sound.play();
+                    backgroundMusic.stop();
+                    dangerMusic.play();
+                    warning.textContent = "The dark jack-o'-lantern awakens to find the pumpkin thief... If you hear a hum approach, beware!";
+                } else if (pumpkinsCollected === 2) {
+                    warning.textContent = "The dark jack-o'-lantern will not forgive you. You will not get away with this...";
+                    enemySpeedMultiplier = 1.1;
+                } else if (pumpkinsCollected === 3) {
+                    warning.textContent = "You feel the trees watch you with pity. They have seen what's about to come so many times before...";
+                    enemySpeedMultiplier = 1.4;
+                } else if (pumpkinsCollected === 4) {
+                    warning.textContent = "In the darkness it chases unrelenting. Do you stand a chance?";
+                    enemySpeedMultiplier = 1.7;
+                } else if (pumpkinsCollected === 5) {
+                    fifthPumpkinTime = performance.now();
+                    warning.textContent = "You have all of its pumpkins and must escape. Its power wanes. Run.";
+                    enemySpeedMultiplier = 2.1;
+                }
+
+                collectionSound.play();
+                break;
+            }
+        }
+    }
+}
+
+const pumpkinMarkers = new Map();
+
+const SPRINT_MULTIPLIER = 1.6;
+const SPRINT_MAX_TIME = 10;
+const SPRINT_RECHARGE_RATE = 1/0.6;
+
+let musicStarted = false;
+
+const keys = {
+    ArrowUp: false,
+    ArrowDown: false,
+    ArrowLeft: false,
+    ArrowRight: false,
+    w: false,
+    s: false,
+    a: false,
+    d: false,
+    shift: false
+};
+
+let sprintMeter = SPRINT_MAX_TIME;
+let isSprinting = false;
+let lastSprintRecharge = performance.now();
+
+function createPumpkin(color) {
+    const pumpkinGroup = new THREE.Group();
+    
+    const geometry = new THREE.SphereGeometry(0.4, 8, 8);
+    const material = new THREE.MeshPhongMaterial({ 
+        color: PUMPKIN_COLORS[color],
+        emissive: 0x000000,
+        emissiveIntensity: 1
+    });
+    const pumpkin = new THREE.Mesh(geometry, material);
+    pumpkinGroup.add(pumpkin);
+    
+    const stemGeometry = new THREE.CylinderGeometry(0.05, 0.08, 0.2, 4);
+    const stemMaterial = new THREE.MeshPhongMaterial({ 
+        color: 0x2a1810,
+        emissive: 0x000000,
+        emissiveIntensity: 1
+    });
+    const stem = new THREE.Mesh(stemGeometry, stemMaterial);
+    stem.position.y = 0.3;
+    stem.rotation.z = Math.random() * 0.4 - 0.2;
+    pumpkinGroup.add(stem);
+    
+    const x = Math.floor(Math.random() * 350 - 175);
+    const z = Math.floor(Math.random() * 350 - 175);
+    pumpkinGroup.position.set(x, 0.4, z);
+    
+    const marker = document.createElement('div');
+    marker.className = 'cardinal-marker';
+    const hexColor = PUMPKIN_COLORS[color].toString(16).padStart(6, '0');
+    marker.style.backgroundColor = `#${hexColor}`; 
+    marker.style.width = '10px';
+    marker.style.height = '10px';
+    document.getElementById('compass').appendChild(marker);
+    
+    pumpkins.set(color, pumpkinGroup);
+    pumpkinMarkers.set(color, marker);
+    scene.add(pumpkinGroup);
+}
+
+function generateChunkKey(chunkX, chunkZ) {
+    return `${chunkX},${chunkZ}`;
+}
+
+const tileColors = {
+    ground: 0x203020,
+    spawn: 0x800000,
+    tree: 0x201008  
+};
+
+const tileHeights = {
+    ground: 0.1,
+    spawn: 0.1,
+    tree: 6.0  
+};
+
+function createChunk(chunkX, chunkZ) {
+    const chunk = new THREE.Group();
+    const groundGeometry = new THREE.BoxGeometry(tileSize, tileHeights.ground, tileSize);
+    const trunkGeometry = new THREE.CylinderGeometry(0.15, 0.3, tileHeights.tree, 6);
+    const branchGeometry = new THREE.CylinderGeometry(0.05, 0.1, 1.5, 4);
+    const twigGeometry = new THREE.CylinderGeometry(0.02, 0.04, 0.3, 3);
+
+    for (let x = 0; x < chunkSize; x++) {
+        for (let z = 0; z < chunkSize; z++) {
+            const worldX = chunkX * chunkSize + x;
+            const worldZ = chunkZ * chunkSize + z;
+
+            const isSpawnTile = (worldX === 0 && worldZ === 0);
+            const shade = Math.random() * 0.1 - 0.05;
+            const baseColor = isSpawnTile ? tileColors.spawn : tileColors.ground;
+            const adjustedColor = applyShadeToColor(baseColor, shade);
+            const groundMaterial = new THREE.MeshBasicMaterial({ color: adjustedColor });
+            const groundTile = new THREE.Mesh(groundGeometry, groundMaterial);
+            groundTile.position.set(
+                x * tileSize,
+                tileHeights.ground / 2 - 0.05,
+                z * tileSize
+            );
+            chunk.add(groundTile);
+
+            // Reduce tree frequency and complexity for better performance
+            if (!isSpawnTile && Math.random() < 0.08) {  // Reduced from 0.1
+                const trunkMaterial = new THREE.MeshBasicMaterial({ color: 0x2a1810 });
+                const trunk = new THREE.Mesh(trunkGeometry, trunkMaterial);
+                trunk.position.set(
+                    x * tileSize + (Math.random() * 0.6 - 0.3),
+                    tileHeights.tree / 2,
+                    z * tileSize + (Math.random() * 0.6 - 0.3)
+                );
+                trunk.rotation.y = Math.random() * Math.PI * 2;
+                trunk.rotation.z = (Math.random() - 0.5) * 0.2;
+
+                // Reduce number of branches
+                const numBranches = 2 + Math.floor(Math.random() * 2); // Reduced from 3+3
+                for (let i = 0; i < numBranches; i++) {
+                    const branch = new THREE.Mesh(branchGeometry, trunkMaterial);
+                    branch.position.y = (tileHeights.tree * 0.3) + (Math.random() * tileHeights.tree * 0.6) - tileHeights.tree/2;
+                    branch.rotation.z = Math.PI/4 + (Math.random() - 0.5) * Math.PI/4;
+                    branch.rotation.y = (Math.PI * 2 * i) / numBranches;
+                    branch.position.x = Math.cos(branch.rotation.y) * 0.3;
+                    branch.position.z = Math.sin(branch.rotation.y) * 0.3;
+                    
+                    // Reduce number of twigs
+                    if (Math.random() < 0.5) {  // Only 50% chance of twigs
+                        const twig = new THREE.Mesh(twigGeometry, trunkMaterial);
+                        twig.position.y = 0.3;
+                        twig.rotation.z = Math.PI/4 + (Math.random() - 0.5) * Math.PI/2;
+                        twig.rotation.y = Math.random() * Math.PI * 2;
+                        branch.add(twig);
+                    }
+                    
+                    trunk.add(branch);
+                }
+
+                chunk.add(trunk);
+            }
+        }
+    }
+
+    chunk.position.set(chunkX * chunkSize, 0, chunkZ * chunkSize);
+    return chunk;
+}
+
+function applyShadeToColor(baseColor, shade) {
+    const r = (baseColor >> 16) & 255;
+    const g = (baseColor >> 8) & 255;
+    const b = baseColor & 255;
+    
+    const adjustedR = Math.min(255, Math.max(0, r + (shade * 255)));
+    const adjustedG = Math.min(255, Math.max(0, g + (shade * 255)));
+    const adjustedB = Math.min(255, Math.max(0, b + (shade * 255)));
+    
+    return (adjustedR << 16) | (adjustedG << 8) | adjustedB;
+}
+
+function checkCollisions() {
+    if (player.position.y < PLAYER_HEIGHT / 2) {
+        player.position.y = PLAYER_HEIGHT / 2;
+        playerVelocity.y = 0;
+        canJump = true;
+    }
+
+    scene.traverse((object) => {
+        if (object instanceof THREE.Mesh && 
+            object.geometry instanceof THREE.CylinderGeometry && 
+            object.geometry.parameters.radiusTop === 0.15) {
+            
+            const worldPos = new THREE.Vector3();
+            object.getWorldPosition(worldPos);
+            const playerPos = player.position.clone();
+            worldPos.y = 0;
+            playerPos.y = 0;
+            
+            const distance = worldPos.distanceTo(playerPos);
+            const minDistance = 0.5; 
+            
+            if (distance < minDistance) {
+                const pushDir = playerPos.sub(worldPos).normalize();
+                player.position.x += pushDir.x * (minDistance - distance);
+                player.position.z += pushDir.z * (minDistance - distance);
+            }
+        }
+    });
+}
+
+function checkPumpkinHover() {
+    raycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
+    
+    const pumpkinMeshes = Array.from(pumpkins.values()).map(group => group.children[0]);
+    const intersects = raycaster.intersectObjects(pumpkinMeshes);
+    
+    if (hoveredPumpkin) {
+        hoveredPumpkin.material.emissive = new THREE.Color(0x000000);
+    }
+    hoveredPumpkin = null;
+    
+    if (intersects.length > 0) {
+        const intersection = intersects[0];
+        if (intersection.distance <= cursorRange) {
+            hoveredPumpkin = intersection.object;
+            hoveredPumpkin.material.emissive = new THREE.Color(0x444444);
+        }
+    }
+}
+
+function pickupPumpkin() {
+    if (hoveredPumpkin) {
+        const slots = document.querySelectorAll('.hotbar-slot');
+        for (let i = 0; i < slots.length; i++) {
+            if (!slots[i].hasAttribute('data-pumpkin')) {
+                const pumpkinGroup = hoveredPumpkin.parent;
+                const color = Array.from(pumpkins.entries())
+                    .find(([_, group]) => group === pumpkinGroup)[0];
+                
+                const hexColor = PUMPKIN_COLORS[color].toString(16).padStart(6, '0');
+                slots[i].style.backgroundColor = `#${hexColor}`; 
+                slots[i].setAttribute('data-pumpkin', color);
+                
+                scene.remove(pumpkinGroup);
+                pumpkins.delete(color);
+                const marker = pumpkinMarkers.get(color);
+                marker.remove();
+                pumpkinMarkers.delete(color);
+                hoveredPumpkin = null;
+
+                pumpkinsCollected++;
+
+                const warning = document.getElementById('warning-message');
+                warning.style.display = 'block';
+                
+                if (pumpkinsCollected === 1) {
+                    enemySpawned = true;
+                    enemySphere.position.set(0, PLAYER_HEIGHT, 0);
+                    sound.play();
+                    backgroundMusic.stop();
+                    dangerMusic.play();
+                    warning.textContent = "The dark jack-o'-lantern awakens to find the pumpkin thief... If you hear a hum approach, beware!";
+                } else if (pumpkinsCollected === 2) {
+                    warning.textContent = "The dark jack-o'-lantern will not forgive you. You will not get away with this...";
+                    enemySpeedMultiplier = 1.1; // Update speed on second pumpkin
+                } else if (pumpkinsCollected === 3) {
+                    warning.textContent = "You feel the trees watch you with pity. They have seen what's about to come so many times before...";
+                    enemySpeedMultiplier = 1.3; // Update speed on third pumpkin
+                } else if (pumpkinsCollected === 4) {
+                    warning.textContent = "In the darkness it chases unrelenting. Do you stand a chance?";
+                    enemySpeedMultiplier = 1.5; // Update speed on fourth pumpkin
+                } else if (pumpkinsCollected === 5) {
+                    fifthPumpkinTime = performance.now();
+                    warning.textContent = "You have all of its pumpkins and must escape. Its power wanes. Run.";
+                    enemySpeedMultiplier = 1.7; // Update speed on fifth pumpkin
+                }
+
+                collectionSound.play();
+                break;
+            }
+        }
+    }
+}
+
+function triggerWin() {
+    if (!gameWon) {
+        gameWon = true;
+        
+        backgroundMusic.stop();
+        dangerMusic.stop();
+        sound.stop();
+        
+        victoryMusic.play();
+        
+        const winScreen = document.createElement('div');
+        winScreen.style.cssText = `
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.8);
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            color: white;
+            font-family: monospace;
+        `;
+        winScreen.innerHTML = `
+            <h1>YOU WIN!!</h1>
+            <p>Thanks so much for playing! <a href="https://bhoppings.de/home" style="color: #ff6600; text-decoration: underline;">https://bhoppings.de/home</a>. Ambient song is Wizard101: Wizard City — Dark; Danger song is Wizard101: Castle Darkmoor — Combat Theme; Victory Song is New Super Mario Bros. Overworld Theme but in minor.</p>
+            <button onclick="location.reload()" style="
+                padding: 10px 20px;
+                font-size: 16px;
+                background: #ff6600;
+                color: white;
+                border: none;
+                border-radius: 5px;
+                cursor: pointer;
+                margin-top: 15px;
+            ">Play Again!</button>
+        `;
+        document.body.appendChild(winScreen);
+    }
+}
+
+function updateLoadedChunks() {
+    const playerChunkX = Math.floor(camera.position.x / (chunkSize * tileSize));
+    const playerChunkZ = Math.floor(camera.position.z / (chunkSize * tileSize));
+    // Reduce render distance from what appears to be unbounded to just 1
+    const renderDistance = 1;
+
+    // Create a Set of needed chunk keys first
+    const neededChunks = new Set();
+    
+    for (let dx = -renderDistance; dx <= renderDistance; dx++) {
+        for (let dz = -renderDistance; dz <= renderDistance; dz++) {
+            const chunkX = playerChunkX + dx;
+            const chunkZ = playerChunkZ + dz;
+            const key = generateChunkKey(chunkX, chunkZ);
+            neededChunks.add(key);
+            
+            if (!loadedChunks.has(key)) {
+                const chunk = createChunk(chunkX, chunkZ);
+                scene.add(chunk);
+                loadedChunks.set(key, chunk);
+            }
+        }
+    }
+
+    // Remove chunks that are too far away
+    for (const [key, chunk] of loadedChunks) {
+        if (!neededChunks.has(key)) {
+            scene.remove(chunk);
+            chunk.traverse((object) => {
+                if (object.geometry) {
+                    object.geometry.dispose();
+                }
+                if (object.material) {
+                    if (Array.isArray(object.material)) {
+                        object.material.forEach(material => material.dispose());
+                    } else {
+                        object.material.dispose();
+                    }
+                }
+            });
+            loadedChunks.delete(key);
+        }
+    }
+}
+
+let pitch = 0;
+let yaw = 0;
+
+const moveSpeed = 3.0;
+
+renderer.domElement.addEventListener('click', function() {
+    renderer.domElement.requestPointerLock();
+});
+
+document.addEventListener('mousemove', function(event) {
+    if (document.pointerLockElement === renderer.domElement) {
+        yaw -= event.movementX * 0.002;
+        pitch -= event.movementY * 0.002;
+        
+        pitch = Math.max(-Math.PI/2, Math.min(Math.PI/2, pitch));
+    }
+});
+
+document.addEventListener('keydown', (e) => {
+    keys[e.key.toLowerCase()] = true;
+    if (e.key.toLowerCase() === 'shift') {
+        isSprinting = sprintMeter > 0;
+    }
+    if (e.key.toLowerCase() === 'e') {
+        pickupPumpkin();
+    }
+
+    const keyPressed = e.key;
+    currentCheatSequence.push(keyPressed);
+    if (currentCheatSequence.length > CHEAT_CODE.length) {
+        currentCheatSequence.shift();
+    }
+    
+    if (currentCheatSequence.length === CHEAT_CODE.length) {
+        const isCheatCode = currentCheatSequence.every((key, index) => {
+            return key.toLowerCase() === CHEAT_CODE[index].toLowerCase();
+        });
+        
+        if (isCheatCode) {
+            triggerCheatWin();
+        }
+    }
+});
+document.addEventListener('keyup', (e) => {
+    keys[e.key.toLowerCase()] = false;
+    if (e.key.toLowerCase() === 'shift') {
+        isSprinting = false;
+    }
+});
+
+// Mobile controls event listeners
+document.getElementById('mobile-toggle').addEventListener('click', function() {
+  mobileControlsEnabled = !mobileControlsEnabled;
+  document.querySelectorAll('.mobile-control, .mobile-button').forEach(el => {
+    el.classList.toggle('show-mobile', mobileControlsEnabled);
+  });
+});
+
+document.getElementById('sprint-button').addEventListener('click', function() {
+  if (sprintMeter > 0) {
+    isSprinting = !isSprinting;
+    this.style.background = isSprinting ? 'rgba(0,255,0,0.5)' : 'rgba(0,0,0,0.5)';
+  }
+});
+
+document.getElementById('interact-button').addEventListener('click', function() {
+  pickupPumpkin();
+});
+
+// Touch handlers for move stick
+document.getElementById('move-stick').addEventListener('touchstart', function(e) {
+  moveStickActive = true;
+  const touch = e.touches[0];
+  moveStickOrigin = {x: touch.clientX, y: touch.clientY};
+  e.preventDefault();
+});
+
+document.getElementById('move-stick').addEventListener('touchmove', function(e) {
+  if (!moveStickActive) return;
+  const touch = e.touches[0];
+  const maxOffset = 50;
+  
+  currentMoveOffset = {
+    x: Math.min(maxOffset, Math.max(-maxOffset, touch.clientX - moveStickOrigin.x)),
+    y: Math.min(maxOffset, Math.max(-maxOffset, touch.clientY - moveStickOrigin.y))
+  };
+  
+  this.querySelector('.stick').style.transform = 
+    `translate(${currentMoveOffset.x}px, ${currentMoveOffset.y}px)`;
+    
+  keys.w = currentMoveOffset.y < -20;
+  keys.s = currentMoveOffset.y > 20;
+  keys.a = currentMoveOffset.x < -20;
+  keys.d = currentMoveOffset.x > 20;
+  
+  e.preventDefault();
+});
+
+// Touch handlers for look stick
+document.getElementById('look-stick').addEventListener('touchstart', function(e) {
+  lookStickActive = true;
+  const touch = e.touches[0];
+  lookStickOrigin = {x: touch.clientX, y: touch.clientY};
+  e.preventDefault();
+});
+
+document.getElementById('look-stick').addEventListener('touchmove', function(e) {
+  if (!lookStickActive) return;
+  const touch = e.touches[0];
+  const maxOffset = 50;
+  
+  currentLookOffset = {
+    x: Math.min(maxOffset, Math.max(-maxOffset, touch.clientX - lookStickOrigin.x)),
+    y: Math.min(maxOffset, Math.max(-maxOffset, touch.clientY - lookStickOrigin.y))
+  };
+  
+  this.querySelector('.stick').style.transform = 
+    `translate(${currentLookOffset.x}px, ${currentLookOffset.y}px)`;
+    
+  yaw -= currentLookOffset.x * 0.001;
+  pitch -= currentLookOffset.y * 0.001;
+  pitch = Math.max(-Math.PI/2, Math.min(Math.PI/2, pitch));
+  
+  e.preventDefault();
+});
+
+// Reset handlers
+function resetStick(stickElement) {
+  stickElement.querySelector('.stick').style.transform = 'translate(-50%, -50%)';
+}
+
+document.addEventListener('touchend', function(e) {
+  if (moveStickActive) {
+    moveStickActive = false;
+    resetStick(document.getElementById('move-stick'));
+    keys.w = keys.a = keys.s = keys.d = false;
+  }
+  if (lookStickActive) {
+    lookStickActive = false;
+    resetStick(document.getElementById('look-stick'));
+  }
+});
+
+// Add to updateSprintMeter()
+if (!isSprinting) {
+  document.getElementById('sprint-button').style.background = 'rgba(0,0,0,0.5)';
+}
+
+function updateCamera() {
+    if (isGameOver) return; 
+    
+    updateEnemy(); 
+    camera.quaternion.setFromEuler(new THREE.Euler(pitch, yaw, 0, 'YXZ'));
+    
+    const forward = new THREE.Vector3(0, 0, -1);
+    const right = new THREE.Vector3(1, 0, 0);
+    forward.applyQuaternion(camera.quaternion);
+    right.applyQuaternion(camera.quaternion);
+    
+    forward.y = 0;
+    right.y = 0;
+    forward.normalize();
+    right.normalize();
+    
+    const moveVector = new THREE.Vector3();
+    if (keys.w || keys.arrowup) moveVector.add(forward);
+    if (keys.s || keys.arrowdown) moveVector.sub(forward);
+    if (keys.a || keys.arrowleft) moveVector.sub(right);
+    if (keys.d || keys.arrowright) moveVector.add(right);
+    
+    if (moveVector.length() > 0) {
+        if (!musicStarted && backgroundMusic.buffer) {
+            backgroundMusic.play();
+            musicStarted = true;
+        }
+        moveVector.normalize().multiplyScalar(moveSpeed * (isSprinting ? SPRINT_MULTIPLIER : 1));
+        playerVelocity.x = moveVector.x;
+        playerVelocity.z = moveVector.z;
+    } else {
+        playerVelocity.x = 0;
+        playerVelocity.z = 0;
+    }
+    
+    playerVelocity.y += GRAVITY * 0.016;
+    player.position.add(playerVelocity.clone().multiplyScalar(0.03));
+    
+    checkCollisions();
+    
+    camera.position.copy(player.position);
+    camera.position.y += PLAYER_HEIGHT/2;
+
+    updateLoadedChunks();
+    updateCompass();
+}
+
+function updateSprintMeter() {
+    const now = performance.now();
+    const deltaTime = (now - lastSprintRecharge) / 1000;
+    lastSprintRecharge = now;
+    
+    if (isSprinting && sprintMeter > 0) {
+        sprintMeter = Math.max(0, sprintMeter - deltaTime);
+        if (sprintMeter === 0) {
+            isSprinting = false;
+            // Add this line to reset the sprint button appearance
+            document.getElementById('sprint-button').style.background = 'rgba(0,0,0,0.5)';
+        }
+    } else if (!isSprinting && sprintMeter < SPRINT_MAX_TIME) {
+        sprintMeter = Math.min(SPRINT_MAX_TIME, sprintMeter + deltaTime * SPRINT_RECHARGE_RATE);
+    }
+    
+    const sprintFill = document.getElementById('sprint-fill');
+    sprintFill.style.width = `${(sprintMeter / SPRINT_MAX_TIME) * 100}%`;
+}
+
+window.addEventListener('resize', function() {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+function animate() {
+    if (!isGameOver || isSpinning) {
+        updateEnemy(); 
+    }
+    requestAnimationFrame(animate);
+    if (!isGameOver) {
+        updateCamera();
+        updateSprintMeter();
+        checkPumpkinHover();
+    }
+    renderer.render(scene, camera);
+}
+
+player.position.set(0, PLAYER_HEIGHT/2, 0);
+camera.position.copy(player.position);
+camera.position.y += PLAYER_HEIGHT/2;
+
+Object.keys(PUMPKIN_COLORS).forEach(color => {
+    createPumpkin(color);
+});
+
+function updateCompass() {
+    const compassMarker = document.getElementById('compass-marker');
+    const northMarker = document.getElementById('north-marker');
+    const southMarker = document.getElementById('south-marker');
+    const eastMarker = document.getElementById('east-marker');
+    const westMarker = document.getElementById('west-marker');
+
+    function angleDifference(a, b) {
+        let diff = ((a - b + Math.PI * 3) % (2 * Math.PI)) - Math.PI;
+        return diff;
+    }
+
+    const compassWidth = document.getElementById('compass').offsetWidth;
+    const centerPosition = compassWidth / 2;
+    const edgePadding = compassWidth * 0.07; // 7% padding from edges
+    const usableWidth = compassWidth - (edgePadding * 2);
+
+    const spawnDir = new THREE.Vector3(0, 0, 0).sub(camera.position);
+    spawnDir.y = 0;
+    spawnDir.normalize();
+
+    const cameraDir = new THREE.Vector3(0, 0, -1);
+    cameraDir.applyQuaternion(camera.quaternion);
+    cameraDir.y = 0;
+    cameraDir.normalize();
+
+    const angleToSpawn = Math.atan2(spawnDir.x, spawnDir.z);
+    const cameraAngle = Math.atan2(cameraDir.x, cameraDir.z);
+    const angle = angleDifference(angleToSpawn, cameraAngle);
+
+    let normalizedAngle = -angle / (Math.PI / 2);
+    normalizedAngle = Math.max(-1, Math.min(1, normalizedAngle));
+
+    const markerPosition = centerPosition + (normalizedAngle * (usableWidth / 2));
+    compassMarker.style.left = `${markerPosition}px`;
+
+    const absAngle = Math.abs(angle);
+    const opacity = Math.max(0, 1 - (absAngle - Math.PI/2) / (Math.PI/2));
+    compassMarker.style.opacity = opacity;
+
+    const cardinalDirections = [
+        { marker: northMarker, angle: 0 },
+        { marker: eastMarker, angle: -Math.PI / 2 },
+        { marker: southMarker, angle: Math.PI },
+        { marker: westMarker, angle: Math.PI / 2 }
+    ];
+
+    cardinalDirections.forEach(({ marker, angle: markerAngle }) => {
+        const relativeAngle = angleDifference(markerAngle, cameraAngle);
+        let normalizedCardinalAngle = -relativeAngle / (Math.PI / 2);
+        normalizedCardinalAngle = Math.max(-1, Math.min(1, normalizedCardinalAngle));
+
+        const cardinalPosition = centerPosition + (normalizedCardinalAngle * (usableWidth / 2));
+        marker.style.left = `${cardinalPosition}px`;
+
+        const absCardinalAngle = Math.abs(relativeAngle);
+        const cardinalOpacity = Math.max(0, 1 - (absCardinalAngle - Math.PI/2) / (Math.PI/2));
+        marker.style.opacity = cardinalOpacity;
+    });
+
+    pumpkins.forEach((pumpkin, color) => {
+        const marker = pumpkinMarkers.get(color);
+        const pumpkinDir = pumpkin.position.clone().sub(camera.position);
+        pumpkinDir.y = 0;
+        pumpkinDir.normalize();
+
+        const angleToPumpkin = Math.atan2(pumpkinDir.x, pumpkinDir.z);
+        const angle = angleDifference(angleToPumpkin, cameraAngle);
+
+        let normalizedAngle = -angle / (Math.PI / 2);
+        normalizedAngle = Math.max(-1, Math.min(1, normalizedAngle));
+
+        const markerPosition = centerPosition + (normalizedAngle * (usableWidth / 2));
+        marker.style.left = `${markerPosition}px`;
+
+        const absAngle = Math.abs(angle);
+        const opacity = Math.max(0, 1 - (absAngle - Math.PI/2) / (Math.PI/2));
+        marker.style.opacity = opacity;
+    });
+}
+
+const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+scene.add(ambientLight);
+
+const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
+directionalLight.position.set(0, 1, 0);
+scene.add(directionalLight);
+
+animate();
+</script>
+</body>
+</html>
