@@ -1,0 +1,1188 @@
+<html><head><base href=""><title>Devil Shooter</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.3.2/socket.io.js"></script>
+<style>
+body { margin: 0; }
+canvas { width: 100%; height: 100%; }
+#info {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    color: white;
+    font-family: monospace;
+    background: rgba(0,0,0,0.7);
+    padding: 10px;
+}
+#crosshair {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: white;
+    font-size: 24px;
+}
+#controls {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    color: white;
+    font-family: monospace;
+    background: rgba(0,0,0,0.7);
+    padding: 15px;
+    border-radius: 5px;
+}
+#cooldown {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    color: white;
+    font-family: monospace;
+    background: rgba(0,0,0,0.7);
+    padding: 10px;
+    display: none;
+}
+</style>
+</head>
+<body>
+<div id="info">Health: <span id="health">100</span><br>Ammo: <span id="ammo">30</span><br>Demons Killed: <span id="score">0</span></div>
+<div id="crosshair">+</div>
+<div id="cooldown">Cooldown: <span id="cooldownTimer">0</span>s</div>
+<div id="controls">
+    Controls:<br>
+    W - Move Forward<br>
+    S - Move Backward<br>
+    A - Move Left<br>
+    D - Move Right<br>
+    Space - Shoot<br>
+    L - Lock/Unlock Mouse<br>
+    Right Mouse - Look Around<br>
+    Mouse - Look Around<br>
+</div>
+<script>
+let socket;
+try {
+    socket = io('http://localhost:3000', {
+        reconnection: false,
+        timeout: 3000
+    });
+} catch (e) {
+    console.log('Socket.IO connection failed - multiplayer disabled');
+    socket = {
+        emit: () => {}, // Create dummy emit function
+        on: () => {} // Create dummy on function
+    };
+}
+
+let isAdmin = false;
+
+const adminPassword = prompt("Admin?");
+if (adminPassword === "dr dandy") {
+    isAdmin = true;
+    console.log("Admin mode activated");
+}
+
+document.getElementById('controls').innerHTML += isAdmin ? '<br>7 - Stop/Start Demons' : '';
+
+const players = new Map();
+const ammoPickups = [];
+const AMMO_PICKUP_AMOUNT = 10;
+const rocks = [];
+const startTime = Date.now();
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x87CEEB);
+
+const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+const renderer = new THREE.WebGLRenderer();
+renderer.setSize(window.innerWidth, window.innerHeight);
+document.body.appendChild(renderer.domElement);
+
+let walkingAnimation = 0;
+const walkingSpeed = 0.08;
+
+let velocity = 0;
+const gravity = 0.01;
+let isGrounded = false;
+const playerHeight = 2;
+
+let maxDemons = 5;
+let titanChance = 0.2;
+
+const createHumanoidModel = () => {
+    const group = new THREE.Group();
+    
+    const torso = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.4, 0.3, 1.2, 8),
+        new THREE.MeshPhongMaterial({color: 0x336699})
+    );
+    torso.position.y = 0.6;
+    group.add(torso);
+    
+    const head = new THREE.Mesh(
+        new THREE.SphereGeometry(0.25, 8, 8),
+        new THREE.MeshPhongMaterial({color: 0xffcd94})
+    );
+    head.position.y = 1.4;
+    group.add(head);
+    
+    const armGeometry = new THREE.CylinderGeometry(0.1, 0.1, 0.8, 8);
+    const leftArm = new THREE.Mesh(armGeometry, new THREE.MeshPhongMaterial({color: 0x336699}));
+    leftArm.position.set(-0.5, 0.9, 0);
+    leftArm.rotation.z = -0.2;
+    group.add(leftArm);
+    
+    const rightArm = new THREE.Mesh(armGeometry, new THREE.MeshPhongMaterial({color: 0x336699}));
+    rightArm.position.set(0.5, 0.9, 0);
+    rightArm.rotation.z = 0.2;
+    group.add(rightArm);
+    
+    const legGeometry = new THREE.CylinderGeometry(0.15, 0.1, 0.9, 8);
+    const leftLeg = new THREE.Mesh(legGeometry, new THREE.MeshPhongMaterial({color: 0x1a4a7a}));
+    leftLeg.position.set(-0.2, 0, 0);
+    group.add(leftLeg);
+    
+    const rightLeg = new THREE.Mesh(legGeometry, new THREE.MeshPhongMaterial({color: 0x1a4a7a}));
+    rightLeg.position.set(0.2, 0, 0);
+    group.add(rightLeg);
+    
+    group.leftArm = leftArm;
+    group.rightArm = rightArm;
+    group.leftLeg = leftLeg;
+    group.rightLeg = rightLeg;
+    
+    return group;
+};
+
+const createJaw = (color) => {
+    const jaw = new THREE.Group();
+    
+    const upperJaw = new THREE.Mesh(
+        new THREE.BoxGeometry(0.3, 0.15, 0.3),
+        new THREE.MeshPhongMaterial({ color: color })
+    );
+    jaw.add(upperJaw);
+    
+    const lowerJaw = new THREE.Mesh(
+        new THREE.BoxGeometry(0.3, 0.15, 0.3),
+        new THREE.MeshPhongMaterial({ color: color })
+    );
+    lowerJaw.position.y = -0.15;
+    jaw.add(lowerJaw);
+    
+    jaw.upperJaw = upperJaw;
+    jaw.lowerJaw = lowerJaw;
+    return jaw;
+};
+
+const createDemonModel = () => {
+    const group = new THREE.Group();
+    
+    const torso = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.5, 0.4, 1.4, 8),
+        new THREE.MeshPhongMaterial({color: 0x8b0000})
+    );
+    torso.position.y = 0.7;
+    group.add(torso);
+    
+    const head = new THREE.Mesh(
+        new THREE.SphereGeometry(0.3, 8, 8),
+        new THREE.MeshPhongMaterial({color: 0x650000})
+    );
+    head.position.y = 1.6;
+    group.add(head);
+    
+    const jaw = createJaw(0x650000);
+    jaw.position.set(0, 1.6, 0.2);
+    group.add(jaw);
+    group.jaw = jaw;
+
+    const hornGeometry = new THREE.ConeGeometry(0.1, 0.4, 8);
+    const leftHorn = new THREE.Mesh(hornGeometry, new THREE.MeshPhongMaterial({color: 0x333333}));
+    leftHorn.position.set(-0.2, 1.9, 0);
+    leftHorn.rotation.z = -0.4;
+    group.add(leftHorn);
+    
+    const rightHorn = new THREE.Mesh(hornGeometry, new THREE.MeshPhongMaterial({color: 0x333333}));
+    rightHorn.position.set(0.2, 1.9, 0);
+    rightHorn.rotation.z = 0.4;
+    group.add(rightHorn);
+    
+    const armGeometry = new THREE.CylinderGeometry(0.15, 0.12, 1, 8);
+    const leftArm = new THREE.Mesh(armGeometry, new THREE.MeshPhongMaterial({color: 0x8b0000}));
+    leftArm.position.set(-0.6, 1, 0);
+    leftArm.rotation.z = -0.3;
+    group.add(leftArm);
+    
+    const rightArm = new THREE.Mesh(armGeometry, new THREE.MeshPhongMaterial({color: 0x8b0000}));
+    rightArm.position.set(0.6, 1, 0);
+    rightArm.rotation.z = 0.3;
+    group.add(rightArm);
+    
+    const legGeometry = new THREE.CylinderGeometry(0.2, 0.15, 1, 8);
+    const leftLeg = new THREE.Mesh(legGeometry, new THREE.MeshPhongMaterial({color: 0x650000}));
+    leftLeg.position.set(-0.3, 0, 0);
+    group.add(leftLeg);
+    
+    const rightLeg = new THREE.Mesh(legGeometry, new THREE.MeshPhongMaterial({color: 0x650000}));
+    rightLeg.position.set(0.3, 0, 0);
+    group.add(rightLeg);
+    
+    group.leftArm = leftArm;
+    group.rightArm = rightArm;
+    group.leftLeg = leftLeg;
+    group.rightLeg = rightLeg;
+    
+    return group;
+};
+
+const createTitanDemonModel = () => {
+    const group = new THREE.Group();
+    
+    const torso = new THREE.Mesh(
+        new THREE.CylinderGeometry(1.0, 0.8, 3.0, 8),
+        new THREE.MeshPhongMaterial({color: 0x4a0000})
+    );
+    torso.position.y = 1.5;
+    group.add(torso);
+    
+    const head = new THREE.Mesh(
+        new THREE.SphereGeometry(0.6, 8, 8),
+        new THREE.MeshPhongMaterial({color: 0x350000})
+    );
+    head.position.y = 3.3;
+    group.add(head);
+    
+    const jaw = createJaw(0x350000);
+    jaw.scale.set(2, 2, 2);
+    jaw.position.set(0, 3.3, 0.4);
+    group.add(jaw);
+    group.jaw = jaw;
+
+    const hornGeometry = new THREE.ConeGeometry(0.2, 0.8, 8);
+    const leftHorn = new THREE.Mesh(hornGeometry, new THREE.MeshPhongMaterial({color: 0x1a1a1a}));
+    leftHorn.position.set(-0.4, 4.0, 0);
+    leftHorn.rotation.z = -0.4;
+    group.add(leftHorn);
+    
+    const rightHorn = new THREE.Mesh(hornGeometry, new THREE.MeshPhongMaterial({color: 0x1a1a1a}));
+    rightHorn.position.set(0.4, 4.0, 0);
+    rightHorn.rotation.z = 0.4;
+    group.add(rightHorn);
+    
+    const armGeometry = new THREE.CylinderGeometry(0.3, 0.25, 2.1, 8);
+    const leftArm = new THREE.Mesh(armGeometry, new THREE.MeshPhongMaterial({color: 0x4a0000}));
+    leftArm.position.set(-1.3, 2.1, 0);
+    leftArm.rotation.z = -0.3;
+    group.add(leftArm);
+    
+    const rightArm = new THREE.Mesh(armGeometry, new THREE.MeshPhongMaterial({color: 0x4a0000}));
+    rightArm.position.set(1.3, 2.1, 0);
+    rightArm.rotation.z = 0.3;
+    group.add(rightArm);
+    
+    const legGeometry = new THREE.CylinderGeometry(0.4, 0.3, 2.1, 8);
+    const leftLeg = new THREE.Mesh(legGeometry, new THREE.MeshPhongMaterial({color: 0x350000}));
+    leftLeg.position.set(-0.6, 0, 0);
+    group.add(leftLeg);
+    
+    const rightLeg = new THREE.Mesh(legGeometry, new THREE.MeshPhongMaterial({color: 0x350000}));
+    rightLeg.position.set(0.6, 0, 0);
+    group.add(rightLeg);
+    
+    group.leftArm = leftArm;
+    group.rightArm = rightArm;
+    group.leftLeg = leftLeg;
+    group.rightLeg = rightLeg;
+    
+    return group;
+};
+
+const createAmmoPickup = () => {
+    const group = new THREE.Group();
+    
+    const box = new THREE.Mesh(
+        new THREE.BoxGeometry(0.4, 0.3, 0.2),
+        new THREE.MeshPhongMaterial({ color: 0x3a5f0b })
+    );
+    group.add(box);
+    
+    const bulletGeometry = new THREE.CylinderGeometry(0.03, 0.03, 0.15, 8);
+    const bulletMaterial = new THREE.MeshPhongMaterial({ color: 0xb87333 });
+    
+    for (let i = 0; i < 3; i++) {
+        const bullet = new THREE.Mesh(bulletGeometry, bulletMaterial);
+        bullet.rotation.x = Math.PI / 2;
+        bullet.position.set((i - 1) * 0.1, 0.2, 0);
+        group.add(bullet);
+    }
+    
+    group.startY = 1.5;
+    group.phase = Math.random() * Math.PI * 2;
+    
+    const angle = Math.random() * Math.PI * 2;
+    const radius = Math.random() * 35;
+    group.position.x = Math.cos(angle) * radius;
+    group.position.z = Math.sin(angle) * radius;
+    group.position.y = 1.5;
+    
+    scene.add(group);
+    ammoPickups.push(group);
+    return group;
+};
+
+function spawnAmmoPickup() {
+    if (ammoPickups.length < 5) {
+        createAmmoPickup();
+    }
+}
+
+const player = createHumanoidModel();
+scene.add(player);
+player.position.y = playerHeight / 2;
+
+const createIsland = () => {
+    const islandGroup = new THREE.Group();
+    
+    const islandGeometry = new THREE.CylinderGeometry(50, 40, 8, 32);
+    const islandMaterial = new THREE.MeshPhongMaterial({
+        color: 0xc2b280,
+        vertexColors: true
+    });
+
+    const colors = [];
+    const positions = islandGeometry.attributes.position.array;
+    for (let i = 0; i < positions.length; i += 3) {
+        const y = positions[i + 1];
+        const height = (y + 4) / 8;
+        
+        if (y > 2) {
+            const variation = 0.9 + Math.random() * 0.2;
+            colors.push(
+                0.76 * variation,
+                0.7 * variation,
+                0.5 * variation
+            );
+        } else {
+            const variation = 0.8 + Math.random() * 0.2;
+            colors.push(
+                0.6 * variation,
+                0.55 * variation,
+                0.4 * variation
+            );
+        }
+    }
+    islandGeometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+    
+    const island = new THREE.Mesh(islandGeometry, islandMaterial);
+    island.position.y = -4;
+    islandGroup.add(island);
+
+    const grassGeometry = new THREE.CircleGeometry(45, 32);
+    const grassMaterial = new THREE.MeshPhongMaterial({
+        color: 0x3f9a25,
+        vertexColors: true
+    });
+
+    const grassColors = [];
+    const grassPositions = grassGeometry.attributes.position.array;
+    for (let i = 0; i < grassPositions.length; i += 3) {
+        const variation = 0.9 + Math.random() * 0.2;
+        grassColors.push(
+            0.25 * variation,
+            0.6 * variation,
+            0.15 * variation
+        );
+    }
+    grassGeometry.setAttribute('color', new THREE.Float32BufferAttribute(grassColors, 3));
+
+    const grass = new THREE.Mesh(grassGeometry, grassMaterial);
+    grass.rotation.x = -Math.PI / 2;
+    grass.position.y = 0.01;
+    islandGroup.add(grass);
+
+    for (let i = 0; i < 20; i++) {
+        const rockSize = 0.5 + Math.random() * 1.5;
+        const rockGeometry = new THREE.DodecahedronGeometry(rockSize);
+        const rockMaterial = new THREE.MeshPhongMaterial({
+            color: 0x808080,
+            roughness: 0.8,
+        });
+        const rock = new THREE.Mesh(rockGeometry, rockMaterial);
+        
+        const angle = Math.random() * Math.PI * 2;
+        const radius = Math.random() * 40;
+        const x = Math.cos(angle) * radius;
+        const z = Math.sin(angle) * radius;
+        
+        rock.position.set(x, 0.01 + rockSize/2, z);
+        rock.rotation.set(
+            Math.random() * Math.PI,
+            Math.random() * Math.PI,
+            Math.random() * Math.PI
+        );
+        rock.radius = rockSize;
+        islandGroup.add(rock);
+        rocks.push(rock);
+    }
+
+    return islandGroup;
+};
+
+const waterGeometry = new THREE.PlaneGeometry(1000, 1000, 32, 32);
+const waterMaterial = new THREE.MeshPhongMaterial({
+    color: 0x006994,
+    transparent: true,
+    opacity: 0.8,
+    specular: 0x004066,
+    shininess: 100
+});
+const water = new THREE.Mesh(waterGeometry, waterMaterial);
+water.rotation.x = -Math.PI / 2;
+water.position.y = -4;
+scene.add(water);
+
+const island = createIsland();
+scene.add(island);
+
+function spawnDemon() {
+    const isTitan = Math.random() < titanChance;
+    const demon = isTitan ? createTitanDemonModel() : createDemonModel();
+    const angle = Math.random() * Math.PI * 2;
+    const radius = 20 + Math.random() * 20;
+    demon.position.x = Math.cos(angle) * radius;
+    demon.position.z = Math.sin(angle) * radius;
+    demon.position.y = 1.2;
+
+    demon.health = isTitan ? 300 : 100; // Removed level multiplier
+    demon.speed = isTitan ? 0.03 : 0.05; // Removed level multiplier
+    demon.damage = 10; // Change damage to 10
+    demon.isTitan = isTitan;
+    demon.lastAttackTime = 0; // Track last attack time
+
+    const existingDemon = demons[0];
+    demon.speed = existingDemon && existingDemon.speed === 0 ? 0 : 
+        (isTitan ? 0.03 : 0.05);
+        
+    scene.add(demon);
+    demons.push(demon);
+}
+
+const light = new THREE.DirectionalLight(0xffffff, 1);
+light.position.set(0, 10, 0);
+scene.add(light);
+scene.add(new THREE.AmbientLight(0x404040));
+
+camera.position.set(0, 3, 5);
+camera.lookAt(player.position);
+
+let health = 100;
+let ammo = 30;
+let score = 0;
+let moveForward = false;
+let moveBackward = false;
+let moveLeft = false;
+let moveRight = false;
+let isMouseLocked = false;
+let canShoot = true;
+let cooldownTime = 0;
+
+const demons = [];
+
+for(let i = 0; i < maxDemons; i++) {
+    spawnDemon();
+}
+
+for (let i = 0; i < 5; i++) {
+    spawnAmmoPickup();
+}
+
+if (socket && socket.on) {
+    socket.on('playerJoined', (playerData) => {
+        const otherPlayer = createHumanoidModel();
+        otherPlayer.position.set(playerData.position.x, playerData.position.y, playerData.position.z);
+        scene.add(otherPlayer);
+        players.set(playerData.id, otherPlayer);
+    });
+
+    socket.on('playerLeft', (playerId) => {
+        const playerToRemove = players.get(playerId);
+        if (playerToRemove) {
+            scene.remove(playerToRemove);
+            players.delete(playerId);
+        }
+    });
+
+    socket.on('playerMoved', (playerData) => {
+        const otherPlayer = players.get(playerData.id);
+        if (otherPlayer) {
+            otherPlayer.position.set(playerData.position.x, playerData.position.y, playerData.position.z);
+            otherPlayer.rotation.y = playerData.rotation;
+        }
+    });
+}
+
+const requestPointerLock = () => {
+    renderer.domElement.requestPointerLock = renderer.domElement.requestPointerLock ||
+                                           renderer.domElement.mozRequestPointerLock;
+    renderer.domElement.requestPointerLock();
+};
+
+const exitPointerLock = () => {
+    document.exitPointerLock = document.exitPointerLock ||
+                              document.mozExitPointerLock;
+    document.exitPointerLock();
+};
+
+let isRightMouseDown = false;
+
+document.addEventListener('mousedown', (event) => {
+    if (event.button === 2) {
+        isRightMouseDown = true;
+    }
+});
+
+document.addEventListener('mouseup', (event) => {
+    if (event.button === 2) {
+        isRightMouseDown = false;
+    }
+});
+
+document.addEventListener('contextmenu', (event) => {
+    event.preventDefault();
+});
+
+document.addEventListener('mousemove', (event) => {
+    if (isMouseLocked || isRightMouseDown) {
+        mouseX += event.movementX * 0.002;
+    }
+    player.rotation.y = -mouseX;
+});
+
+document.addEventListener('keydown', (event) => {
+    switch(event.code) {
+        case 'KeyW': moveForward = true; break;
+        case 'KeyS': moveBackward = true; break;
+        case 'KeyA': moveLeft = true; break;
+        case 'KeyD': moveRight = true; break;
+        case 'Space': if (canShoot) shoot(); break;
+        case 'KeyL': 
+            isMouseLocked = !isMouseLocked;
+            if (isMouseLocked) {
+                requestPointerLock();
+            } else {
+                exitPointerLock();
+            }
+            break;
+        case 'Digit7':
+            if (isAdmin) {
+                demons.forEach(demon => {
+                    if (demon.speed === 0) {
+                        demon.speed = demon.isTitan ? 0.03 : 0.05;
+                    } else {
+                        demon.speed = 0;
+                    }
+                });
+            }
+            break;
+    }
+});
+
+document.addEventListener('keyup', (event) => {
+    switch(event.code) {
+        case 'KeyW': moveForward = false; break;
+        case 'KeyS': moveBackward = false; break;
+        case 'KeyA': moveLeft = false; break;
+        case 'KeyD': moveRight = false; break;
+    }
+});
+
+let mouseX = 0;
+document.addEventListener('mousemove', (event) => {
+    if (isMouseLocked || isRightMouseDown) {
+        mouseX += event.movementX * 0.002;
+    }
+    player.rotation.y = -mouseX;
+});
+
+function startCooldown() {
+    canShoot = false;
+    cooldownTime = 1;
+    document.getElementById('cooldown').style.display = 'block';
+    
+    const cooldownInterval = setInterval(() => {
+        cooldownTime--;
+        document.getElementById('cooldownTimer').textContent = cooldownTime;
+        
+        if (cooldownTime <= 0) {
+            clearInterval(cooldownInterval);
+            canShoot = true;
+            document.getElementById('cooldown').style.display = 'none';
+        }
+    }, 1000);
+}
+
+function createExplosion(position) {
+    const particleCount = 50;
+    const particles = [];
+    const colors = [0xff4500, 0xff6200, 0xff8700, 0xffaa00];
+    
+    for(let i = 0; i < particleCount; i++) {
+        const size = 0.05 + Math.random() * 0.15;
+        const particle = new THREE.Mesh(
+            new THREE.SphereGeometry(size),
+            new THREE.MeshBasicMaterial({
+                color: colors[Math.floor(Math.random() * colors.length)],
+                transparent: true,
+                opacity: 1
+            })
+        );
+        particle.position.copy(position);
+        
+        const angle = Math.random() * Math.PI * 2;
+        const height = Math.random() * Math.PI - Math.PI/2;
+        const speed = 0.1 + Math.random() * 0.3;
+        particle.velocity = new THREE.Vector3(
+            Math.cos(angle) * Math.cos(height),
+            Math.sin(height),
+            Math.sin(angle) * Math.cos(height)
+        ).multiplyScalar(speed);
+        
+        particle.rotationSpeed = new THREE.Vector3(
+            Math.random() * 0.2 - 0.1,
+            Math.random() * 0.2 - 0.1,
+            Math.random() * 0.2 - 0.1
+        );
+        
+        scene.add(particle);
+        particles.push(particle);
+    }
+    
+    const flash = new THREE.PointLight(0xff7700, 2, 10);
+    flash.position.copy(position);
+    scene.add(flash);
+    
+    let explosionTime = 0;
+    function animateExplosion() {
+        explosionTime += 0.016;
+        if (explosionTime > 1) {
+            particles.forEach(p => scene.remove(p));
+            scene.remove(flash);
+            return;
+        }
+        
+        flash.intensity = 2 * (1 - explosionTime);
+        
+        particles.forEach(particle => {
+            particle.position.add(particle.velocity);
+            particle.velocity.y -= 0.015;
+            
+            particle.rotation.x += particle.rotationSpeed.x;
+            particle.rotation.y += particle.rotationSpeed.y;
+            particle.rotation.z += particle.rotationSpeed.z;
+            
+            particle.material.opacity = 1 - (explosionTime / 1);
+            
+            particle.velocity.multiplyScalar(0.98);
+        });
+        
+        requestAnimationFrame(animateExplosion);
+    }
+    animateExplosion();
+}
+
+function createBloodEffect(position) {
+    const particleCount = 60;
+    const particles = [];
+    const bloodColors = [0x8b0000, 0x800000, 0x8b0000, 0x660000];
+    
+    for(let i = 0; i < particleCount; i++) {
+        const size = 0.02 + Math.random() * 0.08;
+        const particle = new THREE.Mesh(
+            new THREE.SphereGeometry(size),
+            new THREE.MeshBasicMaterial({
+                color: bloodColors[Math.floor(Math.random() * bloodColors.length)],
+                transparent: true,
+                opacity: 1
+            })
+        );
+        particle.position.copy(position);
+        
+        const angle = Math.random() * Math.PI * 2;
+        const height = (Math.random() * Math.PI - Math.PI/2) * 0.7;
+        const speed = 0.1 + Math.random() * 0.2;
+        particle.velocity = new THREE.Vector3(
+            Math.cos(angle) * Math.cos(height),
+            Math.abs(Math.sin(height)),
+            Math.sin(angle) * Math.cos(height)
+        ).multiplyScalar(speed);
+        
+        particle.scale.z = 1.5;
+        
+        scene.add(particle);
+        particles.push(particle);
+    }
+    
+    const poolSize = 0.5 + Math.random() * 0.5;
+    const bloodPool = new THREE.Mesh(
+        new THREE.CircleGeometry(poolSize, 32),
+        new THREE.MeshBasicMaterial({
+            color: 0x580000,
+            transparent: true,
+            opacity: 0
+        })
+    );
+    bloodPool.rotation.x = -Math.PI / 2;
+    bloodPool.position.copy(position);
+    bloodPool.position.y = 0.01;
+    scene.add(bloodPool);
+    
+    let bloodTime = 0;
+    function animateBlood() {
+        bloodTime += 0.016;
+        if (bloodTime > 1.5) {
+            particles.forEach(p => scene.remove(p));
+            scene.remove(bloodPool);
+            return;
+        }
+        
+        bloodPool.material.opacity = Math.min(bloodTime * 2, 0.7);
+        
+        particles.forEach(particle => {
+            particle.position.add(particle.velocity);
+            particle.velocity.y -= 0.02;
+            
+            if(particle.position.y < 0.01) {
+                particle.position.y = 0.01;
+                particle.velocity.set(0, 0, 0);
+                particle.scale.set(1, 0.1, 1);
+            }
+            
+            particle.material.opacity = 1 - (bloodTime / 1.5);
+            particle.velocity.multiplyScalar(0.97);
+        });
+        
+        requestAnimationFrame(animateBlood);
+    }
+    animateBlood();
+}
+
+function createFlyingBodyParts(position, isTitan = false) {
+    const bodyParts = [];
+    const scale = isTitan ? 3 : 1;
+    const bodyPartColors = [0x8b0000, 0x650000];
+    
+    const parts = [
+        { geometry: new THREE.SphereGeometry(0.3 * scale), name: 'head' },
+        { geometry: new THREE.CylinderGeometry(0.5 * scale, 0.4 * scale, 1.4 * scale), name: 'torso' },
+        { geometry: new THREE.CylinderGeometry(0.15 * scale, 0.12 * scale, 1 * scale), name: 'arm' },
+        { geometry: new THREE.CylinderGeometry(0.15 * scale, 0.12 * scale, 1 * scale), name: 'arm' },
+        { geometry: new THREE.CylinderGeometry(0.2 * scale, 0.15 * scale, 1 * scale), name: 'leg' },
+        { geometry: new THREE.CylinderGeometry(0.2 * scale, 0.15 * scale, 1 * scale), name: 'leg' },
+        { geometry: new THREE.ConeGeometry(0.1 * scale, 0.4 * scale), name: 'horn' },
+        { geometry: new THREE.ConeGeometry(0.1 * scale, 0.4 * scale), name: 'horn' }
+    ];
+    
+    parts.forEach(part => {
+        const bodyPart = new THREE.Mesh(
+            part.geometry,
+            new THREE.MeshPhongMaterial({
+                color: part.name === 'horn' ? 0x333333 : bodyPartColors[Math.floor(Math.random() * bodyPartColors.length)],
+                transparent: true,
+                opacity: 1
+            })
+        );
+        
+        bodyPart.position.copy(position);
+        bodyPart.position.x += (Math.random() - 0.5) * 0.5;
+        bodyPart.position.y += (Math.random() - 0.5) * 0.5;
+        bodyPart.position.z += (Math.random() - 0.5) * 0.5;
+        
+        const angle = Math.random() * Math.PI * 2;
+        const height = Math.random() * Math.PI - Math.PI/2;
+        const speed = 0.2 + Math.random() * 0.3;
+        bodyPart.velocity = new THREE.Vector3(
+            Math.cos(angle) * Math.cos(height),
+            Math.abs(Math.sin(height)) * 2,
+            Math.sin(angle) * Math.cos(height)
+        ).multiplyScalar(speed);
+        
+        bodyPart.rotationSpeed = new THREE.Vector3(
+            Math.random() * 0.4 - 0.2,
+            Math.random() * 0.4 - 0.2,
+            Math.random() * 0.4 - 0.2
+        );
+        
+        scene.add(bodyPart);
+        bodyParts.push(bodyPart);
+    });
+    
+    let partTime = 0;
+    function animateBodyParts() {
+        partTime += 0.016;
+        if (partTime > 3) {
+            bodyParts.forEach(part => scene.remove(part));
+            return;
+        }
+        
+        bodyParts.forEach(part => {
+            part.position.add(part.velocity);
+            part.velocity.y -= 0.015;
+            
+            if (part.position.y < 0.01) {
+                part.position.y = 0.01;
+                part.velocity.y *= -0.5;
+                part.velocity.x *= 0.8;
+                part.velocity.z *= 0.8;
+            }
+            
+            part.rotation.x += part.rotationSpeed.x;
+            part.rotation.y += part.rotationSpeed.y;
+            part.rotation.z += part.rotationSpeed.z;
+            
+            part.material.opacity = 1 - (partTime / 3);
+            
+            part.velocity.multiplyScalar(0.98);
+        });
+        
+        requestAnimationFrame(animateBodyParts);
+    }
+    animateBodyParts();
+}
+
+function shoot() {
+    if (ammo <= 0 || !canShoot) return;
+    
+    ammo--;
+    document.getElementById('ammo').textContent = ammo;
+    startCooldown();
+    
+    const bulletGeometry = new THREE.SphereGeometry(0.1);
+    const bulletMaterial = new THREE.MeshBasicMaterial({color: 0xffff00});
+    const bullet = new THREE.Mesh(bulletGeometry, bulletMaterial);
+    
+    bullet.position.copy(player.position);
+    bullet.position.y += 0.5;
+    
+    const direction = new THREE.Vector3(0, 0, -1);
+    direction.applyQuaternion(player.quaternion);
+    
+    scene.add(bullet);
+    
+    const bulletSpeed = 1;
+    let distance = 0;
+    const maxDistance = 100;
+    const startTime = Date.now();
+    
+    function animateBullet() {
+        bullet.position.add(direction.clone().multiplyScalar(bulletSpeed));
+        distance += bulletSpeed;
+        
+        const bulletLifetime = (Date.now() - startTime) / 1000;
+        
+        demons.forEach((demon, index) => {
+            if (bullet.position.distanceTo(demon.position) < (demon.isTitan ? 2 : 1)) {
+                demon.health -= 25;
+                createBloodEffect(demon.position.clone());
+                if (demon.health <= 0) {
+                    createFlyingBodyParts(demon.position.clone(), demon.isTitan);
+                    scene.remove(demon);
+                    demons.splice(index, 1);
+                    score += demon.isTitan ? 5 : 1; // Scoring logic
+                    document.getElementById('score').textContent = score;
+                    spawnDemon(); // Spawn a new demon after one is killed
+                }
+                createExplosion(bullet.position.clone());
+                checkExplosionDamage(bullet.position.clone());
+                scene.remove(bullet);
+                distance = maxDistance;
+            }
+        });
+        
+        if (bulletLifetime >= 6 || distance > maxDistance) {
+            createExplosion(bullet.position.clone());
+            checkExplosionDamage(bullet.position.clone());
+            scene.remove(bullet);
+            return;
+        }
+        
+        requestAnimationFrame(animateBullet);
+    }
+    animateBullet();
+}
+
+function updateWalkingAnimation(model, isWalking) {
+    if (!model.leftLeg || !model.rightLeg || !model.leftArm || !model.rightArm) return;
+    
+    if (isWalking) {
+        walkingAnimation += walkingSpeed;
+        
+        model.leftLeg.rotation.x = Math.sin(walkingAnimation) * 0.5;
+        model.rightLeg.rotation.x = Math.sin(walkingAnimation + Math.PI) * 0.5;
+        
+        model.leftArm.rotation.x = Math.sin(walkingAnimation + Math.PI) * 0.3;
+        model.rightArm.rotation.x = Math.sin(walkingAnimation) * 0.3;
+    } else {
+        model.leftLeg.rotation.x = 0;
+        model.rightLeg.rotation.x = 0;
+        model.leftArm.rotation.x = 0;
+        model.rightArm.rotation.x = 0;
+    }
+}
+
+function updateDemons() {
+    demons.forEach(demon => {
+        const direction = new THREE.Vector3();
+        direction.subVectors(player.position, demon.position);
+        direction.y = 0;
+        direction.normalize();
+        
+        const newPosition = demon.position.clone().add(direction.multiplyScalar(demon.speed));
+        const distanceFromCenter = Math.sqrt(newPosition.x * newPosition.x + newPosition.z * newPosition.z);
+        
+        if (distanceFromCenter < 45) {
+            demon.position.x = newPosition.x;
+            demon.position.z = newPosition.z;
+        }
+        
+        demon.lookAt(new THREE.Vector3(player.position.x, demon.position.y, player.position.z));
+        
+        if (demon.position.distanceTo(player.position) < (demon.isTitan ? 2 : 1.5) && demon.speed > 0) {
+            if (!demon.isAttacking) {
+                demon.isAttacking = true;
+                
+                const biteAnimation = () => {
+                    if (!demon.jaw || !demon.isAttacking) return;
+                    
+                    const animationDuration = 300;
+                    const startTime = Date.now();
+                    
+                    const animate = () => {
+                        const elapsed = Date.now() - startTime;
+                        const progress = elapsed / animationDuration;
+                        
+                        if (progress >= 1) {
+                            demon.isAttacking = false;
+                            demon.jaw.lowerJaw.rotation.x = 0;
+                            demon.jaw.upperJaw.rotation.x = 0;
+                            return;
+                        }
+                        
+                        const biteAngle = Math.sin(progress * Math.PI) * Math.PI / 4;
+                        demon.jaw.lowerJaw.rotation.x = biteAngle;
+                        demon.jaw.upperJaw.rotation.x = -biteAngle / 2;
+                        
+                        requestAnimationFrame(animate);
+                    };
+                    
+                    animate();
+                };
+                
+                biteAnimation();
+            }
+            
+            const currentTime = Date.now();
+            if (currentTime - demon.lastAttackTime >= 2000) {
+                health -= demon.damage;
+                demon.lastAttackTime = currentTime;
+                document.getElementById('health').textContent = health;
+                if (health <= 0) {
+                    alert('Game Over!');
+                    location.reload();
+                }
+            }
+        } else {
+            demon.isAttacking = false;
+            if (demon.jaw) {
+                demon.jaw.lowerJaw.rotation.x = 0;
+                demon.jaw.upperJaw.rotation.x = 0;
+            }
+        }
+        
+        updateWalkingAnimation(demon, true);
+    });
+}
+
+function checkExplosionDamage(explosionPosition) {
+    const explosionRadius = 3;
+    const demonsToRemove = [];
+    
+    demons.forEach((demon, index) => {
+        if (explosionPosition.distanceTo(demon.position) < explosionRadius) {
+            demon.health -= 100;
+            if (demon.health <= 0) {
+                createBloodEffect(demon.position.clone());
+                createFlyingBodyParts(demon.position.clone(), demon.isTitan);
+                scene.remove(demon);
+                demonsToRemove.push(index);
+                score += demon.isTitan ? 5 : 1; // Scoring logic
+                document.getElementById('score').textContent = score;
+            }
+        }
+    });
+    
+    demonsToRemove.sort((a, b) => b - a).forEach(index => {
+        demons.splice(index, 1);
+    });
+    
+    demonsToRemove.forEach(() => spawnDemon());
+}
+
+function animate() {
+    requestAnimationFrame(animate);
+    
+    const moveDirection = new THREE.Vector3();
+    
+    if (moveForward) moveDirection.z -= 1;
+    if (moveBackward) moveDirection.z += 1;
+    if (moveLeft) moveDirection.x -= 1;
+    if (moveRight) moveDirection.x += 1;
+    
+    const isWalking = moveDirection.length() > 0;
+    
+    moveDirection.normalize();
+    moveDirection.applyQuaternion(player.quaternion);
+    
+    const speed = 0.1;
+    const newPosition = player.position.clone().add(moveDirection.multiplyScalar(speed));
+    const distanceFromCenter = Math.sqrt(newPosition.x * newPosition.x + newPosition.z * newPosition.z);
+
+    const pushVector = new THREE.Vector3();
+    let isColliding = false;
+
+    rocks.forEach(rock => {
+        const dx = player.position.x - rock.position.x;
+        const dz = player.position.z - rock.position.z;
+        const distance = Math.sqrt(dx * dx + dz * dz);
+        const minDistance = rock.radius + 0.7;
+        
+        if (distance < minDistance) {
+            isColliding = true;
+            const pushStrength = (minDistance - distance) / minDistance;
+            if (distance > 0) {
+                pushVector.x += (dx / distance) * pushStrength;
+                pushVector.z += (dz / distance) * pushStrength;
+            } else {
+                const randomAngle = Math.random() * Math.PI * 2;
+                pushVector.x += Math.cos(randomAngle);
+                pushVector.z += Math.sin(randomAngle);
+            }
+        }
+    });
+
+    if (isColliding) {
+        pushVector.normalize();
+        const pushStrength = 0.3;
+        player.position.x += pushVector.x * pushStrength;
+        player.position.z += pushVector.z * pushStrength;
+    } else if (distanceFromCenter < 45) {
+        const potentialPosition = player.position.clone();
+        potentialPosition.x = newPosition.x;
+        potentialPosition.z = newPosition.z;
+        
+        let wouldCollide = false;
+        rocks.forEach(rock => {
+            const dx = potentialPosition.x - rock.position.x;
+            const dz = potentialPosition.z - rock.position.z;
+            const distance = Math.sqrt(dx * dx + dz * dz);
+            if (distance < rock.radius + 0.7) {
+                wouldCollide = true;
+            }
+        });
+        
+        if (!wouldCollide) {
+            player.position.x = newPosition.x;
+            player.position.z = newPosition.z;
+        }
+    }
+    
+    updateWalkingAnimation(player, isWalking);
+    updateDemons();
+    
+    ammoPickups.forEach((pickup, index) => {
+        pickup.position.y = pickup.startY + Math.sin(Date.now() * 0.003 + pickup.phase) * 0.3;
+        pickup.rotation.y += 0.02;
+        
+        if (pickup.position.distanceTo(player.position) < 1.5) {
+            ammo += AMMO_PICKUP_AMOUNT;
+            document.getElementById('ammo').textContent = ammo;
+            createPickupEffect(pickup.position.clone());
+            scene.remove(pickup);
+            ammoPickups.splice(index, 1);
+            setTimeout(spawnAmmoPickup, 15000);
+        }
+    });
+
+    waterMaterial.displacementScale = Math.sin(Date.now() * 0.001) * 0.2;
+    
+    if (socket && socket.emit) {
+        socket.emit('playerMove', {
+            position: player.position,
+            rotation: player.rotation.y
+        });
+    }
+    
+    const cameraOffset = new THREE.Vector3(0, 3, 5);
+    cameraOffset.applyQuaternion(player.quaternion);
+    camera.position.copy(player.position).add(cameraOffset);
+    camera.lookAt(player.position);
+    
+    renderer.render(scene, camera);
+}
+
+function createPickupEffect(position) {
+    const particleCount = 20;
+    const particles = [];
+    
+    for(let i = 0; i < particleCount; i++) {
+        const particle = new THREE.Mesh(
+            new THREE.SphereGeometry(0.05),
+            new THREE.MeshBasicMaterial({
+                color: 0x3a5f0b,
+                transparent: true,
+                opacity: 1
+            })
+        );
+        
+        particle.position.copy(position);
+        
+        const angle = Math.random() * Math.PI * 2;
+        const height = Math.random() * Math.PI - Math.PI/2;
+        const speed = 0.1 + Math.random() * 0.2;
+        particle.velocity = new THREE.Vector3(
+            Math.cos(angle) * Math.cos(height),
+            Math.sin(height),
+            Math.sin(angle) * Math.cos(height)
+        ).multiplyScalar(speed);
+        
+        scene.add(particle);
+        particles.push(particle);
+    }
+    
+    let time = 0;
+    function animatePickup() {
+        time += 0.016;
+        if (time > 1) {
+            particles.forEach(p => scene.remove(p));
+            return;
+        }
+        
+        particles.forEach(particle => {
+            particle.position.add(particle.velocity);
+            particle.material.opacity = 1 - time;
+            particle.velocity.y += 0.01;
+        });
+        
+        requestAnimationFrame(animatePickup);
+    }
+    animatePickup();
+}
+
+window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+animate();
+</script>
+</body></html>
