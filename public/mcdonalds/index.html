@@ -1,0 +1,551 @@
+<html><head><base href="." />
+<title>McDonald's Horror</title>
+<style>
+body {
+    margin: 0;
+    overflow: hidden;
+    font-family: Arial, sans-serif;
+}
+
+#ui {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    color: #ff0000;
+    font-size: 24px;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+    z-index: 100;
+}
+
+#flashlight {
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    background: radial-gradient(circle at 50% 50%, transparent 0%, rgba(0,0,0,0.8) 20%);
+    z-index: 99;
+    transition: opacity 0.3s ease;
+}
+
+.loading {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: #ff0000;
+    font-size: 32px;
+    text-align: center;
+}
+
+#flashlight-status {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    color: #ff0000;
+    font-size: 18px;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+    z-index: 100;
+}
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body>
+<div id="ui">
+    Happy Meals: <span id="happyMeals">0</span>/5<br>
+    Collect all Happy Meals before your sanity runs out!
+</div>
+<div id="flashlight"></div>
+<div id="flashlight-status">Flashlight: ON (Press F to toggle)</div>
+<div class="loading">Loading McHorror...</div>
+
+<script>
+let scene, camera, renderer, player;
+let collectSound;
+let isGameOver = false;
+let isFlashlightOn = true;
+let spotLight;
+let mouse = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
+let ceilingLights = [];
+let happyMeals = [];
+let collectedMeals = 0;
+const TOTAL_HAPPY_MEALS = 5;
+
+document.addEventListener('mousemove', (event) => {
+    mouse.x = event.clientX;
+    mouse.y = event.clientY;
+});
+
+function loadAudio() {
+    collectSound = new Audio();
+    collectSound.addEventListener('error', (e) => {
+        console.warn('Collect sound failed to load - continuing without sound');
+    });
+    collectSound.src = 'https://example.com/collect.mp3';
+}
+
+function init() {
+    loadAudio();
+    scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x000000);
+    
+    camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    renderer = new THREE.WebGLRenderer();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.body.appendChild(renderer.domElement);
+
+    spotLight = new THREE.SpotLight(0xffffff, 2.5);
+    spotLight.position.set(0, 2, 0);
+    spotLight.angle = Math.PI / 4;
+    spotLight.penumbra = 0.1;
+    spotLight.decay = 2;
+    spotLight.distance = 200;
+    scene.add(spotLight);
+    scene.add(spotLight.target);
+    
+    createEnvironment();
+    
+    camera.position.set(0, 1.6, 0);
+    
+    document.addEventListener('keydown', onKeyDown);
+    
+    animate();
+}
+
+function toggleFlashlight() {
+    isFlashlightOn = !isFlashlightOn;
+    const flashlight = document.getElementById('flashlight');
+    flashlight.style.opacity = isFlashlightOn ? '1' : '0';
+    document.getElementById('flashlight-status').textContent = 
+        `Flashlight: ${isFlashlightOn ? 'ON' : 'OFF'} (Press F to toggle)`;
+    
+    spotLight.intensity = isFlashlightOn ? 2.5 : 0;
+}
+
+function createWalls(size, height, x, y, z) {
+    const wallMaterial = new THREE.MeshStandardMaterial({
+        color: 0xFF0000,
+        roughness: 0.3
+    });
+    
+    const wallGeometry = new THREE.BoxGeometry(size * 2, height, 0.1);
+    const sideWallGeometry = new THREE.BoxGeometry(size * 2, height, 0.1);
+    
+    const northWall = new THREE.Mesh(wallGeometry, wallMaterial);
+    northWall.position.set(x, height/2, z - size);
+    scene.add(northWall);
+    
+    const southWall = new THREE.Mesh(wallGeometry, wallMaterial);
+    southWall.position.set(x, height/2, z + size);
+    scene.add(southWall);
+    
+    const eastWall = new THREE.Mesh(sideWallGeometry, wallMaterial);
+    eastWall.position.set(x + size, height/2, z);
+    eastWall.rotation.y = Math.PI / 2;
+    scene.add(eastWall);
+    
+    const westWall = new THREE.Mesh(sideWallGeometry, wallMaterial);
+    westWall.position.set(x - size, height/2, z);
+    westWall.rotation.y = Math.PI / 2;
+    scene.add(westWall);
+}
+
+function createEnvironment() {
+    const floorGeometry = new THREE.PlaneGeometry(40, 40);
+    const floorTexture = new THREE.TextureLoader().load('https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/checkerboard.png');
+    floorTexture.wrapS = floorTexture.wrapT = THREE.RepeatWrapping;
+    floorTexture.repeat.set(20, 20);
+    const floorMaterial = new THREE.MeshStandardMaterial({
+        map: floorTexture,
+        roughness: 0.8
+    });
+    const floor = new THREE.Mesh(floorGeometry, floorMaterial);
+    floor.rotation.x = -Math.PI / 2;
+    scene.add(floor);
+
+    createWalls(20, 4, 0, 0, 0);
+    
+    createRoom(-15, 0, 10, 10, 'kitchen');
+    
+    createRoom(15, 0, 5, 20, 'bathrooms');
+    
+    createRoom(0, -15, 15, 10, 'playarea');
+    
+    addCounters();
+    addTables();
+    addPlayStructure();
+    addKitchenEquipment();
+    createDeadBodies();
+
+    const happyMealGeometry = new THREE.BoxGeometry(0.5, 0.5, 0.5);
+    const happyMealMaterial = new THREE.MeshStandardMaterial({ 
+        color: 0xff0000,
+        emissive: 0xff0000,
+        emissiveIntensity: 0.2
+    });
+
+    const mealPositions = [
+        {x: -10, z: 5},
+        {x: 10, z: -5}, 
+        {x: 5, z: 8},
+        {x: -5, z: -8},
+        {x: 0, z: 0}
+    ];
+
+    happyMeals = mealPositions.map(pos => {
+        const meal = new THREE.Mesh(happyMealGeometry, happyMealMaterial);
+        meal.position.set(pos.x, 0.25, pos.z);
+        meal.visible = true;
+        scene.add(meal);
+        return meal;
+    });
+
+    const ceilingLightGeometry = new THREE.SphereGeometry(0.2, 8, 8);
+    const ceilingLightMaterial = new THREE.MeshBasicMaterial({ color: 0xFFFFFF });
+
+    for (let x = -15; x <= 15; x += 5) {
+        for (let z = -15; z <= 15; z += 5) {
+            const light = new THREE.PointLight(0xFFFFFF, 0.8, 10);
+            light.position.set(x, 3.5, z);
+            light.baseIntensity = 0.8;
+            light.flickerSpeed = 0.5 + Math.random() * 2;
+            light.timeOffset = Math.random() * 10;
+            scene.add(light);
+            
+            const lightMesh = new THREE.Mesh(ceilingLightGeometry, ceilingLightMaterial);
+            lightMesh.position.copy(light.position);
+            scene.add(lightMesh);
+            
+            ceilingLights.push(light);
+        }
+    }
+}
+
+function createDeadBodies() {
+    const bodyGeometry = new THREE.BoxGeometry(0.5, 0.2, 1.8);
+    const bodyMaterial = new THREE.MeshStandardMaterial({ 
+        color: 0x442222,
+        roughness: 0.9 
+    });
+
+    const bodyPositions = [
+        {x: -8, z: -3, rot: 0.5},
+        {x: 12, z: 4, rot: 2.1},
+        {x: -4, z: 8, rot: 1.2},
+        {x: 7, z: -7, rot: 3.7},
+        {x: -13, z: -12, rot: 5.2}
+    ];
+
+    bodyPositions.forEach(pos => {
+        const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
+        body.position.set(pos.x, 0.1, pos.z);
+        body.rotation.y = pos.rot;
+        
+        const bloodGeometry = new THREE.CircleGeometry(1, 16);
+        const bloodMaterial = new THREE.MeshBasicMaterial({
+            color: 0x880000,
+            opacity: 0.7,
+            transparent: true
+        });
+        const blood = new THREE.Mesh(bloodGeometry, bloodMaterial);
+        blood.rotation.x = -Math.PI / 2;
+        blood.position.set(pos.x, 0.01, pos.z);
+        
+        scene.add(body);
+        scene.add(blood);
+    });
+}
+
+function createRoom(x, z, width, depth, type) {
+    const wallMaterial = new THREE.MeshStandardMaterial({
+        color: 0xFF0000,
+        roughness: 0.3
+    });
+    
+    const wallGeometry = new THREE.BoxGeometry(width, 4, 0.1);
+    const sideWallGeometry = new THREE.BoxGeometry(depth, 4, 0.1);
+    
+    const frontWall = new THREE.Mesh(wallGeometry, wallMaterial);
+    const backWall = new THREE.Mesh(wallGeometry, wallMaterial);
+    const leftWall = new THREE.Mesh(sideWallGeometry, wallMaterial);
+    const rightWall = new THREE.Mesh(sideWallGeometry, wallMaterial);
+    
+    frontWall.position.set(x, 2, z + depth/2);
+    backWall.position.set(x, 2, z - depth/2);
+    leftWall.position.set(x - width/2, 2, z);
+    rightWall.position.set(x + width/2, 2, z);
+    
+    leftWall.rotation.y = Math.PI / 2;
+    rightWall.rotation.y = Math.PI / 2;
+    
+    scene.add(frontWall);
+    scene.add(backWall);
+    scene.add(leftWall);
+    scene.add(rightWall);
+    
+    if (type === 'kitchen') {
+        addKitchenEquipment(x, z);
+    } else if (type === 'playarea') {
+        addPlayStructure(x, z);
+    } else if (type === 'bathrooms') {
+        addBathroomFeatures(x, z);
+    }
+}
+
+function addBathroomFeatures(x = 15, z = 0) {
+    const stallMaterial = new THREE.MeshStandardMaterial({ color: 0x666666 });
+    const sinkMaterial = new THREE.MeshStandardMaterial({ color: 0xCCCCCC });
+    
+    for (let i = -3; i <= 3; i += 2) {
+        const stallWall = new THREE.Mesh(
+            new THREE.BoxGeometry(0.1, 2.5, 1.5),
+            stallMaterial
+        );
+        stallWall.position.set(x + i, 1.25, z - 2);
+        scene.add(stallWall);
+        
+        const stallDoor = new THREE.Mesh(
+            new THREE.BoxGeometry(1.8, 2.5, 0.1),
+            stallMaterial
+        );
+        stallDoor.position.set(x + i + 0.9, 1.25, z - 1.25);
+        scene.add(stallDoor);
+        
+        const toilet = new THREE.Mesh(
+            new THREE.BoxGeometry(0.6, 0.4, 0.8),
+            sinkMaterial
+        );
+        toilet.position.set(x + i, 0.2, z - 2);
+        scene.add(toilet);
+    }
+    
+    for (let i = -3; i <= 3; i += 1.5) {
+        const sink = new THREE.Mesh(
+            new THREE.BoxGeometry(0.6, 0.2, 0.4),
+            sinkMaterial
+        );
+        sink.position.set(x + i, 0.8, z + 2);
+        scene.add(sink);
+        
+        const mirror = new THREE.Mesh(
+            new THREE.BoxGeometry(0.6, 1, 0.05),
+            new THREE.MeshStandardMaterial({ 
+                color: 0xCCCCCC,
+                metalness: 0.8,
+                roughness: 0.2
+            })
+        );
+        mirror.position.set(x + i, 1.8, z + 2.1);
+        scene.add(mirror);
+    }
+}
+
+function addCounters() {
+    const counterMaterial = new THREE.MeshStandardMaterial({ color: 0x8B4513 });
+    
+    const mainCounter = new THREE.Mesh(
+        new THREE.BoxGeometry(12, 1.2, 2),
+        counterMaterial
+    );
+    mainCounter.position.set(0, 0.6, -7);
+    scene.add(mainCounter);
+    
+    for (let i = -5; i <= 5; i += 2) {
+        const register = new THREE.Mesh(
+            new THREE.BoxGeometry(0.5, 0.3, 0.5),
+            new THREE.MeshStandardMaterial({ color: 0x333333 })
+        );
+        register.position.set(i, 1.2, -7);
+        scene.add(register);
+    }
+}
+
+function addTables() {
+    const tableMaterial = new THREE.MeshStandardMaterial({ color: 0x8B4513 });
+    const chairMaterial = new THREE.MeshStandardMaterial({ color: 0xFF4500 });
+    
+    for (let x = -6; x <= 6; x += 4) {
+        for (let z = 0; z <= 6; z += 4) {
+            const table = new THREE.Mesh(
+                new THREE.BoxGeometry(2, 0.8, 2),
+                tableMaterial
+            );
+            table.position.set(x, 0.4, z);
+            scene.add(table);
+            
+            for (let angle = 0; angle < Math.PI * 2; angle += Math.PI/2) {
+                const chair = new THREE.Mesh(
+                    new THREE.BoxGeometry(0.6, 0.6, 0.6),
+                    chairMaterial
+                );
+                chair.position.set(
+                    x + Math.cos(angle) * 1.2,
+                    0.3,
+                    z + Math.sin(angle) * 1.2
+                );
+                scene.add(chair);
+            }
+        }
+    }
+}
+
+function addPlayStructure(x = 0, z = -15) {
+    const playMaterial = new THREE.MeshStandardMaterial({ 
+        color: 0xFF0000,
+        emissive: 0xFF4500,
+        emissiveIntensity: 0.2
+    });
+    
+    const structure = new THREE.Mesh(
+        new THREE.BoxGeometry(8, 3, 8),
+        playMaterial
+    );
+    structure.position.set(x, 1.5, z);
+    scene.add(structure);
+    
+    const tube = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.5, 0.5, 4, 16),
+        playMaterial
+    );
+    tube.rotation.x = Math.PI / 4;
+    tube.position.set(x + 2, 2, z + 2);
+    scene.add(tube);
+}
+
+function addKitchenEquipment(x = -15, z = 0) {
+    const equipmentMaterial = new THREE.MeshStandardMaterial({ color: 0x888888 });
+    
+    for (let i = -2; i <= 2; i += 1) {
+        const fryer = new THREE.Mesh(
+            new THREE.BoxGeometry(0.8, 1.5, 0.8),
+            equipmentMaterial
+        );
+        fryer.position.set(x + i, 0.75, z - 2);
+        scene.add(fryer);
+    }
+    
+    const grill = new THREE.Mesh(
+        new THREE.BoxGeometry(3, 0.4, 1.5),
+        equipmentMaterial
+    );
+    grill.position.set(x, 1, z + 2);
+    scene.add(grill);
+}
+
+function checkHappyMealCollision() {
+    const playerPosition = camera.position;
+    const collectionDistance = 1.5;
+
+    happyMeals.filter(meal => meal.visible).forEach((happyMeal, index) => {
+        const distance = playerPosition.distanceTo(happyMeal.position);
+        if (distance < collectionDistance) {
+            happyMeal.visible = false;
+            collectedMeals++;
+            document.getElementById('happyMeals').textContent = collectedMeals;
+
+            if (collectSound?.play) {
+                collectSound.play().catch(() => {});
+            }
+
+            if (collectedMeals >= TOTAL_HAPPY_MEALS) {
+                victory();
+            }
+        }
+    });
+}
+
+function victory() {
+    isGameOver = true;
+    const victoryText = document.createElement('div');
+    victoryText.style.position = 'fixed';
+    victoryText.style.top = '50%';
+    victoryText.style.left = '50%';
+    victoryText.style.transform = 'translate(-50%, -50%)';
+    victoryText.style.color = '#00ff00';
+    victoryText.style.fontSize = '48px';
+    victoryText.innerHTML = 'YOU ESCAPED!<br>All Happy Meals collected!';
+    document.body.appendChild(victoryText);
+}
+
+function onKeyDown(event) {
+    if (isGameOver) return;
+    
+    const speed = 0.2; // Double the movement speed
+    const turnSpeed = 0.05;
+    
+    switch(event.key.toLowerCase()) {
+        case 'w':
+            camera.position.z -= Math.cos(camera.rotation.y) * speed;
+            camera.position.x -= Math.sin(camera.rotation.y) * speed;
+            break;
+        case 's':
+            camera.position.z += Math.cos(camera.rotation.y) * speed;
+            camera.position.x += Math.sin(camera.rotation.y) * speed;
+            break;
+        case 'a':
+            camera.rotation.y += turnSpeed;
+            break;
+        case 'd':
+            camera.rotation.y -= turnSpeed;
+            break;
+        case 'f':
+            toggleFlashlight();
+            break;
+    }
+}
+
+function updateLights(time) {
+    if (Math.random() < 0.1) {
+        ceilingLights.forEach(light => {
+            const flicker = Math.sin(time * light.flickerSpeed + light.timeOffset);
+            light.intensity = light.baseIntensity + (flicker * 0.1);
+        });
+    }
+}
+
+function updateHappyMeals(time) {
+    happyMeals.filter(meal => meal.visible).forEach(happyMeal => {
+        happyMeal.rotation.y += 0.01;
+        happyMeal.position.y = 0.25 + Math.sin(time * 2) * 0.1;
+    });
+}
+
+function animate() {
+    requestAnimationFrame(animate);
+    
+    const time = Date.now() * 0.001;
+    updateLights(time);
+    
+    if (spotLight) {
+        spotLight.position.copy(camera.position);
+        spotLight.target.position.set(
+            camera.position.x - Math.sin(camera.rotation.y),
+            camera.position.y,
+            camera.position.z - Math.cos(camera.rotation.y)
+        );
+    }
+    
+    if (isFlashlightOn) {
+        const flashlight = document.getElementById('flashlight');
+        if (flashlight) {
+            flashlight.style.background = `radial-gradient(circle at ${mouse.x}px ${mouse.y}px, transparent 0%, rgba(0,0,0,0.97) 20%)`;
+        }
+    }
+    
+    updateHappyMeals(time);
+    checkHappyMealCollision();
+    
+    renderer.render(scene, camera);
+}
+
+window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+window.onload = () => {
+    document.querySelector('.loading').style.display = 'none';
+    init();
+};
+</script>
+</body></html>
