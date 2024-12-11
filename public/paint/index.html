@@ -1,0 +1,1680 @@
+<html><head><base href="." /><meta charset="UTF-8" />
+<title>Web Animation Editor Pro</title>
+<style>
+:root {
+    --dark-gray: #2c2c2c;
+    --mid-gray: #3f3f3f;
+    --light-gray: #4f4f4f;
+    --border: #555;
+    --highlight: #0095ff;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    background: var(--dark-gray);
+    color: white;
+    font-family: Arial, sans-serif;
+    overflow: hidden;
+}
+
+.toolbar {
+    background: var(--mid-gray);
+    padding: 10px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    gap: 10px;
+}
+
+.tools {
+    position: absolute;
+    left: 0;
+    top: 50px;
+    width: 50px;
+    background: var(--mid-gray);
+    border-right: 1px solid var(--border);
+    height: calc(100vh - 50px);
+    padding: 10px;
+}
+
+.brush-selector {
+    margin-top: 10px;
+    width: 100%;
+}
+
+.brush-selector select {
+    width: 100%;
+    background: var(--light-gray);
+    color: white;
+    border: 1px solid var(--border);
+    padding: 5px;
+    border-radius: 4px;
+}
+
+.timeline {
+    position: absolute;
+    bottom: 0;
+    left: 70px;
+    right: 0;
+    height: 200px;
+    background: var(--mid-gray);
+    border-top: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+}
+
+.timeline-controls {
+    display: flex;
+    gap: 10px;
+    padding: 5px;
+    border-bottom: 1px solid var(--border);
+}
+
+.timeline-layers {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 10px;
+    flex: 1;
+    overflow-y: auto;
+}
+
+.layer {
+    background: var(--light-gray);
+    height: 30px;
+    display: flex;
+    align-items: center;
+    padding: 0 10px;
+    border-radius: 4px;
+    justify-content: space-between;
+}
+
+.layer-controls {
+    display: flex;
+    gap: 5px;
+}
+
+.layer-visibility {
+    cursor: pointer;
+}
+
+.frames {
+    display: flex;
+    gap: 2px;
+    margin-top: 10px;
+    padding: 10px;
+    overflow-x: auto;
+    min-height: 60px;
+}
+
+.frame {
+    width: 20px;
+    height: 20px;
+    background: var(--light-gray);
+    border: 1px solid var(--border);
+    cursor: pointer;
+}
+
+.frame.keyframe {
+    background: var(--highlight);
+}
+
+.frame.active {
+    border: 2px solid yellow;
+}
+
+.canvas-container {
+    position: absolute;
+    left: 70px;
+    top: 50px;
+    right: 0;
+    bottom: 200px;
+    background: #fff;
+    overflow: auto;
+}
+
+.properties {
+    position: absolute;
+    right: 0;
+    top: 50px;
+    width: 250px;
+    background: var(--mid-gray);
+    border-left: 1px solid var(--border);
+    height: calc(100vh - 250px);
+    padding: 10px;
+}
+
+.tool-btn {
+    width: 30px;
+    height: 30px;
+    background: var(--light-gray);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+}
+
+.tool-btn:hover {
+    background: var(--highlight);
+}
+
+#canvas {
+    background: white;
+}
+
+/* Add new CSS for symbol library panel */
+.symbol-library {
+    position: absolute;
+    right: 250px;
+    top: 50px;
+    width: 200px;
+    background: var(--mid-gray);
+    border-left: 1px solid var(--border);
+    height: calc(100vh - 250px);
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    overflow-y: auto;
+}
+
+.symbol-item {
+    background: var(--light-gray);
+    padding: 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.symbol-item:hover {
+    background: var(--highlight);
+}
+
+.symbol-preview {
+    width: 30px;
+    height: 30px;
+    background: white;
+    border-radius: 4px;
+    margin-right: 8px;
+}
+
+/* Add to existing CSS */
+.symbol-instance {
+    border: 2px solid var(--highlight);
+    box-sizing: border-box;
+    user-select: none;
+}
+
+.symbol-instance:hover {
+    border-color: #00ff00;
+}
+
+.resize-handle {
+    opacity: 0.7;
+}
+
+.resize-handle:hover {
+    opacity: 1;
+}
+
+.delete-symbol {
+    opacity: 0.7;
+}
+
+.delete-symbol:hover {
+    opacity: 1;
+}
+
+.canvas-container {
+    position: relative;
+}
+
+.place-symbol {
+    opacity: 0.7;
+    transition: opacity 0.2s;
+}
+
+.place-symbol:hover {
+    opacity: 1;
+}
+
+/* Add to existing CSS */
+.help-modal {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: var(--mid-gray);
+    padding: 20px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    z-index: 1000;
+    max-width: 600px;
+    max-height: 80vh;
+    overflow-y: auto;
+    color: white;
+    display: none;
+}
+
+.help-modal h2 {
+    margin-top: 0;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 10px;
+}
+
+.help-section {
+    margin: 15px 0;
+}
+
+.help-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 10px 0;
+}
+
+.close-help {
+    position: absolute;
+    right: 10px;
+    top: 10px;
+    cursor: pointer;
+    padding: 5px;
+}
+
+.help-btn {
+    position: absolute;
+    right: 10px;
+    top: 10px;
+}
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gif.js/0.2.0/gif.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
+</head>
+<body>
+    <div class="toolbar">
+        <button onclick="newFile()" class="tool-btn">📄</button>
+        <button onclick="openFile()" class="tool-btn">📂</button>
+        <button onclick="saveFile()" class="tool-btn">💾</button>
+        <button onclick="undo()" class="tool-btn">↩️</button>
+        <button onclick="redo()" class="tool-btn">↪️</button>
+        <button onclick="play()" class="tool-btn">▶️</button>
+        <button onclick="clearCanvas()" class="tool-btn">🗑️</button>
+        <button onclick="createSymbol()" class="tool-btn">🔲</button>
+        <button onclick="toggleSymbolLibrary()" class="tool-btn">📚</button>
+        <!-- Add help button to toolbar -->
+        <button onclick="showHelp()" class="tool-btn help-btn">❓</button>
+        <!-- Add new toolbar buttons -->
+        <button onclick="toggleOnionSkin()" class="tool-btn">🧅</button>
+        <button onclick="copyFrame()" class="tool-btn">📋</button>
+        <button onclick="pasteFrame()" class="tool-btn">📎</button>
+    </div>
+
+    <div class="tools">
+        <div class="tool-btn" onclick="handleToolSelect('select', this)">👆</div>
+        <div class="tool-btn" onclick="handleToolSelect('brush', this)">🖌️</div>
+        <div class="tool-btn" onclick="handleToolSelect('text', this)">T</div>
+        <div class="tool-btn" onclick="handleToolSelect('fill', this)">🧺</div>
+        <div class="tool-btn" onclick="handleToolSelect('eraser', this)">🧹</div>
+        <div class="brush-selector">
+            <select id="brushType" onchange="changeBrush(this.value)">
+                <option value="normal">Normal</option>
+                <option value="ink">Ink</option>
+                <option value="calligraphy">Calligraphy</option>
+                <option value="spray">Spray</option>
+                <option value="watercolor">Watercolor</option>
+                <option value="pencil">Pencil</option>
+                <option value="marker">Marker</option>
+                <option value="chalk">Chalk</option>
+                <option value="fur">Fur</option>
+                <option value="outline">Outline</option>
+                <option value="velocitySensitive">Velocity Sensitive</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="canvas-container">
+        <canvas id="canvas" width="800" height="600"></canvas>
+    </div>
+
+    <div class="properties">
+        <h3>Properties</h3>
+        <div>
+            <label>Fill Color</label>
+            <input type="color" id="fillColor" onchange="updateProperties()">
+        </div>
+        <div>
+            <label>Stroke Width</label>
+            <input type="range" min="1" max="20" id="strokeWidth" onchange="updateProperties()">
+        </div>
+    </div>
+
+    <div class="timeline">
+        <div class="timeline-controls">
+            <button onclick="addNewFrame()" class="tool-btn">+F</button>
+            <button onclick="addNewLayer()" class="tool-btn">+L</button>
+            <button onclick="deleteLayer()" class="tool-btn">-L</button>
+            <button onclick="addKeyframe()" class="tool-btn">🔑</button>
+            <span>Frame: <span id="frameCounter">1</span></span>
+            <div style="display: flex; align-items: center; gap: 5px;">
+                <label style="color: white;">FPS:</label>
+                <input 
+                    type="number" 
+                    id="fpsControl" 
+                    value="24" 
+                    min="1" 
+                    max="60" 
+                    style="width: 60px; background: var(--light-gray); color: white; border: 1px solid var(--border); padding: 3px; border-radius: 4px;"
+                    onchange="updateFPS(this.value)"
+                >
+            </div>
+        </div>
+        <div class="timeline-layers" id="layerContainer">
+            <!-- Layers will be added dynamically -->
+        </div>
+        <div class="frames" id="frameContainer">
+            <!-- Frames will be added dynamically -->
+        </div>
+    </div>
+
+    <!-- Add new symbol library panel -->
+    <div class="symbol-library" id="symbolLibrary" style="display: none;">
+        <h3>Symbol Library</h3>
+        <div class="symbol-buttons">
+            <button onclick="createSymbol('graphic')" class="tool-btn">+ Graphic</button>
+            <button onclick="createSymbol('button')" class="tool-btn">+ Button</button>
+            <button onclick="createSymbol('movieclip')" class="tool-btn">+ Movie Clip</button>
+        </div>
+        <div id="symbolList"></div>
+    </div>
+
+    <!-- Add help modal -->
+    <div id="helpModal" class="help-modal">
+        <span class="close-help" onclick="hideHelp()">❌</span>
+        <h2>Animation Editor Help</h2>
+        
+        <div class="help-section">
+            <h3>Main Toolbar</h3>
+            <div class="help-item">
+                <span>📄</span>
+                <span>New File - Create a new blank animation project</span>
+            </div>
+            <div class="help-item">
+                <span>📂</span>
+                <span>Open File - Open an existing animation project</span>
+            </div>
+            <div class="help-item">
+                <span>💾</span>
+                <span>Save - Export your animation as PNG sequence, GIF, MP4 or save as project file</span>
+            </div>
+            <div class="help-item">
+                <span>↩️</span>
+                <span>Undo - Undo last action</span>
+            </div>
+            <div class="help-item">
+                <span>↪️</span>
+                <span>Redo - Redo last undone action</span>
+            </div>
+            <div class="help-item">
+                <span>▶️</span>
+                <span>Play/Stop - Play or stop animation preview</span>
+            </div>
+            <div class="help-item">
+                <span>🗑️</span>
+                <span>Clear Canvas - Clear current frame</span>
+            </div>
+            <div class="help-item">
+                <span>🔲</span>
+                <span>Create Symbol - Create a new reusable symbol</span>
+            </div>
+            <div class="help-item">
+                <span>📚</span>
+                <span>Symbol Library - Open/close symbol library panel</span>
+            </div>
+            <div class="help-item">
+                <span>🧅</span>
+                <span>Onion Skin - Toggle onion skinning to see previous and next frames</span>
+            </div>
+            <div class="help-item">
+                <span>📋</span>
+                <span>Copy Frame - Copy the current frame</span>
+            </div>
+            <div class="help-item">
+                <span>📎</span>
+                <span>Paste Frame - Paste the copied frame into the current position</span>
+            </div>
+        </div>
+
+        <div class="help-section">
+            <h3>Tools</h3>
+            <div class="help-item">
+                <span>👆</span>
+                <span>Select Tool - Select and manipulate objects</span>
+            </div>
+            <div class="help-item">
+                <span>🖌️</span>
+                <span>Brush Tool - Draw with various brush types</span>
+            </div>
+            <div class="help-item">
+                <span>T</span>
+                <span>Text Tool - Click anywhere to add text. Size controlled by stroke width slider</span>
+            </div>
+            <div class="help-item">
+                <span>🧺</span>
+                <span>Fill Tool - Fill areas with color</span>
+            </div>
+            <div class="help-item">
+                <span>🧹</span>
+                <span>Eraser Tool - Erase parts of your drawing</span>
+            </div>
+        </div>
+
+        <div class="help-section">
+            <h3>Timeline Controls</h3>
+            <div class="help-item">
+                <span>+F</span>
+                <span>Add Frame - Add a new frame to animation</span>
+            </div>
+            <div class="help-item">
+                <span>+L</span>
+                <span>Add Layer - Add a new layer</span>
+            </div>
+            <div class="help-item">
+                <span>-L</span>
+                <span>Delete Layer - Delete selected layer</span>
+            </div>
+            <div class="help-item">
+                <span>🔑</span>
+                <span>Add Keyframe - Convert current frame to keyframe</span>
+            </div>
+        </div>
+
+        <div class="help-section">
+            <h3>Symbols</h3>
+            <div class="help-item">
+                <span>✏️</span>
+                <span>Edit Symbol - Edit selected symbol</span>
+            </div>
+            <div class="help-item">
+                <span>➕</span>
+                <span>Place Symbol - Add symbol instance to canvas</span>
+            </div>
+            <div class="help-item">
+                <span>🗑️</span>
+                <span>Delete Symbol - Remove symbol from library</span>
+            </div>
+        </div>
+    </div>
+
+<script>
+let symbols = {
+  graphics: {},  // For static graphics
+  buttons: {},   // For interactive button states
+  movieClips: {} // For animated movie clips
+};
+
+let symbolLibrary = []; // Track all created symbols
+let symbolInstances = []; // Store placed symbol instances
+let draggingSymbol = null;
+let resizingSymbol = null;
+let lastMouseX = 0;
+let lastMouseY = 0;
+let selectedSymbol = null;
+
+let currentTool = 'select';
+let isDrawing = false;
+let lastX = 0;
+let lastY = 0;
+let canvas = document.getElementById('canvas');
+let ctx = canvas.getContext('2d');
+let undoStack = [];
+let redoStack = [];
+let animationFrames = [];
+let currentFrame = 0;
+let isPlaying = false;
+let layers = [
+    { id: 1, name: "Layer 1", visible: true, frames: [] },
+    { id: 2, name: "Layer 2", visible: true, frames: [] }
+];
+let currentLayer = 0;
+let frameCount = 1;
+let fps = 24;
+let currentBrush = 'normal';
+let pressure = 1.0; // Default pressure
+let brushTypes = {
+    normal: {
+        draw: (ctx, x1, y1, x2, y2, pressure) => {
+            ctx.beginPath();
+            ctx.moveTo(x1, y1);
+            ctx.lineTo(x2, y2);
+            ctx.stroke();
+        }
+    },
+    ink: {
+        draw: (ctx, x1, y1, x2, y2, pressure) => {
+            ctx.beginPath();
+            ctx.moveTo(x1, y1);
+            let dx = x2 - x1;
+            let dy = y2 - y1;
+            for(let i = 0; i < 3; i++) {
+                ctx.quadraticCurveTo(
+                    x1 + dx * 0.5 + (Math.random() - 0.5) * 10,
+                    y1 + dy * 0.5 + (Math.random() - 0.5) * 10,
+                    x2, y2
+                );
+            }
+            ctx.stroke();
+        }
+    },
+    calligraphy: {
+        draw: (ctx, x1, y1, x2, y2, pressure) => {
+            let angle = Math.PI/4;
+            let width = ctx.lineWidth * pressure;
+            ctx.beginPath();
+            ctx.moveTo(
+                x1 + Math.cos(angle) * width,
+                y1 + Math.sin(angle) * width
+            );
+            ctx.lineTo(
+                x2 + Math.cos(angle) * width,
+                y2 + Math.sin(angle) * width
+            );
+            ctx.lineTo(
+                x2 + Math.cos(angle + Math.PI) * width,
+                y2 + Math.sin(angle + Math.PI) * width
+            );
+            ctx.lineTo(
+                x1 + Math.cos(angle + Math.PI) * width,
+                y1 + Math.sin(angle + Math.PI) * width
+            );
+            ctx.fill();
+        }
+    },
+    spray: {
+        draw: (ctx, x1, y1, x2, y2, pressure) => {
+            let radius = ctx.lineWidth * pressure;
+            let points = Math.floor(radius * 2);
+            for(let i = 0; i < points; i++) {
+                let angle = Math.random() * Math.PI * 2;
+                let distance = Math.random() * radius;
+                ctx.beginPath();
+                ctx.arc(
+                    x2 + Math.cos(angle) * distance,
+                    y2 + Math.sin(angle) * distance,
+                    1, 0, Math.PI * 2
+                );
+                ctx.fill();
+            }
+        }
+    },
+    watercolor: {
+        draw: (ctx, x1, y1, x2, y2, pressure) => {
+            let radius = ctx.lineWidth * pressure;
+            ctx.globalAlpha = 0.1;
+            for(let i = 0; i < 3; i++) {
+                ctx.beginPath();
+                ctx.arc(x2, y2, radius * (1 - i * 0.2), 0, Math.PI * 2);
+                ctx.fill();
+            }
+            ctx.globalAlpha = 1.0;
+        }
+    },
+    pencil: {
+        draw: (ctx, x1, y1, x2, y2, pressure) => {
+            let dx = x2 - x1;
+            let dy = y2 - y1;
+            let dist = Math.sqrt(dx * dx + dy * dy);
+            let steps = Math.max(Math.floor(dist), 1);
+            for(let i = 0; i < steps; i++) {
+                let t = i / steps;
+                let x = x1 + dx * t + (Math.random() - 0.5) * 2;
+                let y = y1 + dy * t + (Math.random() - 0.5) * 2;
+                ctx.beginPath();
+                ctx.arc(x, y, ctx.lineWidth * 0.5 * pressure, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+    },
+    marker: {
+        draw: (ctx, x1, y1, x2, y2, pressure) => {
+            ctx.globalAlpha = 0.5;
+            ctx.beginPath();
+            ctx.moveTo(x1, y1);
+            ctx.lineTo(x2, y2);
+            ctx.stroke();
+            ctx.globalAlpha = 1.0;
+        }
+    },
+    chalk: {
+        draw: (ctx, x1, y1, x2, y2, pressure) => {
+            let dx = x2 - x1;
+            let dy = y2 - y1;
+            let dist = Math.sqrt(dx * dx + dy * dy);
+            let steps = Math.max(Math.floor(dist), 1);
+            for(let i = 0; i < steps; i++) {
+                let t = i / steps;
+                let x = x1 + dx * t + (Math.random() - 0.5) * 4;
+                let y = y1 + dy * t + (Math.random() - 0.5) * 4;
+                ctx.beginPath();
+                ctx.arc(x, y, ctx.lineWidth * 0.3 * pressure, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+    },
+    fur: {
+        draw: (ctx, x1, y1, x2, y2, pressure) => {
+            let dx = x2 - x1;
+            let dy = y2 - y1;
+            let angle = Math.atan2(dy, dx) + Math.PI/2;
+            let length = ctx.lineWidth * pressure;
+            for(let i = 0; i < 5; i++) {
+                let x = x2 + (Math.random() - 0.5) * 10;
+                let y = y2 + (Math.random() - 0.5) * 10;
+                ctx.beginPath();
+                ctx.moveTo(x, y);
+                ctx.lineTo(
+                    x + Math.cos(angle) * length,
+                    y + Math.sin(angle) * length
+                );
+                ctx.stroke();
+            }
+        }
+    },
+    outline: {
+        draw: (ctx, x1, y1, x2, y2, pressure) => {
+            ctx.beginPath();
+            ctx.moveTo(x1, y1);
+            ctx.lineTo(x2, y2);
+            let originalStyle = ctx.strokeStyle;
+            ctx.strokeStyle = 'white';
+            ctx.lineWidth += 2;
+            ctx.stroke();
+            ctx.strokeStyle = originalStyle;
+            ctx.lineWidth -= 2;
+            ctx.stroke();
+        }
+    },
+    velocitySensitive: {
+        draw: (ctx, x1, y1, x2, y2, pressure) => {
+            // Calculate velocity based on distance between points
+            let dx = x2 - x1;
+            let dy = y2 - y1;
+            let distance = Math.sqrt(dx * dx + dy * dy);
+            
+            // Get time difference since last draw
+            let now = Date.now();
+            let timeDelta = now - (ctx.lastDrawTime || now);
+            ctx.lastDrawTime = now;
+            
+            // Calculate velocity (pixels per millisecond)
+            let velocity = distance / (timeDelta || 1);
+            
+            // Inverse relationship - slower movement = bigger brush
+            // Adjust these values to tune the brush behavior
+            let maxVelocity = 10; // pixels per millisecond
+            let minSize = 0.2;
+            let maxSize = 3.0;
+            
+            // Calculate size multiplier based on velocity
+            let sizeMultiplier = maxSize - (velocity / maxVelocity) * (maxSize - minSize);
+            sizeMultiplier = Math.max(minSize, Math.min(maxSize, sizeMultiplier));
+            
+            // Save current line width
+            let originalWidth = ctx.lineWidth;
+            
+            // Apply velocity-based width
+            ctx.lineWidth = originalWidth * sizeMultiplier * pressure;
+            
+            // Draw the line
+            ctx.beginPath();
+            ctx.moveTo(x1, y1);
+            ctx.lineTo(x2, y2);
+            ctx.stroke();
+            
+            // Restore original line width
+            ctx.lineWidth = originalWidth;
+        }
+    }
+};
+
+// Initialize canvas
+ctx.strokeStyle = '#000000';
+ctx.lineWidth = 2;
+ctx.lineCap = 'round';
+
+function handleToolSelect(tool, element) {
+    // Save current frame before switching tools
+    animationFrames[currentFrame] = canvas.toDataURL();
+    
+    currentTool = tool;
+    document.querySelectorAll('.tool-btn').forEach(btn => {
+        btn.style.background = 'var(--light-gray)';
+    });
+    element.style.background = 'var(--highlight)';
+}
+
+function saveCurrentState() {
+    undoStack.push(canvas.toDataURL());
+}
+
+function clearCanvas() {
+    if (confirm('Are you sure you want to clear the canvas?')) {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        undoStack = [];
+        redoStack = [];
+        animationFrames = [];
+        frameCount = 1;
+        currentFrame = 0;
+        updateFrameDisplay();
+    }
+}
+
+canvas.addEventListener('mousedown', startDrawing);
+canvas.addEventListener('mousemove', draw);
+canvas.addEventListener('mouseup', stopDrawing);
+canvas.addEventListener('mouseout', stopDrawing);
+
+canvas.addEventListener('click', (e) => {
+    if (currentTool === 'text') {
+        const text = prompt('Enter text:');
+        if (text) {
+            const fillColor = document.getElementById('fillColor').value;
+            const fontSize = document.getElementById('strokeWidth').value * 2;
+            ctx.fillStyle = fillColor;
+            ctx.font = `${fontSize}px Arial`;
+            ctx.textBaseline = 'middle';
+            ctx.fillText(text, e.offsetX, e.offsetY);
+            
+            // Save state after adding text
+            saveCurrentState();
+            // Update animation frame
+            animationFrames[currentFrame] = canvas.toDataURL();
+            updateFrameDisplay();
+        }
+    }
+});
+
+function startDrawing(e) {
+    isDrawing = true;
+    [lastX, lastY] = [e.offsetX, e.offsetY];
+    saveCurrentState();
+}
+
+function draw(e) {
+    if (!isDrawing) return;
+    
+    // Get pressure if available (for mobile devices)
+    if (e.pressure !== undefined) {
+        pressure = e.pressure;
+    }
+    
+    switch(currentTool) {
+        case 'brush':
+            if (brushTypes[currentBrush]) {
+                brushTypes[currentBrush].draw(ctx, lastX, lastY, e.offsetX, e.offsetY, pressure);
+            }
+            break;
+        case 'eraser':
+            // Save the current composite operation
+            const originalComposite = ctx.globalCompositeOperation;
+            // Set to erase mode
+            ctx.globalCompositeOperation = 'destination-out';
+            // Draw with a round brush
+            ctx.beginPath();
+            ctx.arc(e.offsetX, e.offsetY, ctx.lineWidth * 2, 0, Math.PI * 2);
+            ctx.fill();
+            // Draw line to connect gaps when moving fast
+            ctx.beginPath();
+            ctx.moveTo(lastX, lastY);
+            ctx.lineTo(e.offsetX, e.offsetY);
+            ctx.lineWidth *= 4; // Make line thicker for eraser
+            ctx.stroke();
+            ctx.lineWidth /= 4; // Restore original line width
+            // Restore the original composite operation
+            ctx.globalCompositeOperation = originalComposite;
+            break;
+        case 'text':
+            // Text tool doesn't draw while dragging
+            break;
+    }
+    
+    [lastX, lastY] = [e.offsetX, e.offsetY];
+}
+
+// Add the flood fill implementation:
+function floodFill(startX, startY) {
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const pixels = imageData.data;
+    
+    // Get target color at click position
+    const startPos = (startY * canvas.width + startX) * 4;
+    const targetR = pixels[startPos];
+    const targetG = pixels[startPos + 1];
+    const targetB = pixels[startPos + 2];
+    const targetA = pixels[startPos + 3];
+    
+    // Get fill color from current stroke style
+    const fillColor = document.getElementById('fillColor').value;
+    const tempCanvas = document.createElement('canvas');
+    const tempCtx = tempCanvas.getContext('2d');
+    tempCtx.fillStyle = fillColor;
+    tempCtx.fillRect(0, 0, 1, 1);
+    const fillColorData = tempCtx.getImageData(0, 0, 1, 1).data;
+    
+    // Tolerance for color matching
+    const tolerance = 10;
+    
+    function matchesTarget(pos) {
+        return Math.abs(pixels[pos] - targetR) <= tolerance &&
+               Math.abs(pixels[pos + 1] - targetG) <= tolerance &&
+               Math.abs(pixels[pos + 2] - targetB) <= tolerance &&
+               Math.abs(pixels[pos + 3] - targetA) <= tolerance;
+    }
+    
+    function setFillColor(pos) {
+        pixels[pos] = fillColorData[0];
+        pixels[pos + 1] = fillColorData[1];
+        pixels[pos + 2] = fillColorData[2];
+        pixels[pos + 3] = fillColorData[3];
+    }
+    
+    const stack = [[startX, startY]];
+    const visited = new Set();
+    
+    while (stack.length) {
+        const [x, y] = stack.pop();
+        const pos = (y * canvas.width + x) * 4;
+        
+        if (x < 0 || x >= canvas.width || y < 0 || y >= canvas.height ||
+            visited.has(`${x},${y}`) || !matchesTarget(pos)) {
+            continue;
+        }
+        
+        visited.add(`${x},${y}`);
+        setFillColor(pos);
+        
+        stack.push([x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]);
+    }
+    
+    ctx.putImageData(imageData, 0, 0);
+    saveCurrentState();
+}
+
+function stopDrawing() {
+    if (isDrawing) {
+        isDrawing = false;
+        // Save the current frame state when drawing stops
+        animationFrames[currentFrame] = canvas.toDataURL();
+        updateFrameDisplay();
+    }
+}
+
+function updateProperties() {
+    ctx.strokeStyle = document.getElementById('fillColor').value;
+    ctx.lineWidth = document.getElementById('strokeWidth').value;
+}
+
+function undo() {
+    if (undoStack.length > 0) {
+        redoStack.push(canvas.toDataURL());
+        let imgData = undoStack.pop();
+        let img = new Image();
+        img.src = imgData;
+        img.onload = () => {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(img, 0, 0);
+        };
+    }
+}
+
+function redo() {
+    if (redoStack.length > 0) {
+        undoStack.push(canvas.toDataURL());
+        let imgData = redoStack.pop();
+        let img = new Image();
+        img.src = imgData;
+        img.onload = () => {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(img, 0, 0);
+        };
+    }
+}
+
+function newFile() {
+    if (confirm('Create new file? Unsaved changes will be lost.')) {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        undoStack = [];
+        redoStack = [];
+    }
+}
+
+function saveFile() {
+    const saveDialog = document.createElement('div');
+    saveDialog.style.cssText = `
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: var(--mid-gray);
+        padding: 20px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        z-index: 1000;
+        color: white;
+        min-width: 300px;
+    `;
+    
+    saveDialog.innerHTML = `
+        <h3>Save Animation</h3>
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+            <button onclick="saveAsPNGSequence()" style="padding: 8px; margin: 5px 0;">
+                Save as PNG Sequence
+                <br><small>Saves each frame as separate PNG file</small>
+            </button>
+            
+            <button onclick="saveAsGIF()" style="padding: 8px; margin: 5px 0;">
+                Save as GIF
+                <br><small>Exports animation as animated GIF</small>
+            </button>
+            
+            <button onclick="saveAsJSON()" style="padding: 8px; margin: 5px 0;">
+                Save as JSON
+                <br><small>Saves project file that can be reopened later</small>
+            </button>
+            
+            <button onclick="saveAsMP4()" style="padding: 8px; margin: 5px 0;">
+                Save as MP4
+                <br><small>Exports animation as video file</small>
+            </button>
+            
+            <button onclick="this.parentElement.parentElement.remove()" style="padding: 8px; margin: 5px 0;">
+                Cancel
+            </button>
+        </div>
+    `;
+    
+    document.body.appendChild(saveDialog);
+}
+
+function saveAsPNGSequence() {
+    const zip = new JSZip();
+    const promises = [];
+    
+    // Save each frame
+    animationFrames.forEach((frame, index) => {
+        if (frame) {
+            // Remove the data URL prefix to get just the base64 data
+            const data = frame.replace(/^data:image\/(png|jpg);base64,/, '');
+            zip.file(`frame_${index + 1}.png`, data, {base64: true});
+        }
+    });
+    
+    // Generate and download zip
+    zip.generateAsync({type:"blob"})
+    .then(function(content) {
+        const link = document.createElement('a');
+        link.download = 'animation_frames.zip';
+        link.href = URL.createObjectURL(content);
+        link.click();
+    });
+}
+
+function saveAsGIF() {
+    const gif = new GIF({
+        workers: 2,
+        quality: 10,
+        width: canvas.width,
+        height: canvas.height
+    });
+    
+    // Add each frame to the GIF
+    animationFrames.forEach(frame => {
+        if (frame) {
+            const img = new Image();
+            img.src = frame;
+            gif.addFrame(img, {delay: 1000 / fps});
+        }
+    });
+    
+    gif.on('finished', function(blob) {
+        const link = document.createElement('a');
+        link.download = 'animation.gif';
+        link.href = URL.createObjectURL(blob);
+        link.click();
+    });
+    
+    gif.render();
+}
+
+function saveAsJSON() {
+    const animationData = {
+        frames: animationFrames,
+        layers: layers,
+        frameCount: frameCount,
+        fps: fps,
+        canvasWidth: canvas.width,
+        canvasHeight: canvas.height
+    };
+    
+    const link = document.createElement('a');
+    link.download = 'animation_project.json';
+    link.href = URL.createObjectURL(new Blob([JSON.stringify(animationData)], {type: 'application/json'}));
+    link.click();
+}
+
+function saveAsMP4() {
+    // Create a video stream from the canvas frames
+    const stream = canvas.captureStream(fps);
+    const mediaRecorder = new MediaRecorder(stream, {
+        mimeType: 'video/webm',
+        videoBitsPerSecond: 5000000
+    });
+    
+    const chunks = [];
+    mediaRecorder.ondataavailable = (e) => chunks.push(e.data);
+    mediaRecorder.onstop = () => {
+        const blob = new Blob(chunks, {type: 'video/mp4'});
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.download = 'animation.mp4';
+        link.href = url;
+        link.click();
+    };
+    
+    // Play through all frames while recording
+    mediaRecorder.start();
+    let currentFrameIndex = 0;
+    
+    function playNextFrame() {
+        if (currentFrameIndex >= animationFrames.length) {
+            mediaRecorder.stop();
+            return;
+        }
+        
+        if (animationFrames[currentFrameIndex]) {
+            const img = new Image();
+            img.src = animationFrames[currentFrameIndex];
+            img.onload = () => {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.drawImage(img, 0, 0);
+                currentFrameIndex++;
+                setTimeout(playNextFrame, 1000 / fps);
+            };
+        }
+    }
+    
+    playNextFrame();
+}
+
+// Initialize layers
+function initializeLayers() {
+    const layerContainer = document.getElementById('layerContainer');
+    layerContainer.innerHTML = '';
+    
+    layers.forEach((layer, index) => {
+        const layerDiv = document.createElement('div');
+        layerDiv.className = 'layer';
+        layerDiv.innerHTML = `
+            <span>${layer.name}</span>
+            <div class="layer-controls">
+                <span class="layer-visibility" onclick="toggleLayerVisibility(${index})">
+                    ${layer.visible ? '👁️' : '👁️‍🗨️'}
+                </span>
+                <span onclick="selectLayer(${index})">🎨</span>
+            </div>
+        `;
+        layerContainer.appendChild(layerDiv);
+    });
+    updateFrameDisplay();
+}
+
+function isKeyframe(frameIndex) {
+    // A frame is considered a keyframe if it has content saved
+    return animationFrames[frameIndex] !== undefined && animationFrames[frameIndex] !== null;
+}
+
+function updateFrameDisplay() {
+    const frameContainer = document.getElementById('frameContainer');
+    frameContainer.innerHTML = '';
+    
+    for (let i = 0; i < frameCount; i++) {
+        const frameDiv = document.createElement('div');
+        frameDiv.className = `frame ${i === currentFrame ? 'active' : ''} ${isKeyframe(i) ? 'keyframe' : ''}`;
+        frameDiv.onclick = () => selectFrame(i);
+        frameContainer.appendChild(frameDiv);
+    }
+    document.getElementById('frameCounter').textContent = currentFrame + 1;
+}
+
+function addNewFrame() {
+    // Save current frame
+    animationFrames[currentFrame] = canvas.toDataURL();
+    
+    frameCount++;
+    currentFrame = frameCount - 1;
+    
+    // Clear canvas for new frame
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    updateFrameDisplay();
+}
+
+function addNewLayer() {
+    const newId = layers.length + 1;
+    layers.push({
+        id: newId,
+        name: `Layer ${newId}`,
+        visible: true,
+        frames: []
+    });
+    initializeLayers();
+}
+
+function deleteLayer() {
+    if (layers.length > 1) {
+        layers.splice(currentLayer, 1);
+        currentLayer = Math.max(0, currentLayer - 1);
+        initializeLayers();
+    }
+}
+
+function toggleLayerVisibility(layerIndex) {
+    layers[layerIndex].visible = !layers[layerIndex].visible;
+    initializeLayers();
+}
+
+function selectLayer(layerIndex) {
+    currentLayer = layerIndex;
+    initializeLayers();
+}
+
+function selectFrame(frameIndex) {
+    // Save current frame before switching
+    if (currentFrame !== frameIndex) {
+        animationFrames[currentFrame] = canvas.toDataURL();
+    }
+    
+    currentFrame = frameIndex;
+    updateFrameDisplay();
+    
+    if (animationFrames[frameIndex]) {
+        const img = new Image();
+        img.src = animationFrames[frameIndex];
+        img.onload = () => {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(img, 0, 0);
+        };
+    } else {
+        // Clear canvas for new frame if no content exists
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+}
+
+function addKeyframe() {
+    animationFrames[currentFrame] = canvas.toDataURL();
+    updateFrameDisplay();
+}
+
+function play() {
+    if (isPlaying) {
+        stopPlayback();
+        return;
+    }
+    
+    isPlaying = true;
+    const playButton = document.querySelector('button[onclick="play()"]');
+    playButton.innerText = '⏹️'; // Change to stop icon
+    
+    // Save current frame before starting playback
+    animationFrames[currentFrame] = canvas.toDataURL();
+    
+    let playbackFrame = 0;
+    
+    function playNextFrame() {
+        if (!isPlaying) return;
+        
+        playbackFrame = (playbackFrame + 1) % frameCount;
+        
+        if (animationFrames[playbackFrame]) {
+            const img = new Image();
+            img.src = animationFrames[playbackFrame];
+            img.onload = () => {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.drawImage(img, 0, 0);
+                currentFrame = playbackFrame;
+                updateFrameDisplay();
+                setTimeout(playNextFrame, 1000 / fps);
+            };
+        } else {
+            // If frame is empty, just advance to next frame
+            setTimeout(playNextFrame, 1000 / fps);
+        }
+    }
+    
+    playNextFrame();
+}
+
+function stopPlayback() {
+    isPlaying = false;
+    const playButton = document.querySelector('button[onclick="play()"]');
+    playButton.innerText = '▶️'; // Change back to play icon
+    
+    // Return to editing the current frame
+    if (animationFrames[currentFrame]) {
+        const img = new Image();
+        img.src = animationFrames[currentFrame];
+        img.onload = () => {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(img, 0, 0);
+        };
+    }
+}
+
+// Brush change function
+function changeBrush(brushType) {
+    currentBrush = brushType;
+}
+
+// Initialize the first frame
+saveCurrentState();
+initializeLayers();
+updateFrameDisplay();
+
+// Add touch event listeners
+canvas.addEventListener('touchstart', handleTouchStart, false);
+canvas.addEventListener('touchmove', handleTouchMove, false);
+canvas.addEventListener('touchend', stopDrawing, false);
+
+function handleTouchStart(e) {
+    e.preventDefault();
+    const touch = e.touches[0];
+    const rect = canvas.getBoundingClientRect();
+    const x = touch.clientX - rect.left;
+    const y = touch.clientY - rect.top;
+    pressure = touch.force || 0.5;
+    isDrawing = true;
+    [lastX, lastY] = [x, y];
+    saveCurrentState();
+}
+
+function handleTouchMove(e) {
+    e.preventDefault();
+    if (!isDrawing) return;
+    const touch = e.touches[0];
+    const rect = canvas.getBoundingClientRect();
+    const x = touch.clientX - rect.left;
+    const y = touch.clientY - rect.top;
+    pressure = touch.force || 0.5;
+    
+    if (currentTool === 'brush') {
+        if (brushTypes[currentBrush]) {
+            brushTypes[currentBrush].draw(ctx, lastX, lastY, x, y, pressure);
+        }
+    } else if (currentTool === 'eraser') {
+        const originalComposite = ctx.globalCompositeOperation;
+        ctx.globalCompositeOperation = 'destination-out';
+        ctx.beginPath();
+        ctx.arc(x, y, ctx.lineWidth * 2, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.moveTo(lastX, lastY);
+        ctx.lineTo(x, y);
+        ctx.lineWidth *= 4;
+        ctx.stroke();
+        ctx.lineWidth /= 4;
+        ctx.globalCompositeOperation = originalComposite;
+    }
+    
+    [lastX, lastY] = [x, y];
+}
+
+// Add new functions for symbol management
+function createSymbol(type = 'graphic') {
+    // Save current canvas state
+    const symbolData = canvas.toDataURL();
+    
+    const name = prompt(`Enter name for new ${type} symbol:`);
+    if (!name) return;
+    
+    const symbol = {
+        id: Date.now(),
+        name: name,
+        type: type,
+        content: symbolData,
+        states: type === 'button' ? {
+            up: symbolData,
+            over: null,
+            down: null,
+            hit: null
+        } : null,
+        timeline: type === 'movieclip' ? [] : null
+    };
+    
+    // Add to appropriate collection
+    switch(type) {
+        case 'graphic':
+            symbols.graphics[name] = symbol;
+            break;
+        case 'button':
+            symbols.buttons[name] = symbol;
+            break;
+        case 'movieclip':
+            symbols.movieClips[name] = symbol;
+            break;
+    }
+    
+    symbolLibrary.push(symbol);
+    updateSymbolLibrary();
+    
+    // Clear canvas after creating symbol
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+}
+
+function updateSymbolLibrary() {
+    const symbolList = document.getElementById('symbolList');
+    symbolList.innerHTML = '';
+    
+    symbolLibrary.forEach(symbol => {
+        const symbolItem = document.createElement('div');
+        symbolItem.className = 'symbol-item';
+        symbolItem.innerHTML = `
+            <div style="display: flex; align-items: center;">
+                <canvas class="symbol-preview" width="30" height="30"></canvas>
+                <span>${symbol.name} (${symbol.type})</span>
+            </div>
+            <div class="symbol-buttons">
+                <button onclick="editSymbol('${symbol.id}')" class="tool-btn">✏️</button>
+                <button onclick="placeSymbol('${symbol.id}')" class="tool-btn">➕</button>
+                <button onclick="deleteSymbol('${symbol.id}')" class="tool-btn">🗑️</button>
+            </div>
+        `;
+        
+        // Add preview
+        const preview = symbolItem.querySelector('.symbol-preview');
+        const img = new Image();
+        img.src = symbol.content;
+        img.onload = () => {
+            const pctx = preview.getContext('2d');
+            // Clear the preview canvas first
+            pctx.clearRect(0, 0, preview.width, preview.height);
+            // Draw the symbol preview scaled to fit
+            pctx.drawImage(img, 0, 0, preview.width, preview.height);
+        };
+        
+        symbolList.appendChild(symbolItem);
+    });
+}
+
+function toggleSymbolLibrary() {
+    const library = document.getElementById('symbolLibrary');
+    library.style.display = library.style.display === 'none' ? 'block' : 'none';
+}
+
+function editSymbol(symbolId) {
+    const symbol = symbolLibrary.find(s => s.id === parseInt(symbolId));
+    if (!symbol) return;
+    
+    selectedSymbol = symbol;
+    
+    // Load symbol content into canvas
+    const img = new Image();
+    img.src = symbol.content;
+    img.onload = () => {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(img, 0, 0);
+    };
+    
+    if (symbol.type === 'button') {
+        // Show button state editor
+        showButtonStateEditor(symbol);
+    } else if (symbol.type === 'movieclip') {
+        // Show timeline editor
+        showMovieClipEditor(symbol);
+    }
+}
+
+function placeSymbol(symbolId) {
+    const symbol = symbolLibrary.find(s => s.id === parseInt(symbolId));
+    if (!symbol) return;
+    
+    const img = new Image();
+    img.src = symbol.content;
+    img.onload = () => {
+        // Create new symbol instance
+        const instance = {
+            id: Date.now(),
+            symbol: symbol,
+            x: canvas.width / 2 - img.width / 2,
+            y: canvas.height / 2 - img.height / 2,
+            width: img.width,
+            height: img.height,
+            rotation: 0,
+            scale: 1
+        };
+        
+        symbolInstances.push(instance);
+        createSymbolUI(instance);
+        
+        // Save frame state
+        animationFrames[currentFrame] = canvas.toDataURL();
+        updateFrameDisplay();
+    };
+}
+
+function createSymbolUI(instance) {
+    const symbolUI = document.createElement('div');
+    symbolUI.className = 'symbol-instance';
+    symbolUI.id = `symbol-${instance.id}`;
+    symbolUI.style.cssText = `
+        position: absolute;
+        left: ${instance.x}px;
+        top: ${instance.y}px;
+        width: ${instance.width}px;
+        height: ${instance.height}px;
+        cursor: move;
+        transform-origin: center;
+        transform: rotate(${instance.rotation}deg) scale(${instance.scale});
+    `;
+    
+    // Add place button
+    const placeButton = document.createElement('div');
+    placeButton.className = 'place-symbol';
+    placeButton.innerHTML = '✔️';
+    placeButton.style.cssText = `
+        position: absolute;
+        left: -10px;
+        top: -10px;
+        cursor: pointer;
+        background: #4CAF50;
+        border-radius: 50%;
+        padding: 5px;
+    `;
+    
+    // Add resize handle
+    const resizeHandle = document.createElement('div');
+    resizeHandle.className = 'resize-handle';
+    resizeHandle.style.cssText = `
+        position: absolute;
+        right: -10px;
+        bottom: -10px;
+        width: 20px;
+        height: 20px;
+        background: var(--highlight);
+        border-radius: 50%;
+        cursor: se-resize;
+    `;
+    
+    // Add delete button
+    const deleteButton = document.createElement('div');
+    deleteButton.className = 'delete-symbol';
+    deleteButton.innerHTML = '❌';
+    deleteButton.style.cssText = `
+        position: absolute;
+        right: -10px;
+        top: -10px;
+        cursor: pointer;
+        background: var(--mid-gray);
+        border-radius: 50%;
+        padding: 5px;
+    `;
+    
+    // Add the symbol content
+    const content = document.createElement('img');
+    content.src = instance.symbol.content;
+    content.style.width = '100%';
+    content.style.height = '100%';
+    content.style.pointerEvents = 'none';
+    
+    symbolUI.appendChild(content);
+    symbolUI.appendChild(resizeHandle);
+    symbolUI.appendChild(deleteButton);
+    symbolUI.appendChild(placeButton);
+    document.querySelector('.canvas-container').appendChild(symbolUI);
+    
+    // Event listeners for dragging
+    symbolUI.addEventListener('mousedown', (e) => {
+        if (e.target === resizeHandle) {
+            resizingSymbol = instance;
+        } else if (e.target !== deleteButton && e.target !== placeButton) {
+            draggingSymbol = instance;
+        }
+        lastMouseX = e.clientX;
+        lastMouseY = e.clientY;
+    });
+    
+    deleteButton.addEventListener('click', () => {
+        symbolInstances = symbolInstances.filter(s => s.id !== instance.id);
+        symbolUI.remove();
+    });
+    
+    // Add place button functionality
+    placeButton.addEventListener('click', () => {
+        // Draw the symbol onto the canvas
+        const img = new Image();
+        img.src = instance.symbol.content;
+        img.onload = () => {
+            ctx.save();
+            ctx.translate(instance.x + instance.width/2, instance.y + instance.height/2);
+            ctx.rotate(instance.rotation * Math.PI / 180);
+            ctx.scale(instance.scale, instance.scale);
+            ctx.drawImage(img, 
+                -instance.width/2, 
+                -instance.height/2, 
+                instance.width, 
+                instance.height
+            );
+            ctx.restore();
+            
+            // Remove the UI element
+            symbolUI.remove();
+            symbolInstances = symbolInstances.filter(s => s.id !== instance.id);
+            
+            // Save the current frame state
+            animationFrames[currentFrame] = canvas.toDataURL();
+            updateFrameDisplay();
+        };
+    });
+}
+
+// Add these event listeners to handle drag and resize
+document.addEventListener('mousemove', (e) => {
+    if (draggingSymbol) {
+        const dx = e.clientX - lastMouseX;
+        const dy = e.clientY - lastMouseY;
+        
+        draggingSymbol.x += dx;
+        draggingSymbol.y += dy;
+        
+        const symbolUI = document.getElementById(`symbol-${draggingSymbol.id}`);
+        symbolUI.style.left = `${draggingSymbol.x}px`;
+        symbolUI.style.top = `${draggingSymbol.y}px`;
+        
+        lastMouseX = e.clientX;
+        lastMouseY = e.clientY;
+    }
+    
+    if (resizingSymbol) {
+        const dx = e.clientX - lastMouseX;
+        const dy = e.clientY - lastMouseY;
+        
+        resizingSymbol.width += dx;
+        resizingSymbol.height += dy;
+        
+        const symbolUI = document.getElementById(`symbol-${resizingSymbol.id}`);
+        symbolUI.style.width = `${resizingSymbol.width}px`;
+        symbolUI.style.height = `${resizingSymbol.height}px`;
+        
+        lastMouseX = e.clientX;
+        lastMouseY = e.clientY;
+    }
+});
+
+document.addEventListener('mouseup', () => {
+    draggingSymbol = null;
+    resizingSymbol = null;
+});
+
+// Initialize layers
+initializeLayers();
+updateFrameDisplay();
+
+// Add help functions
+function showHelp() {
+    document.getElementById('helpModal').style.display = 'block';
+}
+
+function hideHelp() {
+    document.getElementById('helpModal').style.display = 'none';
+}
+
+// Close help modal when clicking outside
+window.onclick = function(event) {
+    const modal = document.getElementById('helpModal');
+    if (event.target === modal) {
+        hideHelp();
+    }
+}
+
+// Add this new function
+function updateFPS(newFPS) {
+    fps = parseInt(newFPS);
+    // If currently playing, restart playback with new FPS
+    if (isPlaying) {
+        stopPlayback();
+        play();
+    }
+}
+
+// Update the initialization at the end to set the initial FPS value
+document.getElementById('fpsControl').value = fps;
+
+// New function to toggle onion skinning
+function toggleOnionSkin() {
+    // Implement onion skinning functionality
+}
+
+// New functions to copy and paste frames
+let copiedFrame = null;
+
+function copyFrame() {
+    copiedFrame = canvas.toDataURL();
+}
+
+function pasteFrame() {
+    if (copiedFrame) {
+        const img = new Image();
+        img.src = copiedFrame;
+        img.onload = () => {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(img, 0, 0);
+            // Save the pasted frame
+            animationFrames[currentFrame] = canvas.toDataURL();
+            updateFrameDisplay();
+        };
+    }
+}
+</script>
+</body></html>
