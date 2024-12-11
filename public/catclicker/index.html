@@ -1,0 +1,1249 @@
+<html><head><base href="." /><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cat Clicker Idle Game</title>
+<style>
+body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    min-height: 100vh;
+    margin: 0;
+    padding-top: 20px;
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    font-family: Arial, sans-serif;
+}
+
+.game-container {
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 50px;
+    margin-top: 20px;
+    width: 100%;
+}
+
+#cat-container {
+    cursor: pointer;
+    transition: transform 0.1s;
+}
+
+#cat-container:active {
+    transform: scale(0.95);
+}
+
+.cat {
+    width: 200px;
+    height: 200px;
+}
+
+.score-container {
+    font-size: 24px;
+    margin-bottom: 20px;
+    background: rgba(255, 255, 255, 0.8);
+    padding: 10px 20px;
+    border-radius: 15px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.upgrade-container {
+    background: rgba(255, 255, 255, 0.8);
+    padding: 15px;
+    border-radius: 15px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    position: relative;
+    left: 20px;
+}
+
+.mega-upgrade-container {
+    background: rgba(255, 255, 255, 0.8);
+    padding: 15px;
+    border-radius: 15px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    position: relative;
+    right: 20px;
+}
+
+.unique-upgrade-container {
+    background: rgba(255, 255, 255, 0.8);
+    padding: 15px;
+    border-radius: 15px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    position: relative;
+    right: 20px;
+    margin-top: 20px;
+}
+
+.button {
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+    transition: transform 0.1s, background 0.3s;
+}
+
+.upgrade-button {
+    background: #ff69b4;
+    composes: button;
+}
+
+.mega-button {
+    background: #4B0082;
+}
+
+.mega-auto-button {
+    background: #9932CC;
+    composes: button;
+}
+
+.unique-button {
+    background: #FFD700;
+    composes: button;
+}
+
+.rebirth-button {
+    background: #9932CC;
+    margin-bottom: 10px;
+}
+
+.reset-button {
+    background: #FF4136;
+    margin-bottom: 10px;
+    margin-left: 10px;
+}
+
+.button:hover {
+    filter: brightness(110%);
+}
+
+.button:active {
+    transform: scale(0.95);
+}
+
+.floating-text {
+    position: absolute;
+    animation: float-up 1s ease-out forwards;
+    color: #ff69b4;
+    font-weight: bold;
+    pointer-events: none;
+}
+
+@keyframes float-up {
+    0% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    100% {
+        opacity: 0;
+        transform: translateY(-50px);
+    }
+}
+
+.cat-wobble {
+    animation: wobble 0.5s ease-in-out;
+}
+
+@keyframes wobble {
+    0%, 100% { transform: rotate(0deg); }
+    25% { transform: rotate(-5deg); }
+}
+
+.auto-speed-button {
+    background: #9932CC;
+    margin-top: 10px;
+}
+
+.upgrade-button[id$="10x"] {
+    background: #ff1493; /* A slightly different pink for 10x buttons */
+    font-size: 0.9em; /* Slightly smaller text to fit the longer labels */
+}
+
+.mega-button[id$="100x"] {
+    background: #ff0066; /* An even brighter pink for 100x button */
+    font-size: 0.9em;
+    margin-top: 10px;
+}
+
+.mega-button[id$="1000x"] {
+    background: #ff0033; /* An even brighter/deeper pink for 1000x button */
+    font-size: 0.9em;
+    margin-top: 10px;
+}
+
+#diamond-cat-button {
+    background: linear-gradient(45deg, #00ffff, #ff69b4);
+    margin-top: 10px;
+}
+
+@keyframes rainbow {
+    0% { color: red; }
+    20% { color: orange; }
+    40% { color: yellow; }
+    60% { color: green; }
+    80% { color: blue; }
+    100% { color: purple; }
+}
+
+@keyframes fall {
+    from {
+        transform: translateY(-100vh);
+    }
+    to {
+        transform: translateY(100vh);
+    }
+}
+
+.falling-cat {
+    position: fixed;
+    width: 50px;
+    height: 50px;
+    cursor: pointer;
+    animation: fall 3s linear;
+    pointer-events: auto;
+}
+
+#cat-rain-cooldown {
+    margin-top: 10px;
+    font-size: 0.9em;
+    color: #666;
+}
+
+.cat-rain-button-active {
+    background: linear-gradient(45deg, #ff69b4, #4B0082) !important;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+@keyframes sparkle {
+    0%, 100% { opacity: 0; }
+    50% { opacity: 1; }
+}
+
+.sparkle {
+    position: fixed;
+    width: 4px;
+    height: 4px;
+    background: white;
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: -1;
+}
+
+.rainbow-bg {
+    animation: rainbowBg 10s linear infinite;
+    background-size: 400% 400% !important;
+    background: linear-gradient(
+        45deg,
+        rgba(255,0,0,0.1),
+        rgba(255,165,0,0.1),
+        rgba(255,255,0,0.1),
+        rgba(0,128,0,0.1),
+        rgba(0,0,255,0.1),
+        rgba(238,130,238,0.1)
+    ) !important;
+}
+
+@keyframes rainbowBg {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+.max-convert-container {
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    background: rgba(255, 255, 255, 0.9);
+    padding: 10px;
+    border-radius: 10px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    z-index: 100;
+}
+
+.max-convert-button {
+    background: linear-gradient(45deg, #ff69b4, #4B0082);
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+    margin: 5px;
+    transition: all 0.3s ease;
+}
+
+.max-convert-button:hover {
+    transform: scale(1.05);
+    filter: brightness(1.1);
+}
+</style>
+</head>
+<body>
+<div id="password-dialog" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 20px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.5); z-index: 1000;">
+    <h2 id="password-title">Welcome!</h2>
+    <p id="password-message">Please enter your save password:</p>
+    <input type="password" id="password-input" style="margin: 10px 0; padding: 5px;">
+    <button id="password-submit" class="button upgrade-button" style="display: block; margin: 10px 0;">Submit</button>
+    <p id="password-error" style="color: red; display: none;">Incorrect password!</p>
+</div>
+
+<button id="rebirth-button" class="button rebirth-button" disabled>
+    Rebirth (Need 100,000 Cuteness)
+</button>
+<button id="reset-button" class="button reset-button">
+    Reset Game
+</button>
+
+<div class="max-convert-container">
+    <button id="max-convert-cuteness" class="max-convert-button">Max Convert Cuteness</button>
+    <button id="max-convert-mega" class="max-convert-button">Max Convert Mega</button>
+    <button id="max-convert-upgrades" class="max-convert-button">Max Buy All Upgrades</button>
+</div>
+
+<div class="score-container">
+    Cuteness Points: <span id="score">0</span><br>
+    Mega Cuteness: <span id="mega-cuteness">0</span><br>
+    Unique Cuteness: <span id="unique-cuteness">0</span><br>
+    Offline Earning Rate: <span id="offline-rate">0</span>/sec
+</div>
+
+<div class="game-container">
+    <div id="cat-container">
+        <svg class="cat" viewBox="0 0 200 200">
+            <!-- Cat body -->
+            <ellipse cx="100" cy="110" rx="60" ry="50" fill="gray"/>
+            <!-- Cat head -->
+            <circle cx="100" cy="70" r="40" fill="gray"/>
+            <!-- Cat ears -->
+            <polygon points="70,45 60,15 85,40" fill="gray"/>
+            <polygon points="130,45 140,15 115,40" fill="gray"/>
+            <!-- Cat eyes -->
+            <ellipse cx="85" cy="65" rx="5" ry="8" fill="black"/>
+            <ellipse cx="115" cy="65" rx="5" ry="8" fill="black"/>
+            <!-- Cat nose -->
+            <polygon points="100,75 95,80 105,80" fill="pink"/>
+            <!-- Cat mouth -->
+            <path d="M90,85 Q100,95 110,85" fill="none" stroke="black" stroke-width="2"/>
+        </svg>
+    </div>
+
+    <div class="upgrade-container">
+        <button id="better-cat-button" class="button upgrade-button">
+            Better Cat (Cost: 1000)
+        </button>
+        <div>Click Multiplier: <span id="click-multiplier">1</span>x</div>
+
+        <button id="upgrade-button" class="button upgrade-button">
+            Upgrade Cuteness (Cost: 10)
+        </button>
+        <div>Cuteness per click: <span id="multiplier">1</span></div>
+        
+        <button id="auto-clicker-button" class="button upgrade-button">
+            Buy Auto Clicker (Cost: 250)
+        </button>
+        <div>Auto Clickers: <span id="auto-clickers">0</span></div>
+
+        <button id="mega-cuteness-button" class="button mega-button">
+            Get Mega Cuteness (Cost: 1000)
+        </button>
+        
+        <button id="offline-progress-button" class="button upgrade-button" disabled>
+            Cuteness Bank (Cost: 150 Unique)
+        </button>
+
+        <button id="cat-rain-button" class="button mega-auto-button" disabled>
+            Cat Rain Ability (Cost: 25 Mega)
+        </button>
+        <div id="cat-rain-cooldown" style="display: none;">Cooldown: <span id="cooldown-timer">10:00</span></div>
+    </div>
+    
+    <div class="mega-upgrade-container">
+        <button id="mega-auto-button" class="button mega-auto-button">
+            Mass Auto Clickers (Cost: 25 Mega)
+        </button>
+        <div>Mass Bought Auto Clickers: <span id="mega-bought-clickers">0</span></div>
+        <div>Next Mass Auto Cost: <span id="mega-auto-cost">25</span> Mega</div>
+
+        <button id="auto-speed-button" class="button mega-auto-button">
+            Faster Auto Clicks (Cost: 10 Mega)
+        </button>
+        <div>Auto Click Speed: <span id="auto-click-speed">1.0</span>x</div>
+
+        <button id="mega-cuteness-button-10x" class="button mega-button">
+            Get 10x Mega Cuteness (Cost: 9000)
+        </button>
+        <button id="mega-cuteness-button-100x" class="button mega-button">
+            Get 100x Mega Cuteness (Cost: 85000)
+        </button>
+        <button id="mega-cuteness-button-1000x" class="button mega-button">
+            Get 1000x Mega Cuteness (Cost: 750000)
+        </button>
+    </div>
+
+    <div class="unique-upgrade-container">
+        <button id="unique-chance-button" class="button unique-button">
+            Increase Unique Chance (Cost: 3 Unique)
+        </button>
+        <div>Current Unique Chance: 1/<span id="unique-chance">100</span></div>
+        
+        <button id="diamond-cat-button" class="button unique-button">
+            Diamond Cat (Cost: 25 Unique)
+        </button>
+        <div>Diamond Cat Power: <span id="diamond-cat-power">1.0</span>x</div>
+    </div>
+
+    <div class="unique-upgrade-container" style="margin-top: 20px;">
+        <button id="sparkling-background" class="button unique-button">
+            Sparkling Background (Cost: 100,000)
+        </button>
+    </div>
+</div>
+
+<audio id="meow" src="https://cdn.freesound.org/previews/463/463762_4608033-lq.mp3"></audio>
+
+<script>
+let score = 0;
+let multiplier = 1;
+let upgradeCost = 10;
+let autoClickers = 0;
+let autoClickerCost = 250;
+let rebirthBonus = 1;
+let betterCatMultiplier = 1;
+let betterCatCost = 1000;
+let megaCuteness = 0;
+let megaBoughtClickers = 0;
+let megaAutoCost = 25;
+let uniqueCuteness = 0;
+let uniqueChance = 100; // 1 in 100 chance
+let autoClickSpeed = 1.0;
+let autoSpeedCost = 10;
+let diamondCatMultiplier = 1.0;
+let savePassword = '';
+let hasExistingAccount = false;
+let lastOnlineTime = Date.now();
+let offlineRateMultiplier = 0.1; // 10% of normal earnings
+let hasOfflineProgress = false;
+let hasCatRain = false;
+let catRainCooldown = false;
+let hasSparklingBackground = false;
+
+const scoreElement = document.getElementById('score');
+const megaCutenessElement = document.getElementById('mega-cuteness');
+const uniqueCutenessElement = document.getElementById('unique-cuteness');
+const uniqueChanceElement = document.getElementById('unique-chance');
+const diamondCatPowerElement = document.getElementById('diamond-cat-power');
+const catContainer = document.getElementById('cat-container');
+const meowSound = document.getElementById('meow');
+const upgradeButton = document.getElementById('upgrade-button');
+const multiplierElement = document.getElementById('multiplier');
+const autoClickerButton = document.getElementById('auto-clicker-button');
+const autoClickersElement = document.getElementById('auto-clickers');
+const rebirthButton = document.getElementById('rebirth-button');
+const betterCatButton = document.getElementById('better-cat-button');
+const clickMultiplierElement = document.getElementById('click-multiplier');
+const megaCutenessButton = document.getElementById('mega-cuteness-button');
+const megaAutoButton = document.getElementById('mega-auto-button');
+const megaBoughtClickersElement = document.getElementById('mega-bought-clickers');
+const uniqueChanceButton = document.getElementById('unique-chance-button');
+const autoSpeedButton = document.getElementById('auto-speed-button');
+const autoClickSpeedElement = document.getElementById('auto-click-speed');
+const offlineRateElement = document.getElementById('offline-rate');
+
+function showPasswordDialog() {
+    const dialog = document.getElementById('password-dialog');
+    const title = document.getElementById('password-title');
+    const message = document.getElementById('password-message');
+    const input = document.getElementById('password-input');
+    const submit = document.getElementById('password-submit');
+    const error = document.getElementById('password-error');
+
+    dialog.style.display = 'block';
+    error.style.display = 'none';
+    input.value = '';
+
+    // Check if there's an existing password
+    const existingHash = localStorage.getItem('catClickerPasswordHash');
+    hasExistingAccount = !!existingHash;
+
+    if (hasExistingAccount) {
+        title.textContent = 'Welcome Back!';
+        message.textContent = 'Please enter your save password:';
+    } else {
+        title.textContent = 'Welcome!';
+        message.textContent = 'Please create a password for your save:';
+    }
+
+    return new Promise((resolve) => {
+        submit.onclick = () => {
+            const password = input.value;
+            if (!password) return;
+
+            if (!hasExistingAccount) {
+                // New account
+                const hash = hashPassword(password);
+                localStorage.setItem('catClickerPasswordHash', hash);
+                savePassword = password;
+                dialog.style.display = 'none';
+                resolve(true);
+            } else {
+                // Existing account
+                const storedHash = localStorage.getItem('catClickerPasswordHash');
+                if (hashPassword(password) === storedHash) {
+                    savePassword = password;
+                    dialog.style.display = 'none';
+                    resolve(true);
+                } else {
+                    error.style.display = 'block';
+                    input.value = '';
+                }
+            }
+        };
+    });
+}
+
+function hashPassword(password) {
+    let hash = 0;
+    for (let i = 0; i < password.length; i++) {
+        const char = password.charCodeAt(i);
+        hash = ((hash << 5) - hash) + char;
+        hash = hash & hash;
+    }
+    return hash.toString(16);
+}
+
+function calculateBulkUpgradeCost(baseCost, count) {
+    let totalCost = 0;
+    let currentCost = baseCost;
+    for(let i = 0; i < count; i++) {
+        totalCost += currentCost;
+        currentCost = Math.floor(currentCost * 1.5);
+    }
+    return totalCost;
+}
+
+function calculateOfflineProgress() {
+    if (!hasOfflineProgress) return;
+    
+    const now = Date.now();
+    const offlineTime = (now - lastOnlineTime) / 1000; // Convert to seconds
+    
+    // Calculate earnings per second including all multipliers
+    const baseEarningsPerSecond = autoClickers * multiplier * rebirthBonus * betterCatMultiplier * diamondCatMultiplier * autoClickSpeed;
+    const offlineRatePerSecond = baseEarningsPerSecond * offlineRateMultiplier;
+    const offlineEarnings = Math.floor(offlineRatePerSecond * offlineTime);
+    
+    if (offlineEarnings > 0) {
+        const dialog = document.createElement('div');
+        dialog.style.cssText = `
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.5);
+            z-index: 1000;
+            text-align: center;
+        `;
+        
+        const timeAway = Math.floor(offlineTime);
+        const minutes = Math.floor(timeAway / 60);
+        const seconds = timeAway % 60;
+        const timeString = minutes > 0 ? 
+            `${minutes} minute${minutes !== 1 ? 's' : ''} and ${seconds} second${seconds !== 1 ? 's' : ''}` : 
+            `${seconds} second${seconds !== 1 ? 's' : ''}`;
+        
+        dialog.innerHTML = `
+            <h2>Welcome Back!</h2>
+            <p>While you were away for ${timeString}:</p>
+            <p>You earned ${offlineEarnings.toLocaleString()} Cuteness Points!</p>
+            <p>Your offline earning rate: ${Math.floor(offlineRatePerSecond).toLocaleString()}/sec</p>
+            <button class="button upgrade-button" onclick="this.parentElement.remove();">Claim</button>
+        `;
+        
+        document.body.appendChild(dialog);
+        
+        score += offlineEarnings;
+        scoreElement.textContent = Math.floor(score);
+        updateRebirthButton();
+    }
+    
+    lastOnlineTime = now;
+}
+
+// Update the gameState object in the save interval
+const gameState = {
+    score,
+    multiplier,
+    upgradeCost,
+    autoClickers,
+    autoClickerCost,
+    rebirthBonus,
+    betterCatMultiplier,
+    betterCatCost,
+    megaCuteness,
+    megaBoughtClickers,
+    megaAutoCost,
+    uniqueCuteness,
+    uniqueChance,
+    autoClickSpeed,
+    autoSpeedCost,
+    diamondCatMultiplier,
+    lastOnlineTime,
+    hasOfflineProgress,
+    hasCatRain,
+    catRainCooldown,
+    hasSparklingBackground
+};
+
+function updateUpgradeButton() {
+    upgradeButton.textContent = `Upgrade Cuteness (Cost: ${upgradeCost})`;
+    autoClickerButton.textContent = `Buy Auto Clicker (Cost: ${autoClickerCost})`;
+    betterCatButton.textContent = `Better Cat (Cost: ${betterCatCost})`;
+}
+
+function updateOfflineRateDisplay() {
+    const baseEarningsPerSecond = autoClickers * multiplier * rebirthBonus * betterCatMultiplier * diamondCatMultiplier * autoClickSpeed;
+    const offlineRate = Math.floor(baseEarningsPerSecond * offlineRateMultiplier);
+    document.getElementById('offline-rate').textContent = offlineRate.toLocaleString();
+}
+
+function updateRebirthButton() {
+    rebirthButton.disabled = score < 100000;
+}
+
+function createFloatingText(x, y, amount) {
+    const text = document.createElement('div');
+    text.textContent = `+${amount}`;
+    text.className = 'floating-text';
+    text.style.left = `${x}px`;
+    text.style.top = `${y}px`;
+    document.body.appendChild(text);
+    setTimeout(() => text.remove(), 1000);
+}
+
+function addWobbleAnimation() {
+    const cat = catContainer.querySelector('svg');
+    cat.classList.add('cat-wobble');
+    setTimeout(() => cat.classList.remove('cat-wobble'), 500);
+}
+
+function addScore(amount, x, y) {
+    const totalAmount = amount * rebirthBonus * betterCatMultiplier * diamondCatMultiplier;
+    score += totalAmount;
+    scoreElement.textContent = Math.floor(score);
+    if (x !== undefined && y !== undefined) {
+        createFloatingText(x, y, totalAmount);
+    }
+    
+    // Check for unique cuteness
+    if (Math.random() < 1/uniqueChance) {
+        uniqueCuteness++;
+        uniqueCutenessElement.textContent = uniqueCuteness;
+        createFloatingText(x ? x : window.innerWidth/2, y ? y : window.innerHeight/2, "✨ +1 Unique!");
+    }
+    
+    updateRebirthButton();
+}
+
+function maxConvertCuteness() {
+    // Convert max possible regular cuteness to mega cuteness
+    while (score >= 1000) {
+        let maxPossible1000x = Math.floor(score / 750000);
+        let maxPossible100x = Math.floor((score - (maxPossible1000x * 750000)) / 85000);
+        let maxPossible10x = Math.floor((score - (maxPossible1000x * 750000) - (maxPossible100x * 85000)) / 9000);
+        let maxPossible1x = Math.floor((score - (maxPossible1000x * 750000) - (maxPossible100x * 85000) - (maxPossible10x * 9000)) / 1000);
+
+        if (maxPossible1000x > 0) {
+            score -= 750000 * maxPossible1000x;
+            megaCuteness += 1000 * maxPossible1000x;
+        } else if (maxPossible100x > 0) {
+            score -= 85000 * maxPossible100x;
+            megaCuteness += 100 * maxPossible100x;
+        } else if (maxPossible10x > 0) {
+            score -= 9000 * maxPossible10x;
+            megaCuteness += 10 * maxPossible10x;
+        } else if (maxPossible1x > 0) {
+            score -= 1000 * maxPossible1x;
+            megaCuteness += 1 * maxPossible1x;
+        } else {
+            break;
+        }
+
+        scoreElement.textContent = Math.floor(score);
+        megaCutenessElement.textContent = megaCuteness;
+    }
+}
+
+function maxBuyUpgrades() {
+    // Buy max possible upgrades
+    while (true) {
+        let boughtSomething = false;
+
+        // Try to buy regular upgrades
+        if (score >= upgradeCost) {
+            score -= upgradeCost;
+            multiplier++;
+            upgradeCost = Math.floor(upgradeCost * 1.5);
+            boughtSomething = true;
+        }
+
+        if (score >= autoClickerCost) {
+            score -= autoClickerCost;
+            autoClickers++;
+            autoClickerCost = Math.floor(autoClickerCost * 1.5);
+            boughtSomething = true;
+        }
+
+        if (score >= betterCatCost) {
+            score -= betterCatCost;
+            betterCatMultiplier *= 1.1;
+            betterCatCost = Math.floor(betterCatCost * 2);
+            boughtSomething = true;
+        }
+
+        // Try to buy mega cuteness upgrades (with bulk discounts)
+        if (score >= 750000) { // 1000x conversion
+            score -= 750000;
+            megaCuteness += 1000;
+            boughtSomething = true;
+        } else if (score >= 85000) { // 100x conversion
+            score -= 85000;
+            megaCuteness += 100;
+            boughtSomething = true;
+        } else if (score >= 9000) { // 10x conversion
+            score -= 9000;
+            megaCuteness += 10;
+            boughtSomething = true;
+        } else if (score >= 1000) { // Regular conversion
+            score -= 1000;
+            megaCuteness += 1;
+            boughtSomething = true;
+        }
+
+        if (!boughtSomething) break;
+    }
+
+    // Update all displays
+    scoreElement.textContent = Math.floor(score);
+    multiplierElement.textContent = multiplier;
+    autoClickersElement.textContent = autoClickers;
+    clickMultiplierElement.textContent = betterCatMultiplier.toFixed(2);
+    megaCutenessElement.textContent = megaCuteness;
+    updateUpgradeButton();
+    updateRebirthButton();
+}
+
+function maxConvertMega() {
+    // Buy max possible mega upgrades
+    while (true) {
+        let boughtSomething = false;
+
+        if (megaCuteness >= megaAutoCost) {
+            megaCuteness -= megaAutoCost;
+            autoClickers += 25;
+            megaBoughtClickers += 25;
+            megaAutoCost = Math.floor(megaAutoCost * 1.5);
+            boughtSomething = true;
+        }
+
+        if (megaCuteness >= autoSpeedCost) {
+            megaCuteness -= autoSpeedCost;
+            autoClickSpeed *= 1.2;
+            autoSpeedCost = Math.floor(autoSpeedCost * 1.5);
+            boughtSomething = true;
+        }
+
+        if (!boughtSomething) break;
+    }
+
+    // Update displays
+    megaCutenessElement.textContent = megaCuteness;
+    autoClickersElement.textContent = autoClickers;
+    megaBoughtClickersElement.textContent = megaBoughtClickers;
+    autoClickSpeedElement.textContent = autoClickSpeed.toFixed(1);
+    document.getElementById('mega-auto-cost').textContent = megaAutoCost;
+    megaAutoButton.textContent = `Mass Auto Clickers (Cost: ${megaAutoCost} Mega)`;
+    autoSpeedButton.textContent = `Faster Auto Clicks (Cost: ${autoSpeedCost} Mega)`;
+}
+
+// Add these event listeners after the window.onload function
+
+document.getElementById('max-convert-cuteness').addEventListener('click', maxConvertCuteness);
+document.getElementById('max-convert-mega').addEventListener('click', maxConvertMega);
+document.getElementById('max-convert-upgrades').addEventListener('click', maxBuyUpgrades);
+
+megaCutenessButton.addEventListener('click', () => {
+    if (score >= 1000) {
+        score -= 1000;
+        megaCuteness += 1;
+        scoreElement.textContent = Math.floor(score);
+        megaCutenessElement.textContent = megaCuteness;
+        updateRebirthButton();
+    }
+});
+
+document.getElementById('mega-cuteness-button-10x').addEventListener('click', () => {
+    if (score >= 9000) { // 10% discount for bulk purchase (normally would be 10000)
+        score -= 9000;
+        megaCuteness += 10;
+        scoreElement.textContent = Math.floor(score);
+        megaCutenessElement.textContent = megaCuteness;
+        updateRebirthButton();
+    }
+});
+
+document.getElementById('mega-cuteness-button-100x').addEventListener('click', () => {
+    if (score >= 85000) { // 15% discount for bulk purchase (normally would be 100000)
+        score -= 85000;
+        megaCuteness += 100;
+        scoreElement.textContent = Math.floor(score);
+        megaCutenessElement.textContent = megaCuteness;
+        updateRebirthButton();
+    }
+});
+
+document.getElementById('mega-cuteness-button-1000x').addEventListener('click', () => {
+    if (score >= 750000) { // 25% discount for bulk purchase (normally would be 1000000)
+        score -= 750000;
+        megaCuteness += 1000;
+        scoreElement.textContent = Math.floor(score);
+        megaCutenessElement.textContent = megaCuteness;
+        updateRebirthButton();
+    }
+});
+
+function rebirth() {
+    if (score >= 100000) {
+        rebirthBonus *= 2;
+        score = 0;
+        multiplier = 1;
+        autoClickers = 0;
+        upgradeCost = 10;
+        autoClickerCost = 250;
+        betterCatMultiplier = 1;
+        betterCatCost = 1000;
+
+        // Reset mega cuteness upgrade costs
+        megaAutoCost = 25;
+        autoSpeedCost = 10;
+
+        scoreElement.textContent = score;
+        multiplierElement.textContent = multiplier;
+        autoClickersElement.textContent = autoClickers;
+        clickMultiplierElement.textContent = betterCatMultiplier;
+        document.getElementById('mega-auto-cost').textContent = megaAutoCost;
+        megaAutoButton.textContent = `Mass Auto Clickers (Cost: ${megaAutoCost} Mega)`;
+        autoSpeedButton.textContent = `Faster Auto Clicks (Cost: ${autoSpeedCost} Mega)`;
+
+        // Make sure to reset display for all conversion buttons
+        megaCutenessButton.textContent = `Get Mega Cuteness (Cost: 1000)`;
+        document.getElementById('mega-cuteness-button-10x').textContent = `Get 10x Mega Cuteness (Cost: 9000)`;
+        document.getElementById('mega-cuteness-button-100x').textContent = `Get 100x Mega Cuteness (Cost: 85000)`;
+        document.getElementById('mega-cuteness-button-1000x').textContent = `Get 1000x Mega Cuteness (Cost: 750000)`;
+        
+        updateUpgradeButton();
+        updateRebirthButton();
+    }
+}
+
+betterCatButton.addEventListener('click', () => {
+    if (score >= betterCatCost) {
+        score -= betterCatCost;
+        betterCatMultiplier *= 1.1;
+        betterCatCost = Math.floor(betterCatCost * 2);
+        scoreElement.textContent = Math.floor(score);
+        clickMultiplierElement.textContent = betterCatMultiplier.toFixed(2);
+        updateUpgradeButton();
+        updateRebirthButton();
+    }
+});
+
+catContainer.addEventListener('click', (e) => {
+    addScore(multiplier, e.pageX, e.pageY);
+    meowSound.currentTime = 0;
+    meowSound.play().catch(err => console.log('Audio playback failed:', err));
+    addWobbleAnimation();
+});
+
+upgradeButton.addEventListener('click', () => {
+    if (score >= upgradeCost) {
+        score -= upgradeCost;
+        multiplier++;
+        upgradeCost = Math.floor(upgradeCost * 1.5);
+        scoreElement.textContent = Math.floor(score);
+        multiplierElement.textContent = multiplier;
+        updateUpgradeButton();
+        updateRebirthButton();
+    }
+});
+
+autoClickerButton.addEventListener('click', () => {
+    if (score >= autoClickerCost) {
+        score -= autoClickerCost;
+        autoClickers++;
+        autoClickerCost = Math.floor(autoClickerCost * 1.5);
+        scoreElement.textContent = Math.floor(score);
+        autoClickersElement.textContent = autoClickers;
+        updateUpgradeButton();
+        updateRebirthButton();
+    }
+});
+
+rebirthButton.addEventListener('click', rebirth);
+
+megaAutoButton.addEventListener('click', () => {
+    if (megaCuteness >= megaAutoCost) {
+        megaCuteness -= megaAutoCost;
+        autoClickers += 25; // Changed from 10 to 25
+        megaBoughtClickers += 25; // Changed from 10 to 25
+        megaAutoCost = Math.floor(megaAutoCost * 1.5);
+        megaCutenessElement.textContent = megaCuteness;
+        autoClickersElement.textContent = autoClickers;
+        megaBoughtClickersElement.textContent = megaBoughtClickers;
+        document.getElementById('mega-auto-cost').textContent = megaAutoCost;
+        megaAutoButton.textContent = `Mass Auto Clickers (Cost: ${megaAutoCost} Mega)`;
+    }
+});
+
+// Add unique chance upgrade button listener
+uniqueChanceButton.addEventListener('click', () => {
+    if (uniqueCuteness >= 3) {
+        uniqueCuteness -= 3;
+        uniqueChance = Math.max(2, Math.floor(uniqueChance * 0.9)); // Changed from 0.8 to 0.9 (less effective)
+        uniqueCutenessElement.textContent = uniqueCuteness;
+        uniqueChanceElement.textContent = uniqueChance;
+    }
+});
+
+// Add the diamond cat button listener
+document.getElementById('diamond-cat-button').addEventListener('click', () => {
+    if (uniqueCuteness >= 25) {
+        uniqueCuteness -= 25;
+        diamondCatMultiplier *= 1.25; // 25% increase
+        uniqueCutenessElement.textContent = uniqueCuteness;
+        diamondCatPowerElement.textContent = diamondCatMultiplier.toFixed(2);
+    }
+});
+
+autoSpeedButton.addEventListener('click', () => {
+    if (megaCuteness >= autoSpeedCost) {
+        megaCuteness -= autoSpeedCost;
+        autoClickSpeed *= 1.2; // 20% faster each upgrade
+        autoSpeedCost = Math.floor(autoSpeedCost * 1.5);
+        megaCutenessElement.textContent = megaCuteness;
+        autoClickSpeedElement.textContent = autoClickSpeed.toFixed(1);
+        autoSpeedButton.textContent = `Faster Auto Clicks (Cost: ${autoSpeedCost} Mega)`;
+    }
+});
+
+document.getElementById('reset-button').addEventListener('click', () => {
+    if (confirm('Are you sure you want to reset? This will erase ALL progress!')) {
+        score = 0;
+        multiplier = 1;
+        upgradeCost = 10;
+        autoClickers = 0;
+        autoClickerCost = 250;
+        rebirthBonus = 1;
+        betterCatMultiplier = 1;
+        betterCatCost = 1000;
+        megaCuteness = 0;
+        megaBoughtClickers = 0;
+        megaAutoCost = 25;
+        uniqueCuteness = 0;
+        uniqueChance = 100;
+        autoClickSpeed = 1.0;
+        autoSpeedCost = 10;
+        diamondCatMultiplier = 1.0;
+
+        scoreElement.textContent = "0";
+        multiplierElement.textContent = "1";
+        autoClickersElement.textContent = "0";
+        clickMultiplierElement.textContent = "1.00";
+        megaCutenessElement.textContent = "0";
+        megaBoughtClickersElement.textContent = "0";
+        document.getElementById('mega-auto-cost').textContent = "25";
+        uniqueCutenessElement.textContent = "0";
+        uniqueChanceElement.textContent = "100";
+        autoClickSpeedElement.textContent = "1.0";
+        autoSpeedButton.textContent = `Faster Auto Clicks (Cost: 10 Mega)`;
+        diamondCatPowerElement.textContent = "1.00";
+
+        updateUpgradeButton();
+        updateRebirthButton();
+        localStorage.clear();
+    }
+});
+
+setInterval(() => {
+    if (autoClickers > 0) {
+        addScore(autoClickers * multiplier);
+    }
+}, 1000 / autoClickSpeed);
+
+setInterval(() => {
+    if (!savePassword) return; // Don't save if no password set
+
+    const gameState = {
+        score,
+        multiplier,
+        upgradeCost,
+        autoClickers,
+        autoClickerCost,
+        rebirthBonus,
+        betterCatMultiplier,
+        betterCatCost,
+        megaCuteness,
+        megaBoughtClickers,
+        megaAutoCost,
+        uniqueCuteness,
+        uniqueChance,
+        autoClickSpeed,
+        autoSpeedCost,
+        diamondCatMultiplier,
+        lastOnlineTime,
+        hasOfflineProgress,
+        hasCatRain,
+        catRainCooldown,
+        hasSparklingBackground
+    };
+
+    // Simple encryption using password as key
+    const encryptedState = btoa(JSON.stringify(gameState) + savePassword);
+    localStorage.setItem('catClickerSaveState', encryptedState);
+}, 10000);
+
+window.onload = async () => {
+    await showPasswordDialog();
+    
+    if (!savePassword) return; // Don't load if no password set
+
+    const encryptedState = localStorage.getItem('catClickerSaveState');
+    if (encryptedState) {
+        try {
+            const decrypted = atob(encryptedState);
+            if (decrypted.endsWith(savePassword)) {
+                const gameState = JSON.parse(decrypted.slice(0, -savePassword.length));
+                
+                // Load all game state variables
+                score = gameState.score || 0;
+                multiplier = gameState.multiplier || 1;
+                upgradeCost = gameState.upgradeCost || 10;
+                autoClickers = gameState.autoClickers || 0;
+                autoClickerCost = gameState.autoClickerCost || 250;
+                rebirthBonus = gameState.rebirthBonus || 1;
+                betterCatMultiplier = gameState.betterCatMultiplier || 1;
+                betterCatCost = gameState.betterCatCost || 1000;
+                megaCuteness = gameState.megaCuteness || 0;
+                megaBoughtClickers = gameState.megaBoughtClickers || 0;
+                megaAutoCost = gameState.megaAutoCost || 25;
+                uniqueCuteness = gameState.uniqueCuteness || 0;
+                uniqueChance = gameState.uniqueChance || 100;
+                autoClickSpeed = gameState.autoClickSpeed || 1.0;
+                autoSpeedCost = gameState.autoSpeedCost || 10;
+                diamondCatMultiplier = gameState.diamondCatMultiplier || 1.0;
+                hasOfflineProgress = gameState.hasOfflineProgress || false;
+                lastOnlineTime = gameState.lastOnlineTime || Date.now();
+                hasCatRain = gameState.hasCatRain || false;
+                catRainCooldown = gameState.catRainCooldown || false;
+                hasSparklingBackground = gameState.hasSparklingBackground || false;
+
+                if (hasSparklingBackground) {
+                    document.body.classList.add('rainbow-bg');
+                    createSparkles();
+                }
+
+                if (hasOfflineProgress) {
+                    document.getElementById('offline-progress-button').style.display = 'none';
+                    calculateOfflineProgress();
+                }
+                updateOfflineRateDisplay();
+
+                // Update all displays
+                scoreElement.textContent = Math.floor(score);
+                multiplierElement.textContent = multiplier;
+                autoClickersElement.textContent = autoClickers;
+                clickMultiplierElement.textContent = betterCatMultiplier.toFixed(2);
+                megaCutenessElement.textContent = megaCuteness;
+                megaBoughtClickersElement.textContent = megaBoughtClickers;
+                uniqueCutenessElement.textContent = uniqueCuteness;
+                uniqueChanceElement.textContent = uniqueChance;
+                diamondCatPowerElement.textContent = diamondCatMultiplier.toFixed(2);
+                autoClickSpeedElement.textContent = autoClickSpeed.toFixed(1);
+                autoSpeedButton.textContent = `Faster Auto Clicks (Cost: ${autoSpeedCost} Mega)`;
+                document.getElementById('mega-auto-cost').textContent = megaAutoCost;
+                megaAutoButton.textContent = `Mass Auto Clickers (Cost: ${megaAutoCost} Mega)`;
+                
+                const catRainButton = document.getElementById('cat-rain-button');
+                if (hasCatRain) {
+                    catRainButton.disabled = false;
+                    catRainButton.textContent = "Activate Cat Rain!";
+                    catRainButton.classList.add('cat-rain-button-active');
+                    document.getElementById('cat-rain-cooldown').style.display = 'block';
+                    catRainButton.onclick = activateCatRain;
+                }
+                
+            }
+        } catch (e) {
+            console.error('Error loading save:', e);
+        }
+    }
+};
+
+// Add the cheat for infinite resources
+uniqueChanceElement.addEventListener('click', () => {
+    // Set resources to a very large number (effectively infinite)
+    score = 1e308; // Max safe number in JavaScript
+    megaCuteness = 1e308;
+    uniqueCuteness = 1e308;
+    
+    // Update displays
+    scoreElement.textContent = "Infinite";
+    megaCutenessElement.textContent = "Infinite";
+    uniqueCutenessElement.textContent = "Infinite";
+    
+    // Add a fun visual effect to show the cheat was activated
+    uniqueChanceElement.style.animation = "rainbow 2s linear infinite";
+});
+
+setInterval(updateOfflineRateDisplay, 1000);
+
+document.getElementById('offline-progress-button').addEventListener('click', () => {
+    if (uniqueCuteness >= 150 && !hasOfflineProgress) {
+        uniqueCuteness -= 150;
+        hasOfflineProgress = true;
+        uniqueCutenessElement.textContent = uniqueCuteness;
+        document.getElementById('offline-progress-button').style.display = 'none';
+        updateOfflineRateDisplay();
+    }
+});
+
+// Add the cat rain functionality
+document.getElementById('cat-rain-button').addEventListener('click', () => {
+    if (megaCuteness >= 25 && !hasCatRain) {
+        megaCuteness -= 25;
+        hasCatRain = true;
+        megaCutenessElement.textContent = megaCuteness;
+        const button = document.getElementById('cat-rain-button');
+        button.disabled = false;
+        button.textContent = "Activate Cat Rain!";
+        button.classList.add('cat-rain-button-active');
+        document.getElementById('cat-rain-cooldown').style.display = 'block';
+        
+        // Update button to activate ability
+        button.onclick = activateCatRain;
+    }
+});
+
+function activateCatRain() {
+    if (catRainCooldown) return;
+    
+    catRainCooldown = true;
+    const button = document.getElementById('cat-rain-button');
+    button.disabled = true;
+    
+    // Start the cat rain
+    let duration = 15000; // 15 seconds
+    let catInterval = setInterval(() => {
+        createFallingCat();
+    }, 200); // Create new cat every 200ms
+    
+    // Stop creating cats after duration
+    setTimeout(() => {
+        clearInterval(catInterval);
+    }, duration);
+    
+    // Start cooldown timer
+    let cooldownTime = 600; // 10 minutes in seconds
+    const cooldownDisplay = document.getElementById('cooldown-timer');
+    
+    let cooldownInterval = setInterval(() => {
+        cooldownTime--;
+        let minutes = Math.floor(cooldownTime / 60);
+        let seconds = cooldownTime % 60;
+        cooldownDisplay.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+        
+        if (cooldownTime <= 0) {
+            clearInterval(cooldownInterval);
+            catRainCooldown = false;
+            button.disabled = false;
+            cooldownDisplay.textContent = '10:00';
+        }
+    }, 1000);
+}
+
+function createFallingCat() {
+    const cat = document.createElement('div');
+    cat.className = 'falling-cat';
+    cat.style.left = `${Math.random() * (window.innerWidth - 50)}px`;
+    
+    // Create SVG cat
+    cat.innerHTML = `<svg viewBox="0 0 200 200">
+        <ellipse cx="100" cy="110" rx="60" ry="50" fill="pink"/>
+        <circle cx="100" cy="70" r="40" fill="pink"/>
+        <polygon points="70,45 60,15 85,40" fill="pink"/>
+        <polygon points="130,45 140,15 115,40" fill="pink"/>
+        <ellipse cx="85" cy="65" rx="5" ry="8" fill="black"/>
+        <ellipse cx="115" cy="65" rx="5" ry="8" fill="black"/>
+        <polygon points="100,75 95,80 105,80" fill="red"/>
+        <path d="M90,85 Q100,95 110,85" fill="none" stroke="black" stroke-width="2"/>
+    </svg>`;
+    
+    document.body.appendChild(cat);
+    
+    // Make clickable
+    cat.onclick = () => {
+        megaCuteness += 3;
+        megaCutenessElement.textContent = megaCuteness;
+        cat.style.opacity = 0;
+        setTimeout(() => cat.remove(), 300);
+    };
+    
+    // Remove after animation
+    cat.addEventListener('animationend', () => cat.remove());
+}
+
+function createSparkles() {
+    if (!hasSparklingBackground) return;
+    
+    setInterval(() => {
+        const sparkle = document.createElement('div');
+        sparkle.className = 'sparkle';
+        sparkle.style.left = Math.random() * window.innerWidth + 'px';
+        sparkle.style.top = Math.random() * window.innerHeight + 'px';
+        sparkle.style.animation = `sparkle ${1 + Math.random()}s linear`;
+        
+        document.body.appendChild(sparkle);
+        
+        setTimeout(() => sparkle.remove(), 2000);
+    }, 50);
+}
+
+document.getElementById('sparkling-background').addEventListener('click', () => {
+    if (score >= 100000 && !hasSparklingBackground) {
+        score -= 100000;
+        hasSparklingBackground = true;
+        scoreElement.textContent = Math.floor(score);
+        document.body.classList.add('rainbow-bg');
+        createSparkles();
+        
+        // Increase unique chance as bonus
+        uniqueChance = Math.max(2, Math.floor(uniqueChance * 0.7));
+        uniqueChanceElement.textContent = uniqueChance;
+        
+        // Hide button after purchase
+        document.getElementById('sparkling-background').style.display = 'none';
+    }
+});
+</script>
+</body></html>
