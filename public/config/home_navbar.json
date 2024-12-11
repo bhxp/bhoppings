@@ -24,9 +24,7 @@
     {
         "multiple": true,
         "text": "downloads",
-        "pages": [
-            { "text": "tango clicker", "url": "/tangoclicker" }
-        ]
+        "pages": [{ "text": "tango clicker", "url": "/tangoclicker" }]
     },
     {
         "multiple": true,
@@ -46,7 +44,10 @@
         "pages": [
             { "text": "floral fractal test", "url": "/floralfractaltest" },
             { "text": "fractal land", "url": "/fractalland" },
-            { "text": "hyper realistic fractal shader", "url": "/hyperrealisticfractalshader" },
+            {
+                "text": "hyper realistic fractal shader",
+                "url": "/hyperrealisticfractalshader"
+            },
             { "text": "galaxy gen", "url": "/galaxygen" },
             { "text": "maze generator", "url": "/mazegenerator" },
             { "text": "terrain generator", "url": "/terraingen" },
@@ -60,7 +61,7 @@
             { "text": "airplane simulator", "url": "/airplanesim" },
             { "text": "city builder", "url": "/citybuilder" },
             { "text": "car playground", "url": "/carplayground" },
-            { "text": "motorcycle playground", "url": "/motorcycleplayground" },
+            { "text": "motorcycle playground", "url": "/motercycleplayground" },
             { "text": "dream maze", "url": "/dreammaze" },
             { "text": "planet gen 2", "url": "/planet gen 2" }
         ]
@@ -91,6 +92,6 @@
             { "text": "cosmic", "url": "/cosmic" }
         ]
     },
-    { "text": "tangini","url": "/tangini" },
-    { "text": "app store", "url": "/store", "image": "shop.svg"}
+    { "text": "tangini", "url": "/tangini" },
+    { "text": "app store", "url": "/store", "image": "shop.svg" }
 ]
