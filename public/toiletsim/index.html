@@ -1,0 +1,96 @@
+<html><head><base href="https://toilet-sim.ai"><title>Toilet Simulator 2023</title>
+<meta charset="utf-8">
+<style>
+body {
+  font-family: Arial, sans-serif;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  margin: 0;
+  background-color: #f0f0f0;
+}
+#toilet-img {
+  width: 300px;
+  height: auto;
+  margin-bottom: 20px;
+}
+.button {
+  font-size: 18px;
+  padding: 10px 20px;
+  margin: 10px;
+  cursor: pointer;
+}
+#poop-emoji {
+  font-size: 40px;
+  position: absolute;
+  transition: all 0.5s ease-in-out;
+}
+#message {
+  font-size: 24px;
+  margin-top: 20px;
+  color: #ff0000;
+}
+</style>
+</head>
+<body>
+<h1>Toilet Simulator 2023</h1>
+<img id="toilet-img" src="https://upload.wikimedia.org/wikipedia/commons/3/39/Australian_Toilet.JPG" alt="Toilet">
+<button id="poop-btn" class="button">Poop</button>
+<button id="flush-btn" class="button" disabled>Flush</button>
+<div id="message"></div>
+
+<audio id="fart-sound" src="https://archive.org/download/soundcloud-829414048/829414048.mp3"></audio>
+<audio id="flush-sound" src="https://archive.org/download/ToiletFlushSoundEffect3.79sec/Toilet%20Flush%20Sound%20Effect%20%283.79sec%29.mp3"></audio>
+
+<script>
+const poopBtn = document.getElementById('poop-btn');
+const flushBtn = document.getElementById('flush-btn');
+const fartSound = document.getElementById('fart-sound');
+const flushSound = document.getElementById('flush-sound');
+const message = document.getElementById('message');
+
+let poopCount = 0;
+let poopEmojis = [];
+
+function createPoopEmoji() {
+  const poop = document.createElement('div');
+  poop.id = 'poop-emoji';
+  poop.textContent = '💩';
+  poop.style.left = Math.random() * window.innerWidth + 'px';
+  poop.style.top = Math.random() * window.innerHeight + 'px';
+  document.body.appendChild(poop);
+  poopEmojis.push(poop);
+  animatePoopEmoji(poop);
+}
+
+function animatePoopEmoji(poop) {
+  setInterval(() => {
+    poop.style.left = Math.random() * window.innerWidth + 'px';
+    poop.style.top = Math.random() * window.innerHeight + 'px';
+  }, 2000);
+}
+
+poopBtn.addEventListener('click', () => {
+  fartSound.play();
+  poopCount++;
+  createPoopEmoji();
+  flushBtn.disabled = false;
+  
+  if (poopCount >= 10) {
+    message.textContent = "Oh no! The toilet is clogged!";
+    flushBtn.disabled = true;
+  }
+});
+
+flushBtn.addEventListener('click', () => {
+  flushSound.play();
+  poopCount = 0;
+  message.textContent = "";
+  poopEmojis.forEach(poop => poop.remove());
+  poopEmojis = [];
+  flushBtn.disabled = true;
+});
+</script>
+</body></html>
