@@ -1,0 +1,519 @@
+<html><head><base href="https://codepen.io"><title>Spherical Minecraft</title>
+<style>
+body { margin: 0; overflow: hidden; }
+canvas { width: 100vw; height: 100vh; }
+#ui {
+    position: fixed;
+    top: 10px;
+    left: 10px;
+    color: white;
+    font-family: 'Minecraft', monospace;
+    background: rgba(0,0,0,0.5);
+    padding: 10px;
+}
+#controls-info {
+    position: fixed;
+    bottom: 70px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: white;
+    background: rgba(0,0,0,0.7);
+    padding: 10px;
+    border-radius: 5px;
+    text-align: center;
+    font-family: 'Minecraft', monospace;
+}
+#inventory {
+    position: fixed;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 5px;
+    background: rgba(0,0,0,0.7);
+    padding: 10px;
+    border-radius: 5px;
+}
+.inventory-slot {
+    width: 40px;
+    height: 40px;
+    background: rgba(255,255,255,0.1);
+    border: 2px solid #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-family: 'Minecraft', monospace;
+}
+.selected {
+    background: rgba(255,255,255,0.3);
+    border-color: #ffff00;
+}
+#crosshair {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: white;
+    font-size: 20px;
+    pointer-events: none;
+    user-select: none;
+}
+#title-screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: linear-gradient(45deg, #1e1e1e, #3f3f3f);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+.minecraft-title {
+    font-family: 'Minecraft', monospace;
+    font-size: 64px;
+    color: white;
+    text-shadow: 
+        2px 2px #3f3f3f,
+        -2px -2px #3f3f3f,
+        2px -2px #3f3f3f,
+        -2px 2px #3f3f3f;
+    margin-bottom: 40px;
+    transform: rotate(-5deg);
+    animation: float 3s ease-in-out infinite;
+}
+.start-button {
+    font-family: 'Minecraft', monospace;
+    font-size: 24px;
+    padding: 10px 20px;
+    background: #999999;
+    border: 3px solid #ffffff;
+    color: white;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.start-button:hover {
+    background: #707070;
+    transform: scale(1.05);
+}
+@keyframes float {
+    0%, 100% { transform: rotate(-5deg) translateY(0px); }
+    50% { transform: rotate(-5deg) translateY(-10px); }
+}
+@font-face {
+    font-family: 'Minecraft';
+    src: url('https://cdn.jsdelivr.net/gh/South-Paw/typeface-minecraft@master/fonts/minecraft.woff2') format('woff2');
+}
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/PointerLockControls.js"></script>
+</head>
+<body>
+<div id="title-screen">
+    <h1 class="minecraft-title">Spherical Minecraft</h1>
+    <button class="start-button" onclick="startGame()">Start Game</button>
+</div>
+<div id="ui">
+    Health: <span id="health">20</span><br>
+    Blocks: <span id="blocks">0</span>
+</div>
+<div id="controls-info">
+    Press SPACE to move up | SHIFT to move down | WASD to move | M to mine | P to place blocks | Click to look around
+</div>
+<div id="inventory">
+    <div class="inventory-slot selected" data-block="grass">🟩</div>
+    <div class="inventory-slot" data-block="stone">⬜</div>
+    <div class="inventory-slot" data-block="wood">🟫</div>
+    <div class="inventory-slot" data-block="gold">🟨</div>
+    <div class="inventory-slot" data-block="diamond">🟦</div>
+    <div class="inventory-slot" data-block="tnt">💣</div>
+</div>
+<div id="crosshair">+</div>
+<script>
+let camera, scene, renderer, controls;
+let sphere;
+let blocks = [];
+let sphereVoxels = [];
+let velocity = new THREE.Vector3();
+let playerHealth = 20;
+let blockCount = 0;
+let moveUp = false;
+let moveDown = false; // Added moveDown variable
+let selectedBlockType = 'grass';
+let isLocked = false;
+let lastTime = 0;
+const targetFrameRate = 60;
+const frameInterval = 1000 / targetFrameRate;
+
+const blockColors = {
+    grass: 0x00ff00,
+    stone: 0x808080,
+    wood: 0x8B4513,
+    gold: 0xFFD700,
+    diamond: 0x00FFFF,
+    tnt: 0xff0000
+};
+
+function startGame() {
+    document.getElementById('title-screen').style.display = 'none';
+    init();
+    animate();
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    scene = new THREE.Scene();
+    camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    renderer = new THREE.WebGLRenderer();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.body.appendChild(renderer.domElement);
+});
+
+function checkCollisions(newPosition) {
+    const playerRadius = 1; // Width of player collision
+    const playerHeight = 2; // Height of player collision
+    
+    // Only check collisions with unbroken sphere voxels
+    const allObjects = [...sphereVoxels];
+    
+    // Create points to check for the player's height (bottom, middle, and top)
+    const checkPoints = [
+        newPosition.clone(),
+        newPosition.clone().add(new THREE.Vector3(0, playerHeight/2, 0)),
+        newPosition.clone().add(new THREE.Vector3(0, playerHeight, 0))
+    ];
+    
+    for (const object of allObjects) {
+        // Check each point of the player's height against the block
+        for (const point of checkPoints) {
+            const distance = point.distanceTo(object.position);
+            if (distance < playerRadius + 0.5) { // 0.5 is half the block size
+                return false; // Collision detected
+            }
+        }
+    }
+    
+    return true; // No collisions
+}
+
+function explodeTNT(tntBlock) {
+    const explosionRadius = 5;
+    const explosionForce = 2;
+    const position = tntBlock.position.clone();
+    
+    const particleCount = 50;
+    const particles = new THREE.Group();
+    
+    for(let i = 0; i < particleCount; i++) {
+        const particle = new THREE.Mesh(
+            new THREE.SphereGeometry(0.2),
+            new THREE.MeshPhongMaterial({color: 0xff4500})
+        );
+        
+        const theta = Math.random() * Math.PI * 2;
+        const phi = Math.random() * Math.PI;
+        const r = Math.random() * explosionRadius;
+        
+        particle.position.set(
+            r * Math.sin(phi) * Math.cos(theta),
+            r * Math.sin(phi) * Math.sin(theta),
+            r * Math.cos(phi)
+        );
+        
+        particles.add(particle);
+    }
+    
+    particles.position.copy(position);
+    scene.add(particles);
+    
+    [...blocks, ...sphereVoxels].forEach(block => {
+        const distance = block.position.distanceTo(position);
+        if(distance < explosionRadius) {
+            scene.remove(block);
+            if(blocks.includes(block)) {
+                blocks = blocks.filter(b => b !== block);
+            } else if(sphereVoxels.includes(block)) {
+                sphereVoxels = sphereVoxels.filter(v => v !== block);
+            }
+        }
+    });
+    
+    scene.remove(tntBlock);
+    blocks = blocks.filter(b => b !== tntBlock);
+    
+    setTimeout(() => {
+        const fadeOut = setInterval(() => {
+            particles.scale.multiplyScalar(0.9);
+            if(particles.scale.x < 0.1) {
+                scene.remove(particles);
+                clearInterval(fadeOut);
+            }
+        }, 50);
+    }, 500);
+}
+
+function init() {
+    createSphereVoxels();
+
+    const ambientLight = new THREE.AmbientLight(0x404040);
+    scene.add(ambientLight);
+    const light = new THREE.DirectionalLight(0xffffff, 1);
+    light.position.set(10, 10, 10);
+    scene.add(light);
+
+    controls = new THREE.PointerLockControls(camera, document.body);
+
+    controls.addEventListener('lock', function() {
+        isLocked = true;
+    });
+
+    controls.addEventListener('unlock', function() {
+        isLocked = false;
+    });
+
+    document.addEventListener('click', function() {
+        if (!isLocked) {
+            controls.lock();
+        }
+    });
+
+    document.addEventListener('keydown', onKeyDown);
+    document.addEventListener('keyup', onKeyUp);
+
+    const slots = document.querySelectorAll('.inventory-slot');
+    slots.forEach(slot => {
+        slot.addEventListener('click', (e) => {
+            e.stopPropagation();
+            slots.forEach(s => s.classList.remove('selected'));
+            slot.classList.add('selected');
+            selectedBlockType = slot.dataset.block;
+        });
+    });
+
+    document.addEventListener('keydown', (e) => {
+        if(e.key >= '1' && e.key <= '6') {
+            const index = parseInt(e.key) - 1;
+            slots.forEach(s => s.classList.remove('selected'));
+            slots[index].classList.add('selected');
+            selectedBlockType = slots[index].dataset.block;
+        }
+    });
+
+    for(let i = 0; i < 100; i++) {
+        generateBlock();
+    }
+
+    camera.position.z = 60;
+}
+
+function createSphereVoxels() {
+    const radius = 50;
+    const resolution = 2;
+    
+    for(let x = -radius; x <= radius; x += resolution) {
+        for(let y = -radius; y <= radius; y += resolution) {
+            for(let z = -radius; z <= radius; z += resolution) {
+                const position = new THREE.Vector3(x, y, z);
+                if(position.length() <= radius && position.length() >= radius - resolution) {
+                    const voxel = new THREE.Mesh(
+                        new THREE.BoxGeometry(resolution, resolution, resolution),
+                        new THREE.MeshPhongMaterial({ color: 0x8B4513 })
+                    );
+                    voxel.position.set(x, y, z);
+                    sphereVoxels.push(voxel);
+                    scene.add(voxel);
+                }
+            }
+        }
+    }
+}
+
+function generateBlock() {
+    const size = 1;
+    const geometry = new THREE.BoxGeometry(size, size, size);
+    const material = new THREE.MeshPhongMaterial({
+        color: Math.random() * 0xffffff
+    });
+    const block = new THREE.Mesh(geometry, material);
+    
+    const theta = Math.random() * Math.PI * 2;
+    const phi = Math.random() * Math.PI;
+    const radius = 51;
+    
+    block.position.x = radius * Math.sin(phi) * Math.cos(theta);
+    block.position.y = radius * Math.sin(phi) * Math.sin(theta);
+    block.position.z = radius * Math.cos(phi);
+    
+    block.lookAt(new THREE.Vector3(0, 0, 0));
+    
+    blocks.push(block);
+    scene.add(block);
+}
+
+function onKeyDown(event) {
+    if (!isLocked) return;
+    
+    switch(event.code) {
+        case 'KeyW':
+            velocity.z = -1;
+            break;
+        case 'KeyS':
+            velocity.z = 1;
+            break;
+        case 'KeyA':
+            velocity.x = -1;
+            break;
+        case 'KeyD':
+            velocity.x = 1;
+            break;
+        case 'Space':
+            moveUp = true;
+            break;
+        case 'ShiftLeft':
+            moveDown = true;
+            event.preventDefault(); // Prevent browser's default shift behavior
+            break;
+        case 'KeyM':
+            mineBlock();
+            break;
+        case 'KeyP':
+            placeBlock();
+            break;
+    }
+}
+
+function onKeyUp(event) {
+    switch(event.code) {
+        case 'KeyW':
+        case 'KeyS':
+            velocity.z = 0;
+            break;
+        case 'KeyA':
+        case 'KeyD':
+            velocity.x = 0;
+            break;
+        case 'Space':
+            moveUp = false;
+            break;
+        case 'ShiftLeft':
+            moveDown = false;
+            break;
+    }
+}
+
+function mineBlock() {
+    if (!isLocked) return;
+    
+    const raycaster = new THREE.Raycaster();
+    const direction = new THREE.Vector3();
+    camera.getWorldDirection(direction);
+    raycaster.set(camera.position, direction);
+    
+    const allObjects = [...blocks, ...sphereVoxels];
+    const intersects = raycaster.intersectObjects(allObjects);
+    
+    if(intersects.length > 0 && intersects[0].distance < 5) {
+        const minedObject = intersects[0].object;
+        scene.remove(minedObject);
+        
+        if(blocks.includes(minedObject)) {
+            blocks = blocks.filter(block => block !== minedObject);
+        } else if(sphereVoxels.includes(minedObject)) {
+            sphereVoxels = sphereVoxels.filter(voxel => voxel !== minedObject);
+        }
+        
+        blockCount++;
+        document.getElementById('blocks').textContent = blockCount;
+    }
+}
+
+function placeBlock() {
+    if (!isLocked || blockCount <= 0) return;
+    
+    const direction = new THREE.Vector3();
+    camera.getWorldDirection(direction);
+    
+    const position = camera.position.clone().add(direction.multiplyScalar(3));
+    
+    const block = new THREE.Mesh(
+        new THREE.BoxGeometry(1, 1, 1),
+        new THREE.MeshPhongMaterial({ color: blockColors[selectedBlockType] })
+    );
+    
+    block.position.copy(position);
+    blocks.push(block);
+    scene.add(block);
+    
+    if(selectedBlockType === 'tnt') {
+        setTimeout(() => explodeTNT(block), 2000);
+    }
+    
+    blockCount--;
+    document.getElementById('blocks').textContent = blockCount;
+}
+
+function animate(currentTime) {
+    requestAnimationFrame(animate);
+
+    if (currentTime - lastTime < frameInterval) {
+        return;
+    }
+    
+    if (isLocked) {
+        // Store current position
+        const currentPosition = camera.position.clone();
+        let newPosition = currentPosition.clone();
+        
+        // Calculate potential new position
+        if (velocity.x !== 0) {
+            const moveRight = new THREE.Vector3();
+            controls.getDirection(moveRight);
+            moveRight.cross(new THREE.Vector3(0, 1, 0));
+            moveRight.multiplyScalar(velocity.x * 0.1);
+            newPosition.add(moveRight);
+        }
+        
+        if (velocity.z !== 0) {
+            const moveForward = new THREE.Vector3();
+            controls.getDirection(moveForward);
+            moveForward.y = 0;
+            moveForward.normalize();
+            moveForward.multiplyScalar(-velocity.z * 0.1);
+            newPosition.add(moveForward);
+        }
+        
+        if(moveUp) {
+            newPosition.y += 0.1;
+        }
+        if(moveDown) {
+            newPosition.y -= 0.1;
+        }
+        
+        // Check if new position is valid
+        if (checkCollisions(newPosition)) {
+            camera.position.copy(newPosition);
+        }
+        
+        const distanceFromCenter = camera.position.length();
+        const maxDistance = 100;
+        const minDistance = 30;
+        
+        if(distanceFromCenter > maxDistance) {
+            camera.position.normalize().multiplyScalar(maxDistance);
+        }
+    }
+    
+    renderer.render(scene, camera);
+    lastTime = currentTime;
+}
+
+window.addEventListener('resize', function() {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+});
+</script>
+</body>
+</html>
