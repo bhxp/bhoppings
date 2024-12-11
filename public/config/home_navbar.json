@@ -332,6 +332,22 @@
             {
                 "text": "portal",
                 "url": "/portal"
+            },
+            {
+                "text": "snow globe",
+                "url": "/snowglobe"
+            },
+            {
+                "text": "sun",
+                "url": "/sun"
+            },
+            {
+                "text": "super monkey roll",
+                "url": "/supermonkeyroll"
+            },
+            {
+                "text": "tesseract",
+                "url": "/tesseract"
             }
         ]
     },
@@ -370,28 +386,6 @@
             {
                 "text": "slotwars",
                 "url": "/slotwars"
-            }
-        ]
-    },
-    {
-        "multiple": true,
-        "text": "misc 8",
-        "pages": [
-            {
-                "text": "snow globe",
-                "url": "/snowglobe"
-            },
-            {
-                "text": "sun",
-                "url": "/sun"
-            },
-            {
-                "text": "super monkey roll",
-                "url": "/supermonkeyroll"
-            },
-            {
-                "text": "tesseract",
-                "url": "/tesseract"
             },
             {
                 "text": "townscaper",
