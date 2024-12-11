@@ -1,0 +1,552 @@
+<html><head><base href="." />
+<style>
+body { margin: 0; overflow: hidden; background: #1a1a2e; transition: background 0.5s; }
+
+.volcano-background {
+    background: #4a0404 !important;
+    position: relative;
+}
+
+.lunacy-background {
+    background: #4a0478 !important;
+    position: relative;
+}
+
+.volcano {
+    position: fixed;
+    width: 100px;
+    height: 80px;
+    clip-path: polygon(50% 0%, 100% 100%, 0% 100%);
+    background: #822626;
+    bottom: 0;
+    z-index: -1;
+    transition: all 0.5s;
+}
+
+.lunacy-volcano {
+    width: 200px;
+    height: 160px;
+    background: #6b1b6e;
+}
+
+.menu {
+    position: fixed; /* Change from absolute to fixed */
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    color: #fff;
+    font-family: Arial, sans-serif;
+    z-index: 10; /* Add z-index to ensure menu stays on top */
+}
+
+.menu h1 {
+    font-size: 48px;
+    color: #ff6b6b;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+}
+
+.start-btn, .hard-mode-btn {
+    padding: 15px 30px;
+    font-size: 24px;
+    border: none;
+    border-radius: 25px;
+    color: white;
+    cursor: pointer;
+    transition: transform 0.2s;
+    margin: 10px;
+}
+
+.start-btn {
+    background: #4caf50;
+}
+
+.hard-mode-btn {
+    background: #8b0000;
+    position: relative;
+    overflow: hidden;
+}
+
+.hard-mode-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -5px;
+    width: 110%;
+    height: 100%;
+    background: repeating-linear-gradient(45deg, transparent, transparent 10px, #600 10px, #600 20px);
+    opacity: 0.3;
+}
+
+.start-btn:hover, .hard-mode-btn:hover {
+    transform: scale(1.1);
+}
+
+.game-over {
+    position: fixed; /* Change from absolute to fixed */
+    display: none;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: #ff0000;
+    font-size: 48px;
+    font-weight: bold;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+    z-index: 10; /* Add z-index to ensure game over text stays on top */
+}
+
+#gameCanvas {
+    position: fixed; /* Add fixed positioning */
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: none;
+    z-index: 1; /* Add z-index to ensure proper layering */
+}
+
+.player {
+    width: 30px;
+    height: 30px;
+    position: absolute;
+    background: radial-gradient(circle at 50% 50%, #ff69b4 0%, #ff1493 100%);
+    border-radius: 50%;
+    transform: translate(0, 0);
+    transition: left 0.1s linear, top 0.1s linear; /* Add smooth transitions for movement */
+    box-shadow: 0 0 15px rgba(255, 105, 180, 0.6);
+}
+
+.player::before {
+    content: '';
+    position: absolute;
+    top: 5px;
+    left: 5px;
+    width: 8px;
+    height: 8px;
+    background: rgba(255, 255, 255, 0.8);
+    border-radius: 50%;
+    animation: glow 1.5s infinite alternate;
+}
+
+.ground-pound {
+    transform: scale(1.5);
+    animation: pound 0.3s ease-in;
+}
+
+@keyframes pound {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.8); }
+    100% { transform: scale(1.5); }
+}
+
+@keyframes glow {
+    0% { opacity: 0.5; transform: scale(1); }
+    100% { opacity: 1; transform: scale(1.2); }
+}
+
+.meteor {
+    position: absolute;
+    background: radial-gradient(circle at 50% 50%, #747d8c 0%, #2f3542 100%);
+    border-radius: 50%;
+    box-shadow: 0 0 10px rgba(0,0,0,0.5);
+    filter: brightness(1.2);
+    overflow: visible; /* Allow the flames to be visible outside meteor boundary */
+}
+
+.meteor::before {
+    content: '';
+    position: absolute;
+    bottom: 50%;
+    left: 50%;
+    transform: translate(-50%, 50%);
+    width: 150%;
+    height: 150%;
+    background: linear-gradient(0deg, #ff4d4d, #ff9933, transparent);
+    clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+    animation: flicker 0.3s infinite alternate;
+    z-index: -1;
+}
+
+.meteor::after {
+    content: '';
+    position: absolute;
+    bottom: 50%;
+    left: 50%;
+    transform: translate(-50%, 50%) rotate(180deg);
+    width: 120%;
+    height: 120%;
+    background: linear-gradient(0deg, #ff4d4d, #ff9933, transparent);
+    clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+    animation: flicker 0.4s infinite alternate-reverse;
+    z-index: -1;
+}
+
+@keyframes flicker {
+    0% {
+        opacity: 0.8;
+        transform: translate(-50%, 50%) scale(0.95);
+    }
+    100% {
+        opacity: 1;
+        transform: translate(-50%, 50%) scale(1.05);
+    }
+}
+
+.meteor-fragment {
+    position: absolute;
+    background: #2f3542;
+    border-radius: 50%;
+    pointer-events: none;
+    filter: brightness(1.2);
+}
+
+.meteor-fragment::before {
+    content: '';
+    position: absolute;
+    bottom: 50%;
+    left: 50%;
+    transform: translate(-50%, 50%);
+    width: 150%;
+    height: 150%;
+    background: linear-gradient(0deg, #ff4d4d, #ff9933, transparent);
+    clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+    animation: flicker 0.2s infinite alternate;
+    z-index: -1;
+}
+</style>
+</head>
+<body>
+<div class="menu" id="menu">
+    <h1>Dash, Dodge and Survive!</h1>
+    <button class="start-btn" onclick="startGame()">Start</button>
+    <button class="hard-mode-btn" onclick="toggleHardMode()">HARD MODE</button>
+</div>
+<div id="gameCanvas"></div>
+<div class="game-over" id="gameOver">You died!!!!!!</div>
+
+<script>
+const player = {
+    x: 0,
+    y: 0,
+    width: 30,
+    height: 30,
+    speed: 8, // Increased from 5 to 8
+    jumpForce: 15,
+    gravity: 0.8,
+    velocityY: 0,
+    isJumping: false,
+    dashSpeed: 15,
+    isDashing: false,
+    dashCooldown: false,
+    isFlying: false,
+    isGroundPounding: false
+};
+
+let meteors = [];
+let gameLoop;
+let gameActive = false;
+let meteorsShouldFollow = false;
+let hardMode = false;
+let lunacyMode = false;
+let hardModeClickCount = 0;
+let lastHardModeClick = 0;
+let volcanoes = [];
+let meteorInterval;
+
+function createVolcanoes(isLunacy) {
+    const volcanoCount = isLunacy ? 8 : 5;
+    const gameCanvas = document.getElementById('gameCanvas');
+    
+    // Clear existing volcanoes first
+    volcanoes.forEach(v => v.remove());
+    volcanoes = [];
+    
+    for (let i = 0; i < volcanoCount; i++) {
+        const volcano = document.createElement('div');
+        volcano.className = 'volcano' + (isLunacy ? ' lunacy-volcano' : '');
+        volcano.style.left = `${(i * (window.innerWidth / volcanoCount)) + (Math.random() * 50 - 25)}px`;
+        gameCanvas.appendChild(volcano);
+        volcanoes.push(volcano);
+    }
+}
+
+function toggleHardMode() {
+    const currentTime = Date.now();
+    
+    if (currentTime - lastHardModeClick > 1000) {
+        hardModeClickCount = 0;
+    }
+    
+    hardModeClickCount++;
+    lastHardModeClick = currentTime;
+
+    const body = document.body;
+    
+    if (hardModeClickCount >= 2) {
+        // Activate lunacy mode
+        hardMode = false;
+        lunacyMode = true;
+        body.classList.remove('volcano-background');
+        body.classList.add('lunacy-background');
+        player.gravity = 1.5;
+        player.speed = 3;  // Keep slow speed for lunacy mode
+        if (gameActive) {
+            createVolcanoes(true);
+        }
+    } else {
+        // Regular hard mode toggle
+        hardMode = !hardMode;
+        lunacyMode = false;
+        if (hardMode) {
+            body.classList.add('volcano-background');
+            body.classList.remove('lunacy-background');
+            player.gravity = 1.2;
+            player.speed = 4;  // Keep reduced speed for hard mode
+            if (gameActive) {
+                createVolcanoes(false);
+            }
+        } else {
+            body.classList.remove('volcano-background');
+            body.classList.remove('lunacy-background');
+            player.gravity = 0.8;
+            player.speed = 8;  // Reset to faster speed in normal mode
+            volcanoes.forEach(v => v.remove());
+            volcanoes = [];
+        }
+    }
+}
+
+function createMeteorExplosion(x, y, size) {
+    const fragments = 8;
+    for (let i = 0; i < fragments; i++) {
+        const fragment = document.createElement('div');
+        fragment.className = 'meteor-fragment';
+        fragment.style.width = (size / 4) + 'px';
+        fragment.style.height = (size / 4) + 'px';
+        fragment.style.left = x + (size / 2) + 'px';
+        fragment.style.top = y + (size / 2) + 'px';
+        
+        const angle = (i / fragments) * Math.PI * 2;
+        const tx = Math.cos(angle) * 50;
+        const ty = Math.sin(angle) * 50;
+        
+        fragment.style.setProperty('--tx', `${tx}px`);
+        fragment.style.setProperty('--ty', `${ty}px`);
+        fragment.style.animation = 'fragment 0.5s forwards';
+        
+        document.getElementById('gameCanvas').appendChild(fragment);
+        
+        setTimeout(() => fragment.remove(), 500);
+    }
+}
+
+function startGame() {
+    document.getElementById('menu').style.display = 'none';
+    document.getElementById('gameCanvas').style.display = 'block';
+    document.getElementById('gameOver').style.display = 'none';
+    
+    player.x = window.innerWidth / 2;
+    player.y = window.innerHeight - 100;
+    meteors = [];
+    
+    meteorsShouldFollow = Math.random() < 0.05;
+    
+    if (hardMode || lunacyMode) {
+        createVolcanoes(lunacyMode);
+    }
+    
+    createPlayer();
+    gameActive = true;
+    gameLoop = setInterval(update, 16);
+    
+    // Clear any existing meteor interval
+    if (meteorInterval) {
+        clearInterval(meteorInterval);
+    }
+    
+    // Set new meteor interval based on game mode
+    const meteorSpawnRate = lunacyMode ? 1500 : (hardMode ? 500 : 1000);
+    meteorInterval = setInterval(createMeteor, meteorSpawnRate);
+}
+
+function createMeteor() {
+    if (!gameActive) return;
+    
+    const createSingleMeteor = (startX, startY, direction) => {
+        const meteor = {
+            x: startX,
+            y: startY,
+            size: Math.random() * 20 + (lunacyMode ? 40 : hardMode ? 30 : 20),
+            speed: Math.random() * 3 + (lunacyMode ? 6 : hardMode ? 4 : 2),
+            following: meteorsShouldFollow,
+            direction: direction
+        };
+        
+        const meteorElement = document.createElement('div');
+        meteorElement.className = 'meteor';
+        meteorElement.style.width = meteor.size + 'px';
+        meteorElement.style.height = meteor.size + 'px';
+        document.getElementById('gameCanvas').appendChild(meteorElement);
+        
+        meteors.push({ ...meteor, element: meteorElement });
+    };
+
+    if (lunacyMode) {
+        // Create meteors from left, right, and top
+        createSingleMeteor(-30, Math.random() * window.innerHeight, 'right');
+        createSingleMeteor(window.innerWidth + 30, Math.random() * window.innerHeight, 'left');
+        createSingleMeteor(Math.random() * window.innerWidth, -30, 'down');
+    } else {
+        createSingleMeteor(Math.random() * (window.innerWidth - 30), -30, 'down');
+    }
+}
+
+function update() {
+    if (!gameActive) return;
+    
+    // Calculate desired movement based on key presses
+    let moveX = 0;
+    let moveY = 0;
+    
+    if (keys['a'] && player.x > 0) {
+        moveX = -player.speed;
+    }
+    if (keys['d'] && player.x < window.innerWidth - player.width) {
+        moveX = player.speed;
+    }
+    
+    if (keys['w']) {
+        player.isFlying = true;
+        player.velocityY = -8;
+    } else {
+        player.isFlying = false;
+    }
+
+    if (keys['s'] && !player.isGroundPounding && player.velocityY > 0) {
+        groundPound();
+    }
+    
+    // Apply smooth movement
+    if (!player.isFlying) {
+        player.velocityY += player.gravity;
+    }
+    
+    moveY = player.velocityY;
+    
+    // Update position with bounds checking
+    player.x = Math.max(0, Math.min(window.innerWidth - player.width, player.x + moveX));
+    player.y = Math.max(0, Math.min(window.innerHeight - player.height, player.y + moveY));
+    
+    if (player.y >= window.innerHeight - player.height) {
+        player.y = window.innerHeight - player.height;
+        player.velocityY = 0;
+        player.isJumping = false;
+    }
+    
+    // Update player element position with smooth transition
+    const playerElement = document.getElementById('player');
+    playerElement.style.left = player.x + 'px';
+    playerElement.style.top = player.y + 'px';
+    
+    meteors.forEach((meteor, index) => {
+        if (meteor.following) {
+            const dx = player.x - meteor.x;
+            const dy = player.y - meteor.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            
+            meteor.x += (dx / distance) * meteor.speed;
+            meteor.y += (dy / distance) * meteor.speed;
+        } else {
+            switch(meteor.direction) {
+                case 'right':
+                    meteor.x += meteor.speed;
+                    break;
+                case 'left':
+                    meteor.x -= meteor.speed;
+                    break;
+                case 'down':
+                default:
+                    meteor.y += meteor.speed;
+            }
+        }
+        
+        meteor.element.style.left = meteor.x + 'px';
+        meteor.element.style.top = meteor.y + 'px';
+        
+        if (checkCollision(player, meteor)) {
+            gameOver();
+        }
+        
+        const outOfBounds = meteor.y > window.innerHeight - meteor.size ||
+                           meteor.x < -meteor.size ||
+                           meteor.x > window.innerWidth;
+        
+        if (outOfBounds) {
+            if (meteor.y > window.innerHeight - meteor.size) {
+                createMeteorExplosion(meteor.x, window.innerHeight - meteor.size, meteor.size);
+            }
+            meteor.element.remove();
+            meteors.splice(index, 1);
+        }
+    });
+}
+
+function groundPound() {
+    if (!player.isGroundPounding && player.velocityY > 0) {
+        player.isGroundPounding = true;
+        player.velocityY = 25;
+        const playerElement = document.getElementById('player');
+        playerElement.classList.add('ground-pound');
+        
+        const checkGround = setInterval(() => {
+            if (player.y >= window.innerHeight - player.height) {
+                player.isGroundPounding = false;
+                playerElement.classList.remove('ground-pound');
+                clearInterval(checkGround);
+            }
+        }, 10);
+    }
+}
+
+function checkCollision(player, meteor) {
+    return player.x < meteor.x + meteor.size &&
+           player.x + player.width > meteor.x &&
+           player.y < meteor.y + meteor.size &&
+           player.y + player.height > meteor.y;
+}
+
+function createPlayer() {
+    const playerElement = document.createElement('div');
+    playerElement.className = 'player';
+    playerElement.id = 'player';
+    document.getElementById('gameCanvas').appendChild(playerElement);
+}
+
+function gameOver() {
+    gameActive = false;
+    clearInterval(gameLoop);
+    clearInterval(meteorInterval);
+    document.getElementById('gameOver').style.display = 'block';
+    document.getElementById('gameCanvas').innerHTML = '';
+    meteors = [];
+    volcanoes = [];
+    
+    setTimeout(() => {
+        document.getElementById('menu').style.display = 'flex';
+        document.getElementById('gameOver').style.display = 'none';
+    }, 2000);
+}
+
+const keys = {};
+
+document.addEventListener('keydown', (e) => {
+    keys[e.key] = true;
+});
+
+document.addEventListener('keyup', (e) => {
+    keys[e.key] = false;
+});
+</script>
+</body></html>
