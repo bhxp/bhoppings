@@ -68,11 +68,6 @@
     },
     {
         "multiple": true,
-        "text": "downloads",
-        "pages": [{ "text": "tango clicker", "url": "/tangoclicker" }]
-    },
-    {
-        "multiple": true,
         "text": "tools",
         "pages": [
             { "text": "glass", "url": "/glass" },
@@ -84,7 +79,8 @@
             { "text": "internet speed test", "url": "/internetspeedtest" },
             { "text": "is anyone on the website?", "url": "/isanyoneonthewebsite" },
             { "text": "meme maker", "url": "/mememaker" },
-            { "text": "shitty mp3", "url": "/shiitymp3" }
+            { "text": "shitty mp3", "url": "/shiitymp3" },
+            { "text": "tango clicker", "url": "/tangoclicker" }
         ]
     },
     {
