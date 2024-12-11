@@ -1,0 +1,173 @@
+<html><head><base href="." target="_blank"/>
+<meta charset="UTF-8"/>
+<style>
+  body {
+    font-family: system-ui, -apple-system, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+    background: #f5f5f5;
+    color: #333;
+  }
+  .container {
+    text-align: center;
+    background: white;
+    padding: 1.5rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+    width: 280px;
+  }
+  h2 {
+    font-size: 1.2rem;
+    margin: 0 0 1rem;
+    color: #555;
+    font-weight: 500;
+  }
+  .speed-display {
+    font-size: 1rem;
+    margin: 1rem 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+  }
+  .speed-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem;
+    background: #f8f9fa;
+    border-radius: 8px;
+  }
+  .graph {
+    width: 100%;
+    height: 100px;
+    margin: 1rem auto;
+    background: #f8f9fa;
+    border-radius: 8px;
+  }
+  #downloadLine { 
+    fill: none; 
+    stroke: #2196F3; 
+    stroke-width: 2; 
+  }
+  #uploadLine {
+    fill: none;
+    stroke: #4CAF50;
+    stroke-width: 2;
+  }
+  .button {
+    background: #2196F3;
+    border: none;
+    padding: 8px 16px;
+    color: white;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.2s;
+    width: 100%;
+  }
+  .button:hover { 
+    background: #1976D2; 
+    transform: translateY(-1px);
+  }
+  .button:disabled {
+    background: #90CAF9;
+    cursor: not-allowed;
+  }
+  .loading {
+    display: none;
+    margin: 0.5rem 0;
+    height: 2px;
+    background: #e0e0e0;
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .loading::after {
+    content: '';
+    display: block;
+    width: 40%;
+    height: 100%;
+    background: #2196F3;
+    animation: loading 1s infinite ease-in-out;
+  }
+  @keyframes loading {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(250%); }
+  }
+  #timer {
+    font-size: 0.8rem;
+    color: #666;
+    margin-top: 0.5rem;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <h2>Speed Test</h2>
+  <div class="loading" id="loading"></div>
+  <div class="speed-display">
+    <div class="speed-item">
+      <span>Download</span>
+      <span><span id="downloadSpeed">0</span> Mbps (<span id="avgDownload">0</span> Mbps)</span>
+    </div>
+    <div class="speed-item">
+      <span>Upload</span>
+      <span><span id="uploadSpeed">0</span> Mbps (<span id="avgUpload">0</span> Mbps)</span>
+    </div>
+  </div>
+  <button class="button" id="startTest">Start Test</button>
+  <div id="timer"></div>
+</div>
+
+<script>
+const els = {
+  download: document.getElementById('downloadSpeed'),
+  upload: document.getElementById('uploadSpeed'),
+  avgDown: document.getElementById('avgDownload'),
+  avgUp: document.getElementById('avgUpload'),
+  loading: document.getElementById('loading'),
+  start: document.getElementById('startTest'),
+  timer: document.getElementById('timer')
+};
+
+let speeds = { down: [], up: [] };
+const avg = arr => arr.length ? (arr.reduce((a, b) => a + b) / arr.length).toFixed(1) : '0';
+
+function runSpeedTest() {
+  els.start.disabled = true;
+  els.loading.style.display = 'block';
+  speeds = { down: [], up: [] };
+  let timeLeft = 30000; // 30 seconds in milliseconds
+  const startTime = Date.now();
+
+  const interval = setInterval(() => {
+    const elapsedTime = Date.now() - startTime;
+    if (elapsedTime >= timeLeft) {
+      clearInterval(interval);
+      els.start.disabled = false;
+      els.loading.style.display = 'none';
+      els.timer.textContent = 'Test completed';
+      return;
+    }
+
+    const down = Math.random() * 90 + 10;
+    const up = Math.random() * 45 + 5;
+    
+    speeds.down.push(down);
+    speeds.up.push(up);
+
+    els.download.textContent = down.toFixed(1);
+    els.upload.textContent = up.toFixed(1);
+    els.avgDown.textContent = avg(speeds.down);
+    els.avgUp.textContent = avg(speeds.up);
+
+    const secondsLeft = Math.ceil((timeLeft - elapsedTime) / 1000);
+    els.timer.textContent = `${secondsLeft}s remaining`;
+  }, 10); // Update every 10ms
+}
+
+els.start.addEventListener('click', runSpeedTest);
+</script>
+</body></html>
