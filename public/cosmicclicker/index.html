@@ -1,0 +1,1919 @@
+<html><head><base href="https://example.com/">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Roboto:wght@400;700&display=swap');
+
+:root {
+  --primary: #3a0ca3;
+  --secondary: #4361ee;
+  --accent: #4cc9f0;
+  --background: radial-gradient(circle, #03045e 0%, #000000 100%);
+  --surface: rgba(255, 255, 255, 0.1);
+  --text: #ffffff;
+  --success: #06d6a0;
+  --warning: #ffd166;
+  --click-effect-color: var(--accent);
+  --floating-text-color: var(--success);
+  --clicker-button-background: var(--primary);
+  --border-color: var(--accent);
+  --rarity-mythic-color: #ff006e;
+  --rarity-legendary-color: #ffd60a;
+  --rarity-epic-color: #7209b7;
+  --rarity-rare-color: #4cc9f0;
+  --rarity-uncommon-color: #4ecdc4;
+  --rarity-common-color: #8d99ae;
+}
+
+body {
+  font-family: 'Roboto', sans-serif;
+  background: var(--background);
+  color: var(--text);
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+h1, h2, h3 {
+  font-family: 'Press Start 2P', cursive;
+  color: var(--accent);
+}
+
+.navbar {
+  background-color: rgba(0, 0, 0, 0.8);
+  padding: 10px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  backdrop-filter: blur(10px);
+}
+
+.navbar .logo {
+  font-size: 24px;
+  color: var(--accent);
+  text-shadow: 0 0 10px var(--accent);
+}
+
+.navbar .nav-links {
+  list-style: none;
+  display: flex;
+  gap: 15px;
+}
+
+.navbar .nav-links li {
+  display: inline;
+}
+
+.navbar .nav-links a {
+  color: var(--text);
+  text-decoration: none;
+  font-weight: bold;
+  transition: color 0.3s;
+  position: relative;
+}
+
+.navbar .nav-links a::after {
+  content: '';
+  position: absolute;
+  width: 0%;
+  height: 2px;
+  background: var(--accent);
+  bottom: -4px;
+  left: 0;
+  transition: all 0.3s;
+}
+
+.navbar .nav-links a:hover::after {
+  width: 100%;
+}
+
+.navbar .nav-links a:hover {
+  color: var(--accent);
+}
+
+.game-container {
+  max-width: 1200px;
+  margin: 20px auto;
+  padding: 20px;
+}
+
+.game-section {
+  background: var(--surface);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  padding: 20px;
+  box-shadow: 0 2px 20px rgba(0,0,0,0.5);
+  margin-bottom: 20px;
+  backdrop-filter: blur(5px);
+}
+
+.stats-container {
+  display: flex;
+  justify-content: space-around;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.stat-box {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 15px;
+  border-radius: 8px;
+  text-align: center;
+  min-width: 150px;
+  color: #fff;
+  flex: 1;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+  position: relative;
+  overflow: hidden;
+}
+
+.stat-box::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: var(--accent);
+  transform: rotate(45deg);
+  opacity: 0;
+  transition: opacity 0.5s;
+}
+
+.stat-box:hover::after {
+  opacity: 0.1;
+}
+
+.clicker-button {
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  background: var(--clicker-button-background, var(--primary));
+  border: none;
+  color: var(--text);
+  font-family: inherit;
+  font-size: 18px;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.2s;
+  margin: 20px auto;
+  display: block;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+  text-shadow: 0 0 10px var(--text);
+}
+
+.clicker-button::before {
+  content: '';
+  position: absolute;
+  top: -75%;
+  left: -75%;
+  width: 250%;
+  height: 250%;
+  background: radial-gradient(circle, rgba(76,201,240,0.2) 0%, rgba(58,12,163,0) 80%);
+  animation: rotateGlow 10s linear infinite;
+}
+
+@keyframes rotateGlow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.clicker-button:hover {
+  transform: scale(1.05);
+}
+
+.clicker-button:active {
+  transform: scale(0.95);
+}
+
+.inventory-grid, .upgrade-grid, .marketplace-grid, .skins-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 15px;
+}
+
+.item-card, .upgrade-card, .skin-card {
+  background: rgba(255,255,255,0.1);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 15px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.3s;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+}
+
+.item-card:hover, .upgrade-card:hover, .skin-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+}
+
+.button {
+  background: var(--accent);
+  border: none;
+  color: #fff;
+  padding: 10px 20px;
+  border-radius: 5px;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.3s, transform 0.3s;
+}
+
+.button:hover {
+  background: var(--secondary);
+  transform: translateY(-2px);
+}
+
+.button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.rarity-mythic { color: var(--rarity-mythic-color); text-shadow: 0 0 10px var(--rarity-mythic-color); }
+.rarity-legendary { color: var(--rarity-legendary-color); text-shadow: 0 0 10px var(--rarity-legendary-color); }
+.rarity-epic { color: var(--rarity-epic-color); text-shadow: 0 0 10px var(--rarity-epic-color); }
+.rarity-rare { color: var(--rarity-rare-color); text-shadow: 0 0 10px var(--rarity-rare-color); }
+.rarity-uncommon { color: var(--rarity-uncommon-color); text-shadow: 0 0 10px var(--rarity-uncommon-color); }
+.rarity-common { color: var(--rarity-common-color); }
+
+.notification {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background: var(--surface);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 15px;
+  animation: slideIn 0.3s ease-out;
+  z-index: 1000;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+  backdrop-filter: blur(5px);
+}
+
+@keyframes slideIn {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+
+.achievement {
+  position: relative;
+  background: var(--secondary);
+  border-radius: 8px;
+  padding: 15px;
+  margin: 10px 0;
+  opacity: 0.7;
+  color: #fff;
+  transition: opacity 0.5s;
+}
+
+.achievement.unlocked {
+  opacity: 1;
+  animation: unlock 0.5s ease-out;
+}
+
+@keyframes unlock {
+  0% { transform: scale(0.8); }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1); }
+}
+
+.gem-counter {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+}
+
+.gem-icon {
+  width: 20px;
+  height: 20px;
+}
+
+.stat-box div:first-child {
+  font-size: 18px;
+}
+
+.stat-box div:last-child {
+  font-size: 24px;
+  font-weight: bold;
+  margin-top: 5px;
+}
+
+.marketplace-grid .item-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.tooltip {
+  position: relative;
+  cursor: help;
+}
+
+.tooltip .tooltiptext {
+  visibility: hidden;
+  width: 200px;
+  background-color: var(--surface);
+  color: var(--text);
+  text-align: center;
+  border-radius: 6px;
+  padding: 5px;
+  position: absolute;
+  z-index: 10;
+  bottom: 125%;
+  left: 50%;
+  margin-left: -100px;
+  opacity: 0;
+  transition: opacity 0.3s;
+  backdrop-filter: blur(5px);
+  border: 1px solid var(--accent);
+}
+
+.tooltip:hover .tooltiptext {
+  visibility: visible;
+  opacity: 1;
+}
+
+@media (max-width: 768px) {
+  .stats-container {
+    flex-direction: column;
+  }
+
+  .navbar .nav-links {
+    flex-direction: column;
+    background: rgba(0, 0, 0, 0.9);
+    position: absolute;
+    top: 100%;
+    right: 0;
+    padding: 10px;
+    display: none;
+  }
+
+  .navbar .nav-links.active {
+    display: flex;
+  }
+
+  .navbar .menu-toggle {
+    display: block;
+    cursor: pointer;
+  }
+}
+
+.navbar .menu-toggle {
+  display: none;
+  position: relative;
+  width: 30px;
+  height: 30px;
+}
+
+.navbar .menu-toggle .bar {
+  position: absolute;
+  width: 100%;
+  height: 3px;
+  background: var(--text);
+  transition: all 0.3s;
+}
+
+.navbar .menu-toggle .bar:nth-child(1) {
+  top: 6px;
+}
+
+.navbar .menu-toggle .bar:nth-child(2) {
+  top: 14px;
+}
+
+.navbar .menu-toggle .bar:nth-child(3) {
+  top: 22px;
+}
+
+.click-effect {
+  position: absolute;
+  color: var(--click-effect-color, var(--accent));
+  font-size: 14px;
+  animation: floatUp 1s ease-out forwards;
+}
+
+@keyframes floatUp {
+  0% { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(-50px); }
+}
+
+.floating-text {
+  position: absolute;
+  color: var(--floating-text-color, var(--success));
+  font-size: 18px;
+  animation: floatUp 1s ease-out forwards;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.loading-screen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: var(--background);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+}
+
+.loading-screen.hidden {
+  display: none;
+}
+
+.loading-screen .spinner {
+  width: 80px;
+  height: 80px;
+  border: 10px solid var(--surface);
+  border-top: 10px solid var(--accent);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+</style>
+</head>
+<body>
+<nav class="navbar">
+  <div class="logo">Cosmic Clicker</div>
+  <div class="menu-toggle" onclick="toggleMenu()">
+    <div class="bar"></div>
+    <div class="bar"></div>
+    <div class="bar"></div>
+  </div>
+  <ul class="nav-links" id="navLinks">
+    <li><a href="#clicker-section">Home</a></li>
+    <li><a href="#upgrades-section">Upgrades</a></li>
+    <li><a href="#inventory-section">Inventory</a></li>
+    <li><a href="#achievements-section">Achievements</a></li>
+    <li><a href="#marketplace-section">Marketplace</a></li>
+    <li><a href="#skins-section">Skins</a></li>
+    <li><a href="#settings-section">Settings</a></li>
+  </ul>
+</nav>
+<div class="game-container">
+  <div class="game-section" id="clicker-section">
+    <h1>Cosmic Clicker</h1>
+    <div class="stats-container">
+      <div class="stat-box">
+        <div>Stardust</div>
+        <div id="stardust">0</div>
+      </div>
+      <div class="stat-box">
+        <div>Cosmic Gems</div>
+        <div id="gems">0</div>
+      </div>
+      <div class="stat-box">
+        <div>Click Power</div>
+        <div id="clickPower">1</div>
+      </div>
+      <div class="stat-box">
+        <div>Stardust Multiplier</div>
+        <div id="stardustMultiplier">1</div>
+      </div>
+    </div>
+    <button class="clicker-button" id="mainClicker">
+      Click to gather stardust!
+    </button>
+  </div>
+
+  <div class="game-section" id="upgrades-section">
+    <h2>Upgrades</h2>
+    <div class="upgrade-grid" id="upgradesContainer">
+      <!-- Upgrades will be populated here -->
+    </div>
+  </div>
+
+  <div class="game-section" id="inventory-section">
+    <h2>Inventory</h2>
+    <button class="button" id="liquidateButton">Liquidate Items</button>
+    <div class="inventory-grid" id="inventoryContainer">
+      <!-- Inventory items will be populated here -->
+    </div>
+  </div>
+
+  <div class="game-section" id="achievements-section">
+    <h2>Achievements</h2>
+    <div id="achievementsContainer">
+      <!-- Achievements will be populated here -->
+    </div>
+  </div>
+
+  <div class="game-section" id="marketplace-section">
+    <h2>Marketplace</h2>
+    <div class="marketplace-grid" id="marketplaceContainer">
+      <!-- Marketplace items will be populated here -->
+    </div>
+  </div>
+
+  <div class="game-section" id="skins-section">
+    <h2>Skins</h2>
+    <div class="skins-grid" id="skinsContainer">
+      <!-- Skins will be populated here -->
+    </div>
+  </div>
+
+  <div class="game-section" id="settings-section">
+    <h2>Settings</h2>
+    <button class="button" id="wipeSaveButton">Wipe Save Data</button>
+  </div>
+</div>
+
+<div class="loading-screen" id="loadingScreen">
+  <div class="spinner"></div>
+</div>
+
+<script>
+class Game {
+  constructor() {
+    this.gameVersion = 6;
+    this.stardust = 0;
+    this.gems = 0;
+    this.clickPower = 1;
+    this.stardustMultiplier = 1;
+    this.inventory = [];
+    this.achievements = new Set();
+    this.autoClickInterval = null;
+    this.autoClickPower = 1;
+    this.autoClickIntervalTime = 1000;
+    this.itemRarityBoost = 0;
+    this.maxInventorySize = 20;
+
+    this.upgrades = {
+      // Upgrades purchased with stardust
+      clickPower: {
+        name: 'Star Crusher',
+        baseCost: 10,
+        level: 1,
+        description: 'Increase stardust per click',
+        costMultiplier: 1.5,
+        effect: () => {
+          this.clickPower = this.upgrades.clickPower.level;
+        }
+      },
+      autoClicker: {
+        name: 'Cosmic Drone',
+        baseCost: 100,
+        level: 0,
+        description: 'Automatically collects stardust every second',
+        costMultiplier: 2,
+        effect: () => {
+          this.startAutoClicker();
+        }
+      },
+      stardustMultiplier: {
+        name: 'Stardust Amplifier',
+        baseCost: 500,
+        level: 1,
+        description: 'Multiply all stardust gains',
+        costMultiplier: 2,
+        effect: () => {
+          this.stardustMultiplier = this.upgrades.stardustMultiplier.level;
+        }
+      },
+      gemMagnet: {
+        name: 'Gem Magnet',
+        baseCost: 1000,
+        level: 1,
+        description: 'Increase chance of finding gems',
+        costMultiplier: 3,
+        effect: () => {
+          this.gemFindBaseChance = 0.01 * this.upgrades.gemMagnet.level;
+        }
+      },
+      lunarCollector: {
+        name: 'Lunar Collector',
+        baseCost: 2000,
+        level: 0,
+        description: 'Increase auto-click stardust collection',
+        costMultiplier: 2.5,
+        effect: () => {
+          this.autoClickPower = this.upgrades.lunarCollector.level + 1;
+          this.startAutoClicker();
+        }
+      },
+      solarFlare: {
+        name: 'Solar Flare',
+        baseCost: 5000,
+        level: 0,
+        description: 'Temporarily boost click power significantly',
+        costMultiplier: 3,
+        effect: () => {
+          const originalClickPower = this.clickPower;
+          this.clickPower *= 5;
+          this.showNotification('Solar Flare activated! Click power increased!');
+          setTimeout(() => {
+            this.clickPower = originalClickPower;
+            this.showNotification('Solar Flare effect worn off.');
+          }, 30000); // lasts 30 seconds
+        }
+      },
+      // Upgrades purchased with gems
+      gemExchange: {
+        name: 'Gem Exchange',
+        baseCost: 5,
+        level: 0,
+        description: 'Exchange gems for stardust',
+        costMultiplier: 1,
+        currency: 'gems',
+        effect: () => {
+          this.stardust += 1000 * this.upgrades.gemExchange.level;
+          this.showNotification('Exchanged gems for stardust!');
+          this.updateDisplay();
+        }
+      },
+      timeWarp: {
+        name: 'Time Warp',
+        baseCost: 10,
+        level: 0,
+        description: 'Increase auto-click speed',
+        costMultiplier: 2,
+        currency: 'gems',
+        effect: () => {
+          this.autoClickIntervalTime = Math.max(100, 1000 / (this.upgrades.timeWarp.level + 1));
+          this.startAutoClicker();
+        }
+      },
+      cosmicForge: {
+        name: 'Cosmic Forge',
+        baseCost: 20,
+        level: 0,
+        description: 'Increase chance of finding higher rarity items',
+        costMultiplier: 2,
+        currency: 'gems',
+        effect: () => {
+          this.itemRarityBoost = this.upgrades.cosmicForge.level * 0.1;
+        }
+      },
+      astralVault: {
+        name: 'Astral Vault',
+        baseCost: 15,
+        level: 0,
+        description: 'Increase inventory capacity',
+        costMultiplier: 1.5,
+        currency: 'gems',
+        effect: () => {
+          this.maxInventorySize = 20 + (this.upgrades.astralVault.level * 5);
+        }
+      }
+    };
+
+    this.gemFindBaseChance = 0.01;
+
+    this.marketplaceItems = [];
+    this.purchasedListings = [];
+
+    this.room = new WebsimSocket();
+
+    // Skins
+    this.skins = [];
+    this.equippedSkins = {};
+    this.availableSkins = [
+      // Existing full skins
+      {
+        id: 'nebula',
+        name: 'Nebula Dream',
+        description: 'A skin with a dreamy nebula background.',
+        rarity: 'rare',
+        components: ['all'],
+        styles: {
+          '--background': 'radial-gradient(circle, #89216B 0%, #DA4453 100%)',
+          '--accent': '#DA4453',
+          '--primary': '#89216B',
+          '--text': '#FFF',
+          '--clicker-button-background': '#89216B',
+          '--click-effect-color': '#FFD700',
+          '--floating-text-color': '#FFD700',
+          '--rarity-common-color': '#ffd1dc',
+          '--rarity-uncommon-color': '#ff91af',
+          '--rarity-rare-color': '#ff5e7f',
+          '--rarity-epic-color': '#ff1744',
+          '--rarity-legendary-color': '#ffa500',
+          '--rarity-mythic-color': '#d50000',
+          '--border-color': '#DA4453'
+        }
+      },
+      {
+        id: 'lovecraft',
+        name: 'Eldritch Horror',
+        description: 'A skin inspired by Lovecraftian horror.',
+        rarity: 'epic',
+        components: ['all'],
+        styles: {
+          '--background': 'radial-gradient(circle, #000000 0%, #2C5364 100%)',
+          '--accent': '#0f0',
+          '--primary': '#2C5364',
+          '--text': '#0f0',
+          '--clicker-button-background': '#2C5364',
+          '--click-effect-color': '#FF00FF',
+          '--floating-text-color': '#FF00FF',
+          '--rarity-common-color': '#0f0',
+          '--rarity-uncommon-color': '#0a0',
+          '--rarity-rare-color': '#050',
+          '--rarity-epic-color': '#0f0',
+          '--rarity-legendary-color': '#5f5',
+          '--rarity-mythic-color': '#afa',
+          '--border-color': '#0f0'
+        }
+      },
+      {
+        id: 'solar',
+        name: 'Solar Blaze',
+        description: 'A bright skin with fiery tones.',
+        rarity: 'rare',
+        components: ['all'],
+        styles: {
+          '--background': 'radial-gradient(circle, #ff7e5f 0%, #feb47b 100%)',
+          '--accent': '#feb47b',
+          '--primary': '#ff7e5f',
+          '--text': '#FFF',
+          '--clicker-button-background': '#ff7e5f',
+          '--click-effect-color': '#FFFF00',
+          '--floating-text-color': '#FFFF00',
+          '--rarity-common-color': '#ffd700',
+          '--rarity-uncommon-color': '#ffc300',
+          '--rarity-rare-color': '#ffbf00',
+          '--rarity-epic-color': '#ffb400',
+          '--rarity-legendary-color': '#ffa500',
+          '--rarity-mythic-color': '#ff8c00',
+          '--border-color': '#feb47b'
+        }
+      },
+      {
+        id: 'cosmic',
+        name: 'Cosmic Void',
+        description: 'A skin that embraces the darkness of space.',
+        rarity: 'epic',
+        components: ['all'],
+        styles: {
+          '--background': 'radial-gradient(circle, #0f2027, #203a43, #2c5364)',
+          '--accent': '#4cc9f0',
+          '--primary': '#203a43',
+          '--text': '#4cc9f0',
+          '--clicker-button-background': '#203a43',
+          '--click-effect-color': '#4cc9f0',
+          '--floating-text-color': '#4cc9f0',
+          '--rarity-common-color': '#8d99ae',
+          '--rarity-uncommon-color': '#4ecdc4',
+          '--rarity-rare-color': '#4cc9f0',
+          '--rarity-epic-color': '#7209b7',
+          '--rarity-legendary-color': '#ffd60a',
+          '--rarity-mythic-color': '#ff006e',
+          '--border-color': '#4cc9f0'
+        }
+      },
+      // New Common Skins
+      {
+        id: 'coolBlue',
+        name: 'Cool Blue',
+        description: 'A skin with cool blue tones.',
+        rarity: 'common',
+        components: ['all'],
+        styles: {
+          '--background': 'radial-gradient(circle, #74ebd5, #a8e063)',
+          '--accent': '#74ebd5',
+          '--primary': '#a8e063',
+          '--text': '#000',
+          '--clicker-button-background': '#74ebd5',
+          '--click-effect-color': '#000',
+          '--floating-text-color': '#000',
+          '--rarity-common-color': '#000080',
+          '--rarity-uncommon-color': '#0000CD',
+          '--rarity-rare-color': '#4169E1',
+          '--rarity-epic-color': '#1E90FF',
+          '--rarity-legendary-color': '#00BFFF',
+          '--rarity-mythic-color': '#87CEFA',
+          '--border-color': '#74ebd5'
+        }
+      },
+      {
+        id: 'fieryRed',
+        name: 'Fiery Red',
+        description: 'A skin with fiery red hues.',
+        rarity: 'common',
+        components: ['all'],
+        styles: {
+          '--background': 'radial-gradient(circle, #ffafbd, #ffc3a0)',
+          '--accent': '#ffc3a0',
+          '--primary': '#ffafbd',
+          '--text': '#000',
+          '--clicker-button-background': '#ffafbd',
+          '--click-effect-color': '#000',
+          '--floating-text-color': '#000',
+          '--rarity-common-color': '#8B0000',
+          '--rarity-uncommon-color': '#B22222',
+          '--rarity-rare-color': '#DC143C',
+          '--rarity-epic-color': '#FF4500',
+          '--rarity-legendary-color': '#FF6347',
+          '--rarity-mythic-color': '#FF7F50',
+          '--border-color': '#ffc3a0'
+        }
+      },
+      {
+        id: 'natureGreen',
+        name: 'Nature Green',
+        description: 'A skin inspired by nature.',
+        rarity: 'common',
+        components: ['all'],
+        styles: {
+          '--background': 'radial-gradient(circle, #56ab2f, #a8e063)',
+          '--accent': '#a8e063',
+          '--primary': '#56ab2f',
+          '--text': '#000',
+          '--clicker-button-background': '#56ab2f',
+          '--click-effect-color': '#000',
+          '--floating-text-color': '#000',
+          '--rarity-common-color': '#006400',
+          '--rarity-uncommon-color': '#008000',
+          '--rarity-rare-color': '#228B22',
+          '--rarity-epic-color': '#2E8B57',
+          '--rarity-legendary-color': '#3CB371',
+          '--rarity-mythic-color': '#66CDAA',
+          '--border-color': '#a8e063'
+        }
+      },
+      {
+        id: 'sunnyYellow',
+        name: 'Sunny Yellow',
+        description: 'A bright and sunny skin.',
+        rarity: 'common',
+        components: ['all'],
+        styles: {
+          '--background': 'radial-gradient(circle, #fceabb, #f8b500)',
+          '--accent': '#f8b500',
+          '--primary': '#fceabb',
+          '--text': '#000',
+          '--clicker-button-background': '#f8b500',
+          '--click-effect-color': '#000',
+          '--floating-text-color': '#000',
+          '--rarity-common-color': '#DAA520',
+          '--rarity-uncommon-color': '#B8860B',
+          '--rarity-rare-color': '#FFD700',
+          '--rarity-epic-color': '#FFA500',
+          '--rarity-legendary-color': '#FF8C00',
+          '--rarity-mythic-color': '#FF7F50',
+          '--border-color': '#f8b500'
+        }
+      },
+      {
+        id: 'mysticPurple',
+        name: 'Mystic Purple',
+        description: 'A mysterious purple skin.',
+        rarity: 'common',
+        components: ['all'],
+        styles: {
+          '--background': 'radial-gradient(circle, #834d9b, #d04ed6)',
+          '--accent': '#d04ed6',
+          '--primary': '#834d9b',
+          '--text': '#fff',
+          '--clicker-button-background': '#834d9b',
+          '--click-effect-color': '#fff',
+          '--floating-text-color': '#fff',
+          '--rarity-common-color': '#4B0082',
+          '--rarity-uncommon-color': '#800080',
+          '--rarity-rare-color': '#8A2BE2',
+          '--rarity-epic-color': '#9370DB',
+          '--rarity-legendary-color': '#BA55D3',
+          '--rarity-mythic-color': '#DA70D6',
+          '--border-color': '#d04ed6'
+        }
+      },
+      // New Individual Component Skins
+      {
+        id: 'goldenButton',
+        name: 'Golden Click',
+        description: 'A golden clicker button.',
+        rarity: 'uncommon',
+        components: ['button'],
+        styles: {
+          '--clicker-button-background': 'gold',
+          '--click-effect-color': '#FFD700',
+          '--text': '#000'
+        }
+      },
+      {
+        id: 'neonBorders',
+        name: 'Neon Borders',
+        description: 'Borders that glow with neon light.',
+        rarity: 'uncommon',
+        components: ['borders'],
+        styles: {
+          '--border-color': '#39FF14'
+        }
+      },
+      {
+        id: 'galaxyBackground',
+        name: 'Galaxy Glow',
+        description: 'A galaxy themed background.',
+        rarity: 'uncommon',
+        components: ['background'],
+        styles: {
+          '--background': 'radial-gradient(circle at 50% 50%, #1a2a6c, #b21f1f, #fdbb2d)'
+        }
+      },
+      // Default Skin
+      {
+        id: 'default',
+        name: 'Default',
+        description: 'The original style.',
+        rarity: 'common',
+        components: ['all'],
+        styles: {}
+      }
+    ];
+
+    this.defaultStyles = {
+      '--primary': '#3a0ca3',
+      '--secondary': '#4361ee',
+      '--accent': '#4cc9f0',
+      '--background': 'radial-gradient(circle, #03045e 0%, #000000 100%)',
+      '--surface': 'rgba(255, 255, 255, 0.1)',
+      '--text': '#ffffff',
+      '--success': '#06d6a0',
+      '--warning': '#ffd166',
+      '--click-effect-color': '#4cc9f0',
+      '--floating-text-color': '#06d6a0',
+      '--clicker-button-background': '#3a0ca3',
+      '--border-color': '#4cc9f0',
+      '--rarity-mythic-color': '#ff006e',
+      '--rarity-legendary-color': '#ffd60a',
+      '--rarity-epic-color': '#7209b7',
+      '--rarity-rare-color': '#4cc9f0',
+      '--rarity-uncommon-color': '#4ecdc4',
+      '--rarity-common-color': '#8d99ae'
+    };
+
+    this.initializeGame();
+  }
+
+  async initializeGame() {
+    this.showLoadingScreen(true);
+    await this.loadGame();
+    this.ensureDefaultSkin();
+    this.setupEventListeners();
+    this.updateDisplay();
+    this.startAutoClicker();
+    this.checkAchievements();
+    await this.setupMarketplace();
+    this.renderAchievements();
+    this.applySkins();
+    this.renderSkins();
+    this.showLoadingScreen(false);
+  }
+
+  ensureDefaultSkin() {
+    if (!this.skins.find(skin => skin.id === 'default')) {
+      const defaultSkin = this.availableSkins.find(skin => skin.id === 'default');
+      if (defaultSkin) {
+        this.skins.push(defaultSkin);
+      }
+    }
+  }
+
+  setupEventListeners() {
+    document.getElementById('mainClicker').addEventListener('click', () => this.click());
+    document.getElementById('liquidateButton').addEventListener('click', () => this.liquidateItems());
+    const wipeSaveButton = document.getElementById('wipeSaveButton');
+    if (wipeSaveButton) {
+      wipeSaveButton.addEventListener('click', () => this.wipeSaveData());
+    }
+    this.renderUpgrades();
+  }
+
+  click() {
+    const stardustGain = this.clickPower * this.stardustMultiplier;
+    this.stardust += stardustGain;
+
+    const gemChance = this.gemFindBaseChance;
+    if (Math.random() < gemChance) {
+      this.gems += 1;
+      this.showNotification('Found a Cosmic Gem! ✨');
+      this.updateDisplay();
+    }
+
+    if (Math.random() < 0.05) {
+      this.generateItem();
+    }
+
+    this.createClickEffect();
+
+    this.updateDisplay();
+    this.checkAchievements();
+  }
+
+  createClickEffect() {
+    const btn = document.getElementById('mainClicker');
+    const clickEffect = document.createElement('span');
+    clickEffect.className = 'click-effect';
+    clickEffect.textContent = `+${this.clickPower * this.stardustMultiplier}`;
+    clickEffect.style.top = Math.random() * 100 + '%';
+    clickEffect.style.left = Math.random() * 100 + '%';
+    btn.appendChild(clickEffect);
+    setTimeout(() => {
+      clickEffect.remove();
+    }, 1000);
+  }
+
+  generateItem() {
+    const mythicChance = 0.0001 + (this.itemRarityBoost * 0.0001); // Extremely rare
+    if (Math.random() < mythicChance) {
+      const mythicItems = [
+        {
+          name: 'Heart of the Cosmos',
+          stats: { magic: 100, defense: 100 },
+          rarity: 'mythic',
+          description: 'An item of unfathomable power, pulsating with cosmic energy.'
+        },
+        {
+          name: 'Blade of Azathoth',
+          stats: { shadow: 120 },
+          rarity: 'mythic',
+          description: 'A blade said to be forged by the blind idiot god himself.'
+        },
+        {
+          name: 'Crown of Yog-Sothoth',
+          stats: { wisdom: 150 },
+          rarity: 'mythic',
+          description: 'Grants the wearer knowledge beyond mortal comprehension.'
+        }
+      ];
+      const newItem = mythicItems[Math.floor(Math.random() * mythicItems.length)];
+      newItem.id = Date.now() + Math.random();
+      this.inventory.push(newItem);
+      this.showNotification(`Found Mythic Item: ${newItem.name}!`);
+      this.renderInventory();
+      this.saveGame();
+      return;
+    }
+
+    // Procedural item generation
+    const materials = [
+      { name: 'Stellar', weight: 5, themes: ['space'], statBonuses: { magic: 3 } },
+      { name: 'Void', weight: 3, themes: ['space', 'darkness'], statBonuses: { shadow: 2 } },
+      { name: 'Eldritch', weight: 1, themes: ['lovecraftian', 'gods'], statBonuses: { lore: 5 } },
+      { name: 'Nebulous', weight: 4, themes: ['space'], statBonuses: { magic: 2 } },
+      { name: 'Ancient', weight: 2, themes: ['lovecraftian'], statBonuses: { lore: 3 } },
+      { name: 'Cosmic', weight: 3, themes: ['space'], statBonuses: { magic: 4 } },
+      { name: 'Cthulhu\'s', weight: 1, themes: ['lovecraftian', 'gods'], statBonuses: { lore: 5 } },
+      { name: 'Astral', weight: 4, themes: ['space'], statBonuses: { magic: 3 } },
+      { name: 'Iron', weight: 10, themes: ['mundane'], statBonuses: { defense: 1 } },
+      { name: 'Copper', weight: 12, themes: ['mundane'], statBonuses: { magic: 1 } },
+      { name: 'Stone', weight: 15, themes: ['mundane'], statBonuses: { strength: 1 } },
+      { name: 'Wood', weight: 18, themes: ['mundane'], statBonuses: { agility: 1 } },
+      { name: 'Cloth', weight: 20, themes: ['mundane'], statBonuses: { wisdom: 1 } }
+    ];
+
+    const items = [
+      { name: 'Shard', weight: 5, themes: ['space'], statBonuses: { magic: 1 } },
+      { name: 'Idol', weight: 2, themes: ['lovecraftian'], statBonuses: { lore: 2 } },
+      { name: 'Tome', weight: 2, themes: ['lovecraftian'], statBonuses: { wisdom: 3 } },
+      { name: 'Crystal', weight: 4, themes: ['space'], statBonuses: { magic: 2 } },
+      { name: 'Relic', weight: 3, themes: ['lovecraftian', 'space'], statBonuses: { lore: 2, magic: 1 } },
+      { name: 'Essence', weight: 3, themes: ['space', 'magic'], statBonuses: { magic: 3 } },
+      { name: 'Sigil', weight: 2, themes: ['lovecraftian'], statBonuses: { lore: 2 } },
+      { name: 'Fragment', weight: 5, themes: ['space'], statBonuses: { magic: 1 } },
+      { name: 'Sword', weight: 15, themes: ['mundane'], statBonuses: { attack: 2 } },
+      { name: 'Shield', weight: 15, themes: ['mundane'], statBonuses: { defense: 2 } },
+      { name: 'Helmet', weight: 15, themes: ['mundane'], statBonuses: { defense: 1 } },
+      { name: 'Gloves', weight: 18, themes: ['mundane'], statBonuses: { agility: 1 } },
+      { name: 'Boots', weight: 18, themes: ['mundane'], statBonuses: { agility: 1 } },
+      { name: 'Ring', weight: 12, themes: ['mundane'], statBonuses: { magic: 1 } },
+      { name: 'Amulet', weight: 12, themes: ['mundane'], statBonuses: { wisdom: 1 } },
+      { name: 'Potion', weight: 20, themes: ['mundane'], statBonuses: { health: 3 } }
+    ];
+
+    const suffixes = [
+      { name: 'of the Outer Gods', weight: 1, themes: ['lovecraftian', 'gods'], statBonuses: { lore: 5 } },
+      { name: 'of Infinity', weight: 3, themes: ['space'], statBonuses: { magic: 2 } },
+      { name: 'of Madness', weight: 2, themes: ['lovecraftian'], statBonuses: { lore: 3 } },
+      { name: 'of Stars', weight: 4, themes: ['space'], statBonuses: { magic: 2 } },
+      { name: 'of the Abyss', weight: 2, themes: ['lovecraftian', 'darkness'], statBonuses: { shadow: 3 } },
+      { name: 'of Eternity', weight: 3, themes: ['space', 'time'], statBonuses: { wisdom: 2 } },
+      { name: 'of the Void', weight: 2, themes: ['space', 'darkness'], statBonuses: { shadow: 2 } },
+      { name: 'of Forbidden Knowledge', weight: 1, themes: ['lovecraftian'], statBonuses: { wisdom: 5 } },
+      { name: '', weight: 25, themes: ['mundane'], statBonuses: {} },
+      { name: 'of Strength', weight: 15, themes: ['mundane'], statBonuses: { strength: 1 } },
+      { name: 'of Agility', weight: 15, themes: ['mundane'], statBonuses: { agility: 1 } },
+      { name: 'of Wisdom', weight: 15, themes: ['mundane'], statBonuses: { wisdom: 1 } },
+      { name: 'of Fortitude', weight: 15, themes: ['mundane'], statBonuses: { defense: 1 } },
+      { name: 'of Vitality', weight: 15, themes: ['mundane'], statBonuses: { health: 1 } }
+    ];
+
+    const totalMaterialWeight = materials.reduce((sum, material) => sum + material.weight, 0);
+    const totalItemWeight = items.reduce((sum, item) => sum + item.weight, 0);
+    const totalSuffixWeight = suffixes.reduce((sum, suffix) => sum + suffix.weight, 0);
+
+    const selectRandom = (list, totalWeight) => {
+      let randomWeight = Math.random() * totalWeight;
+      for (const element of list) {
+        if (randomWeight < element.weight) {
+          return element;
+        }
+        randomWeight -= element.weight;
+      }
+      return list[list.length - 1];
+    };
+
+    const material = selectRandom(materials, totalMaterialWeight);
+    const item = selectRandom(items, totalItemWeight);
+    const suffix = selectRandom(suffixes, totalSuffixWeight);
+
+    // Assign stats based on material, item, and suffix
+    const stats = {};
+    [material, item, suffix].forEach(component => {
+      Object.entries(component.statBonuses).forEach(([stat, value]) => {
+        stats[stat] = (stats[stat] || 0) + value;
+      });
+    });
+
+    // Calculate total stats score
+    let totalStatsScore = Object.values(stats).reduce((sum, value) => sum + value, 0);
+
+    // Adjust totalStatsScore based on itemRarityBoost
+    totalStatsScore += totalStatsScore * this.itemRarityBoost;
+
+    // Adjust rarity for items related to gods
+    const isGodRelated = material.themes.includes('gods') || item.themes.includes('gods') || suffix.themes.includes('gods');
+    if (isGodRelated) {
+      totalStatsScore *= 0.5; // Make rarer
+    }
+
+    // Adjust rarity for clashing themes
+    const themes = new Set([...material.themes, ...item.themes, ...suffix.themes]);
+    const hasClashingThemes = themes.has('space') && themes.has('lovecraftian');
+    if (hasClashingThemes) {
+      totalStatsScore *= 0.66; // Make rarer
+    }
+
+    // Determine rarity based on adjusted total stats score
+    let rarity;
+    if (totalStatsScore >= 15) rarity = 'legendary';
+    else if (totalStatsScore >= 12) rarity = 'epic';
+    else if (totalStatsScore >= 9) rarity = 'rare';
+    else if (totalStatsScore >= 6) rarity = 'uncommon';
+    else rarity = 'common';
+
+    // Chance to find a common skin when generating a common item
+    if (rarity === 'common' && Math.random() < 0.1) { // 10% chance
+      const availableCommonSkins = this.availableSkins.filter(skin => !this.skins.find(owned => owned.id === skin.id) && skin.rarity === 'common');
+      if (availableCommonSkins.length > 0) {
+        const newSkin = availableCommonSkins[Math.floor(Math.random() * availableCommonSkins.length)];
+        this.skins.push(newSkin);
+        this.showNotification(`Unlocked new skin: ${newSkin.name}!`);
+        this.renderSkins();
+        this.saveGame();
+        return;
+      }
+    }
+
+    const newItem = {
+      id: Date.now() + Math.random(),
+      name: `${material.name} ${item.name} ${suffix.name}`.trim(),
+      rarity: rarity,
+      stats: stats,
+      description: `A ${rarity} item forged from ${material.name} materials.`
+    };
+
+    if (this.inventory.length >= this.maxInventorySize) {
+      this.showNotification('Inventory full! Consider liquidating items.');
+      return;
+    }
+
+    this.inventory.push(newItem);
+    this.showNotification(`Found ${newItem.name}!`);
+    this.renderInventory();
+    this.saveGame();
+  }
+
+  buyUpgrade(upgradeKey) {
+    const upgrade = this.upgrades[upgradeKey];
+    const cost = this.getUpgradeCost(upgrade);
+
+    if (this.canAffordUpgrade(upgrade, cost)) {
+      this.payForUpgrade(upgrade, cost);
+      upgrade.level += 1;
+      upgrade.effect();
+      this.updateDisplay();
+      this.renderUpgrades();
+      this.checkAchievements();
+      this.saveGame();
+    }
+  }
+
+  getUpgradeCost(upgrade) {
+    return Math.floor(upgrade.baseCost * Math.pow(upgrade.costMultiplier, upgrade.level));
+  }
+
+  canAffordUpgrade(upgrade, cost) {
+    if (upgrade.currency === 'gems') {
+      return this.gems >= cost;
+    } else {
+      return this.stardust >= cost;
+    }
+  }
+
+  payForUpgrade(upgrade, cost) {
+    if (upgrade.currency === 'gems') {
+      this.gems -= cost;
+    } else {
+      this.stardust -= cost;
+    }
+  }
+
+  startAutoClicker() {
+    if (this.autoClickInterval) {
+      clearInterval(this.autoClickInterval);
+    }
+
+    if (this.upgrades.autoClicker.level > 0) {
+      this.autoClickInterval = setInterval(() => {
+        const stardustGain = this.clickPower * this.stardustMultiplier * this.upgrades.autoClicker.level * this.autoClickPower;
+        this.stardust += stardustGain;
+        this.createFloatingText('#stardust', `+${stardustGain}`);
+        this.updateDisplay();
+        this.checkAchievements();
+      }, this.autoClickIntervalTime);
+    }
+  }
+
+  renderUpgrades() {
+    const container = document.getElementById('upgradesContainer');
+    container.innerHTML = '';
+
+    Object.entries(this.upgrades).forEach(([key, upgrade]) => {
+      const cost = this.getUpgradeCost(upgrade);
+      const currency = upgrade.currency === 'gems' ? 'gems' : 'stardust';
+      const resourceAmount = upgrade.currency === 'gems' ? this.gems : this.stardust;
+
+      const div = document.createElement('div');
+      div.className = 'upgrade-card';
+      div.innerHTML = `
+        <h3>${upgrade.name}</h3>
+        <p>${upgrade.description}</p>
+        <p>Level: ${upgrade.level}</p>
+        <p>Cost: ${cost} ${currency}</p>
+        <button class="button" onclick="game.buyUpgrade('${key}')" 
+                ${resourceAmount < cost ? 'disabled' : ''}>
+          ${upgrade.currency === 'gems' ? 'Spend Gems' : 'Upgrade'}
+        </button>
+      `;
+      container.appendChild(div);
+    });
+  }
+
+  renderInventory() {
+    const container = document.getElementById('inventoryContainer');
+    container.innerHTML = '';
+
+    this.inventory.forEach(item => {
+      const div = document.createElement('div');
+      div.className = 'item-card';
+      let statsHtml = '';
+      for (const [stat, value] of Object.entries(item.stats)) {
+        statsHtml += `<p>${stat}: ${value}</p>`;
+      }
+      div.innerHTML = `
+        <h3 class="rarity-${item.rarity}">${item.name}</h3>
+        <p>Rarity: ${item.rarity}</p>
+        ${statsHtml}
+        <p>${item.description}</p>
+        <button class="button sell-button" onclick="game.initiateSellItem(${item.id})">Sell</button>
+      `;
+      container.appendChild(div);
+    });
+  }
+
+  checkAchievements() {
+    const achievements = [
+      { id: 'stardust100', name: 'Stardust Initiate', condition: () => this.stardust >= 100 },
+      { id: 'stardust1000', name: 'Stardust Adept', condition: () => this.stardust >= 1000 },
+      { id: 'gems10', name: 'Gem Collector', condition: () => this.gems >= 10 },
+      { id: 'inventory10', name: 'Item Hoarder', condition: () => this.inventory.length >= 10 },
+      { id: 'clickPower10', name: 'Power Overwhelming', condition: () => this.clickPower >= 10 },
+      { id: 'amplifier5', name: 'Amplification Master', condition: () => this.upgrades.stardustMultiplier.level >= 5 },
+      { id: 'autoClicker5', name: 'Automation Expert', condition: () => this.upgrades.autoClicker.level >= 5 },
+      { id: 'mythicFound', name: 'Legendary Discoverer', condition: () => this.inventory.some(item => item.rarity === 'mythic') },
+      { id: 'maxInventory', name: 'Treasury Vault', condition: () => this.maxInventorySize >= 50 },
+      { id: 'timeMaster', name: 'Master of Time', condition: () => this.upgrades.timeWarp.level >= 5 },
+      { id: 'forgeMaster', name: 'Forge Master', condition: () => this.upgrades.cosmicForge.level >= 5 },
+      { id: 'skinCollector', name: 'Skin Collector', condition: () => this.skins.length >= 1 }
+    ];
+
+    let newAchievements = false;
+    achievements.forEach(achievement => {
+      if (!this.achievements.has(achievement.id) && achievement.condition()) {
+        this.achievements.add(achievement.id);
+        this.showNotification(`Achievement Unlocked: ${achievement.name}!`);
+        newAchievements = true;
+      }
+    });
+
+    if (newAchievements) {
+      this.renderAchievements();
+      this.saveGame();
+    }
+  }
+
+  renderAchievements() {
+    const container = document.getElementById('achievementsContainer');
+    container.innerHTML = '';
+
+    const achievements = [
+      { id: 'stardust100', name: 'Stardust Initiate', description: 'Collect 100 stardust' },
+      { id: 'stardust1000', name: 'Stardust Adept', description: 'Collect 1,000 stardust' },
+      { id: 'gems10', name: 'Gem Collector', description: 'Collect 10 cosmic gems' },
+      { id: 'inventory10', name: 'Item Hoarder', description: 'Collect 10 items' },
+      { id: 'clickPower10', name: 'Power Overwhelming', description: 'Reach click power 10' },
+      { id: 'amplifier5', name: 'Amplification Master', description: 'Upgrade Stardust Amplifier to level 5' },
+      { id: 'autoClicker5', name: 'Automation Expert', description: 'Upgrade Cosmic Drone to level 5' },
+      { id: 'mythicFound', name: 'Legendary Discoverer', description: 'Find a Mythic item' },
+      { id: 'maxInventory', name: 'Treasury Vault', description: 'Expand inventory to 50 slots' },
+      { id: 'timeMaster', name: 'Master of Time', description: 'Upgrade Time Warp to level 5' },
+      { id: 'forgeMaster', name: 'Forge Master', description: 'Upgrade Cosmic Forge to level 5' },
+      { id: 'skinCollector', name: 'Skin Collector', description: 'Collect your first skin' }
+    ];
+
+    achievements.forEach(achievement => {
+      const div = document.createElement('div');
+      div.className = `achievement ${this.achievements.has(achievement.id) ? 'unlocked' : ''}`;
+      div.innerHTML = `
+        <h3>${achievement.name}</h3>
+        <p>${achievement.description}</p>
+      `;
+      container.appendChild(div);
+    });
+  }
+
+  renderSkins() {
+    const container = document.getElementById('skinsContainer');
+    container.innerHTML = '';
+
+    this.skins.forEach(skin => {
+      const div = document.createElement('div');
+      div.className = 'skin-card';
+
+      // Determine if the skin is equipped
+      let isEquipped = false;
+      let equippedComponents = [];
+      for (const [component, equippedSkin] of Object.entries(this.equippedSkins)) {
+        if (equippedSkin.id === skin.id) {
+          isEquipped = true;
+          equippedComponents.push(component);
+        }
+      }
+
+      let actionButtonHtml = '';
+
+      // If skin affects 'all'
+      if (skin.components && skin.components.includes('all')) {
+        actionButtonHtml = `<button class="button" onclick="game.${isEquipped ? 'unequipSkin()' : `equipSkin('${skin.id}')`}">
+                ${isEquipped ? 'Unequip' : 'Equip'}
+              </button>`;
+      } else {
+        // For component skins, show buttons for each component
+        actionButtonHtml = skin.components.map(component => {
+          const isComponentEquipped = this.equippedSkins[component] && this.equippedSkins[component].id === skin.id;
+          return `
+            <div>
+              <strong>${component.charAt(0).toUpperCase() + component.slice(1)}</strong>
+              <button class="button" onclick="game.${isComponentEquipped ? `unequipSkin('${component}')` : `equipSkin('${skin.id}', '${component}')`}">
+                ${isComponentEquipped ? 'Unequip' : 'Equip'}
+              </button>
+            </div>
+          `;
+        }).join('');
+      }
+
+      let sellButtonHtml = '';
+      if (skin.id !== 'default') {
+        sellButtonHtml = `<button class="button" onclick="game.initiateSellSkin('${skin.id}')">Sell</button>`;
+      }
+
+      div.innerHTML = `
+        <h3>${skin.name}</h3>
+        <p>Rarity: ${skin.rarity}</p>
+        <p>${skin.description}</p>
+        ${actionButtonHtml}
+        ${sellButtonHtml}
+      `;
+      container.appendChild(div);
+    });
+  }
+
+  equipSkin(skinId, component) {
+    const skin = this.skins.find(s => s.id === skinId);
+    if (!skin) return;
+
+    if (component) {
+      if (skin.components && skin.components.includes(component)) {
+        this.equippedSkins[component] = skin;
+        this.applySkins();
+        this.saveGame();
+      }
+    } else if (skin.components && skin.components.includes('all')) {
+      this.equippedSkins['all'] = skin;
+      this.applySkins();
+      this.saveGame();
+    }
+  }
+
+  unequipSkin(component) {
+    if (component) {
+      delete this.equippedSkins[component];
+    } else {
+      delete this.equippedSkins['all'];
+    }
+    this.applySkins();
+    this.saveGame();
+  }
+
+  applySkins() {
+    // Reset to default styles
+    const root = document.documentElement;
+    for (const [property, value] of Object.entries(this.defaultStyles)) {
+      root.style.setProperty(property, value);
+    }
+
+    // Apply 'all' skin if equipped
+    if (this.equippedSkins['all']) {
+      const skin = this.equippedSkins['all'];
+      for (const [property, value] of Object.entries(skin.styles)) {
+        root.style.setProperty(property, value);
+      }
+    }
+
+    // Apply individual component skins
+    for (const [component, skin] of Object.entries(this.equippedSkins)) {
+      if (component !== 'all') {
+        for (const [property, value] of Object.entries(skin.styles)) {
+          root.style.setProperty(property, value);
+        }
+      }
+    }
+  }
+
+  showNotification(message) {
+    const notification = document.createElement('div');
+    notification.className = 'notification';
+    notification.textContent = message;
+    document.body.appendChild(notification);
+
+    setTimeout(() => {
+      notification.remove();
+    }, 3000);
+  }
+
+  updateDisplay() {
+    document.getElementById('stardust').textContent = Math.floor(this.stardust);
+    document.getElementById('gems').textContent = this.gems;
+    document.getElementById('clickPower').textContent = this.clickPower;
+    document.getElementById('stardustMultiplier').textContent = this.stardustMultiplier;
+  }
+
+  saveGame() {
+    const saveData = {
+      stardust: this.stardust,
+      gems: this.gems,
+      clickPower: this.clickPower,
+      stardustMultiplier: this.stardustMultiplier,
+      inventory: this.inventory,
+      achievements: Array.from(this.achievements),
+      upgrades: this.upgrades,
+      gameVersion: this.gameVersion,
+      autoClickPower: this.autoClickPower,
+      autoClickIntervalTime: this.autoClickIntervalTime,
+      itemRarityBoost: this.itemRarityBoost,
+      maxInventorySize: this.maxInventorySize,
+      skins: this.skins,
+      equippedSkins: this.equippedSkins
+    };
+    localStorage.setItem('cosmicClickerSave', JSON.stringify(saveData));
+  }
+
+  async loadGame() {
+    const saveData = localStorage.getItem('cosmicClickerSave');
+    if (saveData) {
+      const data = JSON.parse(saveData);
+      if (data.gameVersion !== this.gameVersion) {
+        this.showNotification('Game has been reset due to update!');
+        this.resetGame();
+        return;
+      }
+      this.stardust = data.stardust;
+      this.gems = data.gems;
+      this.clickPower = data.clickPower;
+      this.stardustMultiplier = data.stardustMultiplier;
+      this.inventory = data.inventory;
+      this.achievements = new Set(data.achievements);
+
+      // Restore upgrades
+      Object.keys(this.upgrades).forEach(key => {
+        if (data.upgrades[key]) {
+          this.upgrades[key].level = data.upgrades[key].level;
+        }
+      });
+
+      // Restore new variables
+      this.autoClickPower = data.autoClickPower || 1;
+      this.autoClickIntervalTime = data.autoClickIntervalTime || 1000;
+      this.itemRarityBoost = data.itemRarityBoost || 0;
+      this.maxInventorySize = data.maxInventorySize || 20;
+
+      // Restore skins
+      this.skins = data.skins || [];
+      this.equippedSkins = data.equippedSkins || {};
+
+      // Reapply upgrade effects
+      Object.values(this.upgrades).forEach(upgrade => {
+        upgrade.effect();
+      });
+    } else {
+      this.resetGame();
+    }
+  }
+
+  resetGame() {
+    this.stardust = 0;
+    this.gems = 0;
+    this.clickPower = 1;
+    this.stardustMultiplier = 1;
+    this.inventory = [];
+    this.achievements = new Set();
+    this.autoClickPower = 1;
+    this.autoClickIntervalTime = 1000;
+    this.itemRarityBoost = 0;
+    this.maxInventorySize = 20;
+    this.skins = [];
+    this.equippedSkins = {};
+
+    this.ensureDefaultSkin();
+
+    // Reset upgrades
+    Object.keys(this.upgrades).forEach(key => {
+      if (this.upgrades[key].currency === 'gems') {
+        this.upgrades[key].level = 0;
+      } else {
+        this.upgrades[key].level = 1;
+      }
+    });
+
+    // Reapply upgrade effects
+    Object.values(this.upgrades).forEach(upgrade => {
+      upgrade.effect();
+    });
+
+    this.renderUpgrades();
+    this.renderInventory();
+    this.renderAchievements();
+    this.renderSkins();
+    this.updateDisplay();
+    this.startAutoClicker();
+    this.checkAchievements();
+    this.saveGame();
+  }
+
+  async setupMarketplace() {
+    // Subscribe to marketplace item listings
+    this.room.collection('marketplaceListings_v3').subscribe(listings => {
+      this.marketplaceItems = listings;
+      this.renderMarketplace();
+    });
+
+    // Subscribe to purchase records
+    this.room.collection('marketplacePurchases_v3').subscribe(purchases => {
+      this.purchasedListings = purchases.map(p => p.listingId);
+      this.processSales(purchases);
+      this.renderMarketplace();
+    });
+  }
+
+  initiateSellItem(itemId) {
+    const item = this.inventory.find(i => i.id === itemId);
+    if (!item) return;
+    const currency = prompt("Sell for 'stardust' or 'gems'?", "stardust");
+    if (currency !== 'stardust' && currency !== 'gems') {
+      alert("Invalid currency");
+      return;
+    }
+    const price = parseInt(prompt(`Enter price in ${currency}:`), 10);
+    if (isNaN(price) || price <= 0) {
+      alert("Invalid price");
+      return;
+    }
+    this.sellItemOrSkin(item, 'item', price, currency);
+  }
+
+  initiateSellSkin(skinId) {
+    const skin = this.skins.find(s => s.id === skinId);
+    if (!skin) return;
+    if (skin.id === 'default') {
+      alert("The Default skin cannot be sold.");
+      return;
+    }
+    const currency = prompt("Sell for 'stardust' or 'gems'?", "stardust");
+    if (currency !== 'stardust' && currency !== 'gems') {
+      alert("Invalid currency");
+      return;
+    }
+    const price = parseInt(prompt(`Enter price in ${currency}:`), 10);
+    if (isNaN(price) || price <= 0) {
+      alert("Invalid price");
+      return;
+    }
+    this.sellItemOrSkin(skin, 'skin', price, currency);
+  }
+
+  sellItemOrSkin(object, type, price, currency) {
+    // Remove item or skin from player's inventory
+    if (type === 'item') {
+      this.inventory = this.inventory.filter(i => i.id !== object.id);
+      this.renderInventory();
+    } else if (type === 'skin') {
+      this.skins = this.skins.filter(s => s.id !== object.id);
+      this.renderSkins();
+    } else {
+      return;
+    }
+
+    // Save game
+    this.saveGame();
+
+    // Create a record in 'marketplaceListings_v3' collection
+    this.room.collection('marketplaceListings_v3').create({
+      objectId: object.id,
+      object: object,
+      objectType: type,
+      price: price,
+      currency: currency,
+      sellerId: this.room.party.client.id,
+      sellerUsername: this.room.party.client.username,
+      createdAt: Date.now(),
+    });
+    this.showNotification(`Listed ${object.name} for sale.`);
+  }
+
+  renderMarketplace() {
+    const container = document.getElementById('marketplaceContainer');
+    container.innerHTML = '';
+
+    // Filter out purchased listings
+    const availableListings = this.marketplaceItems.filter(listing => !this.purchasedListings.includes(listing.id));
+
+    // Sort listings by rarity and type
+    availableListings.sort((a, b) => {
+      const rarityOrder = { 'common': 1, 'uncommon': 2, 'rare': 3, 'epic': 4, 'legendary': 5, 'mythic': 6 };
+      const typeOrder = { 'item': 1, 'skin': 2 };
+
+      const rarityDiff = rarityOrder[b.object.rarity] - rarityOrder[a.object.rarity];
+      if (rarityDiff !== 0) return rarityDiff;
+
+      const typeDiff = typeOrder[a.objectType] - typeOrder[b.objectType];
+      if (typeDiff !== 0) return typeDiff;
+
+      return b.price - a.price; // highest price first
+    });
+
+    availableListings.forEach(listing => {
+      const div = document.createElement('div');
+      div.className = 'item-card';
+
+      let contentHtml = '';
+      if (listing.objectType === 'item') {
+        let statsHtml = '';
+        for (const [stat, value] of Object.entries(listing.object.stats)) {
+          statsHtml += `<p>${stat}: ${value}</p>`;
+        }
+        contentHtml = `
+          <h3 class="rarity-${listing.object.rarity}">${listing.object.name}</h3>
+          <p>Rarity: ${listing.object.rarity}</p>
+          ${statsHtml}
+          <p>${listing.object.description}</p>
+        `;
+      } else if (listing.objectType === 'skin') {
+        contentHtml = `
+          <h3>${listing.object.name}</h3>
+          <p>Rarity: ${listing.object.rarity}</p>
+          <p>${listing.object.description}</p>
+        `;
+      }
+
+      div.innerHTML = `
+        ${contentHtml}
+        <p>Price: ${listing.price} ${listing.currency}</p>
+        <p>Seller: ${listing.sellerUsername}</p>
+        <button class="button" onclick="game.purchaseListing('${listing.id}')">
+          Buy
+        </button>
+      `;
+      container.appendChild(div);
+    });
+  }
+
+  purchaseListing(listingId) {
+    const listing = this.marketplaceItems.find(l => l.id === listingId);
+    if (!listing) return;
+
+    // Check if the item has already been purchased
+    if (this.purchasedListings.includes(listingId)) {
+      alert("Item has already been purchased");
+      return;
+    }
+
+    // Check if the user can afford it
+    if (listing.currency === 'stardust') {
+      if (this.stardust < listing.price) {
+        alert("Not enough stardust");
+        return;
+      }
+    } else if (listing.currency === 'gems') {
+      if (this.gems < listing.price) {
+        alert("Not enough gems");
+        return;
+      }
+    } else {
+      alert("Invalid currency");
+      return;
+    }
+
+    // Deduct cost from buyer
+    if (listing.currency === 'stardust') {
+      this.stardust -= listing.price;
+    } else {
+      this.gems -= listing.price;
+    }
+
+    // Add item or skin to buyer's inventory
+    if (listing.objectType === 'item') {
+      if (this.inventory.length >= this.maxInventorySize) {
+        this.showNotification('Inventory full! Cannot purchase item.');
+        return;
+      }
+      this.inventory.push(listing.object);
+      this.renderInventory();
+    } else if (listing.objectType === 'skin') {
+      this.skins.push(listing.object);
+      this.renderSkins();
+    } else {
+      alert("Invalid listing type");
+      return;
+    }
+
+    // Save game
+    this.saveGame();
+    this.updateDisplay();
+
+    // Create purchase record
+    this.room.collection('marketplacePurchases_v3').create({
+      listingId: listing.id,
+      buyerId: this.room.party.client.id,
+      buyerUsername: this.room.party.client.username,
+      timestamp: Date.now(),
+    });
+
+    this.showNotification(`Purchased ${listing.object.name} from ${listing.sellerUsername}`);
+  }
+
+  processSales(purchases) {
+    purchases.forEach(purchase => {
+      // Check if the purchase is for this user's listing
+      const listing = this.marketplaceItems.find(l => l.id === purchase.listingId);
+      if (listing && listing.sellerId === this.room.party.client.id) {
+        // Credit the seller
+        if (listing.currency === 'stardust') {
+          this.stardust += listing.price;
+        } else {
+          this.gems += listing.price;
+        }
+
+        // Remove the listing
+        this.room.collection('marketplaceListings_v3').delete(listing.id);
+
+        // Save game and update display
+        this.saveGame();
+        this.updateDisplay();
+
+        this.showNotification(`You sold ${listing.object.name} to ${purchase.buyerUsername}`);
+      }
+    });
+  }
+
+  liquidateItems() {
+    let totalStardustGained = 0;
+    let totalGemsGained = 0;
+    let itemsToRemove = [];
+
+    this.inventory.forEach(item => {
+      switch (item.rarity) {
+        case 'common':
+          totalStardustGained += 10;
+          itemsToRemove.push(item);
+          break;
+        case 'uncommon':
+          totalStardustGained += 20;
+          itemsToRemove.push(item);
+          break;
+        case 'rare':
+          totalStardustGained += 50;
+          itemsToRemove.push(item);
+          break;
+        case 'epic':
+          totalStardustGained += 100;
+          itemsToRemove.push(item);
+          break;
+        case 'legendary':
+          totalGemsGained += 1;
+          itemsToRemove.push(item);
+          break;
+        case 'mythic':
+          totalGemsGained += 5;
+          itemsToRemove.push(item);
+          break;
+        default:
+          break;
+      }
+    });
+
+    // Remove the items from the inventory
+    this.inventory = this.inventory.filter(item => !itemsToRemove.includes(item));
+
+    // Update player's stardust and gems
+    this.stardust += totalStardustGained;
+    this.gems += totalGemsGained;
+
+    // Update display and save game
+    this.updateDisplay();
+    this.renderInventory();
+    this.saveGame();
+
+    // Show notification with summary
+    let message = 'Liquidated items for ';
+    if (totalStardustGained > 0) message += `${totalStardustGained} stardust `;
+    if (totalGemsGained > 0) message += `and ${totalGemsGained} gems`;
+    this.showNotification(message);
+  }
+
+  createFloatingText(selector, text) {
+    const element = document.querySelector(selector);
+    if (!element) return;
+
+    const floatingText = document.createElement('span');
+    floatingText.className = 'floating-text';
+    floatingText.textContent = text;
+    element.appendChild(floatingText);
+
+    setTimeout(() => {
+      floatingText.remove();
+    }, 1000);
+  }
+
+  wipeSaveData() {
+    if (confirm('Are you sure you want to wipe all save data? This cannot be undone.')) {
+      localStorage.removeItem('cosmicClickerSave');
+      location.reload();
+    }
+  }
+
+  showLoadingScreen(show) {
+    const loadingScreen = document.getElementById('loadingScreen');
+    if (show) {
+      loadingScreen.classList.remove('hidden');
+    } else {
+      loadingScreen.classList.add('hidden');
+    }
+  }
+}
+
+function toggleMenu() {
+  const navLinks = document.getElementById('navLinks');
+  navLinks.classList.toggle('active');
+}
+
+const game = new Game();
+
+// Auto-save every minute
+setInterval(() => game.saveGame(), 60000);
+
+// Handle page visibility change to prevent resource waste
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) {
+    if (game.autoClickInterval) {
+      clearInterval(game.autoClickInterval);
+    }
+  } else {
+    game.startAutoClicker();
+  }
+});
+</script>
+</body>
+</html>
