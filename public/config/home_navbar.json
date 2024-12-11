@@ -4,7 +4,8 @@
         "text": "bio",
         "pages": [
             { "text": "bhop", "url": "/" },
-            { "text": "chezlinkz", "url": "/chezlinkz" }
+            { "text": "chezlinkz", "url": "/chezlinkz" },
+            { "text": "tangini (temporarily in bio cuz no where else to put)", "url": "/tangini" }
         ]
     },
     {
@@ -157,6 +158,5 @@
             { "text": "multicolored shader", "url": "/multicoloredshader" }
         ]
     },
-    { "text": "tangini", "url": "/tangini" },
     { "text": "app store", "url": "/store", "image": "shop.svg" }
 ]
