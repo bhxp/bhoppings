@@ -1,0 +1,525 @@
+<html><head><base href=".">
+<title>Molten Cheese Drinking Simulator 2024</title>
+<style>
+  body {
+    margin: 0;
+    padding: 0;
+    background: #1a1a1a;
+    font-family: Arial, sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    color: #fff;
+    overflow: hidden;
+    transition: filter 1s ease;
+  }
+
+  .vignette {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    background-image: url('IMG_3615.png');
+    background-size: cover;
+    background-position: center;
+    z-index: 1000;
+    mix-blend-mode: multiply;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  .fire-overlay {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 70vh;  /* Changed from 50vh to 70vh to cover more of the screen */
+    background-image: url('Fire.gif');
+    background-size: cover;
+    background-position: center;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 1s ease;
+    z-index: 999;
+  }
+
+  .cheese-container {
+    position: relative;
+    width: 300px;
+    height: 400px;
+    margin-top: 50px;
+  }
+
+  .cheese-pot {
+    position: absolute;
+    bottom: 0;
+    width: 200px;
+    height: 150px;
+    background: #666;
+    border-radius: 0 0 20px 20px;
+    border: 8px solid #444;
+    overflow: hidden;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+
+  .molten-cheese {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    height: 80%;
+    background: linear-gradient(180deg, #ffd700 0%, #ff9900 100%);
+    transition: height 0.5s ease-out;
+  }
+
+  .bubbles {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+  }
+
+  .straw {
+    position: absolute;
+    width: 20px;
+    height: 250px;
+    background: #ff5555;
+    border-radius: 10px;
+    top: 50%;
+    left: 50%;
+    transform-origin: bottom center;
+    transform: translateX(-50%) rotate(15deg);
+    cursor: pointer;
+    transition: transform 0.3s ease;
+  }
+
+  .straw:hover {
+    transform: translateX(-50%) rotate(0deg);
+  }
+
+  .stats {
+    margin-top: 20px;
+    font-size: 24px;
+    text-align: center;
+    z-index: 1001;
+  }
+
+  .cheese-particles {
+    position: absolute;
+    pointer-events: none;
+  }
+
+  .drink-button, .refill-button {
+    margin-top: 20px;
+    padding: 15px 30px;
+    font-size: 20px;
+    background: #ff9900;
+    border: none;
+    border-radius: 10px;
+    color: white;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    z-index: 1001;
+  }
+
+  .drink-button:disabled, .refill-button:disabled {
+    background: #666;
+    cursor: not-allowed;
+    opacity: 0.7;
+  }
+
+  .drink-button:hover:not(:disabled), .refill-button:hover:not(:disabled) {
+    background: #ffaa00;
+  }
+
+  .refill-button {
+    display: none;
+    background: #4CAF50;
+  }
+
+  .refill-button:hover:not(:disabled) {
+    background: #45a049;
+  }
+
+  .achievement {
+    position: fixed;
+    right: -300px;
+    background: rgba(0, 0, 0, 0.8);
+    padding: 15px;
+    border-radius: 10px;
+    border-left: 5px solid #ffd700;
+    transition: right 0.5s ease;
+    z-index: 1002;
+    width: 250px;
+  }
+
+  .achievement.show {
+    right: 20px;
+  }
+
+  .achievements-list {
+    position: fixed;
+    right: 20px;
+    top: 20px;
+    background: rgba(0, 0, 0, 0.8);
+    padding: 15px;
+    border-radius: 10px;
+    z-index: 1002;
+    max-width: 250px;
+  }
+
+  .achievement-item {
+    margin: 5px 0;
+    opacity: 0.5;
+  }
+
+  .achievement-item.unlocked {
+    opacity: 1;
+    color: #ffd700;
+  }
+
+  @keyframes bubble {
+    0% { transform: translateY(0) scale(1); opacity: 0; }
+    50% { opacity: 1; }
+    100% { transform: translateY(-100px) scale(0); opacity: 0; }
+}
+
+.cheese-god-transition {
+  transition: none !important;
+}
+</style>
+</head>
+<body>
+  <div class="vignette"></div>
+  <div class="fire-overlay"></div>
+  <h1>Molten Cheese Drinking Simulator 2024</h1>
+  <div class="stats">
+    <div>Cheese Consumed: <span id="cheese-level">0</span>mL</div>
+    <div>Heat Level: <span id="heat-level">60</span>°C</div>
+  </div>
+  
+  <div class="achievements-list">
+    <h3>Achievements</h3>
+    <div id="achievements-container"></div>
+  </div>
+  
+  <div class="cheese-container">
+    <div class="cheese-pot">
+      <div class="molten-cheese">
+        <div class="bubbles"></div>
+      </div>
+    </div>
+    <div class="straw" style="display: none;"></div>
+    <div class="cheese-particles"></div>
+  </div>
+
+  <button class="drink-button" id="drinkButton" onclick="drinkCheeseButton()" style="position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 100;" disabled="">Drink Cheese</button>
+  <button class="refill-button" id="refillButton" onclick="refillCheese()" style="position: fixed; left: 50%; top: 60%; transform: translate(-50%, -50%); z-index: 100;">Refill Cheese</button>
+
+<script>
+let cheeseConsumed = 0;
+const maxHeat = 1000; // Add this constant
+let heatLevel = 60;
+let isEmpty = false;
+const maxCheese = 1000;
+const requiredTemp = 200;
+
+const achievements = [
+  { id: 'cheese100', title: 'Cheese Novice', description: 'Drink 100mL of molten cheese', threshold: 100, unlocked: false },
+  { id: 'cheese500', title: 'Cheese Enthusiast', description: 'Drink 500mL of molten cheese', threshold: 500, unlocked: false },
+  { id: 'cheese1000', title: 'Cheese Master', description: 'Drink 1000mL of molten cheese', threshold: 1000, unlocked: false },
+  { id: 'cheese5000', title: 'Cheese Legend', description: 'Drink 5000mL of molten cheese', threshold: 5000, unlocked: false },
+  { id: 'cheese10000', title: 'Cheese God', description: 'Drink 10000mL of molten cheese', threshold: 10000, unlocked: false }
+];
+
+function initializeAchievements() {
+  const container = document.getElementById('achievements-container');
+  achievements.forEach(achievement => {
+    const div = document.createElement('div');
+    div.id = achievement.id;
+    div.className = 'achievement-item';
+    div.textContent = `${achievement.title} - ${achievement.description}`;
+    container.appendChild(div);
+  });
+}
+
+function showAchievementNotification(achievement) {
+  const notification = document.createElement('div');
+  notification.className = 'achievement';
+  notification.innerHTML = `
+    <h3>🏆 Achievement Unlocked!</h3>
+    <p>${achievement.title}</p>
+    <p>${achievement.description}</p>
+  `;
+  document.body.appendChild(notification);
+  
+  setTimeout(() => notification.classList.add('show'), 100);
+  setTimeout(() => {
+    notification.classList.remove('show');
+    setTimeout(() => notification.remove(), 500);
+  }, 3000);
+}
+
+function checkAchievements() {
+  achievements.forEach(achievement => {
+    if (!achievement.unlocked && cheeseConsumed >= achievement.threshold) {
+      achievement.unlocked = true;
+      document.getElementById(achievement.id).classList.add('unlocked');
+      showAchievementNotification(achievement);
+      
+      // Check for Cheese God achievement specifically
+      if (achievement.id === 'cheese10000') {
+        triggerEnlightenment();
+      }
+    }
+  });
+}
+
+function updateBlurEffect() {
+  if (cheeseConsumed >= 1000 && cheeseConsumed < 10000) {
+    // Calculate blur intensity (0 to 10px) based on consumption between 1000 and 10000
+    const blurAmount = ((cheeseConsumed - 1000) / 9000) * 10;
+    document.body.style.filter = `blur(${blurAmount}px)`;
+  } else {
+    document.body.style.filter = 'none';
+  }
+}
+
+function triggerEnlightenment() {
+  document.body.classList.add('cheese-god-transition');
+  document.body.style.filter = 'none';
+  
+  // Create enlightenment overlay
+  const overlay = document.createElement('div');
+  overlay.style.position = 'fixed';
+  overlay.style.top = '0';
+  overlay.style.left = '0';
+  overlay.style.width = '100%';
+  overlay.style.height = '100%';
+  overlay.style.background = 'white';
+  overlay.style.zIndex = '9999';
+  overlay.style.opacity = '0';
+  overlay.style.transition = 'opacity 3s ease';
+  document.body.appendChild(overlay);
+
+  // Create enlightenment text
+  const text = document.createElement('div');
+  text.style.position = 'fixed';
+  text.style.top = '50%';
+  text.style.left = '50%';
+  text.style.transform = 'translate(-50%, -50%)';
+  text.style.color = 'black';
+  text.style.fontSize = '24px';
+  text.style.textAlign = 'center';
+  text.style.maxWidth = '80%';
+  text.style.opacity = '0';
+  text.style.transition = 'opacity 2s ease';
+  text.innerHTML = "You have consumed so much cheese you have achieved enlightenment.<br>Your throat has also been burned so much that breathing is no longer possible.<br>You perish slowly as you feel your consciousness become one with the cheese.";
+  overlay.appendChild(text);
+
+  // Create swiss cheese overlay
+  const swissCheese = document.createElement('div');
+  swissCheese.style.position = 'fixed';
+  swissCheese.style.top = '0';
+  swissCheese.style.left = '0';
+  swissCheese.style.width = '100%';
+  swissCheese.style.height = '100%';
+  swissCheese.style.backgroundImage = 'url("Cheese.png")';
+  swissCheese.style.backgroundSize = 'cover';
+  swissCheese.style.backgroundPosition = 'center';
+  swissCheese.style.opacity = '0';
+  swissCheese.style.transition = 'opacity 8s ease, transform 10s ease';
+  swissCheese.style.transform = 'scale(1)';
+  swissCheese.style.zIndex = '10000';
+  overlay.appendChild(swissCheese);
+
+  // Animate the sequence
+  requestAnimationFrame(() => {
+    overlay.style.opacity = '1';
+    setTimeout(() => {
+      text.style.opacity = '1';
+      
+      // Add shaking animation to text
+      let shake = 0;
+      const shakeText = () => {
+        text.style.transform = `translate(-50%, -50%) translate(${Math.random() * 10 - 5}px, ${Math.random() * 10 - 5}px)`;
+        if (shake < 100) {
+          shake++;
+          requestAnimationFrame(shakeText);
+        }
+      };
+      shakeText();
+      
+      setTimeout(() => {
+        text.style.opacity = '0';
+        swissCheese.style.opacity = '1';
+        swissCheese.style.transform = 'scale(1.2)';
+      }, 5000);
+    }, 1000);
+  });
+}
+
+function updateVignette() {
+  const intensity = Math.min((cheeseConsumed / maxCheese) * 1.2, 1);
+  const vignette = document.querySelector('.vignette');
+  vignette.style.opacity = intensity;
+}
+
+function updateFireEffect() {
+  const fireOverlay = document.querySelector('.fire-overlay');
+  if (heatLevel >= 1000) {
+    fireOverlay.style.opacity = '1';
+  } else {
+    fireOverlay.style.opacity = '0';
+  }
+}
+
+function updateDrinkButton() {
+  const drinkButton = document.getElementById('drinkButton');
+  const refillButton = document.getElementById('refillButton');
+  
+  if (isEmpty) {
+    drinkButton.style.display = 'none';
+    refillButton.style.display = 'block';
+    return;
+  }
+  
+  drinkButton.style.display = 'block';
+  refillButton.style.display = 'none';
+  
+  if (heatLevel >= requiredTemp) {
+    drinkButton.disabled = false;
+    drinkButton.textContent = "Drink Cheese";
+  } else {
+    drinkButton.disabled = true;
+    drinkButton.textContent = `Heat to ${requiredTemp}°C (Current: ${heatLevel}°C)`;
+  }
+}
+
+function refillCheese() {
+  isEmpty = false;
+  document.getElementById('cheese-level').textContent = cheeseConsumed;
+  document.querySelector('.molten-cheese').style.height = '80%';
+  updateDrinkButton();
+  updateVignette();
+}
+
+function createBubble() {
+  const bubble = document.createElement('div');
+  bubble.style.position = 'absolute';
+  bubble.style.width = Math.random() * 20 + 10 + 'px';
+  bubble.style.height = bubble.style.width;
+  bubble.style.background = 'rgba(255,255,255,0.3)';
+  bubble.style.borderRadius = '50%';
+  bubble.style.left = Math.random() * 100 + '%';
+  bubble.style.bottom = '0';
+  bubble.style.animation = 'bubble ' + (Math.random() * 2 + 1) + 's ease-out forwards';
+  
+  document.querySelector('.bubbles').appendChild(bubble);
+  setTimeout(() => bubble.remove(), 3000);
+}
+
+function createCheeseParticle(x, y) {
+  const particle = document.createElement('div');
+  particle.style.position = 'absolute';
+  particle.style.width = '8px';
+  particle.style.height = '8px';
+  particle.style.background = '#ffd700';
+  particle.style.borderRadius = '50%';
+  particle.style.left = x + 'px';
+  particle.style.top = y + 'px';
+  
+  const angle = Math.random() * Math.PI * 2;
+  const velocity = Math.random() * 5 + 2;
+  let particleX = x;
+  let particleY = y;
+  let velocityY = -velocity;
+  
+  document.querySelector('.cheese-particles').appendChild(particle);
+  
+  const animate = () => {
+    velocityY += 0.2;
+    particleY += velocityY;
+    particleX += Math.sin(angle) * velocity;
+    
+    particle.style.left = particleX + 'px';
+    particle.style.top = particleY + 'px';
+    
+    if (particleY > window.innerHeight) {
+      particle.remove();
+    } else {
+      requestAnimationFrame(animate);
+    }
+  };
+  
+  animate();
+}
+
+function drinkCheeseButton() {
+  if (heatLevel < requiredTemp || isEmpty) return;
+  
+  const straw = document.querySelector('.straw');
+  const rect = straw.getBoundingClientRect();
+  
+  cheeseConsumed += 10;
+  heatLevel = Math.min(300, heatLevel + 1);
+  
+  document.getElementById('cheese-level').textContent = cheeseConsumed;
+  document.getElementById('heat-level').textContent = heatLevel;
+  
+  checkAchievements();
+  updateBlurEffect(); // Add this line
+  
+  for (let i = 0; i < 5; i++) {
+    createCheeseParticle(rect.left + rect.width / 2, rect.top + rect.height / 2);
+  }
+  
+  const cheeseHeight = (1 - (cheeseConsumed % maxCheese) / maxCheese) * 80;
+  document.querySelector('.molten-cheese').style.height = cheeseHeight + '%';
+  
+  updateVignette();
+  
+  if (cheeseHeight <= 0) {
+    isEmpty = true;
+    updateDrinkButton();
+  }
+  
+  updateDrinkButton();
+}
+
+// Heat up the cheese automatically
+setInterval(() => {
+  if (heatLevel < maxHeat) {
+    heatLevel++;
+    document.getElementById('heat-level').textContent = heatLevel;
+    updateDrinkButton();
+    updateFireEffect();
+  }
+}, 100);
+
+setInterval(createBubble, 300);
+updateDrinkButton();
+updateVignette();
+initializeAchievements();
+
+// Add cheat code listener
+document.addEventListener('keydown', (e) => {
+  if (e.key.toLowerCase() === 'c') {
+    cheeseConsumed = 9980;
+    document.getElementById('cheese-level').textContent = cheeseConsumed;
+    checkAchievements();
+    updateVignette();
+    updateBlurEffect();
+  }
+  if (e.key.toLowerCase() === 'h') {
+    heatLevel = 1000;
+    document.getElementById('heat-level').textContent = heatLevel;
+    updateDrinkButton();
+    updateFireEffect();
+  }
+});
+</script>
+
+</body></html>
