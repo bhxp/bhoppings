@@ -1,0 +1,799 @@
+<html><head><base href="/" />
+<title>3D Slap Platform Adventure!</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/OBJLoader.js"></script>
+<style>
+  body { 
+    margin: 0;
+    overflow: hidden;
+    font-family: Arial, sans-serif;
+    cursor: none;
+  }
+
+  .game-over {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(0,0,0,0.8);
+    padding: 20px;
+    border-radius: 10px;
+    text-align: center;
+    color: white;
+  }
+
+  .restart-btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    background: #e94560;
+    color: white;
+    cursor: pointer;
+    margin-top: 10px;
+  }
+
+  .instructions {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(0,0,0,0.8);
+    padding: 20px;
+    border-radius: 10px;
+    text-align: center;
+    color: white;
+  }
+
+  /* Add CSS to hide audio container */
+  #audio-container {
+    display: none;
+  }
+
+  .chat-container {
+    position: fixed;
+    left: 10px;
+    bottom: 10px;
+    width: 300px;
+    background: rgba(0, 0, 0, 0.7);
+    border-radius: 5px;
+    padding: 10px;
+    color: white;
+    z-index: 1000;
+  }
+
+  .chat-messages {
+    height: 150px;
+    overflow-y: auto;
+    margin-bottom: 10px;
+    padding: 5px;
+  }
+
+  .chat-message {
+    margin: 5px 0;
+    word-wrap: break-word;
+  }
+
+  .chat-input {
+    width: calc(100% - 20px);
+    padding: 5px;
+    border: none;
+    border-radius: 3px;
+    background: rgba(255, 255, 255, 0.9);
+  }
+
+  .chat-container.hidden {
+    display: none;
+  }
+</style>
+</head>
+<body>
+<div class="game-over" id="game-over">
+  <h2>Game Over!</h2>
+  <button class="restart-btn" onclick="game.restart()">Try Again</button>
+</div>
+
+<div class="instructions" id="instructions">
+  <h2>Click to play!</h2>
+  <p>Move with WASD, Jump with SPACE</p>
+  <p>Click to slap!</p>
+</div>
+
+<div class="chat-container hidden" id="chat-container">
+  <div class="chat-messages" id="chat-messages"></div>
+  <input type="text" class="chat-input" id="chat-input" placeholder="Press Enter to chat..." maxlength="100">
+</div>
+
+<!-- Add audio element to the body -->
+<div id="audio-container">
+  <audio id="background-music" loop>
+    <source src="/Happy-Go-Lively.mp3" type="audio/mp3">
+  </audio>
+</div>
+
+<script>
+const game = {
+  health: 100,
+  mouseX: 0,
+  mouseY: 0,
+  isPointerLocked: false,
+  chatActive: false,
+  
+  init() {
+    this.setupThreeJS();
+    this.setupMultiplayer(); 
+    this.setupChat(); // Add this line
+    this.setupPlayer();
+    this.setupPlatforms();
+    this.setupControls();
+    this.setupUI();
+    this.setupPointerLock();
+    this.setupSpawnIsland();
+    this.setupBoundaries(); 
+    this.setupGloveDisplays();
+    this.setupAudio();
+    
+    this.player.rotation.y = Math.PI;
+    
+    this.animate();
+  },
+
+  setupChat() {
+    this.chatContainer = document.getElementById('chat-container');
+    this.chatMessages = document.getElementById('chat-messages');
+    this.chatInput = document.getElementById('chat-input');
+    
+    // Chat visibility toggle with T key
+    document.addEventListener('keydown', (e) => {
+      if (e.code === 'KeyT') {
+        this.chatContainer.classList.toggle('hidden');
+        if (!this.chatContainer.classList.contains('hidden')) {
+          this.chatInput.focus();
+        }
+      }
+    });
+
+    // Handle chat input
+    this.chatInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter' && this.chatInput.value.trim()) {
+        // Send chat message
+        this.room.send({
+          type: 'chat',
+          message: this.chatInput.value.trim(),
+          username: this.room.party.client.username
+        });
+        this.chatInput.value = '';
+      }
+    });
+
+    // Prevent WASD movement when typing
+    this.chatInput.addEventListener('focus', () => {
+      this.chatActive = true;
+    });
+
+    this.chatInput.addEventListener('blur', () => {
+      this.chatActive = false;
+    });
+  },
+
+  addChatMessage(username, message) {
+    const messageDiv = document.createElement('div');
+    messageDiv.className = 'chat-message';
+    messageDiv.textContent = `${username}: ${message}`;
+    this.chatMessages.appendChild(messageDiv);
+    this.chatMessages.scrollTop = this.chatMessages.scrollHeight;
+  },
+
+  setupMultiplayer() {
+    try {
+      this.room = new WebsimSocket();
+      this.otherPlayers = new Map();
+
+      // Handle player join/updates
+      this.room.onmessage = (event) => {
+        try {
+          const data = event.data;
+          if (!data || !data.type) {
+            console.warn('Invalid message data received');
+            return;
+          }
+
+          switch(data.type) {
+            case "playerUpdate":
+              if(data.clientId && data.clientId !== this.room.party.client.id) {
+                this.updateOtherPlayer(data);
+              }
+              break;
+            case "disconnected":
+              if(data.clientId && this.otherPlayers.has(data.clientId)) {
+                const playerToRemove = this.otherPlayers.get(data.clientId);
+                if (playerToRemove) {
+                  this.scene.remove(playerToRemove);
+                  this.otherPlayers.delete(data.clientId);
+                }
+              }
+              break;
+            case "chat": // Add this case
+              if(data.username && data.message) {
+                this.addChatMessage(data.username, data.message);
+              }
+              break;
+          }
+        } catch (error) {
+          console.error('Error handling message:', error);
+        }
+      };
+
+      // Start sending position updates with error handling
+      setInterval(() => {
+        try {
+          if(this.player && this.room && this.room.party.client.id) {
+            this.room.send({
+              type: "playerUpdate",
+              clientId: this.room.party.client.id,
+              position: {
+                x: this.player.position.x,
+                y: this.player.position.y,
+                z: this.player.position.z
+              },
+              rotation: {
+                y: this.player.rotation.y
+              }
+            });
+          }
+        } catch (error) {
+          console.error('Error sending player update:', error);
+        }
+      }, 50);
+    } catch (error) {
+      console.error('Error setting up multiplayer:', error);
+    }
+  },
+
+  updateOtherPlayer(data) {
+    try {
+      // Check if we have the client ID and peer data
+      if (!data.clientId || !this.room.party.peers) {
+        console.warn('Missing client ID or peer data');
+        return;
+      }
+
+      let otherPlayer = this.otherPlayers.get(data.clientId);
+      
+      if(!otherPlayer) {
+        // Create new player mesh
+        const geometry = new THREE.BoxGeometry(1, 2, 1);
+        const material = new THREE.MeshPhongMaterial({ color: 0x00ff00 });
+        otherPlayer = new THREE.Mesh(geometry, material);
+        this.scene.add(otherPlayer);
+        this.otherPlayers.set(data.clientId, otherPlayer);
+
+        // Safely get username
+        const username = this.room.party.peers[data.clientId]?.username || 'Player';
+
+        // Add username label
+        const canvas = document.createElement('canvas');
+        const context = canvas.getContext('2d');
+        canvas.width = 512;
+        canvas.height = 128;
+        context.fillStyle = '#ffffff';
+        context.font = '48px Arial';
+        context.textAlign = 'center';
+        context.fillText(username, 256, 60);
+        
+        const texture = new THREE.CanvasTexture(canvas);
+        const spriteMaterial = new THREE.SpriteMaterial({ map: texture });
+        const sprite = new THREE.Sprite(spriteMaterial);
+        sprite.position.y = 2;
+        sprite.scale.set(4, 1, 1);
+        otherPlayer.add(sprite);
+      }
+
+      // Safely update position and rotation
+      if (data.position) {
+        otherPlayer.position.set(
+          data.position.x || 0,
+          data.position.y || 0,
+          data.position.z || 0
+        );
+      }
+      
+      if (data.rotation) {
+        otherPlayer.rotation.y = data.rotation.y || 0;
+      }
+    } catch (error) {
+      console.error('Error updating other player:', error);
+    }
+  },
+
+  setupBoundaries() {
+    // Create invisible collision barriers around the edge
+    const barrierGeometry = new THREE.CylinderGeometry(15, 15, 4, 32);
+    const barrierMaterial = new THREE.MeshBasicMaterial({ 
+      transparent: true, 
+      opacity: 0.0 
+    });
+    this.barrier = new THREE.Mesh(barrierGeometry, barrierMaterial);
+    this.barrier.position.set(0, 1, 0);
+    this.scene.add(this.barrier);
+    this.platforms.push(this.barrier);
+
+    // Create collision boxes for the display cases
+    const casePositions = [
+      { x: 14, y: 1, z: -3 },
+      { x: 14, y: 1, z: 0 },
+      { x: 14, y: 1, z: 3 }
+    ];
+
+    casePositions.forEach(pos => {
+      const caseBarrierGeometry = new THREE.BoxGeometry(2, 4, 2);
+      const caseBarrier = new THREE.Mesh(caseBarrierGeometry, barrierMaterial);
+      caseBarrier.position.set(pos.x, pos.y + 1, pos.z);
+      this.scene.add(caseBarrier);
+      this.platforms.push(caseBarrier);
+    });
+  },
+
+  setupAudio() {
+    this.backgroundMusic = document.getElementById('background-music');
+    
+    // Start playing when pointer is locked for the first time
+    document.addEventListener('pointerlockchange', () => {
+      if (document.pointerLockElement === document.body) {
+        this.backgroundMusic.play().catch(e => console.log("Audio play failed:", e));
+      }
+    });
+  },
+
+  setupSpawnIsland() {
+    const islandGeometry = new THREE.CylinderGeometry(15, 17, 2, 32);
+    const islandMaterial = new THREE.MeshPhongMaterial({ 
+      color: 0x8B4513, 
+      flatShading: true 
+    });
+    this.spawnIsland = new THREE.Mesh(islandGeometry, islandMaterial);
+    this.spawnIsland.position.set(0, -1, 0);
+    this.scene.add(this.spawnIsland);
+    this.platforms.push(this.spawnIsland);
+
+    const grassGeometry = new THREE.CylinderGeometry(15, 15, 0.2, 32);
+    const grassMaterial = new THREE.MeshPhongMaterial({ 
+      color: 0x90EE90, 
+      flatShading: true 
+    });
+    const grass = new THREE.Mesh(grassGeometry, grassMaterial);
+    grass.position.set(0, 1, 0);
+    this.spawnIsland.add(grass);
+
+    const rockPositions = [
+      { x: 12, y: 1.2, z: 0, scale: 0.7 },
+      { x: -10, y: 1.2, z: 4, scale: 0.5 },
+      { x: 0, y: 1.2, z: -12, scale: 0.6 },
+      { x: 11, y: 1.2, z: 7, scale: 0.8 },
+      { x: -11, y: 1.2, z: -7, scale: 0.6 },
+      { x: 8, y: 1.2, z: -10, scale: 0.7 },
+      { x: -8, y: 1.2, z: 10, scale: 0.5 }
+    ];
+
+    rockPositions.forEach(pos => {
+      const rockGeometry = new THREE.DodecahedronGeometry(0.5);
+      const rockMaterial = new THREE.MeshPhongMaterial({ 
+        color: 0x808080,
+        flatShading: true 
+      });
+      const rock = new THREE.Mesh(rockGeometry, rockMaterial);
+      rock.position.set(pos.x, pos.y, pos.z);
+      rock.scale.set(pos.scale, pos.scale, pos.scale);
+      rock.rotation.set(
+        Math.random() * Math.PI,
+        Math.random() * Math.PI,
+        Math.random() * Math.PI
+      );
+      this.spawnIsland.add(rock);
+    });
+  },
+
+  setupGloveDisplays() {
+    const textureLoader = new THREE.TextureLoader();
+    const defaultTexture = textureLoader.load('/Default.png');
+    const diamondTexture = textureLoader.load('/Diamond.png');
+    const brickTexture = textureLoader.load('/Brick.png');
+
+    const casePositions = [
+      { x: 14, y: 1, z: -3, title: "Normal" },  // Normal stays where it is
+      { x: 14, y: 1, z: 0, title: "Diamond" },  // Diamond moved to where Brick was
+      { x: 14, y: 1, z: 3, title: "Brick" }     // Brick moved to where Diamond was
+    ];
+
+    casePositions.forEach(pos => {
+      // Create title text
+      const loader = new THREE.FontLoader();
+      const textMaterial = new THREE.MeshPhongMaterial({ 
+        color: 0xffffff,
+        emissive: 0x666666
+      });
+
+      // Create text sprite as temporary solution while font loads
+      const canvas = document.createElement('canvas');
+      const context = canvas.getContext('2d');
+      canvas.width = 512; // Doubled from 256
+      canvas.height = 128; // Doubled from 64
+      context.fillStyle = '#ffffff';
+      context.font = '48px Arial'; // Increased from 32px
+      context.textAlign = 'center';
+      context.fillText(pos.title, 256, 60); // Adjusted x position for new width
+      
+      const texture = new THREE.CanvasTexture(canvas);
+      const spriteMaterial = new THREE.SpriteMaterial({ map: texture });
+      const sprite = new THREE.Sprite(spriteMaterial);
+      sprite.position.set(pos.x, pos.y + 2.5, pos.z);
+      sprite.scale.set(4, 1, 1); // Doubled from 2, 0.5, 1
+      this.spawnIsland.add(sprite);
+
+      // Create base
+      const baseGeometry = new THREE.BoxGeometry(2, 0.5, 2);
+      const baseMaterial = new THREE.MeshPhongMaterial({ 
+        color: 0x404040,
+        metalness: 0.8,
+        roughness: 0.2
+      });
+      const base = new THREE.Mesh(baseGeometry, baseMaterial);
+      base.position.set(pos.x, pos.y, pos.z);
+      this.spawnIsland.add(base);
+
+      // Create glass case
+      const glassGeometry = new THREE.BoxGeometry(1.5, 2, 1.5);
+      const glassMaterial = new THREE.MeshPhongMaterial({
+        color: 0x88ccff,
+        transparent: true,
+        opacity: 0.3,
+        emissive: 0x88ccff,
+        emissiveIntensity: 0.2
+      });
+      const glassCase = new THREE.Mesh(glassGeometry, glassMaterial);
+      glassCase.position.set(pos.x, pos.y + 1.25, pos.z);
+      this.spawnIsland.add(glassCase);
+
+      // Create glove inside case with different materials based on type
+      const gloveGeometry = new THREE.BoxGeometry(0.5, 0.5, 0.02); // Made very thin (0.02) in Z dimension
+      let gloveMaterial;
+      
+      switch(pos.title) {
+        case "Diamond":
+          gloveMaterial = new THREE.MeshPhongMaterial({ 
+            map: diamondTexture,
+            metalness: 0.9,
+            roughness: 0.1
+          });
+          break;
+        case "Brick":
+          gloveMaterial = new THREE.MeshPhongMaterial({ 
+            map: brickTexture,
+            metalness: 0.1,
+            roughness: 0.9
+          });
+          break;
+        default:
+          gloveMaterial = new THREE.MeshPhongMaterial({ 
+            map: defaultTexture,
+            metalness: 0.5,
+            roughness: 0.3
+          });
+      }
+      
+      const glove = new THREE.Mesh(gloveGeometry, gloveMaterial);
+      glove.position.set(pos.x, pos.y + 1.25, pos.z);
+      // Store initial Y position for bobbing animation
+      glove.userData.initialY = pos.y + 1.25;
+      // Add animation parameters to userData
+      glove.userData.bobOffset = Math.random() * Math.PI * 2; // Random starting phase
+      glove.userData.spinSpeed = 0.02; // Rotation speed
+      this.spawnIsland.add(glove);
+
+      // Store gloves in an array for animation
+      if (!this.displayGloves) {
+        this.displayGloves = [];
+      }
+      this.displayGloves.push(glove);
+
+      // Add glow effect
+      const glowGeometry = new THREE.SphereGeometry(0.8, 16, 16);
+      const glowMaterial = new THREE.MeshBasicMaterial({
+        color: 0x88ccff,
+        transparent: true,
+        opacity: 0.1
+      });
+      const glow = new THREE.Mesh(glowGeometry, glowMaterial);
+      glow.position.set(pos.x, pos.y + 1.25, pos.z);
+      this.spawnIsland.add(glow);
+    });
+  },
+
+  updateGloveAnimations() {
+    if (this.displayGloves) {
+      this.displayGloves.forEach(glove => {
+        // Bob up and down
+        glove.position.y = glove.userData.initialY + Math.sin(Date.now() * 0.003 + glove.userData.bobOffset) * 0.1;
+        
+        // Spin
+        glove.rotation.y += glove.userData.spinSpeed;
+      });
+    }
+  },
+
+  setupPointerLock() {
+    const instructions = document.getElementById('instructions');
+    
+    document.addEventListener('click', () => {
+      if (!this.isPointerLocked) {
+        document.body.requestPointerLock();
+      }
+    });
+
+    document.addEventListener('pointerlockchange', () => {
+      if (document.pointerLockElement === document.body) {
+        this.isPointerLocked = true;
+        instructions.style.display = 'none';
+      } else {
+        this.isPointerLocked = false;
+        instructions.style.display = 'block';
+      }
+    });
+
+    document.addEventListener('mousemove', (e) => {
+      if (this.isPointerLocked) {
+        this.mouseX += e.movementX;
+        this.mouseY += e.movementY;
+        
+        const sensitivity = 0.002;
+        this.player.rotation.y -= e.movementX * sensitivity;
+      }
+    });
+  },
+
+  setupThreeJS() {
+    this.scene = new THREE.Scene();
+    this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    this.renderer = new THREE.WebGLRenderer({ antialias: true });
+    this.renderer.setSize(window.innerWidth, window.innerHeight);
+    document.body.appendChild(this.renderer.domElement);
+
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+    this.scene.add(ambientLight);
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+    directionalLight.position.set(0, 10, 10);
+    this.scene.add(directionalLight);
+
+    this.gravity = -0.005;
+    this.jumpForce = 0.15;
+
+    this.scene.fog = new THREE.Fog(0x87CEEB, 20, 50);
+    this.renderer.setClearColor(0x87CEEB); 
+  },
+
+  setupPlayer() {
+    const playerGeometry = new THREE.BoxGeometry(1, 2, 1);
+    const playerMaterial = new THREE.MeshPhongMaterial({ color: 0xffb6b6 });
+    this.player = new THREE.Mesh(playerGeometry, playerMaterial);
+    this.player.position.set(0, 5, 0);
+    this.scene.add(this.player);
+
+    const loader = new THREE.OBJLoader();
+    loader.load('Player.obj', (object) => {
+      this.scene.remove(this.player);
+      this.player = object;
+      this.player.position.set(0, 5, 0);
+      this.scene.add(this.player);
+      
+      const handGeometry = new THREE.BoxGeometry(0.5, 0.2, 0.2);
+      const handMaterial = new THREE.MeshPhongMaterial({ color: 0xff9999 });
+      this.hand = new THREE.Mesh(handGeometry, handMaterial);
+      this.player.add(this.hand);
+      this.hand.position.set(0.75, 0, 0);
+    });
+
+    this.playerVelocity = new THREE.Vector3();
+    this.grounded = false;
+  },
+
+  setupPlatforms() {
+    this.platforms = [];
+  },
+
+  setupControls() {
+    this.keys = {};
+    window.addEventListener('keydown', (e) => this.keys[e.code] = true);
+    window.addEventListener('keyup', (e) => this.keys[e.code] = false);
+    window.addEventListener('click', () => this.slap());
+    window.addEventListener('resize', () => this.onWindowResize());
+  },
+
+  setupUI() {
+    this.gameOverScreen = document.getElementById('game-over');
+  },
+
+  onWindowResize() {
+    this.camera.aspect = window.innerWidth / window.innerHeight;
+    this.camera.updateProjectionMatrix();
+    this.renderer.setSize(window.innerWidth, window.innerHeight);
+  },
+
+  updatePlayer() {
+    if (this.chatActive) return; // Add this line at the start
+    const moveSpeed = 0.03;
+    const rotation = this.player.rotation.y;
+    
+    if (this.keys['KeyW']) {
+      this.playerVelocity.x += Math.sin(rotation) * moveSpeed;
+      this.playerVelocity.z += Math.cos(rotation) * moveSpeed;
+    }
+    if (this.keys['KeyS']) {
+      this.playerVelocity.x -= Math.sin(rotation) * moveSpeed;
+      this.playerVelocity.z -= Math.cos(rotation) * moveSpeed;
+    }
+    if (this.keys['KeyD']) {
+      this.playerVelocity.x -= Math.cos(rotation) * moveSpeed;
+      this.playerVelocity.z += Math.sin(rotation) * moveSpeed;
+    }
+    if (this.keys['KeyA']) {
+      this.playerVelocity.x += Math.cos(rotation) * moveSpeed;
+      this.playerVelocity.z -= Math.sin(rotation) * moveSpeed;
+    }
+    
+    if (this.keys['Space'] && this.grounded) {
+      this.playerVelocity.y = this.jumpForce;
+      this.grounded = false;
+    }
+
+    if (!this.grounded) {
+      this.playerVelocity.y += this.gravity;
+    }
+
+    this.player.position.add(this.playerVelocity);
+
+    this.grounded = false;
+    this.platforms.forEach(platform => {
+      if (this.checkCollision(platform)) {
+        this.resolveCollision(platform);
+      }
+    });
+
+    this.playerVelocity.x *= 0.85;
+    this.playerVelocity.z *= 0.85;
+
+    const cameraDistance = 10;
+    const cameraHeight = 5;
+    const angle = this.player.rotation.y;
+    
+    this.camera.position.x = this.player.position.x - Math.sin(angle) * cameraDistance;
+    this.camera.position.y = this.player.position.y + cameraHeight;
+    this.camera.position.z = this.player.position.z - Math.cos(angle) * cameraDistance;
+    this.camera.lookAt(this.player.position);
+  },
+
+  checkCollision(platform) {
+    const playerBox = new THREE.Box3().setFromObject(this.player);
+    const platformBox = new THREE.Box3().setFromObject(platform);
+    return playerBox.intersectsBox(platformBox);
+  },
+
+  resolveCollision(platform) {
+    const playerBox = new THREE.Box3().setFromObject(this.player);
+    const platformBox = new THREE.Box3().setFromObject(platform);
+    
+    const overlap = {
+      x: (playerBox.max.x - platformBox.min.x < platformBox.max.x - playerBox.min.x) 
+        ? playerBox.max.x - platformBox.min.x 
+        : platformBox.max.x - playerBox.min.x,
+      y: (playerBox.max.y - platformBox.min.y < platformBox.max.y - playerBox.min.y)
+        ? playerBox.max.y - platformBox.min.y
+        : platformBox.max.y - playerBox.min.y,
+      z: (playerBox.max.z - platformBox.min.z < platformBox.max.z - playerBox.min.z)
+        ? playerBox.max.z - platformBox.min.z
+        : platformBox.max.z - playerBox.min.z
+    };
+
+    // Find smallest overlap
+    const minOverlap = Math.min(overlap.x, overlap.y, overlap.z);
+
+    if (minOverlap === overlap.y) {
+      if (this.playerVelocity.y <= 0) {
+        this.player.position.y += overlap.y;
+        this.playerVelocity.y = 0;
+        this.grounded = true;
+      }
+    } else if (minOverlap === overlap.x) {
+      // Push player back in x direction
+      if (playerBox.max.x - platformBox.min.x < platformBox.max.x - playerBox.min.x) {
+        this.player.position.x -= overlap.x;
+      } else {
+        this.player.position.x += overlap.x;
+      }
+      this.playerVelocity.x = 0;
+    } else {
+      // Push player back in z direction
+      if (playerBox.max.z - platformBox.min.z < platformBox.max.z - playerBox.min.z) {
+        this.player.position.z -= overlap.z;
+      } else {
+        this.player.position.z += overlap.z;
+      }
+      this.playerVelocity.z = 0;
+    }
+  },
+
+  slap() {
+    if (!this.isPointerLocked || !this.hand) return;
+    
+    const duration = 200;
+    const startRotation = this.hand.rotation.z;
+    const startTime = Date.now();
+
+    const animate = () => {
+      const elapsed = Date.now() - startTime;
+      const progress = elapsed / duration;
+
+      if (progress < 1) {
+        this.hand.rotation.z = startRotation + Math.sin(progress * Math.PI) * 2;
+        requestAnimationFrame(animate);
+      } else {
+        this.hand.rotation.z = startRotation;
+      }
+    };
+
+    animate();
+  },
+
+  updateHealth() {
+    if (this.player.position.y < -10) {
+      this.health -= 1;
+      
+      if (this.health <= 0) {
+        this.gameOver();
+      }
+    }
+  },
+
+  gameOver() {
+    this.restart();
+  },
+
+  restart() {
+    this.health = 100;
+    this.player.position.set(0, 5, 0);
+    this.player.rotation.y = Math.PI;
+    this.playerVelocity.set(0, 0, 0);
+    
+    // Make sure music is playing
+    if (this.backgroundMusic && this.backgroundMusic.paused) {
+      this.backgroundMusic.play().catch(e => console.log("Audio play failed:", e));
+    }
+
+    // Notify other players of new position
+    if(this.room) {
+      this.room.send({
+        type: "playerUpdate",
+        position: {
+          x: this.player.position.x,
+          y: this.player.position.y,
+          z: this.player.position.z
+        },
+        rotation: {
+          y: this.player.rotation.y
+        }
+      });
+    }
+  },
+
+  animate() {
+    requestAnimationFrame(() => this.animate());
+    this.updatePlayer();
+    this.updateGloveAnimations(); // Update glove animations
+    this.updateHealth();
+    this.renderer.render(this.scene, this.camera);
+  }
+};
+
+game.init();
+</script>
+</body>
+</html>
