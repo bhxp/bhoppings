@@ -1,0 +1,233 @@
+<html><head><base href="https://ok.com"/><title>Don't Poop Your Pants</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+    background-color: #f0f0f0;
+    overflow: hidden;
+  }
+  #game-container {
+    text-align: center;
+    background-color: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+  }
+  #emoji {
+    font-size: 100px;
+    margin-bottom: 20px;
+  }
+  button {
+    font-size: 18px;
+    padding: 10px 20px;
+    margin: 10px;
+    cursor: pointer;
+  }
+  #dont-poop {
+    position: absolute;
+    transition: all 0.1s ease;
+  }
+  #result {
+    margin-top: 20px;
+    font-weight: bold;
+  }
+  #headline {
+    font-size: 36px;
+    font-weight: bold;
+    margin-bottom: 20px;
+  }
+  #headline span {
+    display: inline-block;
+    animation: dance 0.5s infinite alternate;
+    margin-right: 10px;
+  }
+  @keyframes dance {
+    0% { transform: translateY(0); }
+    100% { transform: translateY(-10px); }
+  }
+  .toilet-emoji {
+    position: absolute;
+    font-size: 24px;
+    animation: bounce 3s infinite;
+  }
+  @keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-20px); }
+  }
+</style>
+</head>
+<body>
+<div id="game-container">
+  <h1 id="headline"></h1>
+  <div id="emoji"></div>
+  <button id="poop-button">Poop your pants</button>
+  <button id="dont-poop">Don't poop your pants</button>
+  <div id="result"></div>
+  <button id="restart-button" style="display: none;">Restart Game</button>
+</div>
+
+<script>
+  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  const gameContainer = document.getElementById('game-container');
+  const headline = document.getElementById('headline');
+
+  if (isMobile) {
+    gameContainer.innerHTML = '<h2>Mobile players always play games on the toilet so you win!</h2>';
+    
+    for (let i = 0; i < 20; i++) {
+      const toiletEmoji = document.createElement('div');
+      toiletEmoji.className = 'toilet-emoji';
+      toiletEmoji.textContent = '🚽';
+      toiletEmoji.style.left = `${Math.random() * 100}vw`;
+      toiletEmoji.style.top = `${Math.random() * 100}vh`;
+      toiletEmoji.style.animationDelay = `${Math.random() * 2}s`;
+      document.body.appendChild(toiletEmoji);
+    }
+  } else {
+    const emojis = ['👨', '👩', '👶', '👵', '👴', '🧑'];
+    const emoji = document.getElementById('emoji');
+    const poopButton = document.getElementById('poop-button');
+    const dontPoopButton = document.getElementById('dont-poop');
+    const result = document.getElementById('result');
+    const restartButton = document.getElementById('restart-button');
+    
+    let swapInterval;
+    let isSwapped = false;
+    let clickCounter = 0;
+
+    function setupHeadline() {
+      headline.innerHTML = '';
+      const headlineText = "Don't poop your pants";
+      headlineText.split(' ').forEach((word, i) => {
+        const wordSpan = document.createElement('span');
+        word.split('').forEach((char, j) => {
+          const charSpan = document.createElement('span');
+          charSpan.textContent = char;
+          charSpan.style.animationDelay = `${(i * word.length + j) * 0.1}s`;
+          wordSpan.appendChild(charSpan);
+        });
+        headline.appendChild(wordSpan);
+        if (i < headlineText.split(' ').length - 1) {
+          headline.appendChild(document.createTextNode(' '));
+        }
+      });
+    }
+
+    function startGame() {
+      setupHeadline();
+      emoji.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+      result.textContent = '';
+      restartButton.style.display = 'none';
+      poopButton.disabled = false;
+      dontPoopButton.disabled = false;
+      dontPoopButton.style.display = 'inline-block';
+      isSwapped = false;
+      clickCounter = 0;
+      resetButtonPositions();
+      startSwapInterval();
+    }
+
+    function endGame(message) {
+      poopButton.disabled = true;
+      dontPoopButton.disabled = true;
+      dontPoopButton.style.display = 'none';
+      restartButton.style.display = 'inline-block';
+      clearInterval(swapInterval);
+      result.textContent = message;
+    }
+
+    function resetButtonPositions() {
+      poopButton.style.position = 'static';
+      dontPoopButton.style.position = 'absolute';
+      dontPoopButton.style.left = '50%';
+      dontPoopButton.style.top = '70%';
+    }
+    
+    function moveButton(e) {
+      if (isSwapped) {
+        swapButtons();
+        startSwapInterval();
+        return;
+      }
+
+      const rect = dontPoopButton.getBoundingClientRect();
+      const buttonCenterX = rect.left + rect.width / 2;
+      const buttonCenterY = rect.top + rect.height / 2;
+      const distance = Math.sqrt(Math.pow(e.clientX - buttonCenterX, 2) + Math.pow(e.clientY - buttonCenterY, 2));
+      
+      if (distance < 200) {
+        const angle = Math.atan2(e.clientY - buttonCenterY, e.clientX - buttonCenterX);
+        let newX = buttonCenterX - Math.cos(angle) * 200;
+        let newY = buttonCenterY - Math.sin(angle) * 200;
+        
+        const edgeThreshold = 50;
+        if (newX < edgeThreshold || newX > window.innerWidth - edgeThreshold ||
+            newY < edgeThreshold || newY > window.innerHeight - edgeThreshold) {
+          newX = Math.random() * (window.innerWidth - rect.width);
+          newY = Math.random() * (window.innerHeight - rect.height);
+        }
+        
+        newX = Math.max(0, Math.min(newX, window.innerWidth - rect.width));
+        newY = Math.max(0, Math.min(newY, window.innerHeight - rect.height));
+        
+        dontPoopButton.style.left = `${newX}px`;
+        dontPoopButton.style.top = `${newY}px`;
+      }
+    }
+
+    function swapButtons() {
+      const tempText = poopButton.textContent;
+      const tempPosition = poopButton.style.position;
+      const tempLeft = poopButton.style.left;
+      const tempTop = poopButton.style.top;
+
+      poopButton.textContent = dontPoopButton.textContent;
+      poopButton.style.position = dontPoopButton.style.position;
+      poopButton.style.left = dontPoopButton.style.left;
+      poopButton.style.top = dontPoopButton.style.top;
+
+      dontPoopButton.textContent = tempText;
+      dontPoopButton.style.position = tempPosition;
+      dontPoopButton.style.left = tempLeft;
+      dontPoopButton.style.top = tempTop;
+
+      isSwapped = !isSwapped;
+    }
+
+    function startSwapInterval() {
+      clearInterval(swapInterval);
+      swapInterval = setInterval(swapButtons, 3000);
+    }
+    
+    document.addEventListener('mousemove', moveButton);
+    
+    document.addEventListener('click', (e) => {
+      if (e.target !== poopButton && e.target !== dontPoopButton && e.target !== restartButton) {
+        clickCounter++;
+        if (clickCounter >= 10) {
+          emoji.textContent = '💩';
+          endGame("You exerted yourself too hard and pooped your pants. You are smelly.");
+        }
+      }
+    });
+    
+    poopButton.addEventListener('click', () => {
+      emoji.textContent = '💩';
+      endGame('You are smelly now');
+    });
+    
+    dontPoopButton.addEventListener('click', () => {
+      emoji.textContent = '🌞';
+      endGame('You didn\'t poop your pants. Conlaturation!');
+    });
+
+    restartButton.addEventListener('click', startGame);
+
+    startGame();
+  }
+</script>
+</body></html>
