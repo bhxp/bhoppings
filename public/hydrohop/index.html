@@ -1,0 +1,665 @@
+<html><head><base href="https://nigga.io/platformer/"><title>Hydro Hop Adventure - Main Menu</title><style>
+body, html {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overflow: hidden;
+  font-family: Arial, sans-serif;
+}
+canvas {
+  display: block;
+}
+#menuContainer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background: linear-gradient(to bottom, #87CEEB, #4fc3f7);
+}
+#gameTitle {
+  font-size: 48px;
+  color: #0000FF; 
+  font-family: "Comic Sans MS", cursive, sans-serif; 
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+  margin-bottom: 40px;
+}
+#playButton {
+  font-size: 24px;
+  padding: 15px 30px;
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s, transform 0.1s;
+}
+#playButton:hover {
+  background-color: #45a049;
+}
+#playButton:active {
+  transform: scale(0.98);
+}
+</style></head><body>
+<div id="menuContainer">
+  <h1 id="gameTitle">Hydro Hop Adventure</h1>
+  <button id="playButton">Play</button>
+</div>
+<canvas id="gameCanvas" style="display: none;"></canvas>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/phaser/3.55.2/phaser.min.js"></script>
+<script>
+let game;
+let player;
+let platforms;
+let cursors;
+let waterDrops;
+let hydration = 100;
+let scoreText;
+let powerups;
+let gameOver = false;
+let waterBlocks;
+let lavaDrops;
+let isCrouching = false;
+let normalBodyHeight;
+let normalBodyOffsetY;
+let fireExtinguisherBlocks;
+let fireExtinguishers;
+let hasFireExtinguisher = false;
+let fireExtinguisherUses = 0;
+let fireExtinguisherText;
+
+window.onload = function() {
+    const config = {
+        type: Phaser.AUTO,
+        width: 800,
+        height: 600,
+        physics: {
+            default: 'arcade',
+            arcade: {
+                gravity: { y: 600 },
+                debug: false
+            }
+        },
+        scene: [
+            {
+                preload: preload,
+                create: create,
+                update: update
+            },
+            {
+                key: 'caveLevel',
+                create: createCaveLevel,
+                update: update
+            }
+        ]
+    };
+
+    document.getElementById('playButton').addEventListener('click', startGame);
+
+    function startGame() {
+        document.getElementById('menuContainer').style.display = 'none';
+        document.getElementById('gameCanvas').style.display = 'block';
+        
+        if (game) {
+            game.destroy(true);
+        }
+        
+        game = new Phaser.Game(config);
+    }
+
+    function preload() {
+        this.load.image('ground', 'https://labs.phaser.io/assets/sprites/platform.png');
+        this.load.image('powerup', 'https://labs.phaser.io/assets/sprites/star.png');
+        this.load.image('waterDrop', 'path/to/water_drop_image.png');
+        this.load.image('refrigerator', 'https://example.com/refrigerator.png');
+        
+        let bigLavaDrop = this.add.graphics();
+        bigLavaDrop.fillStyle(0xff4500, 1);
+        bigLavaDrop.fillCircle(20, 30, 20);
+        bigLavaDrop.fillTriangle(0, 30, 40, 30, 20, 0);
+        bigLavaDrop.fillStyle(0xffff00, 0.7);
+        bigLavaDrop.fillCircle(20, 20, 10);
+        bigLavaDrop.generateTexture('bigLavaDrop', 40, 40);
+        bigLavaDrop.clear();
+    }
+
+    function create() {
+        this.cameras.main.setBackgroundColor('#87CEEB');
+
+        this.physics.world.setBounds(0, 0, 2400, 600);
+
+        for (let i = 0; i < 15; i++) {
+            let cloudX = Phaser.Math.Between(0, 2400);
+            let cloudY = Phaser.Math.Between(50, 250);
+            createCloud(this, cloudX, cloudY);
+        }
+
+        platforms = this.physics.add.staticGroup();
+
+        for (let i = 0; i < 3; i++) {
+            platforms.create(400 + i * 800, 568, 'ground').setScale(2).refreshBody();
+        }
+
+        platforms.create(600, 400, 'ground');
+        platforms.create(50, 250, 'ground');
+        platforms.create(750, 220, 'ground');
+        platforms.create(1200, 300, 'ground');
+        platforms.create(1500, 450, 'ground');
+        platforms.create(1800, 200, 'ground');
+        platforms.create(2100, 350, 'ground');
+
+        let playerGraphics = this.add.graphics();
+        playerGraphics.fillStyle(0xa0e7ff, 1);
+        playerGraphics.fillRoundedRect(0, 10, 40, 70, 20);
+        playerGraphics.fillRect(10, 0, 20, 15);
+        playerGraphics.fillStyle(0x007acc, 1);
+        playerGraphics.fillRect(10, 0, 20, 10);
+        playerGraphics.fillStyle(0xffffff, 0.3);
+        playerGraphics.fillRoundedRect(5, 15, 10, 60, { tl: 10, tr: 0, bl: 10, br: 0 });
+        playerGraphics.generateTexture('bottle', 40, 80);
+        playerGraphics.clear();
+
+        player = this.physics.add.sprite(100, 450, 'bottle');
+        player.setScale(1.2);
+        player.setBounce(0.1);
+        player.setCollideWorldBounds(true);
+        player.body.setSize(player.width * 0.7, player.height * 0.9);
+        player.body.setOffset(player.width * 0.15, player.height * 0.1);
+
+        normalBodyHeight = player.body.height;
+        normalBodyOffsetY = player.body.offset.y;
+
+        this.physics.add.collider(player, platforms);
+
+        let waterDropGraphics = this.add.graphics();
+        waterDropGraphics.fillStyle(0x4fc3f7, 1);
+        waterDropGraphics.fillCircle(10, 10, 10);
+        waterDropGraphics.generateTexture('waterDrop', 20, 20);
+        waterDropGraphics.clear();
+
+        waterDrops = this.physics.add.group();
+        for (let i = 0; i < 36; i++) {
+            let x = Phaser.Math.Between(0, 2400);
+            let y = Phaser.Math.Between(0, 600);
+            let waterDrop = waterDrops.create(x, y, 'waterDrop');
+            waterDrop.setBounceY(Phaser.Math.FloatBetween(0.2, 0.4));
+            waterDrop.setScale(1.5);
+        }
+
+        powerups = this.physics.add.group();
+        
+        fireExtinguishers = this.physics.add.group();
+
+        waterBlocks = this.physics.add.staticGroup();
+        createWaterBlocks(this);
+
+        fireExtinguisherBlocks = this.physics.add.staticGroup();
+
+        scoreText = this.add.text(16, 16, 'Hydration: 100%', { fontSize: '32px', fill: '#000' });
+        scoreText.setScrollFactor(0);
+
+        fireExtinguisherText = this.add.text(16, 56, '', { fontSize: '32px', fill: '#000' });
+        fireExtinguisherText.setScrollFactor(0);
+
+        lavaDrops = this.physics.add.group();
+
+        let lavaDrop = this.add.graphics();
+        lavaDrop.fillStyle(0xff4500, 1);
+        lavaDrop.fillCircle(10, 15, 10);
+        lavaDrop.fillTriangle(0, 15, 20, 15, 10, 0);
+        lavaDrop.fillStyle(0xffff00, 0.7);
+        lavaDrop.fillCircle(10, 10, 5);
+        lavaDrop.generateTexture('lavaDrop', 20, 20);
+        lavaDrop.clear();
+
+        this.cameras.main.startFollow(player, true, 0.1, 0.1);
+        this.cameras.main.setBounds(0, 0, 2400, 600);
+
+        let refrigeratorGraphics = this.add.graphics();
+        refrigeratorGraphics.fillStyle(0xcccccc, 1);
+        refrigeratorGraphics.fillRect(0, 0, 60, 100);
+        refrigeratorGraphics.fillStyle(0x999999, 1);
+        refrigeratorGraphics.fillRect(3, 3, 54, 47);
+        refrigeratorGraphics.fillRect(3, 53, 54, 44);
+        refrigeratorGraphics.fillStyle(0x666666, 1);
+        refrigeratorGraphics.fillRect(48, 7, 6, 13);
+        refrigeratorGraphics.fillRect(48, 57, 6, 13);
+        refrigeratorGraphics.generateTexture('refrigerator', 60, 100);
+        refrigeratorGraphics.clear();
+
+        let refrigerator = this.physics.add.staticImage(2300, 450, 'refrigerator');
+        refrigerator.setScale(1.2);
+        this.physics.add.collider(player, refrigerator, reachEndOfLevel, null, this);
+
+        this.physics.add.collider(waterDrops, platforms);
+        this.physics.add.collider(powerups, platforms);
+        this.physics.add.collider(player, waterBlocks, hitWaterBlock, null, this);
+        this.physics.add.collider(player, fireExtinguisherBlocks, breakFireExtinguisherBlock, null, this);
+        this.physics.add.collider(lavaDrops, platforms);
+        this.physics.add.overlap(player, waterDrops, collectWaterDrop, null, this);
+        this.physics.add.overlap(player, lavaDrops, hitLava, null, this);
+        this.physics.add.overlap(player, fireExtinguishers, collectFireExtinguisher, null, this);
+        this.physics.add.collider(lavaDrops, fireExtinguisherBlocks, breakBlockWithLava, null, this);
+
+        createFireExtinguisherBlocks(this);
+
+        cursors = this.input.keyboard.createCursorKeys();
+
+        this.time.addEvent({
+            delay: 1000,
+            callback: spawnLava,
+            callbackScope: this,
+            loop: true
+        });
+    }
+
+    function createCaveLevel() {
+        this.cameras.main.setBackgroundColor('#000000');
+        this.physics.world.setBounds(0, 0, 800, 600);
+
+        platforms = this.physics.add.staticGroup();
+
+        for (let i = 0; i < 5; i++) {
+            platforms.create(160 * i, 568, 'ground').setScale(0.5).refreshBody().setTint(0x808080);
+        }
+
+        platforms.create(600, 400, 'ground').setScale(0.5).refreshBody().setTint(0x808080);
+        platforms.create(50, 250, 'ground').setScale(0.5).refreshBody().setTint(0x808080);
+        platforms.create(750, 220, 'ground').setScale(0.5).refreshBody().setTint(0x808080);
+
+        player = this.physics.add.sprite(100, 450, 'bottle');
+        player.setScale(1.2);
+        player.setBounce(0.1);
+        player.setCollideWorldBounds(true);
+        player.body.setSize(player.width * 0.7, player.height * 0.9);
+        player.body.setOffset(player.width * 0.15, player.height * 0.1);
+
+        this.physics.add.collider(player, platforms);
+
+        this.cameras.main.startFollow(player, true, 0.1, 0.1);
+        this.cameras.main.setBounds(0, 0, 800, 600);
+
+        for (let i = 0; i < 10; i++) {
+            let x = Phaser.Math.Between(0, 800);
+            this.add.triangle(x, 0, 0, 0, 10, 30, 20, 0, 0x808080);
+            x = Phaser.Math.Between(0, 800);
+            this.add.triangle(x, 600, 0, 30, 10, 0, 20, 30, 0x808080);
+        }
+
+        hydration = 100;
+        gameOver = false;
+        hasFireExtinguisher = false;
+        fireExtinguisherUses = 0;
+
+        updateHydrationDisplay();
+        updateFireExtinguisherDisplay();
+
+        cursors = this.input.keyboard.createCursorKeys();
+        this.physics.add.overlap(lavaDrops, fireExtinguisherBlocks, breakBlockWithLava, null, this);
+    }
+
+    function reachEndOfLevel(player, refrigerator) {
+        if (hydration > 0) {
+            this.scene.start('caveLevel');
+        }
+    }
+
+    function hitWaterBlock(player, block) {
+        try {
+            hydration = Math.min(hydration + 20, 100);
+            updateHydrationDisplay();
+            block.destroy();
+        } catch (error) {
+            console.error("Error in hitWaterBlock function:", error);
+        }
+    }
+
+    function createCloud(scene, x, y) {
+        let cloudColor = 0xFFFFFF;
+        let cloudAlpha = 0.7;
+
+        let circle1 = scene.add.circle(x, y, 30, cloudColor, cloudAlpha);
+        let circle2 = scene.add.circle(x + 25, y, 40, cloudColor, cloudAlpha);
+        let circle3 = scene.add.circle(x + 50, y, 30, cloudColor, cloudAlpha);
+        let rect = scene.add.rectangle(x + 25, y + 10, 80, 40, cloudColor, cloudAlpha);
+    }
+
+    function createWaterBlocks(scene) {
+        let blockPositions = [
+            {x: 300, y: 300},
+            {x: 900, y: 200},
+            {x: 1500, y: 350},
+            {x: 2000, y: 250}
+        ];
+
+        blockPositions.forEach(pos => {
+            let block = scene.add.rectangle(pos.x, pos.y, 50, 50, 0x4fc3f7);
+            waterBlocks.add(block);
+
+            scene.time.addEvent({
+                delay: Phaser.Math.Between(2000, 5000),
+                callback: () => dropWaterFromBlock(block),
+                callbackScope: scene,
+                loop: true
+            });
+        });
+    }
+
+    function createFireExtinguisherBlocks(scene) {
+        let blockPositions = [
+            {x: 600, y: 300},
+            {x: 1400, y: 200},
+            {x: 2200, y: 350}
+        ];
+
+        blockPositions.forEach(pos => {
+            let fireExtinguisherBlockGraphics = scene.add.graphics();
+            fireExtinguisherBlockGraphics.fillStyle(0xff0000, 1);
+            fireExtinguisherBlockGraphics.fillCircle(20, 20, 20);
+            fireExtinguisherBlockGraphics.fillStyle(0xdddddd, 1);
+            fireExtinguisherBlockGraphics.fillCircle(20, 20, 15);
+            fireExtinguisherBlockGraphics.fillStyle(0x000000, 1);
+            fireExtinguisherBlockGraphics.fillRect(18, 5, 4, 10);
+            fireExtinguisherBlockGraphics.fillStyle(0xff0000, 1);
+            fireExtinguisherBlockGraphics.fillTriangle(15, 8, 25, 8, 20, 3);
+            fireExtinguisherBlockGraphics.generateTexture('fireExtinguisherBlock', 40, 40);
+            fireExtinguisherBlockGraphics.clear();
+
+            let block = fireExtinguisherBlocks.create(pos.x, pos.y, 'fireExtinguisherBlock');
+            block.setScale(1.5);
+        });
+    }
+
+    function dropWaterFromBlock(block) {
+        let x = block.x + Phaser.Math.Between(-25, 25);
+        let y = block.y + 25;
+        let waterDrop = waterDrops.create(x, y, 'waterDrop');
+        waterDrop.setBounceY(Phaser.Math.FloatBetween(0.2, 0.4));
+        waterDrop.setScale(1.5);
+    }
+
+    function update() {
+        try {
+            if (gameOver) {
+                return;
+            }
+
+            if (cursors.down.isDown) {
+                if (!isCrouching) {
+                    isCrouching = true;
+                    player.body.setSize(player.body.width, player.body.height * 0.5);
+                    player.body.setOffset(player.body.offset.x, normalBodyOffsetY + normalBodyHeight * 0.5);
+                    player.setScale(1.2, 0.6);
+                }
+            } else if (isCrouching) {
+                isCrouching = false;
+                player.body.setSize(player.width * 0.7, normalBodyHeight);
+                player.body.setOffset(player.width * 0.15, normalBodyOffsetY);
+                player.setScale(1.2);
+                
+                if (player.body.touching.down) {
+                    player.y -= normalBodyHeight * 0.25;
+                }
+            }
+
+            if (cursors.left.isDown) {
+                player.setVelocityX(isCrouching ? -90 : -180);
+                player.setFlipX(true);
+            } else if (cursors.right.isDown) {
+                player.setVelocityX(isCrouching ? 90 : 180);
+                player.setFlipX(false);
+            } else {
+                player.setVelocityX(0);
+            }
+
+            if (cursors.up.isDown && player.body.touching.down && !isCrouching) {
+                player.setVelocityY(-450);
+            }
+
+            if (cursors.space.isDown && hasFireExtinguisher) {
+                let spray = this.add.particles(player.x, player.y, 'waterDrop', {
+                    speed: 200,
+                    scale: { start: 1, end: 0 },
+                    blendMode: 'ADD',
+                    lifespan: 300,
+                    angle: player.flipX ? 180 : 0,
+                    emitZone: {
+                        source: new Phaser.Geom.Rectangle(player.flipX ? -50 : 50, -10, 10, 20),
+                        type: 'random'
+                    }
+                });
+                this.time.delayedCall(100, () => spray.destroy());
+            }
+        } catch (error) {
+            console.error("Error in update function:", error);
+        }
+    }
+
+    function collectWaterDrop(player, waterDrop) {
+        try {
+            waterDrop.disableBody(true, true);
+            hydration = Math.min(hydration + 10, 100);
+            updateHydrationDisplay();
+
+            if (waterDrops.countActive(true) === 0) {
+                for (let i = 0; i < 36; i++) {
+                    let x = Phaser.Math.Between(0, 2400);
+                    let y = Phaser.Math.Between(0, 600);
+                    let newWaterDrop = waterDrops.create(x, y, 'waterDrop');
+                    newWaterDrop.setBounceY(Phaser.Math.FloatBetween(0.2, 0.4));
+                    newWaterDrop.setScale(1.5);
+                }
+
+                let x = Phaser.Math.Between(0, 2400);
+                let powerup = powerups.create(x, 16, 'powerup');
+                powerup.setBounce(0.7);
+                powerup.setCollideWorldBounds(true);
+                powerup.setVelocity(Phaser.Math.Between(-200, 200), 20);
+            }
+        } catch (error) {
+            console.error("Error in collectWaterDrop function:", error);
+        }
+    }
+
+    function hitLava(player, lava) {
+        try {
+            if (hasFireExtinguisher && fireExtinguisherUses > 0) {
+                lava.disableBody(true, true);
+                fireExtinguisherUses--;
+                updateFireExtinguisherDisplay();
+                
+                let steam = player.scene.add.particles(lava.x, lava.y, 'waterDrop', {
+                    speed: { min: 50, max: 100 },
+                    angle: { min: 0, max: 360 },
+                    scale: { start: lava.getData('isBig') ? 2 : 1, end: 0 },
+                    alpha: { start: 0.8, end: 0 },
+                    lifespan: 2000,
+                    quantity: lava.getData('isBig') ? 60 : 30,
+                    blendMode: 'ADD',
+                    emitZone: {
+                        type: 'random',
+                        source: new Phaser.Geom.Circle(0, 0, lava.getData('isBig') ? 40 : 20)
+                    }
+                });
+                
+                player.scene.time.delayedCall(2000, () => {
+                    steam.destroy();
+                });
+
+                if (fireExtinguisherUses === 0) {
+                    hasFireExtinguisher = false;
+                    updatePlayerSprite();
+                }
+            } else {
+                lava.disableBody(true, true);
+                let damage = lava.getData('isBig') ? 30 : 10;
+                hydration = Math.max(hydration - damage, 0);
+                updateHydrationDisplay();
+
+                if (hydration <= 0) {
+                    gameOver = true;
+                    player.scene.physics.pause();
+                    player.setTint(0xff0000);
+
+                    let gameOverText = player.scene.add.text(400, 300, 'GAME OVER', { fontSize: '64px', fill: '#000' });
+                    gameOverText.setOrigin(0.5);
+                    gameOverText.setScrollFactor(0);
+
+                    let resetText = player.scene.add.text(400, 350, 'Click to Restart', { fontSize: '32px', fill: '#000' });
+                    resetText.setOrigin(0.5);
+                    resetText.setScrollFactor(0);
+
+                    player.scene.input.on('pointerdown', function() { resetGame(player.scene); });
+                } else {
+                    player.setTint(0xff0000);
+                    player.scene.time.delayedCall(200, () => {
+                        player.clearTint();
+                    });
+                }
+            }
+        } catch (error) {
+            console.error("Error in hitLava function:", error);
+        }
+    }
+
+    function collectFireExtinguisher(player, fireExtinguisher) {
+        fireExtinguisher.disableBody(true, true);
+        hasFireExtinguisher = true;
+        fireExtinguisherUses = 10;
+        updatePlayerSprite();
+        updateFireExtinguisherDisplay();
+    }
+
+    function updatePlayerSprite() {
+        if (hasFireExtinguisher) {
+            let extinguisherGraphics = player.scene.add.graphics();
+            extinguisherGraphics.fillStyle(0xa0e7ff, 1);
+            extinguisherGraphics.fillRoundedRect(0, 10, 40, 70, 20);
+            extinguisherGraphics.fillRect(10, 0, 20, 15);
+            extinguisherGraphics.fillStyle(0x007acc, 1);
+            extinguisherGraphics.fillRect(10, 0, 20, 10);
+            extinguisherGraphics.fillStyle(0xffffff, 0.3);
+            extinguisherGraphics.fillRoundedRect(5, 15, 10, 60, { tl: 10, tr: 0, bl: 10, br: 0 });
+            
+            extinguisherGraphics.fillStyle(0xff0000, 1);
+            extinguisherGraphics.fillRoundedRect(30, 20, 20, 40, 10);
+            extinguisherGraphics.fillStyle(0xdddddd, 1);
+            extinguisherGraphics.fillRoundedRect(32, 22, 16, 36, 8);
+            extinguisherGraphics.fillStyle(0x000000, 1);
+            extinguisherGraphics.fillRect(38, 15, 4, 10);
+            extinguisherGraphics.fillStyle(0xff0000, 1);
+            extinguisherGraphics.fillTriangle(35, 18, 45, 18, 40, 13);
+            
+            extinguisherGraphics.generateTexture('bottleWithExtinguisher', 55, 80);
+            extinguisherGraphics.clear();
+            player.setTexture('bottleWithExtinguisher');
+        } else {
+            player.setTexture('bottle');
+        }
+    }
+
+    function updateHydrationDisplay() {
+        scoreText.setText('Hydration: ' + hydration + '%');
+    }
+
+    function updateFireExtinguisherDisplay() {
+        if (fireExtinguisherText) {
+            fireExtinguisherText.setText(hasFireExtinguisher ? `Fire Extinguisher: ${fireExtinguisherUses}` : '');
+        }
+    }
+
+    function resetGame(scene) {
+        try {
+            scene.scene.restart();
+            hydration = 100;
+            gameOver = false;
+            hasFireExtinguisher = false;
+            fireExtinguisherUses = 0;
+        } catch (error) {
+            console.error("Error in resetGame function:", error);
+        }
+    }
+
+    function spawnLava() {
+        try {
+            let x = Phaser.Math.Between(0, 2400);
+            let isBig = Phaser.Math.Between(1, 100) <= 10;
+            
+            let lavaDrop = lavaDrops.create(x, 0, isBig ? 'bigLavaDrop' : 'lavaDrop');
+            lavaDrop.setScale(isBig ? 2 : 1.5);
+            lavaDrop.setBounceY(Phaser.Math.FloatBetween(0.2, 0.4));
+            lavaDrop.setVelocityX(Phaser.Math.Between(-50, 50));
+            lavaDrop.setData('isBig', isBig);
+        } catch (error) {
+            console.error("Error in spawnLava function:", error);
+        }
+    }
+
+    function breakFireExtinguisherBlock(player, block) {
+        block.destroy();
+        
+        let fireExtinguisherGraphics = player.scene.add.graphics();
+        fireExtinguisherGraphics.fillStyle(0xff0000, 1);
+        fireExtinguisherGraphics.fillCircle(10, 25, 10);
+        fireExtinguisherGraphics.fillStyle(0xdddddd, 1);
+        fireExtinguisherGraphics.fillCircle(10, 25, 8);
+        fireExtinguisherGraphics.fillStyle(0x000000, 1);
+        fireExtinguisherGraphics.fillRect(9, 5, 2, 8);
+        fireExtinguisherGraphics.fillStyle(0xff0000, 1);
+        fireExtinguisherGraphics.fillTriangle(7, 7, 13, 7, 10, 3);
+        fireExtinguisherGraphics.generateTexture('fireExtinguisher', 20, 45);
+        fireExtinguisherGraphics.clear();
+        
+        let fireExtinguisher = fireExtinguishers.create(block.x, block.y, 'fireExtinguisher');
+        fireExtinguisher.setScale(1.5);
+        fireExtinguisher.setBounce(0.2);
+    }
+
+    function breakBlockWithLava(lava, block) {
+        if (!lava || !block) return; // Guard clause to prevent undefined errors
+        
+        if (lava.getData('isBig')) {
+            try {
+                let scene = lava.scene;
+                
+                let explosion = scene.add.particles(block.x, block.y, 'fireExtinguisherBlock', {
+                    speed: { min: 50, max: 150 },
+                    angle: { min: 0, max: 360 },
+                    scale: { start: 1, end: 0 },
+                    alpha: { start: 1, end: 0 },
+                    lifespan: 1000,
+                    quantity: 20,
+                    blendMode: 'ADD'
+                });
+                
+                // Create fire extinguisher before destroying the block
+                let fireExtinguisher = fireExtinguishers.create(block.x, block.y, 'fireExtinguisher');
+                fireExtinguisher.setScale(1.5);
+                fireExtinguisher.setBounce(0.2);
+                fireExtinguisher.setVelocity(
+                    Phaser.Math.Between(-100, 100),
+                    Phaser.Math.Between(-200, -100)
+                );
+                
+                // Destroy the lava and block
+                lava.destroy();
+                block.destroy();
+                
+                // Clean up the explosion particle effect
+                scene.time.delayedCall(1000, () => {
+                    if (explosion) {
+                        explosion.destroy();
+                    }
+                });
+            } catch (error) {
+                console.error("Error in breakBlockWithLava:", error);
+            }
+        }
+    }
+};
+</script>
+</body></html>
