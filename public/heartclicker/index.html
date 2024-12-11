@@ -1,0 +1,1008 @@
+<html><head><base href="/" />
+    <title>Heart Clicker Game</title>
+    <style>
+        /* Keeping all existing styles */
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            background: linear-gradient(135deg, #ff9a9e 0%, #fad0c4 100%);
+            font-family: Arial, sans-serif;
+        }
+
+        #heart {
+            cursor: pointer;
+            transition: transform 0.1s;
+            fill: #ff4d6d;
+        }
+
+        #heart:hover {
+            transform: scale(1.1);
+        }
+
+        #heart:active {
+            transform: scale(0.9);
+        }
+
+        .score-container {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .money {
+            font-size: 24px;
+            color: #2c3e50;
+            font-weight: bold;
+        }
+
+        .floating-number {
+            position: absolute;
+            animation: floatUp 1s ease-out forwards;
+            color: #ff4d6d;
+            font-weight: bold;
+            pointer-events: none;
+        }
+
+        .golden-number {
+            color: #FFD700;
+            font-size: 1.5em;
+        }
+
+        .button-container {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .game-button {
+            padding: 10px 20px;
+            font-size: 16px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            background: #ff4d6d;
+            color: white;
+            transition: all 0.3s ease;
+        }
+
+        .game-button:hover:not(:disabled) {
+            background: #ff1f1f;
+            transform: translateY(-2px);
+        }
+
+        .game-button:disabled {
+            background: #cccccc;
+            cursor: not-allowed;
+        }
+
+        .upgrade-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: -300px; /* Start off-screen */
+            width: 280px;
+            height: 100vh;
+            background: white;
+            padding: 20px;
+            box-shadow: 2px 0 6px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease-out;
+            z-index: 1000;
+            overflow-y: auto;
+        }
+
+        .upgrade-modal.visible {
+            transform: translateX(300px);
+        }
+
+        .upgrade-modal .close-button {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            cursor: pointer;
+            font-size: 20px;
+        }
+
+        .upgrade-modal .modal-content {
+            margin-top: 40px;
+        }
+
+        .special-items-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: -300px; /* Start off-screen */
+            width: 280px;
+            height: 100vh;
+            background: white;
+            padding: 20px;
+            box-shadow: 2px 0 6px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease-out;
+            z-index: 1000;
+            overflow-y: auto;
+        }
+
+        .special-items-modal.visible {
+            transform: translateX(300px);
+        }
+
+        .modal-content {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .upgrade-item, .special-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .upgrade-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            min-width: 240px;  /* Add minimum width */
+        }
+
+        .upgrade-item h3 {
+            margin: 0;
+            white-space: nowrap;  /* Prevent text wrapping */
+        }
+
+        .upgrade-item p {
+            margin: 5px 0 0 0;
+        }
+
+        .upgrade-item div {
+            flex: 1;
+            margin-right: 10px;  /* Add spacing between text and button */
+        }
+
+        @keyframes floatUp {
+            0% {
+                transform: translateY(0);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-100px);
+                opacity: 0;
+            }
+        }
+
+        .pulse {
+            animation: pulse 0.5s ease-out;
+        }
+
+        .golden-pulse {
+            animation: goldenPulse 0.5s ease-out;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+
+        @keyframes goldenPulse {
+            0% { transform: scale(1); fill: #FFD700; }
+            50% { transform: scale(1.2); fill: #FFD700; }
+            100% { transform: scale(1); fill: #FFD700; }
+        }
+
+        .rainbow-pulse {
+            animation: rainbowPulse 0.5s ease-out;
+        }
+
+        @keyframes rainbowPulse {
+            0% { 
+                transform: scale(1); 
+                fill: red;
+            }
+            25% { 
+                transform: scale(1.2);
+                fill: orange;
+            }
+            50% { 
+                transform: scale(1.2);
+                fill: yellow;
+            }
+            75% { 
+                transform: scale(1.2);
+                fill: green;
+            }
+            100% { 
+                transform: scale(1);
+                fill: #ff4d6d;
+            }
+        }
+
+        .background-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: -1;
+            opacity: 0.3;
+            overflow: hidden;
+        }
+
+        .floating-heart {
+            position: absolute;
+            animation: float 20s linear infinite;
+            opacity: 0.2;
+            fill: #ff4d6d;
+        }
+
+        @keyframes float {
+            0% {
+                transform: translateY(100vh) scale(1);
+            }
+            100% {
+                transform: translateY(-100px) scale(1);
+            }
+        }
+
+        .shiny-heart {
+            position: absolute;
+            animation: floatAcross 8s linear;
+            cursor: pointer;
+            pointer-events: auto;
+            filter: drop-shadow(0 0 8px gold);
+        }
+
+        @keyframes floatAcross {
+            0% {
+                transform: translateX(-100px) translateY(var(--random-y));
+                opacity: 0;
+            }
+            10% {
+                opacity: 1;
+            }
+            90% {
+                opacity: 1;
+            }
+            100% {
+                transform: translateX(calc(100vw + 100px)) translateY(var(--random-y));
+                opacity: 0;
+            }
+        }
+
+        .shiny-heart path {
+            fill: gold;
+        }
+
+        /* Update the rebirth button styles */
+        .rebirth-button {
+            background: linear-gradient(135deg, #ff4e50, #f9d423);
+            animation: glow 2s infinite alternate;
+        }
+
+        /* Add disabled state styling */
+        .rebirth-button:disabled {
+            background: #cccccc;
+            animation: none;
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+
+        @keyframes glow {
+            0% { box-shadow: 0 0 5px gold; }
+            100% { box-shadow: 0 0 20px gold; }
+        }
+    </style>
+</head>
+<body>
+    <div class="background-container">
+        <svg class="floating-heart" width="40" height="40" viewBox="0 0 24 24" style="left: 10%; animation-delay: 0s;">
+            <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+        </svg>
+        <svg class="floating-heart" width="30" height="30" viewBox="0 0 24 24" style="left: 25%; animation-delay: 2s;">
+            <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+        </svg>
+        <svg class="floating-heart" width="50" height="50" viewBox="0 0 24 24" style="left: 45%; animation-delay: 4s;">
+            <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+        </svg>
+        <svg class="floating-heart" width="35" height="35" viewBox="0 0 24 24" style="left: 65%; animation-delay: 6s;">
+            <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+        </svg>
+        <svg class="floating-heart" width="45" height="45" viewBox="0 0 24 24" style="left: 85%; animation-delay: 8s;">
+            <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+        </svg>
+    </div>
+
+    <div class="score-container">
+        <span class="money">$<span id="score">0</span></span>
+    </div>
+    
+    <svg id="heart" width="100" height="100" viewBox="0 0 24 24">
+        <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+    </svg>
+
+    <div class="button-container">
+        <button id="rebirthBtn" class="game-button rebirth-button" disabled>
+            Rebirth ($30000)
+        </button>
+        <button id="upgradeBtn" class="game-button">Upgrades</button>
+        <button id="achievementsBtn" class="game-button">Achievements</button>
+        <button id="specialItemsBtn" class="game-button">Special Items</button>
+        <button id="saveBtn" class="game-button">Save Progress</button>
+        <button id="resetBtn" class="game-button">Reset Progress</button>
+    </div>
+
+    <div id="upgradeModal" class="upgrade-modal">
+        <span class="close-button">&times;</span>
+        <div class="modal-content">
+            <div class="upgrade-item">
+                <div>
+                    <h3>Faster Pumping</h3>
+                    <p>Auto clicker (1$ per 2 seconds)</p>
+                </div>
+                <button id="buyAutoClicker" class="game-button">Buy ($10)</button>
+            </div>
+            <div class="upgrade-item">
+                <div>
+                    <h3>Effective Pumping</h3>
+                    <p>Get 1$ more per click</p>
+                </div>
+                <button id="buyClickUpgrade" class="game-button">Buy ($15)</button>
+            </div>
+            <div class="upgrade-item">
+                <div>
+                    <h3>Golden Heartbeat</h3>
+                    <p>Chance to get a Golden Heartbeat (x10 when you get it)</p>
+                </div>
+                <button id="buyGoldenHeartbeat" class="game-button">Buy ($200)</button>
+            </div>
+            <div class="upgrade-item">
+                <div>
+                    <h3>Rainbow Heartbeat</h3>
+                    <p>Chance to get a Rainbow Heartbeat (x25 when you get it)</p>
+                </div>
+                <button id="buyRainbowHeartbeat" class="game-button">Buy ($350)</button>
+            </div>
+            <div class="upgrade-item">
+                <div>
+                    <h3>Sugar</h3>
+                    <p>Makes autoclicker click every second instead of every 2 seconds</p>
+                </div>
+                <button id="buySugar" class="game-button">Buy ($500)</button>
+            </div>
+            <div class="upgrade-item">
+                <div>
+                    <h3>Better Heartbeat</h3>
+                    <p>Bigger chance to get Golden Heartbeat</p>
+                </div>
+                <button id="buyBetterHeartbeat" class="game-button">Buy ($600)</button>
+            </div>
+            <div class="upgrade-item">
+                <div>
+                    <h3>Better Heartbeat 2</h3>
+                    <p>Bigger chance to get Rainbow Heartbeat</p>
+                </div>
+                <button id="buyBetterHeartbeat2" class="game-button">Buy ($1000)</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="specialItemsModal" class="special-items-modal">
+        <span class="close-button">&times;</span>
+        <div class="modal-content">
+            <div class="special-item">
+                <div>
+                    <h3>Caffeine</h3>
+                    <p>Doubles all your earnings for 2 minutes</p>
+                </div>
+                <button id="buyCaffeine" class="game-button">Buy ($500)</button>
+            </div>
+            <div class="special-item">
+                <div>
+                    <h3>Energy Drink</h3>
+                    <p>Makes autoclicker 2x faster for 1 minute</p>
+                </div>
+                <button id="buyEnergyDrink" class="game-button">Buy ($300)</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let score = 0;
+        let autoClickerCount = 0;
+        let autoClickerCost = 10;
+        let clickUpgradeCost = 15;
+        let clickValue = 1;
+        let hasGoldenHeartbeat = false;
+        let isCaffeineActive = false;
+        let hasRainbowHeartbeat = false;
+        let isSugarActive = false;
+        let isEnergyDrinkActive = false;
+        let hasBetterHeartbeat = false;
+        let hasBetterHeartbeat2 = false;
+        const goldenHeartbeatCost = 200;
+        const goldenHeartbeatChance = 0.1;
+        const rainbowHeartbeatCost = 350;
+        const rainbowHeartbeatChance = 0.05;
+        const sugarCost = 500;
+        const energyDrinkCost = 300;
+        const betterHeartbeatCost = 600; // Updated cost
+        const betterHeartbeat2Cost = 1000; // Updated cost
+        const betterHeartbeatMultiplier = 2;
+        let autoClickerInterval;
+
+        // Add these variables after other let declarations
+        let rebirthPoints = 0;
+        let rebirthMultiplier = 1;
+
+        const scoreElement = document.getElementById('score');
+        const heart = document.getElementById('heart');
+        const upgradeBtn = document.getElementById('upgradeBtn');
+        const achievementsBtn = document.getElementById('achievementsBtn');
+        const specialItemsBtn = document.getElementById('specialItemsBtn');
+        const saveBtn = document.getElementById('saveBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const upgradeModal = document.getElementById('upgradeModal');
+        const specialItemsModal = document.getElementById('specialItemsModal');
+        const closeButtons = document.querySelectorAll('.close-button');
+        const buyAutoClickerBtn = document.getElementById('buyAutoClicker');
+        const buyClickUpgradeBtn = document.getElementById('buyClickUpgrade');
+        const buyGoldenHeartbeatBtn = document.getElementById('buyGoldenHeartbeat');
+        const buyCaffeineBtn = document.getElementById('buyCaffeine');
+        const buyRainbowHeartbeatBtn = document.getElementById('buyRainbowHeartbeat');
+        const buySugarBtn = document.getElementById('buySugar');
+        const buyEnergyDrinkBtn = document.getElementById('buyEnergyDrink');
+        const buyBetterHeartbeatBtn = document.getElementById('buyBetterHeartbeat');
+        const buyBetterHeartbeat2Btn = document.getElementById('buyBetterHeartbeat2');
+        const rebirthBtn = document.getElementById('rebirthBtn');
+
+        function createShinyHeart() {
+            const heart = document.createElement('svg');
+            heart.setAttribute('class', 'shiny-heart');
+            heart.setAttribute('width', '40');
+            heart.setAttribute('height', '40');
+            heart.setAttribute('viewBox', '0 0 24 24');
+            
+            // Set random Y position
+            const randomY = Math.random() * (window.innerHeight - 100);
+            heart.style.setProperty('--random-y', `${randomY}px`);
+            heart.style.top = `${randomY}px`;
+            
+            heart.innerHTML = '<path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>';
+            
+            // Add click handler
+            heart.addEventListener('click', (e) => {
+                const bonus = Math.floor(Math.random() * 50) + 50; // Random bonus between 50-100
+                processClick(bonus, e.pageX, e.pageY, false);
+                heart.remove();
+            });
+            
+            document.body.appendChild(heart);
+            
+            // Remove the heart after animation completes
+            setTimeout(() => {
+                if (heart && heart.parentElement) {
+                    heart.remove();
+                }
+            }, 8000);
+        }
+
+        function spawnShinyHearts() {
+            setInterval(() => {
+                if (Math.random() < 0.3) { // 30% chance every interval
+                    createShinyHeart();
+                }
+            }, 10000); // Check every 10 seconds
+        }
+
+        function activateEnergyDrink() {
+            if (score >= energyDrinkCost) {
+                score -= energyDrinkCost;
+                scoreElement.textContent = score.toFixed(2);
+                
+                // Store current interval timing
+                const currentInterval = isSugarActive ? 1000 : 2000;
+                const speedBoostInterval = currentInterval / 2;
+                
+                // Clear current interval
+                clearInterval(autoClickerInterval);
+                
+                // Set faster interval
+                autoClickerInterval = setInterval(() => {
+                    if (autoClickerCount > 0) {
+                        const heartRect = heart.getBoundingClientRect();
+                        processClick(autoClickerCount, heartRect.left + 50, heartRect.top + 50, true);
+                    }
+                }, speedBoostInterval);
+
+                // Disable button during effect
+                buyEnergyDrinkBtn.disabled = true;
+                
+                // Reset after 1 minute
+                setTimeout(() => {
+                    clearInterval(autoClickerInterval);
+                    autoClickerInterval = setInterval(() => {
+                        if (autoClickerCount > 0) {
+                            const heartRect = heart.getBoundingClientRect();
+                            processClick(autoClickerCount, heartRect.left + 50, heartRect.top + 50, true);
+                        }
+                    }, currentInterval);
+                    
+                    buyEnergyDrinkBtn.disabled = false;
+                }, 60000); // 1 minute
+            }
+        }
+
+        function updateScore(value) {
+            const multiplier = isCaffeineActive ? 2 : 1;
+            score += value * multiplier;
+            scoreElement.textContent = score.toFixed(2);
+            checkRebirthAvailability(); // Check if the rebirth button should be displayed
+        }
+
+        function checkRebirthAvailability() {
+            if (score >= 30000) {
+                rebirthBtn.disabled = false;
+            } else {
+                rebirthBtn.disabled = true;
+            }
+        }
+
+        function createFloatingNumber(x, y, value, isGolden = false) {
+            const floatingNum = document.createElement('div');
+            floatingNum.className = `floating-number ${isGolden ? 'golden-number' : ''}`;
+            floatingNum.textContent = `+$${value}`;
+            floatingNum.style.left = `${x}px`;
+            floatingNum.style.top = `${y}px`;
+            document.body.appendChild(floatingNum);
+
+            setTimeout(() => floatingNum.remove(), 1000);
+        }
+
+        function pulseHeart(isGolden = false, isRainbow = false) {
+            heart.classList.add(isRainbow ? 'rainbow-pulse' : (isGolden ? 'golden-pulse' : 'pulse'));
+            setTimeout(() => {
+                heart.classList.remove('rainbow-pulse', 'golden-pulse', 'pulse');
+            }, 500);
+        }
+
+        function processClick(baseValue, x, y, isAutoClick = false) {
+            let currentValue = baseValue * rebirthMultiplier; // Apply rebirth multiplier
+            let isGoldenClick = false;
+            let isRainbowClick = false;
+
+            // Calculate actual chances based on upgrades
+            const actualGoldenChance = hasGoldenHeartbeat ? 
+                (hasBetterHeartbeat ? goldenHeartbeatChance * betterHeartbeatMultiplier : goldenHeartbeatChance) : 0;
+            
+            const actualRainbowChance = hasRainbowHeartbeat ? 
+                (hasBetterHeartbeat2 ? rainbowHeartbeatChance * betterHeartbeatMultiplier : rainbowHeartbeatChance) : 0;
+
+            if (hasGoldenHeartbeat && Math.random() < actualGoldenChance) {
+                currentValue *= 10;
+                isGoldenClick = true;
+            } else if (hasRainbowHeartbeat && Math.random() < actualRainbowChance) {
+                currentValue *= 25;
+                isRainbowClick = true;
+            }
+
+            updateScore(currentValue);
+            createFloatingNumber(x, y, currentValue, isGoldenClick || isRainbowClick);
+            if (!isAutoClick) pulseHeart(isGoldenClick, isRainbowClick);
+        }
+
+        function performRebirth() {
+            if (score >= 30000) {
+                // Calculate new rebirth points
+                rebirthPoints++;
+                rebirthMultiplier = 1 + (rebirthPoints * 0.5); // Each rebirth gives +50% bonus
+                
+                // Reset everything except rebirth stats
+                score = 0;
+                autoClickerCount = 0;
+                autoClickerCost = 10;
+                clickUpgradeCost = 15;
+                clickValue = 1 * rebirthMultiplier;
+                hasGoldenHeartbeat = false;
+                isCaffeineActive = false;
+                hasRainbowHeartbeat = false;
+                isSugarActive = false;
+                isEnergyDrinkActive = false;
+                hasBetterHeartbeat = false;
+                hasBetterHeartbeat2 = false;
+                
+                // Update UI
+                scoreElement.textContent = '0';
+                buyAutoClickerBtn.textContent = `Buy ($10)`;
+                buyClickUpgradeBtn.textContent = `Buy ($15)`;
+                buyGoldenHeartbeatBtn.disabled = false;
+                buyGoldenHeartbeatBtn.textContent = `Buy ($${goldenHeartbeatCost})`;
+                buyRainbowHeartbeatBtn.disabled = false;
+                buyRainbowHeartbeatBtn.textContent = `Buy ($${rainbowHeartbeatCost})`;
+                buySugarBtn.disabled = false;
+                buySugarBtn.textContent = `Buy ($${sugarCost})`;
+                buyBetterHeartbeatBtn.disabled = false;
+                buyBetterHeartbeatBtn.textContent = `Buy ($${betterHeartbeatCost})`;
+                buyBetterHeartbeat2Btn.disabled = false;
+                buyBetterHeartbeat2Btn.textContent = `Buy ($${betterHeartbeat2Cost})`;
+                buyEnergyDrinkBtn.disabled = false;
+
+                // Show rebirth message
+                const rebirthMessage = document.createElement('div');
+                rebirthMessage.style.position = 'fixed';
+                rebirthMessage.style.top = '20px';
+                rebirthMessage.style.left = '50%';
+                rebirthMessage.style.transform = 'translateX(-50%)';
+                rebirthMessage.style.background = 'linear-gradient(135deg, #ff4e50, #f9d423)';
+                rebirthMessage.style.padding = '10px 20px';
+                rebirthMessage.style.borderRadius = '5px';
+                rebirthMessage.style.color = 'white';
+                rebirthMessage.textContent = `Rebirth Complete! New Multiplier: ${rebirthMultiplier}x`;
+                document.body.appendChild(rebirthMessage);
+                
+                setTimeout(() => rebirthMessage.remove(), 3000);
+            }
+        }
+
+        function activateCaffeine() {
+            if (score >= 500) {
+                score -= 500;
+                scoreElement.textContent = score.toFixed(2);
+                isCaffeineActive = true;
+                buyCaffeineBtn.disabled = true;
+                setTimeout(() => {
+                    isCaffeineActive = false;
+                    buyCaffeineBtn.disabled = false;
+                }, 120000); // 2 minutes in milliseconds
+            }
+        }
+
+        function activateSugar() {
+            if (score >= sugarCost && !isSugarActive) {
+                score -= sugarCost;
+                scoreElement.textContent = score.toFixed(2);
+                isSugarActive = true;
+                buySugarBtn.disabled = true;
+                buySugarBtn.textContent = "Purchased";
+                
+                // Clear existing interval and set new faster interval with autoClickerCount as value
+                clearInterval(autoClickerInterval);
+                autoClickerInterval = setInterval(() => {
+                    if (autoClickerCount > 0) {
+                        const heartRect = heart.getBoundingClientRect();
+                        processClick(autoClickerCount, heartRect.left + 50, heartRect.top + 50, true);
+                    }
+                }, 1000); // Always 1 second with sugar
+            }
+        }
+
+        function buyBetterHeartbeat() {
+            if (score >= betterHeartbeatCost && hasGoldenHeartbeat && !hasBetterHeartbeat) {
+                score -= betterHeartbeatCost;
+                hasBetterHeartbeat = true;
+                scoreElement.textContent = score.toFixed(2);
+                buyBetterHeartbeatBtn.disabled = true;
+                buyBetterHeartbeatBtn.textContent = "Purchased";
+            }
+        }
+
+        function buyBetterHeartbeat2() {
+            if (score >= betterHeartbeat2Cost && hasRainbowHeartbeat && !hasBetterHeartbeat2) {
+                score -= betterHeartbeat2Cost;
+                hasBetterHeartbeat2 = true;
+                scoreElement.textContent = score.toFixed(2);
+                buyBetterHeartbeat2Btn.disabled = true;
+                buyBetterHeartbeat2Btn.textContent = "Purchased";
+            }
+        }
+
+        function resetProgress() {
+            if (confirm("Are you sure you want to reset all progress? This cannot be undone!")) {
+                // Reset all variables
+                score = 0;
+                autoClickerCount = 0;
+                autoClickerCost = 10;
+                clickUpgradeCost = 15;
+                clickValue = 1;
+                hasGoldenHeartbeat = false;
+                isCaffeineActive = false;
+                hasRainbowHeartbeat = false;
+                isSugarActive = false;
+                isEnergyDrinkActive = false;
+                hasBetterHeartbeat = false;
+                hasBetterHeartbeat2 = false;
+                
+                // Clear localStorage
+                localStorage.removeItem('heartClickerSave');
+                
+                // Reset UI
+                scoreElement.textContent = '0';
+                buyAutoClickerBtn.textContent = `Buy ($10)`;
+                buyClickUpgradeBtn.textContent = `Buy ($15)`;
+                buyGoldenHeartbeatBtn.disabled = false;
+                buyGoldenHeartbeatBtn.textContent = `Buy ($${goldenHeartbeatCost})`;
+                buyRainbowHeartbeatBtn.disabled = false;
+                buyRainbowHeartbeatBtn.textContent = `Buy ($${rainbowHeartbeatCost})`;
+                buySugarBtn.disabled = false;
+                buySugarBtn.textContent = `Buy ($${sugarCost})`;
+                buyBetterHeartbeatBtn.disabled = false;
+                buyBetterHeartbeatBtn.textContent = `Buy ($${betterHeartbeatCost})`;
+                buyBetterHeartbeat2Btn.disabled = false;
+                buyBetterHeartbeat2Btn.textContent = `Buy ($${betterHeartbeat2Cost})`;
+                buyEnergyDrinkBtn.disabled = false;
+
+                // Reset intervals
+                clearInterval(autoClickerInterval);
+                autoClickerInterval = setInterval(() => {
+                    if (autoClickerCount > 0) {
+                        const heartRect = heart.getBoundingClientRect();
+                        processClick(autoClickerCount, heartRect.left + 50, heartRect.top + 50, true);
+                    }
+                }, 2000);
+                
+                // Show reset confirmation message
+                const resetMessage = document.createElement('div');
+                resetMessage.style.position = 'fixed';
+                resetMessage.style.top = '20px';
+                resetMessage.style.left = '50%';
+                resetMessage.style.transform = 'translateX(-50%)';
+                resetMessage.style.background = 'rgba(255, 0, 0, 0.8)';
+                resetMessage.style.padding = '10px 20px';
+                resetMessage.style.borderRadius = '5px';
+                resetMessage.style.color = 'white';
+                resetMessage.textContent = 'Progress Reset!';
+                document.body.appendChild(resetMessage);
+                
+                setTimeout(() => resetMessage.remove(), 2000);
+            }
+        }
+
+        function buyAutoClicker() {
+            if (score >= autoClickerCost) {
+                score -= autoClickerCost;
+                autoClickerCount++;
+                autoClickerCost = Math.round(autoClickerCost * 1.15);
+                scoreElement.textContent = score.toFixed(2);
+                buyAutoClickerBtn.textContent = `Buy ($${autoClickerCost})`;
+            }
+        }
+
+        function buyClickUpgrade() {
+            if (score >= clickUpgradeCost) {
+                score -= clickUpgradeCost;
+                clickValue += 1;
+                clickUpgradeCost = Math.round(clickUpgradeCost * 1.15);
+                scoreElement.textContent = score.toFixed(2);
+                buyClickUpgradeBtn.textContent = `Buy ($${clickUpgradeCost})`;
+            }
+        }
+
+        function buyGoldenHeartbeat() {
+            if (score >= goldenHeartbeatCost && !hasGoldenHeartbeat) {
+                score -= goldenHeartbeatCost;
+                hasGoldenHeartbeat = true;
+                scoreElement.textContent = score.toFixed(2);
+                buyGoldenHeartbeatBtn.disabled = true;
+                buyGoldenHeartbeatBtn.textContent = "Purchased";
+            }
+        }
+
+        function buyRainbowHeartbeat() {
+            if (score >= rainbowHeartbeatCost && !hasRainbowHeartbeat) {
+                score -= rainbowHeartbeatCost;
+                hasRainbowHeartbeat = true;
+                scoreElement.textContent = score.toFixed(2);
+                buyRainbowHeartbeatBtn.disabled = true;
+                buyRainbowHeartbeatBtn.textContent = "Purchased";
+            }
+        }
+
+        function saveProgress() {
+            const gameState = {
+                score,
+                autoClickerCount,
+                autoClickerCost,
+                clickUpgradeCost,
+                clickValue,
+                hasGoldenHeartbeat,
+                hasRainbowHeartbeat,
+                isSugarActive,
+                isEnergyDrinkActive,
+                hasBetterHeartbeat,
+                hasBetterHeartbeat2,
+                rebirthPoints,
+                rebirthMultiplier
+            };
+            
+            localStorage.setItem('heartClickerSave', JSON.stringify(gameState));
+            
+            // Create a temporary floating message
+            const saveMessage = document.createElement('div');
+            saveMessage.style.position = 'fixed';
+            saveMessage.style.top = '20px';
+            saveMessage.style.left = '50%';
+            saveMessage.style.transform = 'translateX(-50%)';
+            saveMessage.style.background = 'rgba(0, 255, 0, 0.8)';
+            saveMessage.style.padding = '10px 20px';
+            saveMessage.style.borderRadius = '5px';
+            saveMessage.style.color = 'white';
+            saveMessage.textContent = 'Progress Saved!';
+            document.body.appendChild(saveMessage);
+            
+            setTimeout(() => saveMessage.remove(), 2000);
+        }
+
+        function loadProgress() {
+            const savedState = localStorage.getItem('heartClickerSave');
+            if (savedState) {
+                const gameState = JSON.parse(savedState);
+                
+                score = gameState.score;
+                autoClickerCount = gameState.autoClickerCount;
+                autoClickerCost = gameState.autoClickerCost;
+                clickUpgradeCost = gameState.clickUpgradeCost;
+                clickValue = gameState.clickValue;
+                hasGoldenHeartbeat = gameState.hasGoldenHeartbeat;
+                hasRainbowHeartbeat = gameState.hasRainbowHeartbeat;
+                isSugarActive = gameState.isSugarActive;
+                isEnergyDrinkActive = gameState.isEnergyDrinkActive;
+                hasBetterHeartbeat = gameState.hasBetterHeartbeat;
+                hasBetterHeartbeat2 = gameState.hasBetterHeartbeat2;
+                rebirthPoints = gameState.rebirthPoints || 0;
+                rebirthMultiplier = gameState.rebirthMultiplier || 1;
+                
+                // Update UI
+                scoreElement.textContent = score.toFixed(2);
+                buyAutoClickerBtn.textContent = `Buy ($${autoClickerCost})`;
+                buyClickUpgradeBtn.textContent = `Buy ($${clickUpgradeCost})`;
+                
+                if (hasGoldenHeartbeat) {
+                    buyGoldenHeartbeatBtn.disabled = true;
+                    buyGoldenHeartbeatBtn.textContent = "Purchased";
+                }
+                
+                if (hasRainbowHeartbeat) {
+                    buyRainbowHeartbeatBtn.disabled = true;
+                    buyRainbowHeartbeatBtn.textContent = "Purchased";
+                }
+                
+                if (isSugarActive) {
+                    buySugarBtn.disabled = true;
+                    buySugarBtn.textContent = "Purchased";
+                }
+                
+                if (isEnergyDrinkActive) {
+                    buyEnergyDrinkBtn.disabled = true;
+                }
+
+                if (hasBetterHeartbeat) {
+                    buyBetterHeartbeatBtn.disabled = true;
+                    buyBetterHeartbeatBtn.textContent = "Purchased";
+                }
+
+                if (hasBetterHeartbeat2) {
+                    buyBetterHeartbeat2Btn.disabled = true;
+                    buyBetterHeartbeat2Btn.textContent = "Purchased";
+                }
+            }
+            checkRebirthAvailability(); // Check rebirth button state after loading progress
+        }
+
+        autoClickerInterval = setInterval(() => {
+            if (autoClickerCount > 0) {
+                const heartRect = heart.getBoundingClientRect();
+                processClick(autoClickerCount, heartRect.left + 50, heartRect.top + 50, true);
+            }
+        }, isSugarActive ? 1000 : 2000);
+
+        heart.addEventListener('click', (e) => processClick(clickValue, e.pageX, e.pageY, false));
+        heart.addEventListener('mouseover', () => heart.style.fill = '#ff1f1f');
+        heart.addEventListener('mouseout', () => heart.style.fill = '#ff4d6d');
+
+        upgradeBtn.addEventListener('click', () => {
+            upgradeModal.style.display = 'block';
+            specialItemsModal.style.display = 'none';
+            // Small delay to ensure display: block is applied before adding the visible class
+            setTimeout(() => {
+                upgradeModal.classList.add('visible');
+            }, 10);
+        });
+
+        specialItemsBtn.addEventListener('click', () => {
+            specialItemsModal.style.display = 'block';
+            upgradeModal.style.display = 'none';
+            upgradeModal.classList.remove('visible');
+            // Small delay to ensure display: block is applied before adding the visible class
+            setTimeout(() => {
+                specialItemsModal.classList.add('visible');
+            }, 10);
+        });
+
+        closeButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                if (button.closest('.upgrade-modal')) {
+                    upgradeModal.classList.remove('visible');
+                    setTimeout(() => {
+                        upgradeModal.style.display = 'none';
+                    }, 300);
+                }
+                if (button.closest('.special-items-modal')) {
+                    specialItemsModal.classList.remove('visible');
+                    setTimeout(() => {
+                        specialItemsModal.style.display = 'none';
+                    }, 300);
+                }
+            });
+        });
+
+        buyAutoClickerBtn.addEventListener('click', buyAutoClicker);
+        buyClickUpgradeBtn.addEventListener('click', buyClickUpgrade);
+        buyGoldenHeartbeatBtn.addEventListener('click', buyGoldenHeartbeat);
+        buyCaffeineBtn.addEventListener('click', activateCaffeine);
+        buyRainbowHeartbeatBtn.addEventListener('click', buyRainbowHeartbeat);
+        buySugarBtn.addEventListener('click', activateSugar);
+        buyEnergyDrinkBtn.addEventListener('click', activateEnergyDrink);
+        buyBetterHeartbeatBtn.addEventListener('click', buyBetterHeartbeat);
+        buyBetterHeartbeat2Btn.addEventListener('click', buyBetterHeartbeat2);
+        resetBtn.addEventListener('click', resetProgress);
+        rebirthBtn.addEventListener('click', performRebirth); // Add rebirth button listener
+
+        saveBtn.addEventListener('click', saveProgress);
+
+        achievementsBtn.addEventListener('click', () => alert('Achievements coming soon!'));
+
+        window.addEventListener('click', (e) => {
+            if (e.target === upgradeModal) {
+                upgradeModal.classList.remove('visible');
+                setTimeout(() => {
+                    upgradeModal.style.display = 'none';
+                }, 300);
+            }
+            if (e.target === specialItemsModal) {
+                specialItemsModal.classList.remove('visible');
+                setTimeout(() => {
+                    specialItemsModal.style.display = 'none';
+                }, 300);
+            }
+        });
+
+        // Load progress when the game starts
+        loadProgress();
+
+        // Create new floating hearts periodically
+        function createFloatingHearts() {
+            setInterval(() => {
+                const heart = document.createElement('svg');
+                heart.setAttribute('class', 'floating-heart');
+                heart.setAttribute('width', Math.random() * 30 + 20);
+                heart.setAttribute('height', Math.random() * 30 + 20);
+                heart.setAttribute('viewBox', '0 0 24 24');
+                heart.style.left = Math.random() * 100 + '%';
+                heart.innerHTML = '<path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>';
+                
+                document.querySelector('.background-container').appendChild(heart);
+                
+                // Remove the heart after animation completes
+                setTimeout(() => {
+                    heart.remove();
+                }, 20000);
+            }, 3000);
+        }
+
+        // Call this function when the page loads
+        createFloatingHearts();
+        
+        // Call this function after createFloatingHearts()
+        spawnShinyHearts();
+    </script>
+</body></html>
