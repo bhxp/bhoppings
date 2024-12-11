@@ -1,0 +1,666 @@
+<html><head><base href=".">
+<meta charset="UTF-8">
+<title>Minecraft Clicker</title>
+<style>
+body {
+    background-color: #333;
+    color: white;
+    font-family: 'MinecraftiaRegular', Arial, sans-serif;
+    margin: 0;
+    padding: 20px;
+}
+
+.container {
+    display: flex;
+    gap: 20px;
+}
+
+#game-area {
+    flex: 2;
+    background-color: #222;
+    padding: 20px;
+    border-radius: 10px;
+    position: relative;
+}
+
+.settings-icon {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    width: 30px;
+    height: 30px;
+    cursor: pointer;
+    transition: transform 0.3s;
+}
+
+.settings-icon:hover {
+    transform: rotate(90deg);
+}
+
+.settings-modal {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: #444;
+    padding: 20px;
+    border-radius: 10px;
+    z-index: 1000;
+}
+
+.settings-modal.active {
+    display: block;
+}
+
+.modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.7);
+    z-index: 999;
+}
+
+.modal-overlay.active {
+    display: block;
+}
+
+.settings-button {
+    background-color: #4CAF50;
+    color: white;
+    padding: 5px 10px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    margin: 2px;
+}
+
+.settings-button:hover {
+    background-color: #45a049;
+}
+
+.save-code {
+    background-color: #333;
+    padding: 10px;
+    border-radius: 5px;
+    margin: 10px 0;
+    word-break: break-all;
+}
+
+.nav-button {
+    display: inline-block;
+    padding: 10px 20px;
+    margin: 5px;
+    background-color: #555;
+    cursor: pointer;
+    border-radius: 5px;
+}
+
+.nav-button:hover {
+    background-color: #666;
+}
+
+.nav-button.active {
+    background-color: #4CAF50;
+}
+
+.nav-button[onclick="showPage('shop')"] {
+    background-color: #0077ff;
+}
+
+.page {
+    display: none;
+    margin-top: 20px;
+}
+
+.page.active {
+    display: block;
+}
+
+.block {
+    width: 100px;
+    height: 100px;
+    background-size: cover;
+    cursor: pointer;
+    margin: 20px auto;
+    position: relative;
+    transition: transform 0.1s;
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+}
+
+.block:active {
+    transform: scale(0.95);
+}
+
+.stone-block {
+    background-image: url('https://minecraft.wiki/images/Stone_JE8.png?b5028');
+}
+
+.wood-block {
+    background-image: url('https://minecraft.wiki/images/Oak_Wood_%28UD%29_JE5_BE2.png?74743');
+}
+
+.dirt-block {
+    background-image: url('https://minecraft.wiki/images/Dirt.png?89d72');
+}
+
+.crop-block {
+    background-image: url('https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRz4C0Xk-eqeTVGWSbjjsmS6C8Fwwcn1URpdQ&s');
+}
+
+#aura-display {
+    color: #00ffff;
+    text-shadow: 0 0 5px #00ffff;
+    font-size: 24px;
+    text-align: center;
+    margin: 10px 0;
+    animation: glow 1.5s ease-in-out infinite alternate;
+}
+
+@keyframes glow {
+    from {
+        text-shadow: 0 0 5px #00ffff, 0 0 10px #00ffff;
+    }
+    to {
+        text-shadow: 0 0 10px #00ffff, 0 0 20px #00ffff;
+    }
+}
+
+#shop-page {
+    background-color: #333;
+    padding: 20px;
+    border-radius: 10px;
+}
+
+.shop-item {
+    background-color: #444;
+    padding: 10px;
+    margin: 10px 0;
+    border-radius: 5px;
+    cursor: pointer;
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+}
+
+.shop-item:hover {
+    background-color: #555;
+}
+
+#admin-panel {
+    background-color: #444;
+    padding: 10px;
+    margin: 10px 0;
+    border-radius: 5px;
+}
+
+#admin-panel button {
+    width: 100%;
+    margin: 2px 0;
+}
+</style>
+</head>
+<body>
+<div class="container">
+    <div id="game-area">
+        <h2>Minecraft Clicker</h2>
+        <div id="aura-display">
+            Aura: <span id="aura">0</span>
+        </div>
+        <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQexaK2bdsUuWz36Ax37PtxTTZ5r-S1YCPSNw&s" class="settings-icon" onclick="toggleSettings()">
+        
+        <div id="resource-display">
+            Resources:<br>
+            Stone: <span id="stone">0</span><br>
+            Wood: <span id="wood">0</span><br>
+            Dirt: <span id="dirt">0</span><br>
+            Crops: <span id="crops">0</span>
+        </div>
+
+        <div class="navigation">
+            <div class="nav-button active" onclick="showPage('stone')">Stone</div>
+            <div class="nav-button" onclick="showPage('wood')">Wood</div>
+            <div class="nav-button" onclick="showPage('dirt')">Dirt</div>
+            <div class="nav-button" onclick="showPage('crops')">Crops</div>
+            <div class="nav-button" onclick="showPage('shop')">Shop</div>
+        </div>
+
+        <div id="stone-page" class="page active">
+            <div class="block stone-block" onclick="mine('pickaxe')">
+                <span>+<span id="pickaxe-power">1</span></span>
+            </div>
+        </div>
+
+        <div id="wood-page" class="page">
+            <div class="block wood-block" onclick="mine('axe')">
+                <span>+<span id="axe-power">1</span></span>
+            </div>
+        </div>
+
+        <div id="dirt-page" class="page">
+            <div class="block dirt-block" onclick="mine('shovel')">
+                <span>+<span id="shovel-power">1</span></span>
+            </div>
+        </div>
+
+        <div id="crops-page" class="page">
+            <div class="block crop-block" onclick="mine('hoe')">
+                <span>+<span id="hoe-power">1</span></span>
+            </div>
+        </div>
+
+        <div id="shop-page" class="page">
+            <h3>Tools</h3>
+            <div class="shop-item" onclick="upgradeTool('pickaxe')">
+                Upgrade Pickaxe (Cost: <span id="pickaxe-cost">10</span>)
+            </div>
+            <div class="shop-item" onclick="upgradeTool('axe')">
+                Upgrade Axe (Cost: <span id="axe-cost">10</span>)
+            </div>
+            <div class="shop-item" onclick="upgradeTool('shovel')">
+                Upgrade Shovel (Cost: <span id="shovel-cost">10</span>)
+            </div>
+            <div class="shop-item" onclick="upgradeTool('hoe')">
+                Upgrade Hoe (Cost: <span id="hoe-cost">10</span>)
+            </div>
+            
+            <h3>Villagers</h3>
+            <div class="shop-item" onclick="hireVillager('miner')">
+                Hire Miner (Cost: <span id="miner-cost">50</span>) - Count: <span id="miner-count">0</span>
+            </div>
+            <div class="shop-item" onclick="hireVillager('lumberjack')">
+                Hire Lumberjack (Cost: <span id="lumberjack-cost">50</span>) - Count: <span id="lumberjack-count">0</span>
+            </div>
+            <div class="shop-item" onclick="hireVillager('farmer')">
+                Hire Farmer (Cost: <span id="farmer-cost">50</span>) - Count: <span id="farmer-count">0</span>
+            </div>
+
+            <h3>Buildings</h3>
+            <div class="shop-item" onclick="buyBuilding('house')">
+                Build House (Generates 1 Aura/s) - Count: 0<br>
+                Cost: 40 stone, 30 wood, 20 dirt, 10 crops
+            </div>
+            <div class="shop-item" onclick="buyBuilding('market')">
+                Build Market (Generates 3 Aura/s) - Count: 0<br>
+                Cost: 100 stone, 75 wood, 50 dirt, 25 crops
+            </div>
+            <div class="shop-item" onclick="buyBuilding('temple')">
+                Build Temple (Generates 7 Aura/s) - Count: 0<br>
+                Cost: 200 stone, 150 wood, 100 dirt, 50 crops
+            </div>
+
+            <h3>Prestige</h3>
+            <div class="shop-item" onclick="prestige()">
+                Prestige (Cost: 1000 Aura) - Current Level: 0<br>
+                Current Multiplier: 1x
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Settings Modal -->
+<div class="modal-overlay" id="modalOverlay"></div>
+<div class="settings-modal" id="settingsModal">
+    <h3>Settings</h3>
+    <div>
+        <button class="settings-button" onclick="saveGame()">Save Game</button>
+        <button class="settings-button" onclick="resetGame()">Reset Game</button>
+    </div>
+    <div class="save-code" id="saveCode"></div>
+    <div>
+        <input type="text" id="loadCodeInput" placeholder="Enter save code">
+        <button class="settings-button" onclick="loadFromCode()">Load Game</button>
+    </div>
+    <button class="settings-button" onclick="toggleSettings()">Close</button>
+</div>
+
+<script>
+const game = {
+    resources: {
+        stone: 0,
+        wood: 0,
+        dirt: 0,
+        crops: 0,
+        aura: 0
+    },
+    prestige: {
+        cost: 1000,
+        level: 0,
+        multiplier: 1
+    },
+    tools: {
+        pickaxe: { power: 1, cost: 10 },
+        axe: { power: 1, cost: 10 },
+        shovel: { power: 1, cost: 10 },
+        hoe: { power: 1, cost: 10 }
+    },
+    villagers: {
+        miner: { count: 0, cost: 50, production: 1 },
+        lumberjack: { count: 0, cost: 50, production: 1 },
+        farmer: { count: 0, cost: 50, production: 1 }
+    },
+    buildings: {
+        house: { count: 0, cost: 100, auraProduction: 1 },
+        market: { count: 0, cost: 250, auraProduction: 3 },
+        temple: { count: 0, cost: 500, auraProduction: 7 }
+    }
+};
+
+function toggleSettings() {
+    const modal = document.getElementById('settingsModal');
+    const overlay = document.getElementById('modalOverlay');
+    modal.classList.toggle('active');
+    overlay.classList.toggle('active');
+}
+
+function saveGame() {
+    const saveData = btoa(JSON.stringify(game));
+    document.getElementById('saveCode').textContent = saveData;
+    localStorage.setItem('minecraftClickerSave', saveData);
+}
+
+function loadFromCode() {
+    const code = document.getElementById('loadCodeInput').value;
+    try {
+        const loadedGame = JSON.parse(atob(code));
+        Object.assign(game, loadedGame);
+        updateDisplay();
+        alert('Game loaded successfully!');
+    } catch (e) {
+        alert('Invalid save code!');
+    }
+}
+
+function resetGame() {
+    if (confirm('Are you sure you want to reset your progress?')) {
+        game.resources = {
+            stone: 0,
+            wood: 0,
+            dirt: 0,
+            crops: 0,
+            aura: 0
+        };
+        game.tools = {
+            pickaxe: { power: 1, cost: 10 },
+            axe: { power: 1, cost: 10 },
+            shovel: { power: 1, cost: 10 },
+            hoe: { power: 1, cost: 10 }
+        };
+        game.villagers = {
+            miner: { count: 0, cost: 50, production: 1 },
+            lumberjack: { count: 0, cost: 50, production: 1 },
+            farmer: { count: 0, cost: 50, production: 1 }
+        };
+        game.buildings = {
+            house: { count: 0, cost: 100, auraProduction: 1 },
+            market: { count: 0, cost: 250, auraProduction: 3 },
+            temple: { count: 0, cost: 500, auraProduction: 7 }
+        };
+        updateDisplay();
+        localStorage.removeItem('minecraftClickerSave');
+    }
+}
+
+function showPage(pageName) {
+    document.querySelectorAll('.page').forEach(page => {
+        page.classList.remove('active');
+    });
+    
+    document.getElementById(pageName + '-page').classList.add('active');
+    
+    document.querySelectorAll('.nav-button').forEach(button => {
+        button.classList.remove('active');
+    });
+    event.target.classList.add('active');
+}
+
+function mine(tool) {
+    switch(tool) {
+        case 'pickaxe':
+            game.resources.stone += game.tools.pickaxe.power;
+            break;
+        case 'axe':
+            game.resources.wood += game.tools.axe.power;
+            break;
+        case 'shovel':
+            game.resources.dirt += game.tools.shovel.power;
+            break;
+        case 'hoe':
+            game.resources.crops += game.tools.hoe.power;
+            break;
+    }
+    updateDisplay();
+}
+
+function upgradeTool(tool) {
+    const toolObj = game.tools[tool];
+    if (game.resources.stone >= toolObj.cost) {
+        game.resources.stone -= toolObj.cost;
+        toolObj.power += 1;
+        toolObj.cost = Math.floor(toolObj.cost * 1.5);
+        updateDisplay();
+    } else {
+        alert('Not enough resources!');
+    }
+}
+
+function hireVillager(type) {
+    const villager = game.villagers[type];
+    if (game.resources.stone >= villager.cost) {
+        game.resources.stone -= villager.cost;
+        villager.count += 1;
+        villager.cost = Math.floor(villager.cost * 1.5);
+        updateDisplay();
+    } else {
+        alert('Not enough resources!');
+    }
+}
+
+function buyBuilding(type) {
+    const building = game.buildings[type];
+    const costs = {
+        house: {stone: 40, wood: 30, dirt: 20, crops: 10},
+        market: {stone: 100, wood: 75, dirt: 50, crops: 25},
+        temple: {stone: 200, wood: 150, dirt: 100, crops: 50}
+    };
+    
+    const currentCost = costs[type];
+    
+    if (game.resources.stone >= currentCost.stone && 
+        game.resources.wood >= currentCost.wood &&
+        game.resources.dirt >= currentCost.dirt &&
+        game.resources.crops >= currentCost.crops) {
+        
+        game.resources.stone -= currentCost.stone;
+        game.resources.wood -= currentCost.wood;
+        game.resources.dirt -= currentCost.dirt;
+        game.resources.crops -= currentCost.crops;
+        
+        game.buildings[type].count = (game.buildings[type].count || 0) + 1;
+        updateDisplay();
+    } else {
+        alert('Not enough resources!');
+    }
+}
+
+function prestige() {
+    if (game.resources.aura >= game.prestige.cost) {
+        if (confirm(`Are you sure you want to prestige? This will reset your progress but multiply all your gains by ${((game.prestige.level + 2) * 0.5).toFixed(1)}x`)) {
+            game.prestige.level++;
+            game.prestige.multiplier = 1 + (game.prestige.level * 0.5);
+            
+            // Store the cost for next prestige
+            const nextPrestigeCost = Math.floor(game.prestige.cost * 1.5);
+            
+            // Reset all resources including aura
+            game.resources = {
+                stone: 0,
+                wood: 0,
+                dirt: 0,
+                crops: 0,
+                aura: 0  // Reset aura to 0
+            };
+            
+            // Reset tools with new multiplier and scaled costs
+            Object.keys(game.tools).forEach(tool => {
+                game.tools[tool] = { 
+                    power: Math.floor(1 * game.prestige.multiplier), 
+                    cost: Math.floor(10 * Math.pow(1.2, game.prestige.level)) // Scale base cost by 1.2^prestige_level
+                };
+            });
+            
+            // Reset villagers with scaled costs
+            Object.keys(game.villagers).forEach(villager => {
+                game.villagers[villager] = { 
+                    count: 0, 
+                    cost: Math.floor(50 * Math.pow(1.2, game.prestige.level)), // Scale base cost
+                    production: Math.floor(1 * game.prestige.multiplier) 
+                };
+            });
+            
+            // Reset buildings with scaled costs
+            const baseCosts = {
+                house: {base: 100, auraProduction: 1},
+                market: {base: 250, auraProduction: 3},
+                temple: {base: 500, auraProduction: 7}
+            };
+            
+            Object.keys(game.buildings).forEach(building => {
+                game.buildings[building] = {
+                    count: 0,
+                    cost: Math.floor(baseCosts[building].base * Math.pow(1.2, game.prestige.level)),
+                    auraProduction: baseCosts[building].auraProduction
+                };
+            });
+            
+            game.prestige.cost = nextPrestigeCost;
+            
+            updateDisplay();
+        }
+    } else {
+        alert('Not enough aura!');
+    }
+}
+
+function updateDisplay() {
+    document.getElementById('stone').textContent = Math.floor(Number(game.resources.stone));
+    document.getElementById('wood').textContent = Math.floor(Number(game.resources.wood));
+    document.getElementById('dirt').textContent = Math.floor(Number(game.resources.dirt));
+    document.getElementById('crops').textContent = Math.floor(Number(game.resources.crops));
+    document.getElementById('aura').textContent = Math.floor(Number(game.resources.aura));
+    
+    document.getElementById('pickaxe-power').textContent = game.tools.pickaxe.power;
+    document.getElementById('axe-power').textContent = game.tools.axe.power;
+    document.getElementById('shovel-power').textContent = game.tools.shovel.power;
+    document.getElementById('hoe-power').textContent = game.tools.hoe.power;
+    
+    document.getElementById('pickaxe-cost').textContent = game.tools.pickaxe.cost;
+    document.getElementById('axe-cost').textContent = game.tools.axe.cost;
+    document.getElementById('shovel-cost').textContent = game.tools.shovel.cost;
+    document.getElementById('hoe-cost').textContent = game.tools.hoe.cost;
+    
+    document.getElementById('miner-count').textContent = game.villagers.miner.count;
+    document.getElementById('lumberjack-count').textContent = game.villagers.lumberjack.count;
+    document.getElementById('farmer-count').textContent = game.villagers.farmer.count;
+    
+    document.getElementById('miner-cost').textContent = game.villagers.miner.cost;
+    document.getElementById('lumberjack-cost').textContent = game.villagers.lumberjack.cost;
+    document.getElementById('farmer-cost').textContent = game.villagers.farmer.cost;
+
+    const shopPage = document.getElementById('shop-page');
+    shopPage.innerHTML = `
+        <h3>Tools</h3>
+        <div class="shop-item" onclick="upgradeTool('pickaxe')">
+            Upgrade Pickaxe (Cost: <span id="pickaxe-cost">${game.tools.pickaxe.cost}</span>)
+        </div>
+        <div class="shop-item" onclick="upgradeTool('axe')">
+            Upgrade Axe (Cost: <span id="axe-cost">${game.tools.axe.cost}</span>)
+        </div>
+        <div class="shop-item" onclick="upgradeTool('shovel')">
+            Upgrade Shovel (Cost: <span id="shovel-cost">${game.tools.shovel.cost}</span>)
+        </div>
+        <div class="shop-item" onclick="upgradeTool('hoe')">
+            Upgrade Hoe (Cost: <span id="hoe-cost">${game.tools.hoe.cost}</span>)
+        </div>
+        
+        <h3>Villagers</h3>
+        <div class="shop-item" onclick="hireVillager('miner')">
+            Hire Miner (Cost: <span id="miner-cost">${game.villagers.miner.cost}</span>) - Count: <span id="miner-count">${game.villagers.miner.count}</span>
+        </div>
+        <div class="shop-item" onclick="hireVillager('lumberjack')">
+            Hire Lumberjack (Cost: <span id="lumberjack-cost">${game.villagers.lumberjack.cost}</span>) - Count: <span id="lumberjack-count">${game.villagers.lumberjack.count}</span>
+        </div>
+        <div class="shop-item" onclick="hireVillager('farmer')">
+            Hire Farmer (Cost: <span id="farmer-cost">${game.villagers.farmer.cost}</span>) - Count: <span id="farmer-count">${game.villagers.farmer.count}</span>
+        </div>
+        
+        <h3>Buildings</h3>
+        <div class="shop-item" onclick="buyBuilding('house')">
+            Build House (Generates 1 Aura/s) - Count: ${game.buildings.house.count}<br>
+            Cost: 40 stone, 30 wood, 20 dirt, 10 crops
+        </div>
+        <div class="shop-item" onclick="buyBuilding('market')">
+            Build Market (Generates 3 Aura/s) - Count: ${game.buildings.market.count}<br>
+            Cost: 100 stone, 75 wood, 50 dirt, 25 crops
+        </div>
+        <div class="shop-item" onclick="buyBuilding('temple')">
+            Build Temple (Generates 7 Aura/s) - Count: ${game.buildings.temple.count}<br>
+            Cost: 200 stone, 150 wood, 100 dirt, 50 crops
+        </div>
+        
+        <h3>Prestige</h3>
+        <div class="shop-item" onclick="prestige()">
+            Prestige (Cost: ${game.prestige.cost} Aura) - Current Level: ${game.prestige.level}<br>
+            Current Multiplier: ${game.prestige.multiplier}x
+        </div>
+    `;
+}
+
+setInterval(() => {
+    // Villager production
+    game.resources.stone += game.villagers.miner.count * game.villagers.miner.production * game.prestige.multiplier;
+    game.resources.wood += game.villagers.lumberjack.count * game.villagers.lumberjack.production * game.prestige.multiplier;
+    game.resources.crops += game.villagers.farmer.count * game.villagers.farmer.production * game.prestige.multiplier;
+
+    // Calculate aura production from buildings
+    let totalAuraProduction = 0;
+    
+    // Add up aura from each building type
+    totalAuraProduction += game.buildings.house.count * game.buildings.house.auraProduction;
+    totalAuraProduction += game.buildings.market.count * game.buildings.market.auraProduction;
+    totalAuraProduction += game.buildings.temple.count * game.buildings.temple.auraProduction;
+    
+    // Apply prestige multiplier
+    totalAuraProduction *= game.prestige.multiplier;
+    
+    // Add the production to current aura
+    game.resources.aura = (game.resources.aura || 0) + totalAuraProduction;
+    
+    // Ensure aura is always a valid number
+    if (isNaN(game.resources.aura)) {
+        game.resources.aura = 0;
+    }
+    
+    updateDisplay();
+}, 1000);
+
+const savedGame = localStorage.getItem('minecraftClickerSave');
+if (savedGame) {
+    try {
+        Object.assign(game, JSON.parse(atob(savedGame)));
+    } catch (e) {
+        console.error('Error loading save:', e);
+    }
+}
+
+updateDisplay();
+</script>
+</body>
+</html>
