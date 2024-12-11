@@ -1,0 +1,488 @@
+<html><head><base href=".">
+<style>
+  body { 
+    margin: 0; 
+    overflow: hidden; 
+    background: #87CEEB;
+    font-family: Arial, sans-serif;
+  }
+  
+  #gameArea {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    background: linear-gradient(#87CEEB 0%, #87CEEB 60%, #90EE90 60%, #90EE90 100%);
+  }
+  
+  #farmer {
+    position: absolute;
+    width: 80px;
+    height: 80px;
+    z-index: 2;
+  }
+  
+  .chicken {
+    position: absolute;
+    width: 60px;
+    height: 60px;
+    z-index: 1;
+  }
+
+  .chicken svg {
+    width: 100%;
+    height: 100%;
+  }
+  
+  .egg {
+    position: absolute;
+    width: 15px;
+    height: 20px;
+    background: #FFFFF0;
+    border-radius: 50%;
+    z-index: 1;
+  }
+  
+  .basket {
+    position: absolute;
+    width: 40px;
+    height: 40px;
+    z-index: 1;
+  }
+  
+  #score {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    font-size: 24px;
+    color: white;
+  }
+  
+  #lives {
+    position: absolute;
+    top: 40px;
+    left: 10px;
+    font-size: 24px;
+    color: white;
+  }
+
+  #eggsHeld {
+    position: absolute;
+    top: 70px;
+    left: 10px;
+    font-size: 24px;
+    color: white;
+  }
+
+  .gameOver {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 48px;
+    color: red;
+    display: none;
+  }
+
+  #farmer svg {
+    width: 100%;
+    height: 100%;
+  }
+</style>
+</head>
+<body>
+<div id="gameArea">
+  <div id="farmer">
+    <svg viewBox="0 0 100 100">
+      <!-- Hat -->
+      <path d="M30 40 L70 40 L65 30 L35 30 Z" fill="#8B4513"/>
+      <rect x="25" y="40" width="50" height="5" fill="#8B4513"/>
+      <!-- Head -->
+      <circle cx="50" cy="50" r="15" fill="#FFE4B5"/>
+      <!-- Body -->
+      <rect x="40" y="65" width="20" height="25" fill="#4682B4"/>
+      <!-- Arms -->
+      <rect x="30" y="65" width="10" height="20" fill="#4682B4"/>
+      <rect x="60" y="65" width="10" height="20" fill="#4682B4"/>
+      <!-- Legs -->
+      <rect x="40" y="90" width="8" height="10" fill="#8B4513"/>
+      <rect x="52" y="90" width="8" height="10" fill="#8B4513"/>
+    </svg>
+  </div>
+  <div id="score">Score: 0</div>
+  <div id="lives">Lives: 3</div>
+  <div id="eggsHeld">Eggs: 0</div>
+  <div class="gameOver">GAME OVER</div>
+</div>
+
+<script>
+const gameArea = document.getElementById('gameArea');
+const farmer = document.getElementById('farmer');
+const scoreDisplay = document.getElementById('score');
+const livesDisplay = document.getElementById('lives');
+const eggsHeldDisplay = document.getElementById('eggsHeld');
+const gameOverDisplay = document.querySelector('.gameOver');
+
+let score = 0;
+let lives = 3;
+let eggsHeld = 0;
+let chickens = [];
+let eggs = [];
+let baskets = [];
+let keys = {};
+let gameLoop;
+
+const ROWS = 7;
+const ROW_HEIGHT = window.innerHeight / ROWS;
+const FARMER_SPEED = 5;
+const CHICKEN_SPEED = 3;
+
+// Audio setup
+let audioContext = new (window.AudioContext || window.webkitAudioContext)();
+
+function playStepSound() {
+  const oscillator = audioContext.createOscillator();
+  const gainNode = audioContext.createGain();
+  oscillator.connect(gainNode);
+  gainNode.connect(audioContext.destination);
+  oscillator.frequency.value = 800;
+  gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+  oscillator.start();
+  oscillator.stop(audioContext.currentTime + 0.05);
+}
+
+function playSadTrombone() {
+  const oscillator = audioContext.createOscillator();
+  const gainNode = audioContext.createGain();
+  oscillator.connect(gainNode);
+  gainNode.connect(audioContext.destination);
+  oscillator.frequency.setValueAtTime(400, audioContext.currentTime);
+  oscillator.frequency.linearRampToValueAtTime(200, audioContext.currentTime + 0.8);
+  gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+  gainNode.gain.linearRampToValueAtTime(0, audioContext.currentTime + 0.8);
+  oscillator.start();
+  oscillator.stop(audioContext.currentTime + 0.8);
+}
+
+function playBloopSound() {
+  const oscillator = audioContext.createOscillator();
+  const gainNode = audioContext.createGain();
+  oscillator.connect(gainNode);
+  gainNode.connect(audioContext.destination);
+  
+  oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+  oscillator.frequency.exponentialRampToValueAtTime(400, audioContext.currentTime + 0.1);
+  
+  gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
+  gainNode.gain.linearRampToValueAtTime(0, audioContext.currentTime + 0.1);
+  
+  oscillator.start();
+  oscillator.stop(audioContext.currentTime + 0.1);
+}
+
+function playBloopSequence(count) {
+  if(count <= 0) return;
+  
+  playBloopSound();
+  if(count > 1) {
+    setTimeout(() => playBloopSequence(count - 1), 100);
+  }
+}
+
+const chickenSVG = `
+  <svg viewBox="0 0 100 100">
+    <circle cx="50" cy="50" r="30" fill="#FFFFFF"/>
+    <circle cx="60" cy="40" r="5" fill="#000000"/>
+    <path d="M40 70 Q50 80 60 70" stroke="#FF6B6B" fill="none" stroke-width="3"/>
+    <path d="M75 45 L90 35" stroke="#FF6B6B" fill="none" stroke-width="3"/>
+    <path d="M20 50 L35 50" stroke="orange" fill="none" stroke-width="8" stroke-linecap="round"/>
+  </svg>
+`;
+
+const basketSVG = `
+  <svg viewBox="0 0 40 40">
+    <!-- Basket rim -->
+    <path d="M5 10 C5 5, 35 5, 35 10" stroke="#8B4513" stroke-width="2" fill="none"/>
+    <!-- Basket body -->
+    <path d="M5 10 L10 35 L30 35 L35 10" fill="#DEB887"/>
+    <!-- Basket weave -->
+    <path d="M10 15 L30 15" stroke="#8B4513" stroke-width="1"/>
+    <path d="M8 20 L32 20" stroke="#8B4513" stroke-width="1"/>
+    <path d="M7 25 L33 25" stroke="#8B4513" stroke-width="1"/>
+    <path d="M6 30 L34 30" stroke="#8B4513" stroke-width="1"/>
+    <!-- Vertical weave -->
+    <path d="M10 10 L15 35" stroke="#8B4513" stroke-width="1"/>
+    <path d="M15 10 L19 35" stroke="#8B4513" stroke-width="1"/>
+    <path d="M20 10 L22 35" stroke="#8B4513" stroke-width="1"/>
+    <path d="M25 10 L26 35" stroke="#8B4513" stroke-width="1"/>
+    <path d="M30 10 L29 35" stroke="#8B4513" stroke-width="1"/>
+  </svg>
+`;
+
+// Create baskets on bottom row
+for(let i = 0; i < 7; i++) {
+  const bottomBasket = document.createElement('div');
+  bottomBasket.className = 'basket';
+  bottomBasket.style.left = `${(window.innerWidth / 8) * (i + 1) - 20}px`;
+  bottomBasket.style.bottom = '10px';
+  bottomBasket.innerHTML = basketSVG;
+  gameArea.appendChild(bottomBasket);
+  baskets.push(bottomBasket);
+
+  // Create baskets on top row
+  const topBasket = document.createElement('div');
+  topBasket.className = 'basket';
+  topBasket.style.left = `${(window.innerWidth / 8) * (i + 1) - 20}px`;
+  topBasket.style.top = '10px';
+  topBasket.innerHTML = basketSVG;
+  gameArea.appendChild(topBasket);
+  baskets.push(topBasket);
+}
+
+// Initial farmer position
+farmer.style.left = `${window.innerWidth / 2}px`;
+farmer.style.top = `${window.innerHeight / 2}px`;
+
+// Key event listeners
+document.addEventListener('keydown', e => {
+  keys[e.key] = true;
+  if(e.key === 'a') farmer.style.transform = 'scaleX(-1)';
+  if(e.key === 'd') farmer.style.transform = 'scaleX(1)';
+});
+document.addEventListener('keyup', e => keys[e.key] = false);
+
+function createChicken() {
+  const chicken = document.createElement('div');
+  chicken.className = 'chicken';
+  chicken.innerHTML = chickenSVG;
+  const row = Math.floor(Math.random() * (ROWS - 2)) + 1;
+  const fromLeft = Math.random() < 0.5;
+  
+  chicken.style.top = `${row * ROW_HEIGHT + ROW_HEIGHT/2}px`;
+  chicken.style.left = fromLeft ? '-60px' : `${window.innerWidth}px`;
+  chicken.direction = fromLeft ? 1 : -1;
+  if(chicken.direction === -1) {
+    chicken.style.transform = 'scaleX(-1)';
+  }
+  chicken.lastEggTime = Date.now();
+  chicken.nextEggTime = Date.now() + (Math.random() * 5000 + 5000);
+  
+  gameArea.appendChild(chicken);
+  chickens.push(chicken);
+}
+
+function createEgg(chicken) {
+  const egg = document.createElement('div');
+  egg.className = 'egg';
+  
+  // Get chicken position
+  const chickenRect = chicken.getBoundingClientRect();
+  
+  // Position egg slightly behind chicken based on direction
+  const eggLeft = chicken.direction === 1 ? 
+    chickenRect.left : // If moving right, place on left side
+    chickenRect.right - 15; // If moving left, place on right side
+    
+  // Position egg slightly above the bottom of the chicken
+  const eggTop = chickenRect.bottom - 30; // Changed from -10 to -30 to place egg higher
+  
+  egg.style.left = `${eggLeft}px`;
+  egg.style.top = `${eggTop}px`;
+  
+  gameArea.appendChild(egg);
+  eggs.push(egg);
+}
+
+function moveFarmer() {
+  let left = parseInt(farmer.style.left);
+  let top = parseInt(farmer.style.top);
+  let moved = false;
+  
+  if(keys['w'] && top > 0) {
+    top -= FARMER_SPEED;
+    moved = true;
+  }
+  if(keys['s'] && top < window.innerHeight - 80) {
+    top += FARMER_SPEED;
+    moved = true;
+  }
+  if(keys['a'] && left > 0) {
+    left -= FARMER_SPEED;
+    moved = true;
+  }
+  if(keys['d'] && left < window.innerWidth - 80) {
+    left += FARMER_SPEED;
+    moved = true;
+  }
+  
+  if(moved) {
+    playStepSound();
+  }
+  
+  farmer.style.left = `${left}px`;
+  farmer.style.top = `${top}px`;
+}
+
+function checkCollisions() {
+  const farmerRect = farmer.getBoundingClientRect();
+  const farmerBox = {
+    left: farmerRect.left + farmerRect.width * 0.25,
+    right: farmerRect.right - farmerRect.width * 0.25,
+    top: farmerRect.top + farmerRect.height * 0.25,
+    bottom: farmerRect.bottom - farmerRect.height * 0.15
+  };
+  
+  // Add basket collision checks
+  baskets.forEach(basket => {
+    const basketRect = basket.getBoundingClientRect();
+    const basketBox = {
+      left: basketRect.left,
+      right: basketRect.right,
+      top: basketRect.top,
+      bottom: basketRect.bottom
+    };
+    
+    if(isColliding(farmerBox, basketBox)) {
+      // Play bloop for each egg before scoring
+      playBloopSequence(eggsHeld);
+      
+      // Add points based on eggs held
+      score += (eggsHeld * 5);
+      scoreDisplay.textContent = `Score: ${score}`;
+      
+      // Reset eggs held
+      eggsHeld = 0;
+      eggsHeldDisplay.textContent = `Eggs: ${eggsHeld}`;
+    }
+  });
+  
+  chickens.forEach(chicken => {
+    const chickenRect = chicken.getBoundingClientRect();
+    const chickenBox = {
+      left: chickenRect.left + chickenRect.width * 0.2,
+      right: chickenRect.right - chickenRect.width * 0.2,
+      top: chickenRect.top + chickenRect.height * 0.2,
+      bottom: chickenRect.bottom - chickenRect.height * 0.2
+    };
+    if(isColliding(farmerBox, chickenBox)) {
+      loseLife();
+    }
+  });
+  
+  eggs.forEach((egg, index) => {
+    const eggRect = egg.getBoundingClientRect();
+    const eggBox = {
+      left: eggRect.left - 5,
+      right: eggRect.right + 5,
+      top: eggRect.top - 5,
+      bottom: eggRect.bottom + 5
+    };
+    if(isColliding(farmerBox, eggBox)) {
+      eggsHeld++;
+      eggsHeldDisplay.textContent = `Eggs: ${eggsHeld}`;
+      gameArea.removeChild(egg);
+      eggs.splice(index, 1);
+      playBloopSound();
+    }
+  });
+
+  // Check chicken-egg collisions
+  chickens.forEach(chicken => {
+    const chickenRect = chicken.getBoundingClientRect();
+    const chickenBox = {
+      left: chickenRect.left + chickenRect.width * 0.2,
+      right: chickenRect.right - chickenRect.width * 0.2,
+      top: chickenRect.top + chickenRect.height * 0.2,
+      bottom: chickenRect.bottom - chickenRect.height * 0.2
+    };
+
+    for(let i = eggs.length - 1; i >= 0; i--) {
+      const egg = eggs[i];
+      const eggRect = egg.getBoundingClientRect();
+      const eggBox = {
+        left: eggRect.left - 5,
+        right: eggRect.right + 5,
+        top: eggRect.top - 5,
+        bottom: eggRect.bottom + 5
+      };
+
+      if(isColliding(chickenBox, eggBox)) {
+        if(chicken.direction === 1) {
+          if(eggRect.left > chickenRect.right - chickenRect.width * 0.4) {
+            gameArea.removeChild(egg);
+            eggs.splice(i, 1);
+          }
+        } else {
+          if(eggRect.right < chickenRect.left + chickenRect.width * 0.4) {
+            gameArea.removeChild(egg);
+            eggs.splice(i, 1);
+          }
+        }
+      }
+    }
+  });
+}
+
+function isColliding(rect1, rect2) {
+  return !(rect1.right < rect2.left || 
+           rect1.left > rect2.right || 
+           rect1.bottom < rect2.top || 
+           rect1.top > rect2.bottom);
+}
+
+function loseLife() {
+  lives--;
+  livesDisplay.textContent = `Lives: ${lives}`;
+  playSadTrombone();
+  
+  if(lives <= 0) {
+    gameOver();
+    return;
+  }
+  
+  resetLevel();
+}
+
+function resetLevel() {
+  farmer.style.left = `${window.innerWidth / 2}px`;
+  farmer.style.top = `${window.innerHeight / 2}px`;
+  farmer.style.transform = 'scaleX(1)';
+  
+  chickens.forEach(chicken => gameArea.removeChild(chicken));
+  eggs.forEach(egg => gameArea.removeChild(egg));
+  chickens = [];
+  eggs = [];
+  eggsHeld = 0;
+  eggsHeldDisplay.textContent = `Eggs: ${eggsHeld}`;
+}
+
+function gameOver() {
+  clearInterval(gameLoop);
+  gameOverDisplay.style.display = 'block';
+}
+
+function updateGame() {
+  moveFarmer();
+  
+  chickens.forEach((chicken, index) => {
+    let left = parseInt(chicken.style.left);
+    left += CHICKEN_SPEED * chicken.direction;
+    chicken.style.left = `${left}px`;
+    
+    if(left < -60 || left > window.innerWidth) {
+      gameArea.removeChild(chicken);
+      chickens.splice(index, 1);
+    }
+    
+    if(Date.now() >= chicken.nextEggTime) {
+      createEgg(chicken);
+      chicken.nextEggTime = Date.now() + (Math.random() * 5000 + 5000);
+    }
+  });
+  
+  checkCollisions();
+}
+
+setInterval(createChicken, 1000);
+gameLoop = setInterval(updateGame, 16);
+</script>
+</body></html>
