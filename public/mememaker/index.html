@@ -1,0 +1,199 @@
+<html><head><base href="/" /><title>Meme Generator</title>
+<style>
+  body {
+    font-family: 'Impact', sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+    background: linear-gradient(45deg, #1a1a1a, #2d2d2d);
+  }
+  
+  .meme-container {
+    position: relative;
+    width: 500px;
+    height: 500px;
+    background: #333;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 0 20px rgba(0,0,0,0.5);
+    transition: transform 0.3s ease;
+  }
+
+  .meme-container:hover {
+    transform: scale(1.02);
+  }
+
+  .doge {
+    width: 100%;
+    height: 100%;
+    transition: transform 0.5s ease;
+  }
+
+  .text {
+    position: absolute;
+    color: white;
+    text-transform: uppercase;
+    text-shadow: 2px 2px 0 #000, -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000;
+    font-size: 48px;
+    text-align: center;
+    width: 100%;
+    animation: wobble 2s infinite;
+    cursor: pointer;
+    transition: transform 0.3s ease, font-size 0.3s ease;
+  }
+
+  .text:hover {
+    transform: scale(1.1);
+    text-shadow: 3px 3px 0 #000, -3px -3px 0 #000, 3px -3px 0 #000, -3px 3px 0 #000;
+  }
+
+  .top-text {
+    top: 20px;
+  }
+
+  .bottom-text {
+    bottom: 20px;
+  }
+
+  @keyframes wobble {
+    0% { transform: rotate(0deg); }
+    25% { transform: rotate(-5deg); }
+    75% { transform: rotate(5deg); }
+    100% { transform: rotate(0deg); }
+  }
+
+  .button {
+    position: fixed;
+    top: 20px;
+    padding: 15px 30px;
+    background: linear-gradient(45deg, #4CAF50, #45a049);
+    color: white;
+    border: none;
+    border-radius: 25px;
+    cursor: pointer;
+    font-size: 18px;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+  }
+
+  .button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+  }
+
+  .button:active {
+    transform: translateY(1px);
+  }
+</style>
+</head>
+<body>
+<button class="button" onclick="generateMeme()">Generate New Meme</button>
+<div class="meme-container">
+  <svg class="doge" viewBox="0 0 100 100">
+    <defs>
+      <radialGradient id="dogeGradient" cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
+        <stop offset="0%" style="stop-color:#FFE5B4" />
+        <stop offset="100%" style="stop-color:#FFB347" />
+      </radialGradient>
+      <filter id="squiggly">
+        <feTurbulence type="turbulence" baseFrequency="0.01" numOctaves="3" result="turbulence"/>
+        <feDisplacementMap in2="turbulence" in="SourceGraphic" scale="2" xChannelSelector="R" yChannelSelector="G"/>
+      </filter>
+    </defs>
+    <!-- Doge face -->
+    <circle cx="50" cy="50" r="40" fill="url(#dogeGradient)" />
+    <circle cx="40" cy="45" r="5" fill="black"> 
+      <animate attributeName="r" values="5;4;5" dur="2s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="60" cy="45" r="5" fill="black">
+      <animate attributeName="r" values="5;4;5" dur="2s" repeatCount="indefinite"/>
+    </circle>
+    <path d="M 45 60 Q 50 65 55 60" stroke="black" stroke-width="2" fill="none">
+      <animate attributeName="d" 
+               values="M 45 60 Q 50 65 55 60;M 45 58 Q 50 63 55 58;M 45 60 Q 50 65 55 60" 
+               dur="3s" 
+               repeatCount="indefinite"/>
+    </path>
+    <ellipse cx="50" cy="52" rx="8" ry="5" fill="#FFB347" />
+  </svg>
+  <div class="text top-text" onclick="changeText(this)">Much Wow</div>
+  <div class="text bottom-text" onclick="changeText(this)">Very Meme</div>
+</div>
+
+<script>
+const topPhrases = [
+  "Much Wow",
+  "Such Amazing",
+  "Very Cool",
+  "So Talent",
+  "Much Creative",
+  "Such Style",
+  "Very Expert",
+  "Much Skill",
+  "So Professional",
+  "Very Art"
+];
+
+const bottomPhrases = [
+  "Very Meme",
+  "Much Laugh",
+  "So Funny",
+  "Very Entertainment",
+  "Much Joy",
+  "Such Happiness",
+  "Very Success",
+  "Much Win",
+  "So Amazing",
+  "Very Perfect"
+];
+
+function changeText(element) {
+  const phrases = element.classList.contains('top-text') ? topPhrases : bottomPhrases;
+  const currentText = element.innerText;
+  let newText;
+  do {
+    newText = phrases[Math.floor(Math.random() * phrases.length)];
+  } while (newText === currentText);
+  
+  element.style.transform = 'scale(0.8)';
+  setTimeout(() => {
+    element.innerText = newText;
+    element.style.transform = 'scale(1)';
+  }, 150);
+}
+
+function generateMeme() {
+  const topText = document.querySelector('.top-text');
+  const bottomText = document.querySelector('.bottom-text');
+  const doge = document.querySelector('.doge');
+  
+  // Add animation class to container
+  const container = document.querySelector('.meme-container');
+  container.style.transform = 'scale(0.95)';
+  setTimeout(() => {
+    container.style.transform = 'scale(1)';
+  }, 150);
+  
+  changeText(topText);
+  changeText(bottomText);
+  
+  // Animate the doge with random rotation and scale
+  const rotation = Math.random() * 20 - 10;
+  const scale = 0.9 + Math.random() * 0.2;
+  doge.style.transform = `rotate(${rotation}deg) scale(${scale})`;
+}
+
+// Generate initial random texts
+generateMeme();
+
+// Add some randomized movement to the doge
+setInterval(() => {
+  const doge = document.querySelector('.doge');
+  const currentTransform = doge.style.transform;
+  const smallRotation = Math.random() * 4 - 2;
+  doge.style.transform = currentTransform + ` rotate(${smallRotation}deg)`;
+}, 2000);
+</script>
+</body></html>
