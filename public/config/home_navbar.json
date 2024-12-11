@@ -22,9 +22,13 @@
             { "text": "the backrooms", "url": "/backrooms" },
             { "text": "the backrooms 2", "url": "/backrooms2" },
             { "text": "bedroom", "url": "/bedroom" },
-            { "text": "bhopcraft", "url": "/bhopcraft" },
-            { "text": "piss clicker", "url": "/pissclicker" },
-            { "text": "cat clicker", "url": "/catclicker" },
+            { "text": "bhopcraft", "url": "/bhopcraft" }
+        ]
+    },
+    {
+        "multiple": true,
+        "text": "more games",
+        "pages": [
             { "text": "chicken farm", "url": "/chickefarmn" },
             { "text": "cosmic", "url": "/cosmicclicker" },
             { "text": "crazy cars", "url": "/crazycars" },
@@ -33,8 +37,16 @@
             { "text": "fart 3d", "url": "/fart3d" },
             { "text": "griller tag", "url": "/griller-tag" },
             { "text": "heart clicker", "url": "/heartclicker" },
+            { "text": "piss clicker", "url": "/pissclicker" },
+            { "text": "cat clicker", "url": "/catclicker" },
             { "text": "hydro hop", "url": "/hydrohop" },
-            { "text": "inflation fetish", "url": "/inflationfetish" },
+            { "text": "inflation fetish", "url": "/inflationfetish" }
+        ]
+    },
+    {
+        "multiple": true,
+        "text": "other games",
+        "pages": [
             { "text": "minecraft babies", "url": "/minecraftbabies" },
             { "text": "minecraft clicker", "url": "/minecraftclicker" },
             { "text": "minecraft world explore", "url": "/minecraftworldexplore" },
