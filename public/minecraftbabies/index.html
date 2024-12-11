@@ -1,0 +1,1108 @@
+<html><head><base href="minecraft_babies" />
+<style>
+/* Existing styles remain unchanged */
+:root {
+  --grass: #7ec850;
+  --dirt: #8b4513;
+  --sky: #87ceeb;
+}
+
+body {
+  margin: 0;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--sky);
+  font-family: Arial, sans-serif;
+  overflow-x: scroll;
+  overflow-y: hidden;
+  transition: background-color 5s;
+}
+
+.world {
+  flex: 1;
+  position: relative;
+  width: 3000px;
+}
+
+.block {
+  width: 100px;
+  height: 100px;
+  position: absolute;
+  cursor: pointer;
+  transition: transform 0.3s;
+  border: 4px solid rgba(0,0,0,0.3);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.block:hover {
+  transform: scale(1.1);
+}
+
+.grass {
+  background: var(--grass);
+  transition: background-color 5s;
+}
+
+.dirt {
+  background: var(--dirt);
+}
+
+.character {
+  width: 120px;
+  height: 120px;
+  position: absolute;
+  transition: all 0.5s;
+}
+
+.animal {
+  width: 80px;
+  height: 80px;
+  position: absolute;
+  transition: all 0.5s;
+  cursor: pointer;
+}
+
+.clouds {
+  position: absolute;
+  top: 50px;
+  animation: float 20s linear infinite;
+}
+
+@keyframes float {
+  from { left: -200px; }
+  to { left: 100%; }
+}
+
+.sound-effect {
+  font-size: 24px;
+  position: absolute;
+  animation: pop 1s forwards;
+  pointer-events: none;
+}
+
+@keyframes pop {
+  0% { transform: scale(0); opacity: 1; }
+  50% { transform: scale(1.5); opacity: 1; }
+  100% { transform: scale(2); opacity: 0; }
+}
+
+.heart {
+  position: absolute;
+  pointer-events: none;
+  animation: float-up 1s forwards;
+}
+
+@keyframes float-up {
+  0% { transform: translateY(0) scale(1); opacity: 1; }
+  100% { transform: translateY(-100px) scale(0); opacity: 0; }
+}
+
+.animal:hover {
+  transform: scale(1.1);
+}
+
+.sun {
+  position: absolute;
+  animation: sun-cycle 20s linear infinite;
+}
+
+.moon {
+  position: absolute;
+  animation: moon-cycle 20s linear infinite;
+}
+
+@keyframes sun-cycle {
+  0% { transform: translate(-100px, 400px); }
+  50% { transform: translate(1500px, 50px); }
+  100% { transform: translate(3100px, 400px); }
+}
+
+@keyframes moon-cycle {
+  0% { transform: translate(-100px, 400px); opacity: 0; }
+  50% { transform: translate(1500px, 50px); opacity: 1; }
+  100% { transform: translate(3100px, 400px); opacity: 0; }
+}
+
+/* New styles for milk bottle and effects */
+.milk-bottle {
+  width: 30px;
+  height: 40px;
+  position: absolute;
+  cursor: pointer;
+  transition: all 0.3s;
+  pointer-events: all;
+}
+
+.milk-bottle:hover {
+  transform: scale(1.1);
+}
+
+.inventory {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 10px;
+  padding: 10px;
+  background: rgba(0,0,0,0.5);
+  border-radius: 10px;
+}
+
+.inventory-slot {
+  width: 50px;
+  height: 50px;
+  background: rgba(255,255,255,0.2);
+  border: 2px solid white;
+  border-radius: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.inventory-count {
+  position: absolute;
+  bottom: 2px;
+  right: 2px;
+  color: white;
+  font-size: 14px;
+  font-weight: bold;
+  text-shadow: 1px 1px 2px black;
+}
+
+.block-preview {
+  width: 40px;
+  height: 40px;
+  border: 2px solid rgba(0,0,0,0.3);
+  border-radius: 5px;
+}
+
+.destroy-effect {
+  position: absolute;
+  pointer-events: none;
+  animation: scatter 0.5s forwards;
+}
+
+@keyframes scatter {
+  0% { transform: scale(1) rotate(0deg); opacity: 1; }
+  100% { transform: scale(0) rotate(360deg) translate(50px, -50px); opacity: 0; }
+}
+
+.jump-effect {
+  position: absolute;
+  color: white;
+  font-size: 20px;
+  font-weight: bold;
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+  pointer-events: none;
+  animation: float-up 2s forwards;
+}
+
+/* Add these new styles */
+.armor {
+  position: absolute;
+  pointer-events: none;
+  transition: all 0.5s;
+}
+
+.armor-effect {
+  position: absolute;
+  color: #4682B4;
+  font-size: 24px;
+  font-weight: bold;
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+  pointer-events: none;
+  animation: float-up 2s forwards;
+}
+
+/* Add to inventory styles */
+.armor-slot {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  width: 60px;
+  height: 60px;
+  background: rgba(255,255,255,0.2);
+  border: 2px solid #4682B4;
+  border-radius: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.armor-icon {
+  width: 40px;
+  height: 40px;
+  opacity: 0.5;
+  transition: opacity 0.3s;
+}
+
+.armor-active {
+  opacity: 1;
+  box-shadow: 0 0 10px #4682B4;
+}
+
+/* Add these styles to the existing CSS */
+.mining-progress {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 5px;
+  width: 0%;
+  background: #ff0000;
+  transition: width 0.2s;
+}
+
+/* Add these styles for cotton candy and star eyes */
+.cotton-candy {
+  width: 40px;
+  height: 40px;
+  position: absolute;
+  cursor: pointer;
+  pointer-events: all;
+  animation: float-down 1s forwards;
+}
+
+@keyframes float-down {
+  0% { transform: translateY(-50px); opacity: 0; }
+  100% { transform: translateY(0); opacity: 1; }
+}
+
+.star-eyes .character-eyes {
+  animation: twinkle 0.5s infinite alternate;
+}
+
+@keyframes twinkle {
+  0% { transform: scale(1); }
+  100% { transform: scale(1.2); }
+}
+
+/* New styles for trees and seeds */
+.tree {
+  position: absolute;
+  pointer-events: all;
+  transition: transform 0.3s;
+}
+
+.seed {
+  width: 20px;
+  height: 20px;
+  position: absolute;
+  cursor: pointer;
+  pointer-events: all;
+}
+
+.seed:hover {
+  transform: scale(1.1);
+}
+
+.grow-effect {
+  position: absolute;
+  font-size: 24px;
+  color: #228B22;
+  pointer-events: none;
+  animation: float-up 2s forwards;
+}
+
+.seed-slot {
+  width: 50px;
+  height: 50px;
+  background: rgba(255,255,255,0.2);
+  border: 2px solid #228B22;
+  border-radius: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+/* Add these new styles to the existing CSS */
+.bed {
+  cursor: pointer;
+  transition: transform 0.3s;
+  z-index: 5;
+}
+
+.bed:hover {
+  transform: scale(1.05);
+}
+
+.wool-slot {
+  background: rgba(255,255,255,0.2);
+  border: 2px solid #F5F5F5;
+}
+</style>
+</head>
+<body>
+
+<div class="world" id="gameWorld">
+  <svg class="sun" width="100" height="100">
+    <circle cx="50" cy="50" r="30" fill="yellow" />
+    <g id="sunrays">
+      <line x1="50" y1="10" x2="50" y2="0" stroke="yellow" stroke-width="4"/>
+      <line x1="50" y1="90" x2="50" y2="100" stroke="yellow" stroke-width="4"/>
+      <line x1="10" y1="50" x2="0" y2="50" stroke="yellow" stroke-width="4"/>
+      <line x1="90" y1="50" x2="100" y2="50" stroke="yellow" stroke-width="4"/>
+    </g>
+  </svg>
+
+  <svg class="moon" width="100" height="100">
+    <circle cx="50" cy="50" r="30" fill="#D3D3D3" />
+    <circle cx="40" cy="40" r="8" fill="#A9A9A9" />
+    <circle cx="65" cy="60" r="10" fill="#A9A9A9" />
+  </svg>
+
+  <svg class="clouds" width="200" height="100">
+    <path d="M 20,50 Q 40,20 60,50 T 100,50 T 140,50" 
+          fill="none" stroke="white" stroke-width="20"/>
+  </svg>
+
+  <svg class="character" id="player" style="left: 100px; top: 100px">
+    <!-- Head -->
+    <rect x="30" y="20" width="60" height="60" fill="#FFA07A" />
+    <!-- Body -->
+    <rect x="40" y="80" width="40" height="30" fill="#4682B4" />
+    <!-- Arms -->
+    <rect x="20" y="80" width="20" height="25" fill="#FFA07A" />
+    <rect x="80" y="80" width="20" height="25" fill="#FFA07A" />
+    <!-- Eyes -->
+    <rect x="45" y="40" width="10" height="10" fill="black" />
+    <rect x="65" y="40" width="10" height="10" fill="black" />
+    <!-- Mouth -->
+    <rect x="50" y="60" width="20" height="5" fill="black" />
+  </svg>
+</div>
+
+<div class="inventory" id="inventory"></div>
+
+<div class="armor-slot" id="armorSlot">
+  <svg class="armor-icon" viewBox="0 0 40 40">
+    <rect x="5" y="5" width="30" height="30" fill="#4682B4" rx="5" />
+    <path d="M10 20 L20 10 L30 20 L20 30 Z" fill="#87CEEB" />
+  </svg>
+</div>
+
+<script>
+const world = document.getElementById('gameWorld');
+const player = document.getElementById('player');
+const inventory = document.getElementById('inventory');
+const armorSlot = document.getElementById('armorSlot');
+let blockCount = 0;
+let isNight = false;
+let canJump = false;
+let plankCount = 5; // Start with 5 planks
+let isPlacing = false;
+let hasArmor = false;
+
+// New variables for seeds and trees
+let seedCount = 5;
+
+// New variables for wool and bed
+let woolCount = 0;
+let hasBed = false;
+
+// Create plank inventory slot
+const plankSlot = document.createElement('div');
+plankSlot.className = 'inventory-slot';
+const plankPreview = document.createElement('div');
+plankPreview.className = 'block-preview planks';
+const plankCount_el = document.createElement('div');
+plankCount_el.className = 'inventory-count';
+plankCount_el.textContent = plankCount;
+plankSlot.appendChild(plankPreview);
+plankSlot.appendChild(plankCount_el);
+inventory.appendChild(plankSlot);
+
+// Create seed inventory slot
+const seedSlot = document.createElement('div');
+seedSlot.className = 'inventory-slot seed-slot';
+const seedPreview = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+seedPreview.setAttribute("width", "30");
+seedPreview.setAttribute("height", "30");
+seedPreview.innerHTML = `
+  <circle cx="15" cy="15" r="8" fill="#8B4513"/>
+  <path d="M15,5 L15,12" stroke="#228B22" stroke-width="2"/>
+`;
+const seedCount_el = document.createElement('div');
+seedCount_el.className = 'inventory-count';
+seedCount_el.textContent = seedCount;
+seedSlot.appendChild(seedPreview);
+seedSlot.appendChild(seedCount_el);
+inventory.appendChild(seedSlot);
+
+// Create wool inventory slot
+const woolSlot = document.createElement('div');
+woolSlot.className = 'inventory-slot wool-slot';
+const woolPreview = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+woolPreview.setAttribute("width", "30");
+woolPreview.setAttribute("height", "30");
+woolPreview.innerHTML = `
+  <rect x="5" y="5" width="20" height="20" fill="#F5F5F5" rx="2"/>
+  <line x1="5" y1="15" x2="25" y2="15" stroke="#DDD" stroke-width="2"/>
+  <line x1="15" y1="5" x2="15" y2="25" stroke="#DDD" stroke-width="2"/>
+`;
+const woolCount_el = document.createElement('div');
+woolCount_el.className = 'inventory-count';
+woolCount_el.textContent = woolCount;
+woolSlot.appendChild(woolPreview);
+woolSlot.appendChild(woolCount_el);
+inventory.appendChild(woolSlot);
+
+// Day/Night Cycle
+setInterval(() => {
+  isNight = !isNight;
+  if (isNight) {
+    document.body.style.backgroundColor = '#1a1a3a';
+    document.querySelectorAll('.grass').forEach(block => {
+      block.style.backgroundColor = '#3a5a28';
+    });
+  } else {
+    document.body.style.backgroundColor = '#87ceeb';
+    document.querySelectorAll('.grass').forEach(block => {
+      block.style.backgroundColor = '#7ec850';
+    });
+  }
+}, 10000);
+
+// Create extended ground
+for(let i = 0; i < 25; i++) {
+  createBlock('grass', i * 110, window.innerHeight - 220);
+  createBlock('dirt', i * 110, window.innerHeight - 110);
+}
+
+// Create animals
+const animals = [
+  { type: 'pig', color: '#FFC0CB', sound: 'Oink!' },
+  { type: 'cow', color: '#8B4513', sound: 'Moo!' },
+  { type: 'chicken', color: '#FFFFFF', sound: 'Cluck!' },
+  { type: 'sheep', color: '#F5F5F5', sound: 'Baa!' }
+];
+
+// Place animals randomly
+animals.forEach((animal, index) => {
+  for(let i = 0; i < 3; i++) {
+    createAnimal(animal, Math.random() * 2500, window.innerHeight - 320);
+  }
+});
+
+// Generate natural trees
+function generateNaturalTrees() {
+  for(let i = 0; i < 5; i++) {
+    const x = Math.random() * 2500;
+    createTree(x, window.innerHeight - 400);
+  }
+}
+
+// Call tree generation after ground creation
+generateNaturalTrees();
+
+// Periodic natural tree growth
+setInterval(() => {
+  const x = Math.random() * 2500;
+  createTree(x, window.innerHeight - 400);
+}, 30000);
+
+function createAnimal(animal, x, y) {
+  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  svg.setAttribute("class", "animal");
+  svg.setAttribute("data-type", animal.type);
+  svg.style.left = x + 'px';
+  svg.style.top = y + 'px';
+  
+  const body = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+  body.setAttribute("x", "10");
+  body.setAttribute("y", "10");
+  body.setAttribute("width", "60");
+  body.setAttribute("height", "40");
+  body.setAttribute("fill", animal.color);
+  body.setAttribute("rx", "10");
+  
+  const eye1 = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+  eye1.setAttribute("cx", "25");
+  eye1.setAttribute("cy", "25");
+  eye1.setAttribute("r", "3");
+  eye1.setAttribute("fill", "black");
+  
+  const eye2 = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+  eye2.setAttribute("cx", "45");
+  eye2.setAttribute("cy", "25");
+  eye2.setAttribute("r", "3");
+  eye2.setAttribute("fill", "black");
+  
+  svg.appendChild(body);
+  svg.appendChild(eye1);
+  svg.appendChild(eye2);
+  
+  svg.addEventListener('click', () => {
+    // Add armor protection message if armor is on
+    if (hasArmor) {
+      const protectEffect = document.createElement('div');
+      protectEffect.className = 'armor-effect';
+      protectEffect.textContent = '🛡️ Protected!';
+      protectEffect.style.left = x + 'px';
+      protectEffect.style.top = (y - 50) + 'px';
+      world.appendChild(protectEffect);
+      setTimeout(() => protectEffect.remove(), 1000);
+      return;
+    }
+
+    // Add wool harvesting for sheep
+    if (animal.type === 'sheep') {
+      woolCount++;
+      updateWoolCount();
+      showFloatingText('🧶 +1 Wool', x, y);
+    }
+
+    const sound = document.createElement('div');
+    sound.className = 'sound-effect';
+    sound.textContent = animal.sound;
+    sound.style.left = x + 'px';
+    sound.style.top = (y - 50) + 'px';
+    world.appendChild(sound);
+    
+    createHearts(x, y);
+    
+    if (animal.type === 'cow') {
+      createMilkBottle(x, y);
+    }
+    
+    setTimeout(() => sound.remove(), 1000);
+    
+    svg.style.transform = 'translateY(-20px)';
+    setTimeout(() => {
+      svg.style.transform = 'translateY(0)';
+    }, 200);
+  });
+  
+  world.appendChild(svg);
+}
+
+function createMilkBottle(x, y) {
+  const bottle = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  bottle.setAttribute("class", "milk-bottle");
+  bottle.setAttribute("width", "30");
+  bottle.setAttribute("height", "40");
+  bottle.style.left = x + 'px';
+  bottle.style.top = (y - 50) + 'px';
+  
+  const bottleBody = document.createElementNS("http://www.w3.org/2000/svg", "path");
+  bottleBody.setAttribute("d", "M5,10 L5,35 Q5,40 10,40 L20,40 Q25,40 25,35 L25,10 L20,5 L10,5 Z");
+  bottleBody.setAttribute("fill", "white");
+  bottleBody.setAttribute("stroke", "#999");
+  
+  const cap = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+  cap.setAttribute("x", "10");
+  cap.setAttribute("y", "0");
+  cap.setAttribute("width", "10");
+  cap.setAttribute("height", "5");
+  cap.setAttribute("fill", "#666");
+  
+  bottle.appendChild(bottleBody);
+  bottle.appendChild(cap);
+  
+  bottle.addEventListener('click', () => {
+    drinkMilk();
+    bottle.remove();
+  });
+  
+  world.appendChild(bottle);
+}
+
+function drinkMilk() {
+  canJump = true;
+  
+  const effect = document.createElement('div');
+  effect.className = 'jump-effect';
+  effect.textContent = '🦘 Jump Power!';
+  effect.style.left = player.style.left;
+  effect.style.top = parseInt(player.style.top) - 30 + 'px';
+  world.appendChild(effect);
+  
+  setTimeout(() => {
+    effect.remove();
+    canJump = false;
+  }, 5000);
+}
+
+// Create hearts
+function createHearts(x, y) {
+  for(let i = 0; i < 3; i++) {
+    const heart = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    heart.setAttribute("class", "heart");
+    heart.setAttribute("width", "20");
+    heart.setAttribute("height", "20");
+    heart.style.left = (x + Math.random() * 80) + 'px';
+    heart.style.top = (y + Math.random() * 80) + 'px';
+    
+    const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    path.setAttribute("d", "M10,4 C10,4 8.5,2 6,2 C3.5,2 2,4 2,6 C2,8 4,10 10,16 C16,10 18,8 18,6 C18,4 16.5,2 14,2 C11.5,2 10,4 10,4");
+    path.setAttribute("fill", "#ff69b4");
+    
+    heart.appendChild(path);
+    world.appendChild(heart);
+    
+    setTimeout(() => heart.remove(), 1000);
+  }
+}
+
+function createBlock(type, x, y, isDestroyable = false) {
+  const block = document.createElement('div');
+  block.className = `block ${type}`;
+  block.style.left = x + 'px';
+  block.style.top = y + 'px';
+  
+  // Add mining progress bar
+  const progressBar = document.createElement('div');
+  progressBar.className = 'mining-progress';
+  progressBar.style.display = 'none';
+  block.appendChild(progressBar);
+  
+  block.addEventListener('mousedown', (e) => {
+    if (canMine && type !== 'dirt' && type !== 'grass') {
+      miningBlock = block;
+      miningProgress = 0;
+      progressBar.style.display = 'block';
+      
+      miningInterval = setInterval(() => {
+        miningProgress += 10;
+        progressBar.style.width = `${miningProgress}%`;
+        
+        if (miningProgress >= 100) {
+          clearInterval(miningInterval);
+          createDestroyEffect(x, y);
+          plankCount++;
+          updatePlankCount();
+          block.remove();
+          showFloatingText('+1 Block Mined', x, y);
+        }
+      }, 200);
+    }
+  });
+
+  block.addEventListener('mouseup', () => {
+    if (miningInterval) {
+      clearInterval(miningInterval);
+      miningProgress = 0;
+      progressBar.style.width = '0%';
+      progressBar.style.display = 'none';
+    }
+  });
+  
+  block.addEventListener('mouseleave', () => {
+    if (miningInterval) {
+      clearInterval(miningInterval);
+      miningProgress = 0;
+      progressBar.style.width = '0%';
+      progressBar.style.display = 'none';
+    }
+  });
+  
+  // Keep existing click handler
+  block.addEventListener('click', (e) => {
+    if (isDestroyable && e.shiftKey) {
+      createDestroyEffect(x, y);
+      block.remove();
+      plankCount++;
+      updatePlankCount();
+      return;
+    }
+    
+    const sound = document.createElement('div');
+    sound.className = 'sound-effect';
+    sound.textContent = ['Pop!', 'Yay!', 'Wheee!'][Math.floor(Math.random() * 3)];
+    sound.style.left = x + 'px';
+    sound.style.top = (y - 50) + 'px';
+    world.appendChild(sound);
+    
+    createHearts(x, y);
+    
+    setTimeout(() => sound.remove(), 1000);
+    
+    player.style.left = (x - 10) + 'px';
+    player.style.top = (y - 120) + 'px';
+  });
+  
+  world.appendChild(block);
+}
+
+function updatePlankCount() {
+  plankCount_el.textContent = plankCount;
+}
+
+// Add wool count update function
+function updateWoolCount() {
+  woolCount_el.textContent = woolCount;
+}
+
+function createDestroyEffect(x, y) {
+  for(let i = 0; i < 4; i++) {
+    const particle = document.createElement('div');
+    particle.className = 'destroy-effect';
+    particle.style.left = (x + Math.random() * 100) + 'px';
+    particle.style.top = (y + Math.random() * 100) + 'px';
+    particle.style.width = '20px';
+    particle.style.height = '20px';
+    particle.style.background = '#bb9457';
+    world.appendChild(particle);
+    setTimeout(() => particle.remove(), 500);
+  }
+}
+
+// Add this event listener for the plank slot
+plankSlot.addEventListener('click', () => {
+  isPlacing = !isPlacing;
+  plankSlot.style.backgroundColor = isPlacing ? 'rgba(255,255,255,0.4)' : 'rgba(255,255,255,0.2)';
+});
+
+// Add this to handle block placement
+world.addEventListener('click', (e) => {
+  if (isPlacing && plankCount > 0) {
+    const rect = world.getBoundingClientRect();
+    const x = Math.floor((e.clientX + world.scrollLeft - rect.left) / 110) * 110;
+    const y = Math.floor((e.clientY - rect.top) / 110) * 110;
+    
+    // Check if there's already a block at this position
+    const existingBlock = document.elementFromPoint(e.clientX, e.clientY);
+    if (!existingBlock.classList.contains('block')) {
+      createBlock('planks', x, y, true);
+      plankCount--;
+      updatePlankCount();
+    }
+  }
+
+  if (e.target.classList.contains('grass')) {
+    const rect = e.target.getBoundingClientRect();
+    plantSeed(e.clientX + world.scrollLeft, rect.top);
+  }
+});
+
+// Keep all other existing code (createBlock, player click handler, etc.)
+player.addEventListener('click', () => {
+  player.style.transform = 'rotate(20deg)';
+  setTimeout(() => {
+    player.style.transform = 'rotate(-20deg)';
+    setTimeout(() => {
+      player.style.transform = 'rotate(0deg)';
+    }, 200);
+  }, 200);
+});
+
+document.addEventListener('keydown', (e) => {
+  const currentX = parseInt(player.style.left);
+  const currentY = parseInt(player.style.top);
+  
+  switch(e.key) {
+    case 'ArrowLeft':
+      player.style.left = (currentX - 110) + 'px';
+      break;
+    case 'ArrowRight':
+      player.style.left = (currentX + 110) + 'px';
+      break;
+    case 'ArrowUp':
+      if (canJump) {
+        player.style.top = (currentY - 110) + 'px';
+        setTimeout(() => {
+          player.style.top = (currentY) + 'px';
+        }, 500);
+      }
+      break;
+    case 'r':
+      toggleArmor();
+      break;
+    case '+':
+    case '=': // Add = as alternative since + requires Shift
+      plankCount++;
+      updatePlankCount();
+      showFloatingText('+1 Block', player.style.left, player.style.top);
+      break;
+    case '-':
+      if (plankCount > 0) {
+        plankCount--;
+        updatePlankCount();
+        showFloatingText('-1 Block', player.style.left, player.style.top);
+      }
+      break;
+    case 'm':
+      toggleMining();
+      break;
+    case 'b':
+      craftBed();
+      break;
+  }
+});
+
+// Add mining toggle function
+function toggleMining() {
+  canMine = !canMine;
+  showFloatingText(canMine ? '🔨 Mining Mode On!' : '🔨 Mining Mode Off!', player.style.left, player.style.top);
+}
+
+// Add show floating text function
+function showFloatingText(text, x, y) {
+  const floatingText = document.createElement('div');
+  floatingText.className = 'jump-effect';
+  floatingText.textContent = text;
+  floatingText.style.left = x;
+  floatingText.style.top = parseInt(y) - 30 + 'px';
+  world.appendChild(floatingText);
+  setTimeout(() => floatingText.remove(), 1000);
+}
+
+// Add armor toggle function
+function toggleArmor() {
+  hasArmor = !hasArmor;
+  
+  // Visual feedback
+  const effect = document.createElement('div');
+  effect.className = 'armor-effect';
+  effect.textContent = hasArmor ? '🛡️ Armor On!' : '🛡️ Armor Off!';
+  effect.style.left = player.style.left;
+  effect.style.top = parseInt(player.style.top) - 30 + 'px';
+  world.appendChild(effect);
+  
+  // Update armor slot appearance
+  armorSlot.querySelector('.armor-icon').classList.toggle('armor-active');
+  
+  // Update player appearance
+  if (hasArmor) {
+    player.querySelector('rect[fill="#4682B4"]').setAttribute('fill', '#87CEEB'); // Change body color
+    // Add armor outline
+    const armorOutline = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+    armorOutline.setAttribute("x", "38");
+    armorOutline.setAttribute("y", "78");
+    armorOutline.setAttribute("width", "44");
+    armorOutline.setAttribute("height", "34");
+    armorOutline.setAttribute("fill", "none");
+    armorOutline.setAttribute("stroke", "#4682B4");
+    armorOutline.setAttribute("stroke-width", "4");
+    armorOutline.setAttribute("class", "armor");
+    player.appendChild(armorOutline);
+  } else {
+    player.querySelector('rect[fill="#87CEEB"]').setAttribute('fill', '#4682B4'); // Revert body color
+    const armor = player.querySelector('.armor');
+    if (armor) armor.remove();
+  }
+  
+  setTimeout(() => effect.remove(), 2000);
+}
+
+// Add click handler for clouds
+document.querySelector('.clouds').addEventListener('click', (e) => {
+  const rect = e.target.getBoundingClientRect();
+  createCottonCandy(e.clientX + world.scrollLeft, rect.top + 50);
+});
+
+function createCottonCandy(x, y) {
+  const cottonCandy = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  cottonCandy.setAttribute("class", "cotton-candy");
+  cottonCandy.setAttribute("viewBox", "0 0 40 40");
+  
+  // Create fluffy cotton candy shape
+  const candy = document.createElementNS("http://www.w3.org/2000/svg", "g");
+  
+  const circle1 = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+  circle1.setAttribute("cx", "20");
+  circle1.setAttribute("cy", "15");
+  circle1.setAttribute("r", "12");
+  circle1.setAttribute("fill", "#FFB7ED");
+
+  const circle2 = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+  circle2.setAttribute("cx", "15");
+  circle2.setAttribute("cy", "20");
+  circle2.setAttribute("r", "12");
+  circle2.setAttribute("fill", "#FFD1F1");
+
+  const circle3 = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+  circle3.setAttribute("cx", "25");
+  circle3.setAttribute("cy", "20");
+  circle3.setAttribute("r", "12");
+  circle3.setAttribute("fill", "#FFC4EE");
+
+  const stick = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+  stick.setAttribute("x", "18");
+  stick.setAttribute("y", "25");
+  stick.setAttribute("width", "4");
+  stick.setAttribute("height", "15");
+  stick.setAttribute("fill", "#C4A484");
+
+  candy.appendChild(circle1);
+  candy.appendChild(circle2);
+  candy.appendChild(circle3);
+  candy.appendChild(stick);
+  cottonCandy.appendChild(candy);
+  
+  cottonCandy.style.left = x + 'px';
+  cottonCandy.style.top = y + 'px';
+  
+  cottonCandy.addEventListener('click', () => {
+    eatCottonCandy();
+    cottonCandy.remove();
+  });
+  
+  world.appendChild(cottonCandy);
+}
+
+function eatCottonCandy() {
+  // Create floating effect text
+  const effect = document.createElement('div');
+  effect.className = 'jump-effect';
+  effect.textContent = '🍭 Sugar Rush!';
+  effect.style.left = player.style.left;
+  effect.style.top = parseInt(player.style.top) - 30 + 'px';
+  world.appendChild(effect);
+  
+  // Replace eyes with stars
+  const eyes = player.querySelectorAll('rect[fill="black"]');
+  eyes.forEach(eye => {
+    eye.setAttribute('class', 'character-eyes');
+    // Create star shape
+    eye.setAttribute('d', 'M10,0L13.09,6.58L20,7.24L15,12.09L16.18,19L10,15.77L3.82,19L5,12.09L0,7.24L6.91,6.58L10,0');
+    eye.setAttribute('fill', '#FFD700');
+  });
+  
+  // Reset eyes after 10 seconds
+  setTimeout(() => {
+    eyes.forEach(eye => {
+      eye.removeAttribute('class');
+      eye.removeAttribute('d');
+      eye.setAttribute('fill', 'black');
+    });
+  }, 10000);
+}
+
+// Tree creation and planting functions
+function createTree(x, y, isNatural = true) {
+  const tree = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  tree.setAttribute("class", "tree");
+  tree.setAttribute("width", "150");
+  tree.setAttribute("height", "200");
+  tree.style.left = x + 'px';
+  tree.style.top = y + 'px';
+  
+  if (!isNatural) {
+    tree.style.transform = 'scale(0)';
+    setTimeout(() => {
+      tree.style.transform = 'scale(1)';
+      showFloatingText('🌳 Tree Grown!', x, y);
+    }, 15000);
+  }
+  
+  // Trunk
+  const trunk = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+  trunk.setAttribute("x", "65");
+  trunk.setAttribute("y", "100");
+  trunk.setAttribute("width", "20");
+  trunk.setAttribute("height", "80");
+  trunk.setAttribute("fill", "#8B4513");
+  
+  // Leaves
+  const leaves = document.createElementNS("http://www.w3.org/2000/svg", "g");
+  leaves.innerHTML = `
+    <circle cx="75" cy="90" r="40" fill="#228B22"/>
+    <circle cx="45" cy="70" r="30" fill="#228B22"/>
+    <circle cx="105" cy="70" r="30" fill="#228B22"/>
+    <circle cx="75" cy="50" r="25" fill="#228B22"/>
+  `;
+  
+  tree.appendChild(trunk);
+  tree.appendChild(leaves);
+  world.appendChild(tree);
+  
+  // Add click handler for mining
+  tree.addEventListener('click', () => {
+    if (canMine) {
+      createDestroyEffect(x, y);
+      tree.remove();
+      plankCount += 2;
+      updatePlankCount();
+      showFloatingText('+2 Blocks', x, y);
+    }
+  });
+}
+
+function plantSeed(x, y) {
+  if (seedCount <= 0) return;
+  
+  const seed = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  seed.setAttribute("class", "seed");
+  seed.setAttribute("width", "20");
+  seed.setAttribute("height", "20");
+  seed.style.left = x + 'px';
+  seed.style.top = y + 'px';
+  
+  seed.innerHTML = `
+    <circle cx="10" cy="10" r="5" fill="#8B4513"/>
+    <path d="M10,3 L10,8" stroke="#228B22" stroke-width="2"/>
+  `;
+  
+  world.appendChild(seed);
+  seedCount--;
+  updateSeedCount();
+  
+  showFloatingText('🌱 Growing...', x, y);
+  
+  setTimeout(() => {
+    seed.remove();
+    createTree(x - 75, y - 180, false);
+  }, 15000);
+}
+
+function updateSeedCount() {
+  seedCount_el.textContent = seedCount;
+}
+
+// Add bed crafting function
+function craftBed() {
+  if (woolCount >= 2 && plankCount >= 2 && !hasBed) {
+    woolCount -= 2;
+    plankCount -= 2;
+    updateWoolCount();
+    updatePlankCount();
+    hasBed = true;
+    createBed();
+    showFloatingText('🛏️ Bed Crafted!', player.style.left, player.style.top);
+  } else if (hasBed) {
+    showFloatingText('❌ You already have a bed!', player.style.left, player.style.top);
+  } else {
+    showFloatingText('❌ Not enough materials!', player.style.left, player.style.top);
+  }
+}
+
+// Add bed creation function
+function createBed() {
+  const bed = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  bed.setAttribute("class", "bed");
+  bed.setAttribute("width", "150");
+  bed.setAttribute("height", "80");
+  bed.style.position = "absolute";
+  bed.style.left = (parseInt(player.style.left) + 150) + 'px';
+  bed.style.top = (parseInt(player.style.top) + 50) + 'px';
+  
+  bed.innerHTML = `
+    <rect x="10" y="40" width="130" height="20" fill="#8B4513"/> <!-- frame -->
+    <rect x="10" y="10" width="130" height="30" fill="#F5F5F5"/> <!-- mattress -->
+    <rect x="10" y="5" width="30" height="40" fill="#FF69B4"/> <!-- pillow -->
+    <rect x="120" y="35" width="10" height="30" fill="#8B4513"/> <!-- leg -->
+    <rect x="20" y="35" width="10" height="30" fill="#8B4513"/> <!-- leg -->
+  `;
+  
+  bed.addEventListener('click', () => {
+    // Sleep animation
+    player.style.transform = 'rotate(90deg) translate(0, -60px)';
+    showFloatingText('😴 Sleeping...', bed.style.left, bed.style.top);
+    
+    setTimeout(() => {
+      player.style.transform = 'rotate(0deg) translate(0, 0)';
+      // Force daytime
+      isNight = true; // This will trigger day cycle on next interval
+    }, 2000);
+  });
+  
+  world.appendChild(bed);
+}
+</script>
+
+</body></html>
