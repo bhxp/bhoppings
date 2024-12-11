@@ -1,0 +1,296 @@
+<html><head><base href="." />
+<style>
+  body {
+    margin: 0;
+    overflow: hidden;
+    background: #000;
+    font-family: 'Comic Sans MS', cursive;
+    perspective: 1000px;
+  }
+
+  #earth {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    background: radial-gradient(circle at center, #001133, #000);
+    cursor: crosshair;
+    transform-style: preserve-3d;
+  }
+
+  #globe {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    transform-style: preserve-3d;
+  }
+
+  .missile {
+    position: absolute;
+    width: 40px;
+    height: 12px;
+    background: linear-gradient(90deg, #ff4444, #cc0000);
+    transform-origin: center;
+    pointer-events: none;
+    z-index: 100;
+    box-shadow: 0 0 10px #ff6666;
+    border-radius: 6px;
+  }
+
+  .missile::before {
+    content: '';
+    position: absolute;
+    left: 5px;
+    top: 50%;
+    width: 20px;
+    height: 4px;
+    background: #ffaa00;
+    transform: translateY(-50%);
+    border-radius: 2px;
+    filter: blur(2px);
+    animation: thrust 0.1s infinite;
+  }
+
+  .missile::after {
+    content: '';
+    position: absolute;
+    right: -15px;
+    top: -4px;
+    width: 0;
+    height: 0;
+    border-left: 15px solid #cc0000;
+    border-top: 10px solid transparent;
+    border-bottom: 10px solid transparent;
+    filter: drop-shadow(0 0 5px #ff6666);
+  }
+
+  @keyframes thrust {
+    0% { width: 15px; opacity: 0.8; }
+    50% { width: 25px; opacity: 1; }
+    100% { width: 15px; opacity: 0.8; }
+  }
+
+  .explosion {
+    position: absolute;
+    pointer-events: none;
+    animation: explode 1s forwards;
+  }
+
+  @keyframes explode {
+    0% { transform: scale(0); opacity: 1; }
+    100% { transform: scale(2); opacity: 0; }
+  }
+
+  #score {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    color: #ff6b6b;
+    font-size: 24px;
+    z-index: 100;
+    text-shadow: 2px 2px 0 #000;
+  }
+</style>
+</head>
+<body>
+
+<div id="score">Places Destroyed: 0</div>
+<div id="earth">
+  <div id="globe"></div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+const earth = document.getElementById('earth');
+const globeContainer = document.getElementById('globe');
+const scoreElement = document.getElementById('score');
+let score = 0;
+let isHoveringEarth = false;
+
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+renderer.setSize(window.innerWidth, window.innerHeight);
+globeContainer.appendChild(renderer.domElement);
+
+const geometry = new THREE.SphereGeometry(5, 64, 64);
+const textureLoader = new THREE.TextureLoader();
+
+const material = new THREE.MeshPhongMaterial({
+  map: textureLoader.load('https://threejs.org/examples/textures/planets/earth_atmos_2048.jpg'),
+  bumpMap: textureLoader.load('https://threejs.org/examples/textures/planets/earth_normal_2048.jpg'),
+  bumpScale: 0.05,
+  specularMap: textureLoader.load('https://threejs.org/examples/textures/planets/earth_specular_2048.jpg'),
+  specular: new THREE.Color('grey')
+});
+
+const earthMesh = new THREE.Mesh(geometry, material);
+earthMesh.position.set(0, 0, 0);
+scene.add(earthMesh);
+
+const ambientLight = new THREE.AmbientLight(0x666666);
+scene.add(ambientLight);
+
+const directionalLight = new THREE.DirectionalLight(0xffffff, 1.5);
+directionalLight.position.set(5, 3, 5);
+scene.add(directionalLight);
+
+camera.position.z = 15;
+
+const raycaster = new THREE.Raycaster();
+const mouse = new THREE.Vector2();
+
+renderer.domElement.addEventListener('mousemove', (event) => {
+  mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+  mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+  
+  raycaster.setFromCamera(mouse, camera);
+  const intersects = raycaster.intersectObject(earthMesh);
+  
+  isHoveringEarth = intersects.length > 0;
+  renderer.domElement.style.cursor = isHoveringEarth ? 'crosshair' : 'default';
+});
+
+function animate() {
+  requestAnimationFrame(animate);
+  earthMesh.rotation.y += 0.002;
+  renderer.render(scene, camera);
+}
+animate();
+
+let isDragging = false;
+let previousMousePosition = {
+  x: 0,
+  y: 0
+};
+
+renderer.domElement.addEventListener('mousedown', (e) => {
+  isDragging = true;
+});
+
+renderer.domElement.addEventListener('mousemove', (e) => {
+  if (isDragging) {
+    const deltaMove = {
+      x: e.offsetX - previousMousePosition.x,
+      y: e.offsetY - previousMousePosition.y
+    };
+
+    earthMesh.rotation.y += deltaMove.x * 0.005;
+    earthMesh.rotation.x += deltaMove.y * 0.005;
+  }
+
+  previousMousePosition = {
+    x: e.offsetX,
+    y: e.offsetY
+  };
+});
+
+renderer.domElement.addEventListener('mouseup', (e) => {
+  isDragging = false;
+});
+
+window.addEventListener('resize', () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+function createMissile(startX, startY, targetX, targetY) {
+  const missile = document.createElement('div');
+  missile.className = 'missile';
+  missile.style.left = startX + 'px';
+  missile.style.top = startY + 'px';
+  
+  const angle = Math.atan2(targetY - startY, targetX - startX) * 180 / Math.PI;
+  missile.style.transform = `rotate(${angle}deg)`;
+  
+  document.body.appendChild(missile);
+  
+  const distance = Math.sqrt(Math.pow(targetX - startX, 2) + Math.pow(targetY - startY, 2));
+  const duration = distance / 500;
+  
+  missile.animate([
+    { left: startX + 'px', top: startY + 'px' },
+    { left: targetX + 'px', top: targetY + 'px' }
+  ], {
+    duration: duration * 1000,
+    easing: 'linear'
+  }).onfinish = () => {
+    missile.remove();
+    createExplosion(targetX, targetY);
+  };
+}
+
+function createExplosion(x, y) {
+  const explosionGeometry = new THREE.SphereGeometry(0.5, 32, 32);
+  const explosionMaterial = new THREE.MeshBasicMaterial({
+    color: 0xff4444,
+    transparent: true,
+    opacity: 0.8
+  });
+  const explosion = new THREE.Mesh(explosionGeometry, explosionMaterial);
+  
+  const vector = new THREE.Vector3();
+  vector.set(
+    (x / window.innerWidth) * 2 - 1,
+    -(y / window.innerHeight) * 2 + 1,
+    0.5
+  );
+  vector.unproject(camera);
+  vector.sub(camera.position).normalize();
+  const distance = -camera.position.z / vector.z;
+  const pos = camera.position.clone().add(vector.multiplyScalar(distance));
+  explosion.position.copy(pos);
+  
+  scene.add(explosion);
+  
+  let scale = 0;
+  const expandExplosion = () => {
+    scale += 0.1;
+    explosion.scale.set(scale, scale, scale);
+    explosion.material.opacity -= 0.05;
+    
+    if (scale < 2) {
+      requestAnimationFrame(expandExplosion);
+    } else {
+      scene.remove(explosion);
+    }
+  };
+  expandExplosion();
+
+  score++;
+  scoreElement.textContent = `Places Destroyed: ${score}`;
+  
+  const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  const oscillator = audioCtx.createOscillator();
+  const gainNode = audioCtx.createGain();
+  
+  oscillator.connect(gainNode);
+  gainNode.connect(audioCtx.destination);
+  
+  oscillator.type = 'sine';
+  oscillator.frequency.setValueAtTime(150, audioCtx.currentTime);
+  gainNode.gain.setValueAtTime(0.2, audioCtx.currentTime);
+  
+  oscillator.start();
+  gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+  oscillator.stop(audioCtx.currentTime + 0.5);
+}
+
+renderer.domElement.addEventListener('click', (e) => {
+  if (!isDragging && isHoveringEarth) {
+    let startX, startY;
+    if(Math.random() < 0.5) {
+      startX = Math.random() < 0.5 ? -50 : window.innerWidth + 50;
+      startY = Math.random() * window.innerHeight;
+    } else {
+      startX = Math.random() * window.innerWidth;
+      startY = Math.random() < 0.5 ? -50 : window.innerHeight + 50;
+    }
+    
+    createMissile(startX, startY, e.clientX, e.clientY);
+  }
+});
+</script>
+</body>
+</html>
