@@ -1,0 +1,870 @@
+<html><head><base href="https://developer.mozilla.org/docs/Web/images/">
+<title>AdamOS - A Modern Web Desktop Experience</title>
+<!-- Using Font Awesome for icons -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Segoe UI', sans-serif;
+}
+
+body {
+  background-image: url('https://images.unsplash.com/photo-1519681393784-d120267933ba');
+  background-size: cover;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.boot-screen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: #000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 99999;
+  color: white;
+}
+
+.boot-logo {
+  width: 200px;
+  height: 200px;
+  margin-bottom: 40px;
+  animation: pulseLogo 2s infinite;
+}
+
+.boot-logo svg {
+  width: 100%;
+  height: 100%;
+}
+
+.boot-progress {
+  width: 200px;
+  height: 4px;
+  background: rgba(255,255,255,0.1);
+  border-radius: 2px;
+  overflow: hidden;
+  position: relative;
+}
+
+.boot-progress-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 0%;
+  background: #1E90FF;
+  animation: loadProgress 3s ease-in-out forwards;
+}
+
+@keyframes pulseLogo {
+  0% { transform: scale(1); opacity: 0.8; }
+  50% { transform: scale(1.1); opacity: 1; }
+  100% { transform: scale(1); opacity: 0.8; }
+}
+
+@keyframes loadProgress {
+  0% { width: 0%; }
+  50% { width: 70%; }
+  100% { width: 100%; }
+}
+
+/* Hide main content initially */
+.desktop-content {
+  display: none;
+}
+
+.taskbar {
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+  height: 48px;
+  background: rgba(255,255,255,0.8);
+  backdrop-filter: blur(10px);
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  z-index: 1000;
+}
+
+.start-button {
+  width: 40px;
+  height: 40px;
+  background: rgba(255,255,255,0.9);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.start-button:hover {
+  background: rgba(200,200,200,0.9);
+}
+
+.taskbar-icons {
+  display: flex;
+  gap: 8px;
+  margin-left: 8px;
+}
+
+.taskbar-icon {
+  width: 40px;
+  height: 40px;
+  background: rgba(255,255,255,0.7);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: 0.3s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.taskbar-icon:hover {
+  background: rgba(200,200,200,0.9);
+}
+
+.start-menu {
+  position: fixed;
+  bottom: 48px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 600px;
+  height: 650px;
+  background: rgba(255,255,255,0.8);
+  backdrop-filter: blur(10px);
+  border-radius: 12px;
+  padding: 20px;
+  display: none;
+  animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateX(-50%) translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+  }
+}
+
+.app-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.app-icon {
+  width: 80px;
+  height: 80px;
+  background: rgba(255,255,255,0.5);
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: 0.3s;
+  position: relative;
+}
+
+.window {
+  position: fixed;
+  background: rgba(255,255,255,0.95);
+  backdrop-filter: blur(10px);
+  border-radius: 8px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+  min-width: 400px;
+  min-height: 300px;
+  display: none;
+  resize: both;
+  overflow: auto;
+}
+
+.window-header {
+  padding: 8px;
+  background: rgba(255,255,255,0.9);
+  border-radius: 8px 8px 0 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: move;
+}
+
+.window-title {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.window-controls {
+  display: flex;
+  gap: 8px;
+}
+
+.window-control {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.window-content {
+  padding: 16px;
+  height: calc(100% - 40px);
+  overflow: auto;
+}
+
+.minimize {
+  background: #ffbd44;
+}
+
+.maximize {
+  background: #00ca4e;
+}
+
+.close {
+  background: #ff605c;
+}
+
+.desktop-icons {
+  padding: 20px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, 100px);
+  gap: 20px;
+}
+
+.time {
+  position: absolute;
+  right: 20px;
+  color: #000;
+  font-size: 14px;
+}
+
+.login-screen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: url('https://images.unsplash.com/photo-1519681393784-d120267933ba') center/cover;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 99998;
+}
+
+.login-container {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(10px);
+  padding: 40px;
+  border-radius: 12px;
+  text-align: center;
+  width: 300px;
+}
+
+.profile-image {
+  width: 120px;
+  height: 120px;
+  background: #ddd;
+  border-radius: 60px;
+  margin: 0 auto 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 48px;
+  color: #666;
+}
+
+.login-input {
+  width: 100%;
+  padding: 10px;
+  margin: 10px 0;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.login-button {
+  width: 100%;
+  padding: 10px;
+  background: #1E90FF;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-top: 10px;
+  transition: 0.3s;
+}
+
+.login-button:hover {
+  background: #187bcd;
+}
+
+.login-error {
+  color: #ff4444;
+  margin-top: 10px;
+  display: none;
+}
+</style>
+</head>
+<body>
+  <div class="boot-screen">
+    <div class="boot-logo">
+      <svg viewBox="0 0 24 24" fill="#1E90FF">
+        <path d="M3 3h8v8H3V3zm10 0h8v8h-8V3zM3 13h8v8H3v-8zm10 0h8v8h-8v-8z"/>
+      </svg>
+    </div>
+    <div class="boot-progress">
+      <div class="boot-progress-bar"></div>
+    </div>
+    <div style="margin-top: 20px; font-family: 'Segoe UI', sans-serif;">
+      Starting AdamOS...
+    </div>
+  </div>
+
+  <div class="login-screen">
+    <div class="login-container">
+      <div class="profile-image">
+        <i class="fas fa-user"></i>
+      </div>
+      <h2>Welcome to AdamOS</h2>
+      <p>Please sign in to continue</p>
+      <input type="text" class="login-input" id="username" placeholder="Username">
+      <input type="password" class="login-input" id="password" placeholder="Password">
+      <button class="login-button" onclick="attemptLogin()">Sign In</button>
+      <p class="login-error">Incorrect username or password</p>
+      <p style="margin-top: 20px; font-size: 12px; color: #666;">
+        Hint:<br>
+        Username: user<br>
+        Password: 123456789
+      </p>
+    </div>
+  </div>
+
+  <div class="desktop-content">
+    <div class="desktop-icons">
+      <!-- Desktop icons will be dynamically added here -->
+    </div>
+
+    <div class="taskbar">
+      <div class="start-button" onclick="toggleStartMenu()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="#1E90FF">
+          <path d="M3 3h8v8H3V3zm10 0h8v8h-8V3zM3 13h8v8H3v-8zm10 0h8v8h-8v-8z"/>
+        </svg>
+      </div>
+      <div class="taskbar-icons">
+        <div class="taskbar-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="#666">
+            <path d="M3 3h18v18H3V3zm2 2v14h14V5H5z"/>
+          </svg>
+        </div>
+        <div class="taskbar-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="#666">
+            <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 14H4V8l8 5 8-5v10zm-8-7L4 6h16l-8 5z"/>
+          </svg>
+        </div>
+      </div>
+      <div class="time"></div>
+    </div>
+
+    <div class="start-menu">
+      <input type="text" placeholder="Type to search..." style="width: 100%; padding: 8px; border-radius: 4px; border: 1px solid #ddd;">
+      <div class="app-grid">
+        <!-- App icons will be dynamically added here -->
+      </div>
+    </div>
+
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        // Hide boot screen and show login after animation
+        setTimeout(() => {
+          const bootScreen = document.querySelector('.boot-screen');
+          const loginScreen = document.querySelector('.login-screen');
+          
+          bootScreen.style.opacity = '1';
+          bootScreen.style.transition = 'opacity 0.5s ease-in-out';
+          
+          setTimeout(() => {
+            bootScreen.style.opacity = '0';
+            loginScreen.style.display = 'flex';
+            
+            setTimeout(() => {
+              bootScreen.style.display = 'none';
+            }, 500);
+          }, 3500); // Wait for progress bar animation to complete
+        }, 100);
+      });
+
+      // Add these functions for login functionality
+      function attemptLogin() {
+        const username = document.getElementById('username').value;
+        const password = document.getElementById('password').value;
+        const errorMessage = document.querySelector('.login-error');
+        
+        // Changed username from 'admin' to 'user'
+        if (username === 'user' && password === '123456789') {
+          const loginScreen = document.querySelector('.login-screen');
+          const desktopContent = document.querySelector('.desktop-content');
+          
+          loginScreen.style.opacity = '1';
+          loginScreen.style.transition = 'opacity 0.5s ease-in-out';
+          
+          setTimeout(() => {
+            loginScreen.style.opacity = '0';
+            desktopContent.style.display = 'block';
+            
+            setTimeout(() => {
+              loginScreen.style.display = 'none';
+            }, 500);
+          }, 500);
+        } else {
+          errorMessage.style.display = 'block';
+          document.getElementById('password').value = '';
+        }
+      }
+
+      // Add keyboard event listener for Enter key
+      document.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter' && document.querySelector('.login-screen').style.display !== 'none') {
+          attemptLogin();
+        }
+      });
+
+      // Update time
+      function updateTime() {
+        const timeElement = document.querySelector('.time');
+        const now = new Date();
+        const timeString = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        timeElement.textContent = timeString;
+      }
+
+      setInterval(updateTime, 1000);
+      updateTime();
+
+      // Toggle start menu
+      function toggleStartMenu() {
+        const startMenu = document.querySelector('.start-menu');
+        if (startMenu.style.display === 'none' || !startMenu.style.display) {
+          startMenu.style.display = 'block';
+        } else {
+          startMenu.style.display = 'none';
+        }
+      }
+
+      // Close start menu when clicking outside
+      document.addEventListener('click', (e) => {
+        const startMenu = document.querySelector('.start-menu');
+        const startButton = document.querySelector('.start-button');
+        if (!startMenu.contains(e.target) && !startButton.contains(e.target)) {
+          startMenu.style.display = 'none';
+        }
+      });
+
+      // Window management system
+      class WindowManager {
+        constructor() {
+          this.windows = new Map();
+          this.activeWindow = null;
+          this.zIndex = 1000;
+        }
+
+        createWindow(app) {
+          const windowEl = document.createElement('div');
+          windowEl.className = 'window';
+          windowEl.style.zIndex = ++this.zIndex;
+          windowEl.style.width = '600px';
+          windowEl.style.height = '400px';
+          windowEl.style.left = '50%';
+          windowEl.style.top = '50%';
+          windowEl.style.transform = 'translate(-50%, -50%)';
+          
+          windowEl.innerHTML = `
+            <div class="window-header">
+              <div class="window-title">${app.name}</div>
+              <div class="window-controls">
+                <div class="window-control minimize">−</div>
+                <div class="window-control maximize">□</div>
+                <div class="window-control close">×</div>
+              </div>
+            </div>
+            <div class="window-content">
+              ${this.getAppContent(app)}
+            </div>
+          `;
+
+          document.body.appendChild(windowEl);
+          this.setupWindowControls(windowEl);
+          this.makeDraggable(windowEl);
+          
+          windowEl.style.display = 'block';
+          this.windows.set(app.name, windowEl);
+          this.focusWindow(windowEl);
+          
+          return windowEl;
+        }
+
+        getAppContent(app) {
+          const contents = {
+            'Browser': `
+              <iframe src="https://bing.com" style="width: 100%; height: 100%; border: none;"></iframe>
+            `,
+            'Calculator': `
+              <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; padding: 16px;">
+                <input type="text" id="calc-display" style="grid-column: span 4; padding: 8px; margin-bottom: 8px;">
+                <button onclick="calc('7')">7</button>
+                <button onclick="calc('8')">8</button>
+                <button onclick="calc('9')">9</button>
+                <button onclick="calc('+')">+</button>
+                <button onclick="calc('4')">4</button>
+                <button onclick="calc('5')">5</button>
+                <button onclick="calc('6')">6</button>
+                <button onclick="calc('-')">-</button>
+                <button onclick="calc('1')">1</button>
+                <button onclick="calc('2')">2</button>
+                <button onclick="calc('3')">3</button>
+                <button onclick="calc('*')">*</button>
+                <button onclick="calc('0')">0</button>
+                <button onclick="calc('.')">.</button>
+                <button onclick="calc('=')">=</button>
+                <button onclick="calc('/')">/</button>
+              </div>
+            `,
+            'Notes': `
+              <textarea style="width: 100%; height: 100%; padding: 16px; border: none; resize: none;"></textarea>
+            `,
+            'Settings': `
+              <div style="padding: 16px;">
+                <h2>Settings</h2>
+                <hr>
+                <h3>Personalization</h3>
+                <p>Theme: <select><option>Light</option><option>Dark</option></select></p>
+                <h3>System</h3>
+                <p>Version: AdamOS 1.0</p>
+                <p>Build: 2023.1</p>
+              </div>
+            `,
+            'Mail': `
+              <div style="padding: 16px;">
+                <div style="display: flex; height: 100%;">
+                  <div style="width: 200px; border-right: 1px solid #ddd;">
+                    <button style="width: 100%; padding: 8px; margin-bottom: 16px;">Compose</button>
+                    <div style="padding: 8px;">
+                      <div>📥 Inbox</div>
+                      <div>📤 Sent</div>
+                      <div>📝 Drafts</div>
+                      <div>🗑️ Trash</div>
+                    </div>
+                  </div>
+                  <div style="flex-grow: 1; padding: 16px;">
+                    <div style="text-align: center; color: #666;">
+                      <i class="fas fa-envelope" style="font-size: 48px; margin-bottom: 16px;"></i>
+                      <p>Select an email to read</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            `,
+            'Photos': `
+              <div style="padding: 16px;">
+                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 16px;">
+                  <div style="background: #f0f0f0; aspect-ratio: 1; display: flex; align-items: center; justify-content: center;">
+                    <i class="fas fa-image" style="font-size: 48px; color: #666;"></i>
+                  </div>
+                  <div style="background: #f0f0f0; aspect-ratio: 1; display: flex; align-items: center; justify-content: center;">
+                    <i class="fas fa-image" style="font-size: 48px; color: #666;"></i>
+                  </div>
+                  <div style="background: #f0f0f0; aspect-ratio: 1; display: flex; align-items: center; justify-content: center;">
+                    <i class="fas fa-image" style="font-size: 48px; color: #666;"></i>
+                  </div>
+                </div>
+              </div>
+            `,
+            'Music': `
+              <div style="padding: 16px;">
+                <div style="text-align: center;">
+                  <div style="width: 200px; height: 200px; background: #f0f0f0; margin: 0 auto 16px; display: flex; align-items: center; justify-content: center;">
+                    <i class="fas fa-music" style="font-size: 48px; color: #666;"></i>
+                  </div>
+                  <div style="margin-bottom: 16px;">
+                    <h3>Now Playing</h3>
+                    <p>Select a song to play</p>
+                  </div>
+                  <div style="display: flex; justify-content: center; gap: 16px;">
+                    <button><i class="fas fa-backward"></i></button>
+                    <button><i class="fas fa-play"></i></button>
+                    <button><i class="fas fa-forward"></i></button>
+                  </div>
+                </div>
+              </div>
+            `,
+            'Store': `
+              <div style="padding: 16px;">
+                <h2>AdamOS Store</h2>
+                <input type="text" placeholder="Search apps..." style="width: 100%; padding: 8px; margin: 16px 0;">
+                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px;">
+                  <div style="border: 1px solid #ddd; padding: 16px; border-radius: 8px;">
+                    <h3>Featured App 1</h3>
+                    <p>Description of the app</p>
+                    <button style="width: 100%; margin-top: 8px;">Install</button>
+                  </div>
+                  <div style="border: 1px solid #ddd; padding: 16px; border-radius: 8px;">
+                    <h3>Featured App 2</h3>
+                    <p>Description of the app</p>
+                    <button style="width: 100%; margin-top: 8px;">Install</button>
+                  </div>
+                </div>
+              </div>
+            `,
+            'Calendar': `
+              <div style="padding: 16px;">
+                <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; text-align: center;">
+                  <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
+                  ${Array(31).fill(0).map((_, i) => `<div style="padding: 8px; border: 1px solid #ddd;">${i + 1}</div>`).join('')}
+                </div>
+              </div>
+            `,
+            'Weather': `
+              <div style="padding: 16px; text-align: center;">
+                <h2>Weather</h2>
+                <div style="font-size: 48px; margin: 24px 0;">🌤️</div>
+                <h3>22°C</h3>
+                <p>Partly Cloudy</p>
+                <div style="margin-top: 24px;">
+                  <div style="display: flex; justify-content: space-around;">
+                    <div>Mon<br>🌤️<br>21°C</div>
+                    <div>Tue<br>☀️<br>23°C</div>
+                    <div>Wed<br>🌧️<br>19°C</div>
+                    <div>Thu<br>⛅<br>20°C</div>
+                    <div>Fri<br>☀️<br>24°C</div>
+                  </div>
+                </div>
+              </div>
+            `,
+            'Maps': `
+              <div style="padding: 16px;">
+                <input type="text" placeholder="Search location..." style="width: 100%; padding: 8px; margin-bottom: 16px;">
+                <div style="background: #f0f0f0; height: calc(100% - 50px); display: flex; align-items: center; justify-content: center;">
+                  <i class="fas fa-map-marked-alt" style="font-size: 48px; color: #666;"></i>
+                </div>
+              </div>
+            `,
+            'Camera': `
+              <div style="padding: 16px; text-align: center;">
+                <div style="background: #f0f0f0; aspect-ratio: 16/9; margin-bottom: 16px; display: flex; align-items: center; justify-content: center;">
+                  <i class="fas fa-camera" style="font-size: 48px; color: #666;"></i>
+                </div>
+                <button style="padding: 8px 16px;">Take Photo</button>
+              </div>
+            `,
+            'My Computer': `
+              <div style="padding: 16px;">
+                <h2>My Computer</h2>
+                <div style="margin-top: 16px;">
+                  <div style="display: flex; align-items: center; padding: 8px; border: 1px solid #ddd; margin-bottom: 8px;">
+                    <i class="fas fa-hdd" style="margin-right: 8px;"></i>
+                    Local Disk (C:) - 256GB
+                  </div>
+                  <div style="display: flex; align-items: center; padding: 8px; border: 1px solid #ddd; margin-bottom: 8px;">
+                    <i class="fas fa-network-wired" style="margin-right: 8px;"></i>
+                    Network
+                  </div>
+                </div>
+              </div>
+            `,
+            'Recycle Bin': `
+              <div style="padding: 16px;">
+                <h2>Recycle Bin</h2>
+                <div style="margin-top: 16px; text-align: center; color: #666;">
+                  <i class="fas fa-trash" style="font-size: 48px; margin-bottom: 16px;"></i>
+                  <p>Recycle Bin is empty</p>
+                </div>
+                <button style="width: 100%; margin-top: 16px;">Empty Recycle Bin</button>
+              </div>
+            `,
+            'Documents': `
+              <div style="padding: 16px;">
+                <h2>Documents</h2>
+                <div style="margin-top: 16px;">
+                  <div style="display: flex; align-items: center; padding: 8px; border: 1px solid #ddd; margin-bottom: 8px;">
+                    <i class="fas fa-file-alt" style="margin-right: 8px;"></i>
+                    Document1.txt
+                  </div>
+                  <div style="display: flex; align-items: center; padding: 8px; border: 1px solid #ddd; margin-bottom: 8px;">
+                    <i class="fas fa-file-alt" style="margin-right: 8px;"></i>
+                    Document2.txt
+                  </div>
+                </div>
+              </div>
+            `
+          };
+          return contents[app.name] || `<div style="padding: 16px;">Content for ${app.name}</div>`;
+        }
+
+        setupWindowControls(windowEl) {
+          const closeBtn = windowEl.querySelector('.close');
+          const maximizeBtn = windowEl.querySelector('.maximize');
+          const minimizeBtn = windowEl.querySelector('.minimize');
+
+          closeBtn.addEventListener('click', () => {
+            windowEl.style.display = 'none';
+          });
+
+          maximizeBtn.addEventListener('click', () => {
+            if (windowEl.style.width === '100vw') {
+              windowEl.style.width = '600px';
+              windowEl.style.height = '400px';
+              windowEl.style.top = '50%';
+              windowEl.style.left = '50%';
+              windowEl.style.transform = 'translate(-50%, -50%)';
+            } else {
+              windowEl.style.width = '100vw';
+              windowEl.style.height = '100vh';
+              windowEl.style.top = '0';
+              windowEl.style.left = '0';
+              windowEl.style.transform = 'none';
+            }
+          });
+
+          minimizeBtn.addEventListener('click', () => {
+            windowEl.style.display = 'none';
+          });
+        }
+
+        makeDraggable(windowEl) {
+          const header = windowEl.querySelector('.window-header');
+          let isDragging = false;
+          let currentX;
+          let currentY;
+          let initialX;
+          let initialY;
+          let xOffset = 0;
+          let yOffset = 0;
+
+          header.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            initialX = e.clientX - xOffset;
+            initialY = e.clientY - yOffset;
+            
+            if (e.target === header) {
+              this.focusWindow(windowEl);
+            }
+          });
+
+          document.addEventListener('mousemove', (e) => {
+            if (isDragging) {
+              e.preventDefault();
+              currentX = e.clientX - initialX;
+              currentY = e.clientY - initialY;
+              xOffset = currentX;
+              yOffset = currentY;
+              
+              windowEl.style.transform = `translate(${currentX}px, ${currentY}px)`;
+            }
+          });
+
+          document.addEventListener('mouseup', () => {
+            isDragging = false;
+          });
+        }
+
+        focusWindow(windowEl) {
+          windowEl.style.zIndex = ++this.zIndex;
+        }
+      }
+
+      // Initialize window manager
+      const windowManager = new WindowManager();
+
+      // Calculator functionality
+      let calcDisplay = '';
+      function calc(value) {
+        const display = document.getElementById('calc-display');
+        if (!display) return;
+        
+        if (value === '=') {
+          try {
+            calcDisplay = eval(calcDisplay);
+          } catch (e) {
+            calcDisplay = 'Error';
+          }
+        } else {
+          calcDisplay += value;
+        }
+        display.value = calcDisplay;
+      }
+
+      // Modified app click handler
+      function handleAppClick(app) {
+        const existingWindow = windowManager.windows.get(app.name);
+        if (existingWindow) {
+          existingWindow.style.display = 'block';
+          windowManager.focusWindow(existingWindow);
+        } else {
+          windowManager.createWindow(app);
+        }
+      }
+
+      // Update apps array with click handlers
+      const apps = [
+        { name: 'Browser', icon: '🌐' },
+        { name: 'Mail', icon: '✉️' },
+        { name: 'Photos', icon: '🖼️' },
+        { name: 'Music', icon: '🎵' },
+        { name: 'Settings', icon: '⚙️' },
+        { name: 'Store', icon: '🛍️' },
+        { name: 'Calendar', icon: '📅' },
+        { name: 'Weather', icon: '🌤️' },
+        { name: 'Maps', icon: '🗺️' },
+        { name: 'Calculator', icon: '🧮' },
+        { name: 'Notes', icon: '📝' },
+        { name: 'Camera', icon: '📷' }
+      ];
+
+      // Modified app generation code
+      const appGrid = document.querySelector('.app-grid');
+      apps.forEach(app => {
+        const appIcon = document.createElement('div');
+        appIcon.className = 'app-icon';
+        appIcon.innerHTML = `
+          <div style="font-size: 24px;">${app.icon}</div>
+          <span>${app.name}</span>
+        `;
+        appIcon.addEventListener('click', () => handleAppClick(app));
+        appGrid.appendChild(appIcon);
+      });
+
+      // Modified desktop icons generation
+      const desktopIcons = document.querySelector('.desktop-icons');
+      const desktopApps = [
+        { name: 'My Computer', icon: '💻' },
+        { name: 'Recycle Bin', icon: '🗑️' },
+        { name: 'Documents', icon: '📁' }
+      ];
+
+      desktopApps.forEach(app => {
+        const icon = document.createElement('div');
+        icon.className = 'app-icon';
+        icon.innerHTML = `
+          <div style="font-size: 24px;">${app.icon}</div>
+          <span>${app.name}</span>
+        `;
+        icon.addEventListener('click', () => handleAppClick(app));
+        desktopIcons.appendChild(icon);
+      });
+    </script>
+  </div>
+</body></html>
