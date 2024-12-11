@@ -17,388 +17,84 @@
         "multiple": true,
         "text": "games",
         "pages": [
-            {
-                "text": "poop game",
-                "url": "/poop"
-            },
-            {
-                "text": "poop shooter 3d",
-                "url": "/poopshooter3d"
-            },
-            {
-                "text": "drug tycoon",
-                "url": "/drugtycoon"
-            },
-            {
-                "text": "damyan run",
-                "url": "/damyan-run"
-            },
-            {
-                "text": "tic tac unbound",
-                "url": "/tic-tac-unbound"
-            },
-            {
-                "text": "physics sandbox",
-                "url": "/physic-sandbox"
-            },
-            {
-                "text": "devil shooter",
-                "url": "/devilshooter"
-            },
-            {
-                "text": "piss clicker",
-                "url": "/pissclicker"
-            }
+            { "text": "tic tac unbound", "url": "/tic-tac-unbound" },
+            { "text": "poop game", "url": "/poop" },
+            { "text": "poop shooter 3d", "url": "/poopshooter3d" },
+            { "text": "damyan run", "url": "/damyan-run" },
+            { "text": "devil shooter", "url": "/devilshooter" },
+            { "text": "drug tycoon", "url": "/drugtycoon" },
+            { "text": "physics sandbox", "url": "/physic-sandbox" },
+            { "text": "piss clicker", "url": "/pissclicker" }
         ]
     },
     {
         "multiple": true,
         "text": "downloads",
         "pages": [
-            {
-                "text": "tango clicker",
-                "url": "/tangoclicker"
-            }
+            { "text": "tango clicker", "url": "/tangoclicker" }
         ]
     },
     {
         "multiple": true,
         "text": "tools",
         "pages": [
-            {
-                "text": "glass",
-                "url": "/glass"
-            },
-            {
-                "text": "time from now",
-                "url": "/timefromnow"
-            },
-            {
-                "text": "lightroom renderer",
-                "url": "/lightroom-renderer"
-            },
-            {
-                "text": "scrollbar",
-                "url": "/scrollbar"
-            },
-            {
-                "text": "particle",
-                "url": "/particle"
-            },
-            {
-                "text": "loading animations",
-                "url": "/loadinganimations"
-            }
+            { "text": "glass", "url": "/glass" },
+            { "text": "time from now", "url": "/timefromnow" },
+            { "text": "lightroom renderer", "url": "/lightroom-renderer" },
+            { "text": "scrollbar", "url": "/scrollbar" },
+            { "text": "particle", "url": "/particle" },
+            { "text": "loading animations", "url": "/loadinganimations" }
         ]
     },
     {
         "multiple": true,
-        "text": "misc",
+        "text": "creative",
         "pages": [
-            {
-                "text": "autism buttons",
-                "url": "/autismbuttons"
-            },
-            {
-                "text": "happy imessage",
-                "url": "/happyimessage"
-            },
-            {
-                "text": "bird with balls",
-                "url": "/birdwithballs"
-            },
-            {
-                "text": "hell's domain",
-                "url": "/hellsdomain"
-            },
-            {
-                "text": "sell your soul",
-                "url": "/sellyoursoul"
-            },
-            {
-                "text": "poopstagram",
-                "url": "/poopstagram"
-            },
-            {
-                "text": "protocol 533",
-                "url": "/protocol_533"
-            },
-            {
-                "text": "backrooms",
-                "url": "/backrooms"
-            },
-            {
-                "text": "cosmic",
-                "url": "/cosmic"
-            },
-            {
-                "text": "creature builder",
-                "url": "/creaturebuilder"
-            },
-            {
-                "text": "crt shader",
-                "url": "/crtemulationshader"
-            },
-            {
-                "text": "dreamland",
-                "url": "/dreamland"
-            }
+            { "text": "floral fractal test", "url": "/floralfractaltest" },
+            { "text": "fractal land", "url": "/fractalland" },
+            { "text": "hyper realistic fractal shader", "url": "/hyperrealisticfractalshader" },
+            { "text": "galaxy gen", "url": "/galaxygen" },
+            { "text": "maze generator", "url": "/mazegenerator" },
+            { "text": "terrain generator", "url": "/terraingen" },
+            { "text": "retro grid", "url": "/retrogrid" }
         ]
     },
     {
         "multiple": true,
-        "text": "misc 2",
+        "text": "simulations",
         "pages": [
-            {
-                "text": "floral fractal test",
-                "url": "/floralfractaltest"
-            },
-            {
-                "text": "fractal land",
-                "url": "/fractalland"
-            },
-            {
-                "text": "hyper realistic fractal shader",
-                "url": "/hyperrealisticfractalshader"
-            },
-            {
-                "text": "galaxy gen",
-                "url": "/galaxygen"
-            },
-            {
-                "text": "maze generator",
-                "url": "/mazegenerator"
-            },
-            {
-                "text": "shader test",
-                "url": "/shadertest"
-            },
-            {
-                "text": "spixe",
-                "url": "/spixe"
-            },
-            {
-                "text": "terrain generator",
-                "url": "/terraingen"
-            }
+            { "text": "airplane simulator", "url": "/airplanesim" },
+            { "text": "city builder", "url": "/citybuilder" },
+            { "text": "car playground", "url": "/carplayground" },
+            { "text": "motorcycle playground", "url": "/motorcycleplayground" },
+            { "text": "dream maze", "url": "/dreammaze" },
+            { "text": "planet gen 2", "url": "/planet gen 2" }
         ]
     },
     {
         "multiple": true,
-        "text": "misc 3",
+        "text": "funny/misc",
         "pages": [
-            {
-                "text": "airplane simulator",
-                "url": "/airplanesim"
-            },
-            {
-                "text": "autoways",
-                "url": "/autoways"
-            },
-            {
-                "text": "backrooms",
-                "url": "/backrooms"
-            },
-            {
-                "text": "backrooms 2",
-                "url": "/backrooms2"
-            },
-            {
-                "text": "ball game",
-                "url": "/ballgame"
-            },
-            {
-                "text": "ball pit",
-                "url": "/ballpit"
-            },
-            {
-                "text": "bedroom",
-                "url": "/bedroom"
-            },
-            {
-                "text": "bhopcraft",
-                "url": "/bhopcraft"
-            }
+            { "text": "autism buttons", "url": "/autismbuttons" },
+            { "text": "happy imessage", "url": "/happyimessage" },
+            { "text": "bird with balls", "url": "/birdwithballs" },
+            { "text": "bmovie planet", "url": "/bmovie-planet" },
+            { "text": "fart 3d", "url": "/fart3d" },
+            { "text": "poogle", "url": "/poogle" },
+            { "text": "poogle photos", "url": "/pooglephotos" },
+            { "text": "poopstagram", "url": "/poopstagram" }
         ]
     },
     {
         "multiple": true,
-        "text": "misc 4",
+        "text": "experimental",
         "pages": [
-            {
-                "text": "bmovie planet",
-                "url": "/bmovie-planet"
-            },
-            {
-                "text": "car playground",
-                "url": "/carplayground"
-            },
-            {
-                "text": "city builder",
-                "url": "/citybuilder"
-            },
-            {
-                "text": "civilism 3d",
-                "url": "/civilism3d"
-            },
-            {
-                "text": "crazy cars",
-                "url": "/crazycars"
-            },
-            {
-                "text": "creature creator 2",
-                "url": "/creaturecreator2"
-            },
-            {
-                "text": "dream maze",
-                "url": "/dreammaze"
-            },
-            {
-                "text": "earth",
-                "url": "/earth"
-            }
-        ]
-    },
-    {
-        "multiple": true,
-        "text": "misc 5",
-        "pages": [
-            {
-                "text": "fart 3d",
-                "url": "/fart3d"
-            },
-            {
-                "text": "griller tag",
-                "url": "/griller-tag"
-            },
-            {
-                "text": "inflation fetish",
-                "url": "/inflation-fetish"
-            },
-            {
-                "text": "lost",
-                "url": "/lost"
-            },
-            {
-                "text": "macos",
-                "url": "/macos"
-            },
-            {
-                "text": "magma",
-                "url": "/magma"
-            },
-            {
-                "text": "magma",
-                "url": "/magma"
-            },
-            {
-                "text": "minecraft world explore",
-                "url": "/minecraftworldexplore"
-            }
-        ]
-    },
-    {
-        "multiple": true,
-        "text": "misc 6",
-        "pages": [
-            {
-                "text": "motor cycle playground",
-                "url": "/motorcycleplayground"
-            },
-            {
-                "text": "ping pong",
-                "url": "/pingpong"
-            },
-            {
-                "text": "planet gen 2",
-                "url": "/planet gen 2"
-            },
-            {
-                "text": "poogle",
-                "url": "/poogle"
-            },
-            {
-                "text": "poogle photos",
-                "url": "/pooglephotos"
-            },
-            {
-                "text": "poopet",
-                "url": "/poopet"
-            },
-            {
-                "text": "poop train",
-                "url": "/pooptrain"
-            },
-            {
-                "text": "portal",
-                "url": "/portal"
-            },
-            {
-                "text": "snow globe",
-                "url": "/snowglobe"
-            },
-            {
-                "text": "sun",
-                "url": "/sun"
-            },
-            {
-                "text": "super monkey roll",
-                "url": "/supermonkeyroll"
-            },
-            {
-                "text": "tesseract",
-                "url": "/tesseract"
-            }
-        ]
-    },
-    {
-        "multiple": true,
-        "text": "misc 7",
-        "pages": [
-            {
-                "text": "px fun",
-                "url": "/pxfun"
-            },
-            {
-                "text": "quantum",
-                "url": "/quantum"
-            },
-            {
-                "text": "real life",
-                "url": "/real-life"
-            },
-            {
-                "text": "retro grid",
-                "url": "/retrogrid"
-            },
-            {
-                "text": "rooms explorer",
-                "url": "/roomsexplorer"
-            },
-            {
-                "text": "scented candles",
-                "url": "/scented-candles"
-            },
-            {
-                "text": "shitcraft",
-                "url": "/shitcraft"
-            },
-            {
-                "text": "slotwars",
-                "url": "/slotwars"
-            },
-            {
-                "text": "townscaper",
-                "url": "/townscaper"
-            },
-            {
-                "text": "weird walk",
-                "url": "/weirdwalk"
-            },
-            {
-                "text": "wtdjl (???)",
-                "url": "/wtdjl"
-            }
+            { "text": "protocol 533", "url": "/protocol_533" },
+            { "text": "quantum", "url": "/quantum" },
+            { "text": "shader test", "url": "/shadertest" },
+            { "text": "spixe", "url": "/spixe" },
+            { "text": "dreamland", "url": "/dreamland" },
+            { "text": "cosmic", "url": "/cosmic" }
         ]
     },
     {

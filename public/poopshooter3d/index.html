@@ -220,10 +220,32 @@
     
     function init() {
         scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x87CEEB); // Add this line to set sky blue color
+        scene.background = new THREE.Color(0x88CCEE); // Lighter blue winter sky
         
-        // Create a subtle gradient using fog
-        scene.fog = new THREE.Fog(0x87CEEB, 50, 150);
+        // Create a winter gradient using fog
+        scene.fog = new THREE.Fog(0x88CCEE, 50, 150);
+        
+        // Add snow particles
+        const snowGeometry = new THREE.BufferGeometry();
+        const snowVertices = [];
+        for(let i = 0; i < 5000; i++) {
+            const x = Math.random() * 200 - 100;
+            const y = Math.random() * 100;
+            const z = Math.random() * 200 - 100;
+            snowVertices.push(x, y, z);
+        }
+        snowGeometry.setAttribute('position', new THREE.Float32BufferAttribute(snowVertices, 3));
+        const snowMaterial = new THREE.PointsMaterial({
+            color: 0xFFFFFF,
+            size: 0.2,
+            transparent: true,
+            opacity: 0.8
+        });
+        const snow = new THREE.Points(snowGeometry, snowMaterial);
+        scene.add(snow);
+    
+        // Store snow reference for animation
+        scene.userData.snow = snow;
         
         camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
         renderer = new THREE.WebGLRenderer();
@@ -232,7 +254,6 @@
         renderer.shadowMap.type = THREE.PCFSoftShadowMap;
         document.body.appendChild(renderer.domElement);
         
-        // Only start rendering the scene
         animate();
     }
     
@@ -298,6 +319,15 @@
             movePlayer();
             updateEnemies();
             
+            if(scene.userData.snow) {
+                const positions = scene.userData.snow.geometry.attributes.position.array;
+                for(let i = 1; i < positions.length; i += 3) {
+                    positions[i] -= 0.1;
+                    if(positions[i] < 0) positions[i] = 100;
+                }
+                scene.userData.snow.geometry.attributes.position.needsUpdate = true;
+            }
+            
             clouds.forEach(cloud => {
                 cloud.userData.angle += cloud.userData.rotationSpeed;
                 cloud.position.x = Math.cos(cloud.userData.angle) * cloud.userData.radius;
@@ -321,52 +351,12 @@
         renderer.render(scene, camera);
     }
     
-    function restartGame() {
-        while(enemies.length > 0) {
-            const enemy = enemies.pop();
-            scene.remove(enemy.mesh);
-        }
-        
-        while(projectiles.length > 0) {
-            const projectile = projectiles.pop();
-            scene.remove(projectile.mesh);
-            world.remove(projectile.body);
-        }
-        
-        gameIsOver = false;
-        player.health = 100;
-        wave = 1;
-        
-        camera.position.set(0, 2, 0);
-        camera.rotation.set(0, 0, 0);
-        
-        document.body.requestPointerLock().catch(err => {
-            console.log("Pointer lock request failed:", err);
-        });
-        
-        document.getElementById('gameOver').style.display = 'none';
-        
-        updateHUD();
-        
-        const initialEnemyCount = 5 + wave * 2;
-        document.getElementById('poopCount').textContent = initialEnemyCount;
-        document.getElementById('totalPoops').textContent = initialEnemyCount;
-        
-        clouds.forEach(cloud => {
-            cloud.userData.angle = Math.random() * Math.PI * 2;
-            cloud.position.x = Math.cos(cloud.userData.angle) * cloud.userData.radius;
-            cloud.position.z = Math.sin(cloud.userData.angle) * cloud.userData.radius;
-        });
-        
-        spawnEnemies();
-    }
-    
     function createGround() {
         const geometry = new THREE.PlaneGeometry(100, 100, 50, 50);
         const material = new THREE.MeshStandardMaterial({
-            color: 0x33aa33,
+            color: 0xFFFFFF, // Snow white
             metalness: 0.1,
-            roughness: 0.8
+            roughness: 0.9
         });
         const ground = new THREE.Mesh(geometry, material);
         ground.rotation.x = -Math.PI / 2;
@@ -382,11 +372,15 @@
     
     function createEnvironment() {
         const mountainGeometry = new THREE.ConeGeometry(20, 30, 4);
-        const mountainMaterial = new THREE.MeshStandardMaterial({ color: 0x666666 });
+        const mountainMaterial = new THREE.MeshStandardMaterial({ 
+            color: 0x666666 // Mountain base color
+        });
+        const snowCapMaterial = new THREE.MeshStandardMaterial({ 
+            color: 0xFFFFFF // Snow cap color
+        });
         
         const mountainCount = 20;
-        const radius = 80;
-        
+        const radius = 80;  
         const sunGeometry = new THREE.SphereGeometry(5, 32, 32);
         const sunMaterial = new THREE.MeshBasicMaterial({
             color: 0xffff00,
@@ -395,7 +389,6 @@
         });
         const sun = new THREE.Mesh(sunGeometry, sunMaterial);
         sun.position.set(50, 100, -50);
-    
         const sunGlowGeometry = new THREE.SphereGeometry(7, 32, 32);
         const sunGlowMaterial = new THREE.MeshBasicMaterial({
             color: 0xffff66,
@@ -404,7 +397,6 @@
         });
         const sunGlow = new THREE.Mesh(sunGlowGeometry, sunGlowMaterial);
         sun.add(sunGlow);
-    
         scene.add(sun);
         
         for(let i = 0; i < mountainCount; i++) {
@@ -416,242 +408,96 @@
             mountain.rotation.y = Math.random() * Math.PI;
             const scale = 0.5 + Math.random() * 1.5;
             mountain.scale.set(scale, scale, scale);
-            scene.add(mountain);
-        }
-        
-        const secondRowCount = 15;
-        const secondRadius = 120;
-        
-        for(let i = 0; i < secondRowCount; i++) {
-            const angle = ((i / secondRowCount) * Math.PI * 2) + (Math.PI / secondRowCount);
-            const mountain = new THREE.Mesh(mountainGeometry, mountainMaterial);
-            mountain.position.x = Math.cos(angle) * secondRadius;
-            mountain.position.z = Math.sin(angle) * secondRadius;
-            mountain.position.y = 15;
-            mountain.rotation.y = Math.random() * Math.PI;
-            const scale = 0.7 + Math.random() * 1.8;
-            mountain.scale.set(scale, scale, scale);
+            
+            // Add snow cap
+            const snowCap = new THREE.Mesh(mountainGeometry, snowCapMaterial);
+            snowCap.position.copy(mountain.position);
+            snowCap.position.y += 10; // Adjust the height
+            snowCap.scale.set(scale * 1.2, scale * 1.2, scale * 1.2);
+            scene.add(snowCap);
+            
             scene.add(mountain);
         }
     
-        const cloudGeometry = new THREE.SphereGeometry(3, 16, 16);
-        const cloudMaterial = new THREE.MeshStandardMaterial({
-            color: 0xffffff,
-            roughness: 1,
-            metalness: 0
-        });
-    
-        for(let i = 0; i < 12; i++) {
-            const cloudGroup = new THREE.Group();
+        // Add Christmas trees
+        const treeCount = 30;
+        for(let i = 0; i < treeCount; i++) {
+            const angle = (i / treeCount) * Math.PI * 2;
+            const radius = 40 + Math.random() * 20;
+            const tree = createChristmasTree(1 + Math.random() * 0.5);
             
-            const sphereCount = 5 + Math.floor(Math.random() * 5);
-            for(let j = 0; j < sphereCount; j++) {
-                const cloudPuff = new THREE.Mesh(cloudGeometry, cloudMaterial);
-                cloudPuff.position.set(
-                    (Math.random() - 0.5) * 4,
-                    (Math.random() - 0.5) * 2,
-                    (Math.random() - 0.5) * 4
-                );
-                const scale = 0.5 + Math.random() * 0.5;
-                cloudPuff.scale.set(scale, scale * 0.6, scale);
-                cloudGroup.add(cloudPuff);
-            }
+            tree.position.x = Math.cos(angle) * radius;
+            tree.position.z = Math.sin(angle) * radius;
+            tree.rotation.y = Math.random() * Math.PI * 2;
             
-            const angle = (i / 12) * Math.PI * 2;
-            const radius = 60 + Math.random() * 20;
-            cloudGroup.position.set(
-                Math.cos(angle) * radius,
-                30 + Math.random() * 10,
-                Math.sin(angle) * radius
-            );
-            
-            cloudGroup.userData.angle = angle;
-            cloudGroup.userData.radius = radius;
-            cloudGroup.userData.rotationSpeed = 0.0001 + Math.random() * 0.0001;
-            
-            scene.add(cloudGroup);
-            clouds.push(cloudGroup);
+            scene.add(tree);
         }
+        
+        // Add additional trees in random positions
+        for(let i = 0; i < 20; i++) {
+            const angle = Math.random() * Math.PI * 2;
+            const radius = 20 + Math.random() * 30;
+            const tree = createChristmasTree(0.8 + Math.random() * 0.4);
+            
+            tree.position.x = Math.cos(angle) * radius;
+            tree.position.z = Math.sin(angle) * radius;
+            tree.rotation.y = Math.random() * Math.PI * 2;
+            
+            scene.add(tree);
+        }
+    }
     
-        const treeCount = 50;
-        const treeGeometry = new THREE.CylinderGeometry(0.3, 0.5, 4, 8);
-        const treeMaterial = new THREE.MeshStandardMaterial({ 
+    function createChristmasTree(scale) {
+        const treeGroup = new THREE.Group();
+        
+        // Tree trunk
+        const trunkGeometry = new THREE.CylinderGeometry(0.3, 0.5, 4, 8);
+        const trunkMaterial = new THREE.MeshStandardMaterial({ 
             color: 0x4b3621,
             roughness: 0.8,
             metalness: 0.1
         });
-    
-        const foliageGeometry = new THREE.IcosahedronGeometry(2, 1);
-        const foliageMaterial = new THREE.MeshStandardMaterial({
-            color: 0x2d5a27,
-            roughness: 0.8,
-            metalness: 0.1
-        });
-    
-        const treePositions = [];
-        const minTreeDistance = 5;
-    
-        for(let attempts = 0; attempts < 200 && treePositions.length < treeCount; attempts++) {
-            const angle = Math.random() * Math.PI * 2;
-            const minRadius = 15;
-            const maxRadius = 45;
-            const radius = minRadius + Math.random() * (maxRadius - minRadius);
+        const trunk = new THREE.Mesh(trunkGeometry, trunkMaterial);
+        trunk.position.y = 2;
+        treeGroup.add(trunk);
+        
+        // Tree layers
+        const layerCount = 4;
+        for(let i = 0; i < layerCount; i++) {
+            const coneGeometry = new THREE.ConeGeometry(2 - (i * 0.3), 2, 8);
+            const coneMaterial = new THREE.MeshStandardMaterial({
+                color: 0x0b5915, // Deep Christmas green
+                roughness: 0.8,
+                metalness: 0.1
+            });
+            const cone = new THREE.Mesh(coneGeometry, coneMaterial);
+            cone.position.y = 3 + (i * 1.5);
+            treeGroup.add(cone);
             
-            const position = {
-                x: Math.cos(angle) * radius,
-                z: Math.sin(angle) * radius
-            };
-    
-            let tooClose = false;
-            for(const existingPos of treePositions) {
-                const dx = position.x - existingPos.x;
-                const dz = position.z - existingPos.z;
-                const distance = Math.sqrt(dx * dx + dz * dz);
-                if(distance < minTreeDistance) {
-                    tooClose = true;
-                    break;
-                }
-            }
-    
-            if(!tooClose) {
-                treePositions.push(position);
-    
-                const treeGroup = new THREE.Group();
-                const trunk = new THREE.Mesh(treeGeometry, treeMaterial);
-                trunk.position.y = 2;
-                treeGroup.add(trunk);
-                
-                const leafClusters = 2 + Math.floor(Math.random());
-                for(let j = 0; j < leafClusters; j++) {
-                    const foliage = new THREE.Mesh(foliageGeometry, foliageMaterial);
-                    foliage.position.y = 4 + j * 1.5;
-                    foliage.position.x = (Math.random() - 0.5) * 0.5;
-                    foliage.position.z = (Math.random() - 0.5) * 0.5;
-                    const scale = 0.6 + Math.random() * 0.4;
-                    foliage.scale.set(scale, scale, scale);
-                    treeGroup.add(foliage);
-                }
-                
-                treeGroup.position.set(
-                    position.x,
-                    0,
-                    position.z
-                );
-                
-                treeGroup.rotation.y = Math.random() * Math.PI * 2;
-                
-                const treeScale = 0.8 + Math.random() * 0.4;
-                treeGroup.scale.set(treeScale, treeScale, treeScale);
-                
-                scene.add(treeGroup);
-            }
+            // Add snow on branches
+            const snowGeometry = new THREE.ConeGeometry(2.1 - (i * 0.3), 0.2, 8);
+            const snowMaterial = new THREE.MeshStandardMaterial({
+                color: 0xFFFFFF,
+                roughness: 0.8,
+                metalness: 0.1
+            });
+            const snow = new THREE.Mesh(snowGeometry, snowMaterial);
+            snow.position.y = 3.8 + (i * 1.5);
+            treeGroup.add(snow);
         }
-    }
-    
-    function shootPoop() {
-        if(gameIsOver) return;
         
-        const poopGeometry = new THREE.SphereGeometry(0.2, 32, 32);
-        const poopMaterial = new THREE.ShaderMaterial({
-            uniforms: {
-                color: { value: new THREE.Color(0x4a3525) },
-                lightDirection: { value: new THREE.Vector3(1, 1, 1).normalize() }
-            },
-            vertexShader: `
-                varying vec3 vNormal;
-                varying vec3 vViewPosition;
-                
-                void main() {
-                    vNormal = normalize(normalMatrix * normal);
-                    vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
-                    vViewPosition = -mvPosition.xyz;
-                    gl_Position = projectionMatrix * mvPosition;
-                }
-            `,
-            fragmentShader: `
-                uniform vec3 color;
-                uniform vec3 lightDirection;
-                varying vec3 vNormal;
-                varying vec3 vViewPosition;
-                
-                void main() {
-                    vec3 normal = normalize(vNormal);
-                    vec3 viewDir = normalize(vViewPosition);
-                    
-                    float diffuse = max(0.0, dot(normal, lightDirection));
-                    
-                    float outline = 1.0 - dot(normal, viewDir);
-                    float outlineStrength = smoothstep(0.6, 0.9, outline);
-                    
-                    vec3 finalColor = color;
-                    finalColor = mix(finalColor, vec3(1.0), outlineStrength * 0.8);
-                    finalColor = mix(color * 0.5, finalColor, diffuse);
-                    
-                    gl_FragColor = vec4(finalColor, 1.0);
-                    gl_FragColor.rgb += color * 0.2;
-                }
-            `
+        // Add star on top
+        const starGeometry = new THREE.OctahedronGeometry(0.5, 0);
+        const starMaterial = new THREE.MeshStandardMaterial({
+            color: 0xFFD700,
+            metalness: 0.5,
+            roughness: 0.2
         });
-        const poop = new THREE.Group();
-        const poopBody = new THREE.Mesh(poopGeometry, poopMaterial);
-        poopBody.castShadow = true;
-        poop.add(poopBody);
-    
-        const eyeGeometry = new THREE.SphereGeometry(0.05, 16, 16);
-        const eyeWhiteMaterial = new THREE.MeshStandardMaterial({ color: 0xffffff });
+        const star = new THREE.Mesh(starGeometry, starMaterial);
+        star.position.y = 9;
+        treeGroup.add(star);
         
-        const leftEye = new THREE.Mesh(eyeGeometry, eyeWhiteMaterial);
-        leftEye.position.set(-0.08, 0.05, 0.15);
-        poop.add(leftEye);
-        
-        const rightEye = new THREE.Mesh(eyeGeometry, eyeWhiteMaterial);
-        rightEye.position.set(0.08, 0.05, 0.15);
-        poop.add(rightEye);
-    
-        const pupilGeometry = new THREE.SphereGeometry(0.02, 8, 8);
-        const pupilMaterial = new THREE.MeshStandardMaterial({ color: 0x000000 });
-        
-        const leftPupil = new THREE.Mesh(pupilGeometry, pupilMaterial);
-        leftPupil.position.set(-0.08, 0.05, 0.18);
-        poop.add(leftPupil);
-        
-        const rightPupil = new THREE.Mesh(pupilGeometry, pupilMaterial);
-        rightPupil.position.set(0.08, 0.05, 0.18);
-        poop.add(rightPupil);
-    
-        const smileGeometry = new THREE.TorusGeometry(0.08, 0.02, 8, 16, Math.PI);
-        const smileMaterial = new THREE.MeshStandardMaterial({ color: 0x000000 });
-        const smile = new THREE.Mesh(smileGeometry, smileMaterial);
-        smile.position.set(0, -0.05, 0.15);
-        smile.rotation.x = Math.PI / 2;
-        poop.add(smile);
-        
-        const direction = new THREE.Vector3();
-        camera.getWorldDirection(direction);
-        
-        const spawnDistance = 2;
-        poop.position.copy(camera.position).add(direction.multiplyScalar(spawnDistance));
-        poop.lookAt(camera.position);
-        
-        scene.add(poop);
-        
-        const body = new CANNON.Body({
-            mass: 1,
-            shape: new CANNON.Sphere(0.2)
-        });
-        body.position.copy(poop.position);
-        body.velocity.set(
-            direction.x * 20,
-            direction.y * 20,
-            direction.z * 20
-        );
-        world.addBody(body);
-        
-        projectiles.push({ 
-            mesh: poop, 
-            body: body,
-            timestamp: Date.now() 
-        });
+        return treeGroup;
     }
     
     function spawnEnemies() {
@@ -748,6 +594,26 @@
                 1,
                 Math.sin(angle) * distance
             );
+    
+            // Add Santa hat to each enemy
+            const hatGeometry = new THREE.ConeGeometry(0.3, 0.6, 8);
+            const hatMaterial = new THREE.MeshStandardMaterial({ color: 0xff0000 });
+            const hat = new THREE.Mesh(hatGeometry, hatMaterial);
+            hat.position.set(0, 0.5, 0);
+            hat.rotation.x = -0.2;
+            poopGroup.add(hat);
+            
+            const furGeometry = new THREE.TorusGeometry(0.3, 0.1, 8, 16);
+            const furMaterial = new THREE.MeshStandardMaterial({ color: 0xFFFFFF });
+            const fur = new THREE.Mesh(furGeometry, furMaterial);
+            fur.position.set(0, 0.2, 0);
+            fur.rotation.x = Math.PI / 2;
+            poopGroup.add(fur);
+            
+            const pompomGeometry = new THREE.SphereGeometry(0.15, 8, 8);
+            const pompom = new THREE.Mesh(pompomGeometry, furMaterial);
+            pompom.position.set(0, 0.8, 0.1);
+            poopGroup.add(pompom);
             
             poopGroup.scale.set(scale, scale, scale);
             
@@ -806,6 +672,73 @@
             spawnEnemies();
             updateHUD();
         }
+    }
+    
+    function shootPoop() {
+        const geometry = new THREE.SphereGeometry(0.3, 16, 16);
+        const material = new THREE.MeshStandardMaterial({ color: 0x4a3525 });
+        const mesh = new THREE.Mesh(geometry, material);
+        mesh.castShadow = true;
+        
+        const direction = new THREE.Vector3();
+        camera.getWorldDirection(direction);
+        
+        mesh.position.copy(camera.position);
+        scene.add(mesh);
+        
+        const shape = new CANNON.Sphere(0.3);
+        const body = new CANNON.Body({
+            mass: 1,
+            shape: shape
+        });
+        
+        body.position.copy(mesh.position);
+        world.addBody(body);
+        
+        const force = 50;
+        body.velocity.set(
+            direction.x * force,
+            direction.y * force,
+            direction.z * force
+        );
+        
+        projectiles.push({
+            mesh: mesh,
+            body: body,
+            timestamp: Date.now()
+        });
+    }
+    
+    function restartGame() {
+        // Reset game state
+        player.health = 100;
+        wave = 1;
+        gameIsOver = false;
+        
+        // Clear existing enemies and projectiles
+        enemies.forEach(enemy => scene.remove(enemy.mesh));
+        enemies = [];
+        
+        projectiles.forEach(projectile => {
+            scene.remove(projectile.mesh);
+            world.remove(projectile.body);
+        });
+        projectiles = [];
+        
+        // Reset player position
+        playerBody.position.set(0, 2, 0);
+        playerBody.velocity.set(0, 0, 0);
+        camera.position.copy(playerBody.position);
+        
+        // Hide game over screen
+        document.getElementById('gameOver').style.display = 'none';
+        
+        // Request pointer lock again
+        document.body.requestPointerLock();
+        
+        // Spawn new enemies
+        spawnEnemies();
+        updateHUD();
     }
     
     function setupControls() {
@@ -885,18 +818,18 @@
     }
     
     function handleMouseMove(e) {
-        if(gameIsOver) return;
-    
-        const sensitivity = 0.002;
-    
-        const rotation = new THREE.Euler(camera.rotation.x, camera.rotation.y, 0, 'YXZ');
-    
-        rotation.y -= e.movementX * sensitivity;  // Yaw (left-right)
-        rotation.x -= e.movementY * sensitivity;  // Pitch (up-down)
-        rotation.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, rotation.x));
-    
-        camera.rotation.set(rotation.x, rotation.y, 0, 'YXZ');  // Set the new rotation
-    }
+            if(gameIsOver) return;
+        
+            const sensitivity = 0.002;
+        
+            const rotation = new THREE.Euler(camera.rotation.x, camera.rotation.y, 0, 'YXZ');
+        
+            rotation.y -= e.movementX * sensitivity;  // Yaw (left-right)
+            rotation.x -= e.movementY * sensitivity;  // Pitch (up-down)
+            rotation.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, rotation.x));
+        
+            camera.rotation.set(rotation.x, rotation.y, 0, 'YXZ');  // Set the new rotation
+        }
     
     function setupHackMenu() {
         const speedHack = document.getElementById('speedHack');
@@ -1012,37 +945,6 @@
         document.getElementById('healthBar').style.width = player.health + '%';
         document.getElementById('poopCount').textContent = enemies.length;
         document.getElementById('totalPoops').textContent = enemies.length > 0 ? enemies.length : 0;
-    }
-    
-    function animate() {
-        requestAnimationFrame(animate);
-        
-        if(!gameIsOver && document.getElementById('startMenu').style.display === 'none') {
-            world.step(1/60);
-            movePlayer();
-            updateEnemies();
-            
-            clouds.forEach(cloud => {
-                cloud.userData.angle += cloud.userData.rotationSpeed;
-                cloud.position.x = Math.cos(cloud.userData.angle) * cloud.userData.radius;
-                cloud.position.z = Math.sin(cloud.userData.angle) * cloud.userData.radius;
-                cloud.rotation.y += 0.001;
-            });
-            
-            for(let i = projectiles.length - 1; i >= 0; i--) {
-                const projectile = projectiles[i];
-                projectile.mesh.position.copy(projectile.body.position);
-                projectile.mesh.quaternion.copy(projectile.body.quaternion);
-                
-                if(projectile.mesh.position.y < -10 || Date.now() - projectile.timestamp > 5000) {
-                    scene.remove(projectile.mesh);
-                    world.remove(projectile.body);
-                    projectiles.splice(i, 1);
-                }
-            }
-        }
-        
-        renderer.render(scene, camera);
     }
     
     window.addEventListener('resize', () => {
