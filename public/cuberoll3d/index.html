@@ -1,0 +1,1877 @@
+<html><head><base href="">
+            <title>3D Cube Rolling Game</title>
+            <style>
+                body { margin: 0; overflow: hidden; }
+                #manaCanvas {
+                    position: absolute;
+                    top: 10px;
+                    left: 10px;
+                    z-index: 1000;
+                }
+                #hpBar {
+                    position: absolute;
+                    top: 120px;
+                    left: 20px;
+                    z-index: 1000;
+                    width: 20px;
+                    height: 400px;
+                    background-color: transparent;
+                    border: 1px solid #000;
+                }
+                #hpContent {
+                    width: 100%;
+                    height: 100%;
+                    background-color: red;
+                    transform-origin: bottom;
+                }
+                #floorDisplay {
+                    position: absolute;
+                    top: 10px;
+                    left: 50%;
+                    transform: translateX(-50%);
+                    font-size: 24px;
+                    color: white;
+                    z-index: 1000;
+                    text-shadow: 2px 2px 4px #000;
+                }
+                #gameOverScreen {
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    background-color: rgba(0, 0, 0, 0.8);
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                    z-index: 2000;
+                    color: white;
+                    font-size: 48px;
+                    text-align: center;
+                }
+                #gameOverScreen.hidden {
+                    display: none;
+                }
+                #countdown {
+                    position: absolute;
+                    top: 45%;
+                    left: 50%;
+                    transform: translate(-50%, -50%);
+                    font-size: 72px;
+                    color: white;
+                    z-index: 2000;
+                    text-shadow: 4px 4px 8px #000;
+                }
+                #letterKeys {
+                    position: absolute;
+                    z-index: 1500;
+                    left: 50%;
+                    transform: translateX(-50%);
+                }
+                #letterKeys span {
+                    font-size: 32px;
+                    color: white;
+                    text-shadow: 2px 2px 4px #000;
+                    margin: 0 5px;
+                    transition: transform 0.2s, color 0.2s;
+                }
+                .enemyHpBar {
+                    position: absolute;
+                    width: 50px;
+                    height: 5px;
+                    background-color: red;
+                    border: 1px solid #000;
+                }
+                #perfectText {
+                    position: absolute;
+                    left: 50%;
+                    top: 30%;
+                    transform: translate(-50%, -50%);
+                    font-size: 48px;
+                    color: turquoise;
+                    opacity: 0;
+                    z-index: 2500;
+                    animation: perfectAnimation 1s forwards;
+                    text-shadow: 2px 2px 4px #000;
+                }
+                @keyframes perfectAnimation {
+                    0% { opacity: 0; }
+                    50% { opacity: 1; }
+                    100% { opacity: 0; }
+                }
+                @keyframes hpBarGlow {
+                    0% { background-color: #8B0000; }
+                    50% { background-color: #8B0000; }
+                    100% { background-color: #8B0000; }
+                }
+                /* Add shockwave effect styles */
+                .shockwave {
+                    position: absolute;
+                    width: 50px;
+                    height: 50px;
+                    background: radial-gradient(circle, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0) 70%);
+                    border-radius: 50%;
+                    opacity: 0.5;
+                    animation: shockwaveAnim 1s forwards;
+                    pointer-events: none;
+                }
+                @keyframes shockwaveAnim {
+                    0% {
+                        transform: scale(0);
+                        opacity: 0.5;
+                    }
+                    100% {
+                        transform: scale(5);
+                        opacity: 0;
+                    }
+                }
+                #playerStats {
+                    position: absolute;
+                    top: 120px;
+                    left: 60px;
+                    z-index: 1000;
+                    color: white;
+                    font-size: 18px;
+                }
+                /* Black overlay for floor transition */
+                #blackOverlay {
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    background-color: black;
+                    opacity: 0;
+                    z-index: 3000;
+                    pointer-events: none;
+                    transition: opacity 0.5s;
+                }
+            </style>
+            <!-- Include Three.js library from CDN -->
+            <script src="https://cdn.jsdelivr.net/npm/three@0.136.0/build/three.min.js"></script>
+            <script src="https://cdn.jsdelivr.net/npm/three@0.136.0/examples/js/libs/stats.min.js"></script>
+        </head>
+        <body>
+            <canvas id="manaCanvas"></canvas>
+            <div id="hpBar"><div id="hpContent"></div></div>
+            <div id="floorDisplay">Floor: 1</div>
+            <div id="gameOverScreen" class="hidden">
+                <div>GAME OVER</div>
+                <div id="finalScore"></div>
+                <button id="retryButton" style="display: none; margin-top: 20px; padding: 10px 20px; font-size: 24px;">Retry</button>
+            </div>
+            <div id="countdown"></div>
+            <div id="letterKeys" style="display: none;"></div>
+            <div id="animationsContainer" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 3000;"></div>
+            <div id="playerStats">
+                <div>MAX HP: <span id="statMaxHP"></span></div>
+                <div>MAX MANA: <span id="statMaxMana"></span></div>
+                <div>HP REGEN: <span id="statHpRegen"></span></div>
+                <div>HP SLURP: <span id="statHpSlurp"></span></div>
+                <div>MANA REGEN: <span id="statManaRegen"></span></div>
+                <div>SPEED: <span id="statSpeed"></span></div>
+                <div>DEF: <span id="statDef"></span></div>
+                <div>LUCK: <span id="statLuck"></span></div>
+                <div>FLASH POW: <span id="statFlashPow"></span></div>
+                <div>RODEO POW: <span id="statRodeoPow"></span></div>
+                <div>JUMP POW: <span id="statJumpPow"></span></div>
+                <div>SPRINT TIME: <span id="statSprintTime"></span></div>
+                <div>CRIT RATE: <span id="statCritRate"></span></div>
+                <div>CRIT POWER: <span id="statCritPower"></span></div>
+                <div>REPUTATION: <span id="statReputation"></span></div>
+                <div>DEBT: <span id="statDebt"></span></div>
+                <div>CRIME: <span id="statCrime"></span></div>
+                <div>WISDOM: <span id="statWisdom"></span></div>
+            </div>
+            <div id="blackOverlay"></div>
+            <script>
+                // Basic setup
+                const scene = new THREE.Scene();
+                // Load the background texture
+                const loader = new THREE.TextureLoader();
+                loader.load('https://file.garden/ZxZB7ZTKxiU0oJTj/wallpaperflare.com_wallpaper.jpg', function(texture) {
+                    scene.background = texture;
+                });
+        
+                // Adjusted camera position for 200% zoom and 5% higher
+                const camera = new THREE.PerspectiveCamera(50, window.innerWidth/window.innerHeight, 0.1, 1000);
+                let cameraAngle = 0; // Initial camera angle
+                let isCameraMoving = false; // To prevent overlapping camera rotations
+                camera.position.set(0, 5.25, 7.5); // 5% higher on Y-axis
+                camera.lookAt(0, 0, 0);
+        
+                const renderer = new THREE.WebGLRenderer({antialias: true});
+                renderer.setSize(window.innerWidth, window.innerHeight);
+                renderer.shadowMap.enabled = true; // Enable shadows
+                document.body.appendChild(renderer.domElement);
+        
+                // Add ambient light
+                const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+                scene.add(ambientLight);
+        
+                // Add directional light
+                const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+                directionalLight.position.set(10, 20, 10);
+                directionalLight.castShadow = true; // Enable shadows from this light
+                directionalLight.shadow.mapSize.width = 2048;
+                directionalLight.shadow.mapSize.height = 2048;
+                scene.add(directionalLight);
+        
+                // Create the field grid with chessboard pattern
+                const gridSize = 25;
+                const tileSize = 1;
+                const textureLoader = new THREE.TextureLoader();
+        
+                const grassTexture1 = textureLoader.load('https://file.garden/ZxZB7ZTKxiU0oJTj/Grass1.png');
+                const grassTexture2 = textureLoader.load('https://file.garden/ZxZB7ZTKxiU0oJTj/Grass2.png');
+        
+                for (let i = -gridSize / 2; i < gridSize / 2; i++) {
+                    for (let j = -gridSize / 2; j < gridSize / 2; j++) {
+                        const geometry = new THREE.PlaneGeometry(tileSize, tileSize);
+                        let material;
+                        // Alternate between textures to create chessboard pattern
+                        if ((i + j) % 2 === 0) {
+                            material = new THREE.MeshBasicMaterial({ map: grassTexture1 });
+                        } else {
+                            material = new THREE.MeshBasicMaterial({ map: grassTexture2 });
+                        }
+                        const plane = new THREE.Mesh(geometry, material);
+                        plane.rotation.x = -Math.PI / 2;
+                        plane.position.set(i + tileSize / 2, 0, j + tileSize / 2);
+                        plane.receiveShadow = true;
+                        scene.add(plane);
+                    }
+                }
+        
+                // Load textures for the cube faces
+                const textureFaces = {
+                    'Face1.png': textureLoader.load('https://file.garden/ZxZB7ZTKxiU0oJTj/Face1.png'),
+                    'Face2.png': textureLoader.load('https://file.garden/ZxZB7ZTKxiU0oJTj/Face2.png'),
+                    'Face3.png': textureLoader.load('https://file.garden/ZxZB7ZTKxiU0oJTj/Face3.png'),
+                    'Face4.png': textureLoader.load('https://file.garden/ZxZB7ZTKxiU0oJTj/Face4.png'),
+                    'Face5.png': textureLoader.load('https://file.garden/ZxZB7ZTKxiU0oJTj/Face5.png'),
+                    'Face6.png': textureLoader.load('https://file.garden/ZxZB7ZTKxiU0oJTj/Face6.png')
+                };
+        
+                // Create player cube with specific textures
+                const cubeSize = 1;
+                const cubeGeometry = new THREE.BoxGeometry(cubeSize, cubeSize, cubeSize);
+                let cubeMaterials = [
+                    new THREE.MeshPhongMaterial({ map: textureFaces['Face2.png'], color: 0xffffff, emissive: 0x000000 }), // Right face
+                    new THREE.MeshPhongMaterial({ map: textureFaces['Face4.png'], color: 0xffffff, emissive: 0x000000 }),  // Left face
+                    new THREE.MeshPhongMaterial({ map: textureFaces['Face1.png'], color: 0xffffff, emissive: 0x000000 }),    // Top face
+                    new THREE.MeshPhongMaterial({ map: textureFaces['Face6.png'], color: 0xffffff, emissive: 0x000000 }),  // Bottom face
+                    new THREE.MeshPhongMaterial({ map: textureFaces['Face5.png'], color: 0xffffff, emissive: 0x000000 }), // Front face
+                    new THREE.MeshPhongMaterial({ map: textureFaces['Face3.png'], color: 0xffffff, emissive: 0x000000 })   // Back face
+                ];
+                const cube = new THREE.Mesh(cubeGeometry, cubeMaterials);
+                cube.position.y = cubeSize / 2;
+                cube.renderOrder = 9999; // Ensure the cube has highest z-order value
+                cube.castShadow = true;
+                cube.receiveShadow = false;
+                scene.add(cube);
+        
+                // Variables for movement
+                let isMoving = false;
+                let movementEnabled = false; // Disable movement until countdown ends
+                const moveDistance = 1; // 1 block = 1 movement distance
+                const rotationAngle = Math.PI / 2; // 90 degrees
+                const baseMoveDuration = 500 / (1.48 * 0.95); // 5% slower movement speed
+        
+                // Variables for jumping
+                let isJumping = false;
+                let jumpStartTime = 0;
+                let isBlinking = false;
+                let isInAir = false;
+                let energyAura = null;
+                let maxJumpPower = 3.05; // seconds
+                let isMaxPowerJump = false;
+                let jumpAnimationStarted = false;
+                let isCasualJump = false;
+        
+                // Variables for sprinting
+                let isSprinting = false;
+                let sprintStartTime = 0;
+        
+                // Mana variables
+                let mana = 30;
+                const maxMana = 30;
+        
+                // Health variables
+                let health = 10;
+                const maxHealth = 10;
+                let isInvincible = false;
+                let invincibilityStartTime = 0;
+        
+                // Player stats
+                let playerStats = {
+                    maxHP: 10,
+                    maxMana: 30,
+                    hpRegen: 0,
+                    hpSlurp: 0,
+                    manaRegen: -2,
+                    speed: 3,
+                    def: 0,
+                    luck: -5,
+                    jumpPow: 20,
+                    flashPow: 10,
+                    rodeoPow: 50,
+                    sprintTime: 0,
+                    critRate: -4,
+                    critPower: 6,
+                    reputation: -2,
+                    debt: 0,
+                    crime: 0,
+                    wisdom: 1
+                };
+        
+                // Update stats display
+                document.getElementById('statMaxHP').textContent = playerStats.maxHP;
+                document.getElementById('statMaxMana').textContent = playerStats.maxMana;
+                document.getElementById('statHpRegen').textContent = playerStats.hpRegen;
+                document.getElementById('statHpSlurp').textContent = playerStats.hpSlurp;
+                document.getElementById('statManaRegen').textContent = playerStats.manaRegen;
+                document.getElementById('statSpeed').textContent = playerStats.speed;
+                document.getElementById('statDef').textContent = playerStats.def;
+                document.getElementById('statLuck').textContent = playerStats.luck;
+                document.getElementById('statFlashPow').textContent = playerStats.flashPow;
+                document.getElementById('statRodeoPow').textContent = playerStats.rodeoPow;
+                document.getElementById('statJumpPow').textContent = playerStats.jumpPow;
+                document.getElementById('statSprintTime').textContent = playerStats.sprintTime;
+                document.getElementById('statCritRate').textContent = playerStats.critRate;
+                document.getElementById('statCritPower').textContent = playerStats.critPower;
+                document.getElementById('statReputation').textContent = playerStats.reputation;
+                document.getElementById('statDebt').textContent = playerStats.debt;
+                document.getElementById('statCrime').textContent = playerStats.crime;
+                document.getElementById('statWisdom').textContent = playerStats.wisdom;
+        
+                // Floor variables
+                let floorNumber = 1;
+                let floorStartTime = 0;
+                let currentFloorIndex = 0;
+                let currentFloor = null;
+                const floors = [
+                    { floorNumber: 1, initialEnemies: 0, spawnInterval: 6000, duration: 31000 },
+                    { floorNumber: 2, initialEnemies: 2, spawnInterval: 5000, duration: 41000 },
+                    { floorNumber: 3, initialEnemies: 4, spawnInterval: 5000, duration: 41000 }
+                ];
+        
+                // Game state
+                let isGameOver = false;
+        
+                // UI Elements
+                const hpBar = document.getElementById('hpBar');
+                const hpContent = document.getElementById('hpContent');
+                const floorDisplay = document.getElementById('floorDisplay');
+                const gameOverScreen = document.getElementById('gameOverScreen');
+                const finalScoreDisplay = document.getElementById('finalScore');
+                const retryButton = document.getElementById('retryButton');
+                const countdownElement = document.getElementById('countdown');
+                const letterKeysElement = document.getElementById('letterKeys');
+                const animationsContainer = document.getElementById('animationsContainer');
+                const blackOverlay = document.getElementById('blackOverlay');
+        
+                retryButton.addEventListener('click', retryGame);
+        
+                // Array to store dust particles
+                let dustParticles = [];
+        
+                // List of enemies
+                let enemies = [];
+                let enemySpawnInterval;
+                let enemyTypes = ['OneEyed', 'TwoEyed', 'ThreeEyed', 'FourEyed', 'FiveEyed', 'SixEyed', 'MonsterWeak'];
+                let enemySpawnTimes = [];
+        
+                // Textures for enemies
+                const enemyTextures = {
+                    'OneEyed': textureLoader.load('https://file.garden/ZxZB7ZTKxiU0oJTj/Monster1.gif'),
+                    'TwoEyed': textureLoader.load('https://file.garden/ZxZB7ZTKxiU0oJTj/Monster2.gif'),
+                    'ThreeEyed': textureLoader.load('https://file.garden/ZxZB7ZTKxiU0oJTj/Monster3.png'),
+                    'FourEyed': textureLoader.load('https://file.garden/ZxZB7ZTKxiU0oJTj/Monster4.png'),
+                    'FiveEyed': textureLoader.load('https://file.garden/ZxZB7ZTKxiU0oJTj/Monster5.png'),
+                    'SixEyed': textureLoader.load('https://file.garden/ZxZB7ZTKxiU0oJTj/Monster6.png'),
+                    'MonsterWeak': textureLoader.load('https://file.garden/ZxZB7ZTKxiU0oJTj/MonsterWeak.png'),
+                    'MonsterWeakBack': textureLoader.load('https://file.garden/ZxZB7ZTKxiU0oJTj/MonsterWeakBack.png')
+                };
+        
+                // Letter keys for max power jump
+                let sequenceKeys = [];
+                let sequenceIndex = 0;
+                let sequenceActive = false;
+                let sequenceStartTime = 0;
+                let sequenceTimeout;
+                let sequenceSuccess = false;
+                let sequenceFailed = false;
+        
+                // Trap tile
+                let trapTile = null;
+                let isTransitioning = false;
+        
+                // Event listeners for key presses
+                document.addEventListener('keydown', onDocumentKeyDown, false);
+                document.addEventListener('keyup', onDocumentKeyUp, false);
+        
+                function onDocumentKeyDown(event) {
+                    if (isGameOver || isTransitioning) return;
+                    let keyCode = event.code;
+        
+                    if (sequenceActive) {
+                        handleSequenceInput(keyCode);
+                        return;
+                    }
+        
+                    if (keyCode === 'Space') {
+                        handleJumpStart();
+                    }
+        
+                    if (keyCode === 'ShiftLeft') {
+                        handleSprintPress();
+                    }
+        
+                    if (!movementEnabled) return; // Prevent input when movement is disabled
+        
+                    if (keyCode === 'KeyW' || keyCode === 'KeyA' || keyCode === 'KeyS' || keyCode === 'KeyD') {
+                        handleMovement(keyCode);
+                    } else if (keyCode === 'KeyQ' || keyCode === 'KeyE') {
+                        handleCameraRotation(keyCode);
+                    }
+                }
+        
+                function onDocumentKeyUp(event) {
+                    if (isGameOver || isTransitioning) return;
+                    let keyCode = event.code;
+                    if (keyCode === 'Space') {
+                        handleJumpEnd();
+                    }
+                }
+        
+                function handleMovement(keyCode) {
+                    if (isMoving || isJumping || isInAir) return; // Prevent multiple moves or moving while jumping or in air
+        
+                    // Calculate movement direction based on camera view
+                    let direction = new THREE.Vector3();
+                    let rotationAxis = new THREE.Vector3();
+        
+                    // Get camera direction
+                    let forward = new THREE.Vector3();
+                    camera.getWorldDirection(forward);
+                    forward.y = 0;
+                    forward.normalize();
+        
+                    let right = new THREE.Vector3();
+                    right.crossVectors(forward, camera.up);
+                    right.normalize();
+        
+                    if (keyCode === 'KeyW') {
+                        direction.copy(forward).multiplyScalar(moveDistance);
+                        rotationAxis.copy(right).multiplyScalar(-1);
+                    } else if (keyCode === 'KeyS') {
+                        direction.copy(forward).multiplyScalar(-moveDistance);
+                        rotationAxis.copy(right).multiplyScalar(1);
+                    } else if (keyCode === 'KeyA') {
+                        direction.copy(right).multiplyScalar(-moveDistance);
+                        rotationAxis.copy(forward).multiplyScalar(-1);
+                    } else if (keyCode === 'KeyD') {
+                        direction.copy(right).multiplyScalar(moveDistance);
+                        rotationAxis.copy(forward).multiplyScalar(1);
+                    } else {
+                        return;
+                    }
+        
+                    const endPosition = cube.position.clone().add(direction);
+        
+                    // Check bounds
+                    const halfGridSize = gridSize / 2;
+                    const minPosition = -halfGridSize + cubeSize / 2;
+                    const maxPosition = halfGridSize - cubeSize / 2;
+                    if (endPosition.x < minPosition || endPosition.x > maxPosition ||
+                        endPosition.z < minPosition || endPosition.z > maxPosition) {
+                        // Out of bounds, do not move
+                        return;
+                    }
+        
+                    // Check for collision with trap tile
+                    if (trapTile && checkTrapTileCollision(endPosition)) {
+                        handleTrapTileCollision();
+                        return;
+                    }
+        
+                    animateCubeMove(direction, rotationAxis);
+                }
+        
+                function handleCameraRotation(keyCode) {
+                    if (isCameraMoving) return; // Prevent multiple camera rotations at the same time
+        
+                    movementEnabled = false; // Disable movement controls during camera rotation
+        
+                    let rotationAmount = 0;
+                    if (keyCode === 'KeyQ') {
+                        rotationAmount = -Math.PI / 2; // Rotate left
+                    } else if (keyCode === 'KeyE') {
+                        rotationAmount = Math.PI / 2; // Rotate right
+                    } else {
+                        return;
+                    }
+        
+                    animateCameraRotation(rotationAmount);
+                }
+        
+                function handleJumpStart() {
+                    if (isMoving || isJumping || isInAir) return; // Prevent jumping while moving or already jumping or in air
+                    // Determine if it's a casual jump or rodeo jump
+                    jumpStartTime = performance.now();
+                    let jumpHoldDuration = 0; // For casual jump, hold duration is zero
+        
+                    // Check if mana is enough for casual jump (4 mana)
+                    if (mana >= 4 && !event.repeat) {
+                        isCasualJump = true;
+                        isJumping = true;
+                        mana -= 4;
+                        if (mana < 0) mana = 0;
+                        drawManaBar();
+                        startJumpChargeColor();
+                    } else if (mana >= 10) {
+                        isCasualJump = false;
+                        isJumping = true;
+                        startJumpChargeColor();
+                        createEnergyAura();
+                    }
+                }
+        
+                function handleJumpEnd() {
+                    if (!isJumping) return;
+                    cube.visible = true; // Ensure cube is visible
+                    isBlinking = false;
+                    let jumpHoldDuration = (performance.now() - jumpStartTime) / 1000; // in seconds
+                    if (isCasualJump) {
+                        // Perform casual jump
+                        let jumpHeight = 2.5; // Maximum height
+                        animateJump(jumpHeight);
+                        isJumping = false;
+                        removeEnergyAura();
+                    } else {
+                        // For rodeo jump
+                        let maxHoldDuration = maxJumpPower; // seconds
+                        let maxJumpHeight = 2.5; // blocks
+                        let jumpHeight = Math.min((jumpHoldDuration / maxHoldDuration) * maxJumpHeight, maxJumpHeight);
+                        // Calculate mana cost based on hold time
+                        let manaCost = 10; // Fixed cost for rodeo jump
+                        if (mana < manaCost) {
+                            isJumping = false;
+                            removeEnergyAura();
+                            return; // Not enough mana to jump
+                        }
+                        mana -= manaCost;
+                        if (mana < 0) mana = 0;
+                        drawManaBar();
+                        // Start jump animation
+                        if (jumpHoldDuration >= maxHoldDuration) {
+                            isMaxPowerJump = true;
+                        } else {
+                            isMaxPowerJump = false;
+                        }
+                        animateJump(jumpHeight);
+                        isJumping = false;
+                        removeEnergyAura();
+                    }
+                }
+        
+                function handleSprintPress() {
+                    if (isSprinting || isInAir || mana < 6) return; // Already sprinting or in air or not enough mana
+                    mana -= 6;
+                    if (mana < 0) mana = 0;
+                    drawManaBar();
+                    isSprinting = true;
+                    sprintStartTime = performance.now();
+                    // Change cube color to orange immediately
+                    cube.material.forEach((material) => {
+                        material.color.set(0xFFA500); // Orange color
+                    });
+                }
+        
+                // Function to animate cube movement with rotation around its center
+                function animateCubeMove(direction, rotationAxis) {
+                    isMoving = true;
+                    movementEnabled = false; // Disable movement controls during movement
+                    let moveDuration = baseMoveDuration;
+                    if (isSprinting) {
+                        moveDuration = moveDuration / 1.92; // Increase speed by 92%
+                    }
+                    const startTime = performance.now();
+                    const startPosition = cube.position.clone();
+                    const endPosition = startPosition.clone().add(direction);
+        
+                    let previousProgress = 0;
+        
+                    function animate() {
+                        const elapsedTime = performance.now() - startTime;
+                        const progress = Math.min(elapsedTime / moveDuration, 1);
+        
+                        // Update position
+                        cube.position.lerpVectors(startPosition, endPosition, progress);
+        
+                        // Update rotation using rotateOnWorldAxis
+                        const deltaProgress = progress - previousProgress;
+                        const deltaAngle = rotationAngle * deltaProgress;
+        
+                        cube.rotateOnWorldAxis(rotationAxis, deltaAngle);
+        
+                        previousProgress = progress;
+        
+                        renderer.render(scene, camera);
+        
+                        if (progress < 1) {
+                            requestAnimationFrame(animate);
+                        } else {
+                            // Movement finished
+                            cube.position.copy(endPosition);
+                            // Ensure the cube is centered on a block
+                            cube.position.x = Math.round(cube.position.x);
+                            cube.position.z = Math.round(cube.position.z);
+                            // Add a delay of 0.05 seconds before allowing movement again
+                            setTimeout(() => { 
+                                isMoving = false; 
+                                movementEnabled = true; 
+                            }, 50);
+                            // Check for flashing attacks
+                            if (!isInAir) {
+                                checkFlashing();
+                            }
+                        }
+                    }
+        
+                    animate();
+                }
+        
+                function animateCameraRotation(rotationAmount) {
+                    isCameraMoving = true;
+                    const rotationDuration = 800; // 0.8 seconds
+                    const startTime = performance.now();
+                    const startAngle = cameraAngle;
+                    const endAngle = startAngle + rotationAmount;
+        
+                    function animate() {
+                        const elapsedTime = performance.now() - startTime;
+                        const progress = Math.min(elapsedTime / rotationDuration, 1);
+        
+                        // Update camera angle
+                        cameraAngle = startAngle + rotationAmount * progress;
+        
+                        renderer.render(scene, camera);
+        
+                        if (progress < 1) {
+                            requestAnimationFrame(animate);
+                        } else {
+                            // Rotation finished
+                            cameraAngle = endAngle;
+                            // Add a delay of 0.01 seconds before allowing movement again
+                            setTimeout(() => { 
+                                isCameraMoving = false; 
+                                movementEnabled = true; // Re-enable movement controls
+                            }, 10);
+                        }
+                    }
+        
+                    animate();
+                }
+        
+                function animateJump(jumpHeight) {
+                    if (isMaxPowerJump) {
+                        isInvincible = true; // Become invincible during rodeo jump
+                    }
+                    movementEnabled = false;
+                    isInAir = true; // Set isInAir to true at start of jump
+                    const baseJumpDuration = 1000;
+                    const jumpDuration = baseJumpDuration / 1.5; // 1.5 times faster
+                    const fallDuration = jumpDuration / 1.6; // 1.6 times faster
+                    const holdDuration = isMaxPowerJump ? 1700 : 0; // 1.7 seconds
+                    const totalDuration = jumpDuration + holdDuration + fallDuration;
+                    const startTime = performance.now();
+                    const startY = cube.position.y;
+                    const peakY = startY + jumpHeight;
+        
+                    let landed = false;
+                    jumpAnimationStarted = true;
+                    let sequenceStarted = false;
+                    sequenceSuccess = false;
+                    sequenceFailed = false;
+        
+                    function easeInQuad(t) { return t * t; }
+                    function easeOutQuad(t) { return t * (2 - t); }
+        
+                    function animate() {
+                        const elapsedTime = performance.now() - startTime;
+                        if (elapsedTime < jumpDuration) {
+                            // Going up
+                            const progress = elapsedTime / jumpDuration;
+                            cube.position.y = startY + jumpHeight * easeOutQuad(progress);
+                        } else if (elapsedTime < jumpDuration + holdDuration) {
+                            // At peakY, hold position
+                            cube.position.y = peakY;
+                            if (isMaxPowerJump && !sequenceStarted) {
+                                sequenceStarted = true;
+                                // Start the sequence
+                                showSequence();
+                            }
+                        } else if (elapsedTime < totalDuration) {
+                            // Falling down
+                            const fallProgress = (elapsedTime - jumpDuration - holdDuration) / fallDuration;
+                            cube.position.y = peakY - jumpHeight * easeInQuad(fallProgress);
+                            // Check for collision during fall
+                            if (!isCasualJump) {
+                                checkEnemyCollisionDuringJump();
+                            }
+                        } else {
+                            // Jump finished
+                            cube.position.y = startY;
+                            if (!landed) {
+                                landed = true;
+                                isInAir = false; // Set isInAir to false after landing
+                                // Reset cube color
+                                resetCubeColor();
+                                // Enable movement after landing
+                                setTimeout(() => { movementEnabled = true; }, 50);
+                                // Check for enemies under cube
+                                if (isCasualJump) {
+                                    performCasualJumpAction();
+                                } else {
+                                    checkEnemyCollisionOnLanding();
+                                }
+                                // Reset invincibility after landing
+                                if (isMaxPowerJump) {
+                                    isInvincible = false;
+                                }
+                            }
+                            jumpAnimationStarted = false;
+                            return;
+                        }
+        
+                        renderer.render(scene, camera);
+                        requestAnimationFrame(animate);
+                    }
+        
+                    animate();
+                }
+        
+                function handleSequenceInput(keyCode) {
+                    if (keyCode === sequenceKeys[sequenceIndex]) {
+                        // Correct key
+                        const spans = letterKeysElement.getElementsByTagName('span');
+                        const span = spans[sequenceIndex];
+                        span.style.transform = 'scale(1.22)';
+                        span.style.color = 'green';
+                        sequenceIndex++;
+                        if (sequenceIndex >= sequenceKeys.length) {
+                            // Sequence completed
+                            sequenceSuccess = true;
+                            sequenceActive = false;
+                            clearTimeout(sequenceTimeout);
+                            // All letters grow by 40%, glow turquoise, then disappear
+                            for (let i = 0; i < spans.length; i++) {
+                                spans[i].style.transform = 'scale(1.4)';
+                                spans[i].style.color = 'turquoise';
+                            }
+                            setTimeout(() => {
+                                letterKeysElement.style.display = 'none';
+                            }, 300); // Quickly disappear
+                            // Show "Perfect!" animation after 0.3 seconds
+                            setTimeout(() => {
+                                showPerfectAnimation();
+                            }, 300);
+                        }
+                    } else {
+                        // Incorrect key
+                        const spans = letterKeysElement.getElementsByTagName('span');
+                        const span = spans[sequenceIndex];
+                        span.style.transform = 'scale(1.22)';
+                        span.style.color = 'red';
+                        // Remove letters after some delay
+                        setTimeout(() => {
+                            letterKeysElement.style.display = 'none';
+                        }, 300);
+                        clearTimeout(sequenceTimeout);
+                        sequenceFailed = true;
+                        sequenceActive = false;
+                    }
+                }
+        
+                function showSequence() {
+                    sequenceKeys = [];
+                    sequenceIndex = 0;
+                    sequenceActive = true;
+                    sequenceStartTime = performance.now();
+        
+                    const possibleKeys = ['KeyA', 'KeyS', 'KeyD', 'KeyF', 'KeyG', 'KeyH'];
+                    for (let i = 0; i < 3; i++) {
+                        const randomKey = possibleKeys[Math.floor(Math.random() * possibleKeys.length)];
+                        sequenceKeys.push(randomKey);
+                    }
+        
+                    // Display keys above the player's cube and y-centered
+                    const x = window.innerWidth / 2;
+                    const y = window.innerHeight / 4;
+                    letterKeysElement.style.left = `${x}px`;
+                    letterKeysElement.style.top = `${y}px`;
+                    letterKeysElement.style.display = 'block';
+        
+                    // Display the keys
+                    letterKeysElement.innerHTML = '';
+                    sequenceKeys.forEach((key, index) => {
+                        const span = document.createElement('span');
+                        span.textContent = key.replace('Key', '');
+                        span.dataset.index = index;
+                        letterKeysElement.appendChild(span);
+                    });
+        
+                    // Set timeout for sequence input
+                    sequenceTimeout = setTimeout(() => {
+                        if (sequenceActive) {
+                            sequenceFailed = true;
+                            sequenceActive = false;
+                            letterKeysElement.style.display = 'none';
+                            performAreaAttack(10);
+                        }
+                    }, 1700); // 1.7 seconds
+                }
+        
+                function showPerfectAnimation() {
+                    const perfectText = document.createElement('div');
+                    perfectText.id = 'perfectText';
+                    perfectText.textContent = 'Perfect!';
+                    document.body.appendChild(perfectText);
+                    setTimeout(() => {
+                        document.body.removeChild(perfectText);
+                    }, 1000);
+                }
+        
+                function performAreaAttack(damage) {
+                    // Deal specified damage to enemies in 7x7 area around player
+                    enemies.forEach(enemy => {
+                        if (!enemy.alive) return;
+                        const distance = enemy.mesh.position.distanceTo(cube.position);
+                        if (distance <= 3.5) { // 7x7 area with cube at center
+                            enemy.health -= damage;
+                            if (enemy.health <= 0) {
+                                enemy.health = 0;
+                                enemy.alive = false;
+                                scene.remove(enemy.mesh);
+                                if (enemy.hpBarElement) {
+                                    document.body.removeChild(enemy.hpBarElement);
+                                    enemy.hpBarElement = null;
+                                }
+                                spawnDefeatAnimation(enemy.mesh.position);
+                                checkIfFloorCleared();
+                            } else {
+                                showEnemyHpBar(enemy);
+                            }
+                        }
+                    });
+                    // Play shockwave effect
+                    playShockwaveEffect();
+                }
+        
+                function playShockwaveEffect() {
+                    const shockwave = document.createElement('div');
+                    shockwave.className = 'shockwave';
+                    shockwave.style.left = '50%';
+                    shockwave.style.top = '50%';
+                    shockwave.style.transform = 'translate(-50%, -50%)';
+                    animationsContainer.appendChild(shockwave);
+                    setTimeout(() => {
+                        animationsContainer.removeChild(shockwave);
+                    }, 1000);
+                }
+        
+                function performStandardJumpAttack() {
+                    // Deal 20 damage to enemies directly beneath the player
+                    enemies.forEach(enemy => {
+                        if (!enemy.alive) return;
+                        const dx = enemy.mesh.position.x - cube.position.x;
+                        const dz = enemy.mesh.position.z - cube.position.z;
+                        const distanceXZ = Math.sqrt(dx * dx + dz * dz);
+                        const yDifference = cube.position.y - enemy.mesh.position.y;
+        
+                        if (distanceXZ < 0.5 && yDifference >= 0 && yDifference <= 1) {
+                            let damage = playerStats.jumpPow;
+                            enemy.health -= damage;
+                            if (enemy.health <= 0) {
+                                enemy.health = 0;
+                                enemy.alive = false;
+                                scene.remove(enemy.mesh);
+                                if (enemy.hpBarElement) {
+                                    document.body.removeChild(enemy.hpBarElement);
+                                    enemy.hpBarElement = null;
+                                }
+                                spawnDefeatAnimation(enemy.mesh.position);
+                                checkIfFloorCleared();
+                            } else {
+                                showEnemyHpBar(enemy);
+                            }
+                        }
+                    });
+                }
+        
+                function checkEnemyCollisionOnLanding() {
+                    if (isMaxPowerJump) {
+                        let damage = playerStats.rodeoPow;
+                        if (sequenceSuccess) {
+                            damage += damage * 0.5; // +50% for perfect rodeo jump
+                        } else if (!sequenceSuccess) {
+                            damage = 10; // Non-perfect rodeo jump deals only 10 damage
+                        }
+                        performAreaAttack(damage);
+                        playShockwaveEffect();
+                    } else {
+                        performStandardJumpAttack();
+                    }
+                    // Player is invincible until landing when performing a rodeo jump
+                    if (isMaxPowerJump) {
+                        isInvincible = false;
+                    }
+                    // Make player invincible for 0.2 seconds after performing a jump attack
+                    isInvincible = true;
+                    setTimeout(() => {
+                        isInvincible = false;
+                    }, 200);
+                }
+        
+                function performCasualJumpAction() {
+                    // Push the target on the BACK side 2 blocks away in a random direction and stun for 2.6s
+                    enemies.forEach(enemy => {
+                        if (!enemy.alive) return;
+                        const dx = enemy.mesh.position.x - cube.position.x;
+                        const dz = enemy.mesh.position.z - cube.position.z;
+                        const distanceXZ = Math.sqrt(dx * dx + dz * dz);
+        
+                        if (distanceXZ < 0.5) {
+                            // Determine a random direction to push the enemy
+                            const directions = [
+                                new THREE.Vector3(1, 0, 0),
+                                new THREE.Vector3(-1, 0, 0),
+                                new THREE.Vector3(0, 0, 1),
+                                new THREE.Vector3(0, 0, -1)
+                            ];
+                            const randomDirection = directions[Math.floor(Math.random() * directions.length)];
+                            const pushDistance = 2;
+                            const targetPosition = enemy.mesh.position.clone().add(randomDirection.multiplyScalar(pushDistance));
+        
+                            // Animate enemy being pushed
+                            animateEnemyPush(enemy, targetPosition);
+                            // Stun enemy
+                            enemy.stunned = true;
+                            enemy.stunStartTime = performance.now();
+                        }
+                    });
+                }
+        
+                function animateEnemyPush(enemy, targetPosition) {
+                    enemy.isMoving = true;
+                    const moveDuration = 500;
+                    const startTime = performance.now();
+                    const startPosition = enemy.mesh.position.clone();
+        
+                    function animate() {
+                        const elapsedTime = performance.now() - startTime;
+                        const progress = Math.min(elapsedTime / moveDuration, 1);
+        
+                        enemy.mesh.position.lerpVectors(startPosition, targetPosition, progress);
+        
+                        if (progress < 1) {
+                            requestAnimationFrame(animate);
+                        } else {
+                            // Movement finished
+                            enemy.mesh.position.copy(targetPosition);
+                            enemy.isMoving = false;
+                        }
+                    }
+        
+                    animate();
+                }
+        
+                function startJumpChargeColor() {
+                    function updateColor() {
+                        const elapsedTime = (performance.now() - jumpStartTime) / 1000; // in seconds
+                        const maxHoldDuration = maxJumpPower;
+                        const progress = Math.min(elapsedTime / maxHoldDuration, 1);
+                        // From default color to orange-red
+                        const colorValue = new THREE.Color(1, 1 - progress, 1 - progress * 0.5);
+                        cube.material.forEach((material) => {
+                            material.color.set(colorValue);
+                        });
+                        if (progress >= 1) {
+                            // Start blinking if fully charged
+                            if (!isBlinking) {
+                                isBlinking = true;
+                                startBlinking();
+                            }
+                        }
+                        if (isJumping && !isBlinking) {
+                            requestAnimationFrame(updateColor);
+                        }
+                    }
+                    isBlinking = false;
+                    requestAnimationFrame(updateColor);
+                }
+        
+                function startBlinking() {
+                    let startTime = performance.now();
+                    function blink() {
+                        if (!isJumping) {
+                            // Reset cube emissive color to black (no emission)
+                            cube.material.forEach((material) => {
+                                material.emissive.set(0x000000);
+                            });
+                            return; // Stop blinking when jump is initiated
+                        }
+                        const elapsedTime = performance.now() - startTime;
+                        const frequency = 2; // Number of pulses per second
+                        const t = (elapsedTime / 1000) * frequency * Math.PI * 2;
+                        const pulse = 0.5 + 0.5 * Math.sin(t); // Oscillates between 0 and 1
+                        const emissiveColor = new THREE.Color();
+                        emissiveColor.setRGB(pulse, pulse * 0.5, 0); // From dark red to bright orange
+                        cube.material.forEach((material) => {
+                            material.emissive.set(emissiveColor);
+                        });
+                        requestAnimationFrame(blink);
+                    }
+                    blink();
+                }
+        
+                function resetCubeColor() {
+                    cube.material.forEach((material) => {
+                        material.color.set(0xffffff); // Reset to default color
+                        material.emissive.set(0x000000); // Reset emissive color
+                    });
+                }
+        
+                function checkFlashing() {
+                    // Determine top face index
+                    const up = new THREE.Vector3(0, 1, 0);
+                    const quaternion = cube.quaternion.clone();
+                    const directions = [
+                        new THREE.Vector3(1, 0, 0),  // Right
+                        new THREE.Vector3(-1, 0, 0), // Left
+                        new THREE.Vector3(0, 1, 0),  // Up
+                        new THREE.Vector3(0, -1, 0), // Down
+                        new THREE.Vector3(0, 0, 1),  // Front
+                        new THREE.Vector3(0, 0, -1)  // Back
+                    ];
+                    let topFaceIndex = -1;
+                    let maxDot = -1;
+                    for (let i = 0; i < directions.length; i++) {
+                        const directionWorld = directions[i].clone().applyQuaternion(quaternion);
+                        const dot = directionWorld.dot(up);
+                        if (dot > maxDot) {
+                            maxDot = dot;
+                            topFaceIndex = i;
+                        }
+                    }
+                    let topFaceTexture;
+                    switch (topFaceIndex) {
+                        case 0:
+                            topFaceTexture = 'Face2.png';
+                            break;
+                        case 1:
+                            topFaceTexture = 'Face4.png';
+                            break;
+                        case 2:
+                            topFaceTexture = 'Face1.png';
+                            break;
+                        case 3:
+                            topFaceTexture = 'Face6.png';
+                            break;
+                        case 4:
+                            topFaceTexture = 'Face5.png';
+                            break;
+                        case 5:
+                            topFaceTexture = 'Face3.png';
+                            break;
+                        default:
+                            return;
+                    }
+        
+                    // Check if any enemy is within 3 cubes and matching
+                    enemies.forEach(enemy => {
+                        if (!enemy.alive) return;
+                        const distance = enemy.mesh.position.distanceTo(cube.position);
+                        if (distance <= 3) {
+                            const enemyType = enemy.type;
+                            if (
+                                (topFaceTexture === 'Face1.png' && enemyType === 'OneEyed') ||
+                                (topFaceTexture === 'Face2.png' && enemyType === 'TwoEyed') ||
+                                (topFaceTexture === 'Face3.png' && enemyType === 'ThreeEyed') ||
+                                (topFaceTexture === 'Face4.png' && enemyType === 'FourEyed') ||
+                                (topFaceTexture === 'Face5.png' && enemyType === 'FiveEyed') ||
+                                (topFaceTexture === 'Face6.png' && enemyType === 'SixEyed')
+                            ) {
+                                enemy.health -= playerStats.flashPow;
+                                if (enemy.health <= 0) {
+                                    enemy.health = 0;
+                                    enemy.alive = false;
+                                    scene.remove(enemy.mesh);
+                                    if (enemy.hpBarElement) {
+                                        document.body.removeChild(enemy.hpBarElement);
+                                        enemy.hpBarElement = null;
+                                    }
+                                    spawnDefeatAnimation(enemy.mesh.position);
+                                    checkIfFloorCleared();
+                                } else {
+                                    showEnemyHpBar(enemy);
+                                }
+                            }
+                        }
+                    });
+                }
+        
+                function startInvincibilityBlink() {
+                    let blinkInterval = setInterval(() => {
+                        cube.visible = !cube.visible;
+                    }, 200);
+        
+                    setTimeout(() => {
+                        clearInterval(blinkInterval);
+                        cube.visible = true;
+                        isInvincible = false;
+                    }, 3100);
+                }
+        
+                function triggerGameOver() {
+                    isGameOver = true;
+                    movementEnabled = false;
+                    // Explode all monsters with no points earned
+                    enemies.forEach(enemy => {
+                        if (enemy.alive) {
+                            enemy.alive = false;
+                            scene.remove(enemy.mesh);
+                            spawnDefeatAnimation(enemy.mesh.position);
+                        }
+                    });
+                    // Player explodes after 1.1 seconds
+                    setTimeout(() => {
+                        cube.visible = false;
+                        showGameOverScreen();
+                    }, 1100);
+                }
+        
+                function showGameOverScreen() {
+                    gameOverScreen.classList.remove('hidden');
+                    finalScoreDisplay.textContent = `You reached Floor ${floorNumber}`;
+                    retryButton.style.display = 'block';
+                }
+        
+                function updateFloorDisplay() {
+                    floorDisplay.textContent = `Floor: ${floorNumber}`;
+                }
+        
+                function retryGame() {
+                    location.reload();
+                }
+        
+                function showEnemyHpBar(enemy) {
+                    if (!enemy.hpBarElement) {
+                        enemy.hpBarElement = document.createElement('div');
+                        enemy.hpBarElement.className = 'enemyHpBar';
+                        document.body.appendChild(enemy.hpBarElement);
+                    }
+                    const hpFraction = enemy.health / enemy.maxHealth;
+                    enemy.hpBarElement.style.width = `${50 * hpFraction}px`;
+                }
+        
+                function updateEnemyHpBars() {
+                    enemies.forEach(enemy => {
+                        if (enemy.hpBarElement && enemy.alive) {
+                            const vector = new THREE.Vector3();
+                            enemy.mesh.getWorldPosition(vector);
+                            vector.project(camera);
+                            const x = (vector.x * 0.5 + 0.5) * window.innerWidth - 25;
+                            const y = (-vector.y * 0.5 + 0.5) * window.innerHeight + 20;
+                            enemy.hpBarElement.style.left = `${x}px`;
+                            enemy.hpBarElement.style.top = `${y}px`;
+                        } else if (enemy.hpBarElement && !enemy.alive) {
+                            document.body.removeChild(enemy.hpBarElement);
+                            enemy.hpBarElement = null;
+                        }
+                    });
+                }
+        
+                function spawnDefeatAnimation(position) {
+                    const animationElement = document.createElement('img');
+                    animationElement.src = 'https://file.garden/ZxZB7ZTKxiU0oJTj/OrbExplotano.gif';
+                    animationElement.style.position = 'absolute';
+                    animationElement.style.width = '100px';
+                    animationElement.style.height = '100px';
+                    animationElement.style.pointerEvents = 'none';
+                    animationsContainer.appendChild(animationElement);
+        
+                    // Convert 3D position to 2D screen position
+                    const vector = new THREE.Vector3(position.x, position.y, position.z);
+                    vector.project(camera);
+                    const x = (vector.x * 0.5 + 0.5) * window.innerWidth - 50;
+                    const y = (-vector.y * 0.5 + 0.5) * window.innerHeight - 50;
+                    animationElement.style.left = `${x}px`;
+                    animationElement.style.top = `${y}px`;
+        
+                    setTimeout(() => {
+                        animationsContainer.removeChild(animationElement);
+                    }, 1000); // Duration of the animation
+                }
+        
+                function startCountdown() {
+                    let count = 3;
+                    movementEnabled = false;
+                    const interval = setInterval(() => {
+                        countdownElement.textContent = count;
+                        count--;
+                        if (count < 0) {
+                            clearInterval(interval);
+                            countdownElement.textContent = '';
+                            movementEnabled = true;
+                            setTimeout(() => {
+                                const listener = new THREE.AudioListener();
+                                camera.add(listener);
+        
+                                const sound = new THREE.Audio(listener);
+                                const audioLoader = new THREE.AudioLoader();
+                                audioLoader.load('https://file.garden/ZxZB7ZTKxiU0oJTj/Chill%20Night%20Music.wav', function(buffer) {
+                                    sound.setBuffer(buffer);
+                                    sound.setLoop(true);
+                                    sound.setVolume(0.5);
+                                    sound.play();
+                                });
+                            }, 150); // 0.15 second delay
+                            startFloor(); // Start the first floor after countdown
+                        }
+                    }, 1000);
+                }
+        
+                startCountdown();
+        
+                let hasTakenDamageThisFrame = false;
+                function checkConstantEnemyCollision() {
+                    hasTakenDamageThisFrame = false;
+                    const currentTime = performance.now();
+                    enemies.forEach(enemy => {
+                        if (!enemy.alive) return;
+                        const dx = enemy.mesh.position.x - cube.position.x;
+                        const dz = enemy.mesh.position.z - cube.position.z;
+                        const distanceXZ = Math.sqrt(dx * dx + dz * dz);
+                        if (distanceXZ < 0.5) {
+                            // Player is in contact with enemy
+                            if (isInAir || isInvincible) {
+                                // Do not take damage
+                                return;
+                            }
+                            if (currentTime - enemy.spawnTime < 1400) {
+                                // Enemy is within 1.4 seconds of spawning, do not deal damage
+                                return;
+                            }
+                            if (!hasTakenDamageThisFrame) {
+                                let damageTaken = 1; // Base damage
+                                // Apply DEF stat (every 5 DEF = -1 damage)
+                                let defReduction = Math.floor(playerStats.def / 5);
+                                damageTaken -= defReduction;
+                                if (damageTaken < 1) damageTaken = 1; // Always take at least 1 damage
+                                health -= damageTaken;
+                                if (health <= 0) {
+                                    health = 0;
+                                    triggerGameOver();
+                                } else {
+                                    isInvincible = true;
+                                    invincibilityStartTime = performance.now();
+                                    startInvincibilityBlink();
+                                }
+                                updateHealthBar();
+                                hasTakenDamageThisFrame = true;
+                            }
+                        }
+                    });
+                }
+        
+                // Handle window resize
+                window.addEventListener('resize', onWindowResize, false);
+                function onWindowResize(){
+                    camera.aspect = window.innerWidth/window.innerHeight;
+                    camera.updateProjectionMatrix();
+                    renderer.setSize(window.innerWidth, window.innerHeight);
+                }
+        
+                // Mana regeneration
+                setInterval(function() {
+                    if (mana < maxMana) {
+                        mana++;
+                        drawManaBar();
+                    }
+                }, 1635); // 1.3 times faster
+        
+                // Mana bar
+                const manaCanvas = document.getElementById('manaCanvas');
+                manaCanvas.width = 100;
+                manaCanvas.height = 100;
+                const manaCtx = manaCanvas.getContext('2d');
+                let manaBlink = false;
+        
+                function drawManaBar() {
+                    const ctx = manaCtx;
+                    const radius = 45; // Smaller than canvas size to allow for padding
+                    const centerX = manaCanvas.width / 2;
+                    const centerY = manaCanvas.height / 2;
+                    
+                    ctx.clearRect(0, 0, manaCanvas.width, manaCanvas.height);
+                    
+                    // Draw background circle
+                    ctx.beginPath();
+                    ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
+                    ctx.fillStyle = '#444'; // Background color
+                    ctx.fill();
+                    ctx.lineWidth = 1; // Small black outline
+                    ctx.strokeStyle = '#000'; // Black color
+                    ctx.stroke();
+                    ctx.closePath();
+                    
+                    // Draw mana arc
+                    const manaFraction = mana / maxMana;
+                    const startAngle = -Math.PI / 2;
+                    const endAngle = startAngle + manaFraction * 2 * Math.PI;
+                    
+                    ctx.beginPath();
+                    ctx.moveTo(centerX, centerY);
+                    ctx.arc(centerX, centerY, radius, startAngle, endAngle, false);
+                    // Set fill style based on mana level
+                    if (mana >= maxMana) {
+                        if (manaBlink) {
+                            ctx.fillStyle = '#FFFFFF'; // Blink white
+                        } else {
+                            ctx.fillStyle = '#0F2D56'; // Marine blue
+                        }
+                    } else if (mana < 15) {
+                        ctx.fillStyle = '#FF0000'; // Red when mana is below 15
+                    } else {
+                        ctx.fillStyle = '#00FF00'; // Green otherwise
+                    }
+                    ctx.fill();
+                    ctx.lineWidth = 1; // Small black outline
+                    ctx.strokeStyle = '#000'; // Black color
+                    ctx.stroke();
+                    ctx.closePath();
+                    
+                    // Draw quarter separations
+                    for (let i = 0; i < 4; i++) {
+                        const angle = (i * Math.PI / 2) - Math.PI / 2;
+                        ctx.beginPath();
+                        ctx.moveTo(centerX, centerY);
+                        ctx.lineTo(centerX + radius * Math.cos(angle), centerY + radius * Math.sin(angle));
+                        ctx.strokeStyle = '#000'; // Separation lines color
+                        ctx.lineWidth = 2;
+                        ctx.stroke();
+                        ctx.closePath();
+                    }
+                }
+        
+                // Blink logic for mana bar when full
+                setInterval(() => {
+                    if (mana >= maxMana) {
+                        manaBlink = !manaBlink;
+                    } else {
+                        manaBlink = false;
+                    }
+                    drawManaBar();
+                }, 200); // Fast blink
+        
+                drawManaBar();
+        
+                function updateHealthBar() {
+                    if (hpContent) {
+                        hpContent.style.transform = `scaleY(${health / maxHealth})`;
+                    }
+                }
+        
+                updateHealthBar();
+        
+                function createEnergyAura() {
+                    const auraGeometry = new THREE.SphereGeometry(cubeSize * 1.2, 16, 16);
+                    const auraMaterial = new THREE.MeshBasicMaterial({
+                        color: 0xFFA500, // Orange color
+                        transparent: true,
+                        opacity: 0.4, // 60% lower opacity
+                        blending: THREE.AdditiveBlending,
+                        depthWrite: false
+                    });
+                    energyAura = new THREE.Mesh(auraGeometry, auraMaterial);
+                    cube.add(energyAura);
+                }
+        
+                function removeEnergyAura() {
+                    if (energyAura) {
+                        cube.remove(energyAura);
+                        energyAura.geometry.dispose();
+                        energyAura.material.dispose();
+                        energyAura = null;
+                    }
+                }
+        
+                function updateEnergyAura() {
+                    if (energyAura) {
+                        let elapsedTime = (performance.now() - jumpStartTime) / 1000; // in seconds
+                        let maxDuration = 3; // 3 seconds
+                        let progress = Math.min(elapsedTime / maxDuration, 1);
+                        energyAura.material.opacity = 0.4 * (1 - progress); // Opacity reduces from 0.4 to 0 over 3s
+        
+                        // Adjust the aura size based on progress
+                        let scale = 1 + progress * 0.5; // Scale from 1 to 1.5
+                        energyAura.scale.set(scale, scale, scale);
+        
+                        // Color remains orange
+                    }
+                }
+        
+                function createDustParticle(position) {
+                    const particleSize = 0.2;
+                    const geometry = new THREE.BoxGeometry(particleSize, particleSize, particleSize);
+                    const material = new THREE.MeshLambertMaterial({ color: 0xFFFF00, transparent: true, opacity: 1.0 });
+                    const particle = new THREE.Mesh(geometry, material);
+                    particle.position.copy(position);
+                    particle.lifetime = 0.5; // seconds
+                    particle.creationTime = performance.now();
+                    scene.add(particle);
+        
+                    dustParticles.push(particle);
+                }
+        
+                function updateDustParticles() {
+                    const currentTime = performance.now();
+                    for (let i = dustParticles.length -1; i >= 0; i--) {
+                        const particle = dustParticles[i];
+                        const elapsedTime = (currentTime - particle.creationTime) / 1000; // in seconds
+                        const progress = elapsedTime / particle.lifetime;
+                        if (progress >= 1) {
+                            // Remove particle from scene and array
+                            scene.remove(particle);
+                            particle.geometry.dispose();
+                            particle.material.dispose();
+                            dustParticles.splice(i, 1);
+                        } else {
+                            // Update opacity
+                            particle.material.opacity = 1.0 - progress;
+                        }
+                    }
+                }
+        
+                function startFloor() {
+                    if (currentFloorIndex >= floors.length) {
+                        // Game completed
+                        showGameOverScreen();
+                        return;
+                    }
+                    currentFloor = floors[currentFloorIndex];
+                    floorNumber = currentFloor.floorNumber;
+                    updateFloorDisplay();
+                    floorStartTime = performance.now();
+                    enemySpawnTimes = [];
+                    enemies = [];
+                    trapTile = null;
+                    // Remove any existing trap tile from previous floor
+                    if (trapTile && trapTile.meshes) {
+                        trapTile.meshes.forEach(mesh => scene.remove(mesh));
+                        trapTile = null;
+                    }
+                    // Spawn initial enemies
+                    for (let i = 0; i < currentFloor.initialEnemies; i++) {
+                        createEnemy();
+                    }
+                    // Start background music if not already playing
+                    if (!backgroundMusicStarted) {
+                        playBackgroundMusic();
+                    }
+                }
+        
+                function checkIfFloorCleared() {
+                    let anyAlive = enemies.some(enemy => enemy.alive);
+                    if (!anyAlive && !trapTile) {
+                        // All enemies defeated
+                        spawnTrapTile();
+                    }
+                }
+        
+                function spawnTrapTile() {
+                    const edgePositions = [];
+                    const halfGridSize = gridSize / 2 - 1;
+                    const positions = [-halfGridSize, halfGridSize];
+                    positions.forEach((pos) => {
+                        for (let i = -halfGridSize; i <= halfGridSize - 1; i++) {
+                            edgePositions.push({ x: i, z: pos });
+                            edgePositions.push({ x: pos, z: i });
+                        }
+                    });
+                    const randomIndex = Math.floor(Math.random() * edgePositions.length);
+                    const position = edgePositions[randomIndex];
+                    const geometry = new THREE.BoxGeometry(tileSize, tileSize, tileSize);
+                    const material = new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.5 });
+                    const meshes = [];
+                    for (let dx = 0; dx <= 1; dx++) {
+                        for (let dz = 0; dz <= 1; dz++) {
+                            const mesh = new THREE.Mesh(geometry, material);
+                            mesh.position.set(position.x + dx, tileSize / 2, position.z + dz);
+                            scene.add(mesh);
+                            meshes.push(mesh);
+                        }
+                    }
+                    trapTile = { meshes: meshes, positions: meshes.map(mesh => mesh.position.clone()) };
+                }
+        
+                function checkTrapTileCollision(endPosition) {
+                    if (!trapTile) return false;
+                    return trapTile.positions.some(pos => pos.x === endPosition.x && pos.z === endPosition.z);
+                }
+        
+                function handleTrapTileCollision() {
+                    isTransitioning = true;
+                    movementEnabled = false;
+                    // Freeze the game
+                    // Fade in black overlay
+                    blackOverlay.style.opacity = 1;
+                    setTimeout(() => {
+                        // Move to next floor after 2 seconds
+                        currentFloorIndex++;
+                        startFloor();
+                        // Fade out black overlay
+                        setTimeout(() => {
+                            blackOverlay.style.opacity = 0;
+                            isTransitioning = false;
+                            movementEnabled = true;
+                        }, 500); // Fade out duration
+                    }, 2000);
+                }
+        
+                let backgroundMusicStarted = false;
+                function playBackgroundMusic() {
+                    backgroundMusicStarted = true;
+                    const listener = new THREE.AudioListener();
+                    camera.add(listener);
+        
+                    const sound = new THREE.Audio(listener);
+                    const audioLoader = new THREE.AudioLoader();
+                    audioLoader.load('https://file.garden/ZxZB7ZTKxiU0oJTj/Chill%20Night%20Music.wav', function(buffer) {
+                        sound.setBuffer(buffer);
+                        sound.setLoop(true);
+                        sound.setVolume(0.5);
+                        sound.play();
+                    });
+                }
+        
+                function spawnEnemies() {
+                    if (isGameOver || isTransitioning) return;
+                    const currentTime = performance.now();
+                    const elapsedTime = currentTime - floorStartTime;
+        
+                    // Do not spawn enemies after floor duration
+                    if (elapsedTime >= currentFloor.duration) {
+                        return;
+                    }
+        
+                    if (enemySpawnTimes.length === 0 || currentTime - enemySpawnTimes[enemySpawnTimes.length -1] > currentFloor.spawnInterval) {
+                        enemySpawnTimes.push(currentTime);
+                        createEnemy();
+                    }
+                }
+        
+                function createEnemy() {
+                    const enemyType = enemyTypes[Math.floor(Math.random() * enemyTypes.length)];
+                    const enemyGeometry = new THREE.BoxGeometry(cubeSize, cubeSize, cubeSize);
+                    let enemyMaterial;
+                    if (enemyType === 'MonsterWeak') {
+                        const materials = [
+                            new THREE.MeshLambertMaterial({ map: enemyTextures['MonsterWeak'] }),
+                            new THREE.MeshLambertMaterial({ map: enemyTextures['MonsterWeak'] }),
+                            new THREE.MeshLambertMaterial({ map: enemyTextures['MonsterWeak'] }),
+                            new THREE.MeshLambertMaterial({ map: enemyTextures['MonsterWeakBack'] }), // Bottom face
+                            new THREE.MeshLambertMaterial({ map: enemyTextures['MonsterWeak'] }),
+                            new THREE.MeshLambertMaterial({ map: enemyTextures['MonsterWeak'] })
+                        ];
+                        enemyMaterial = materials;
+                    } else {
+                        const material = new THREE.MeshLambertMaterial({ map: enemyTextures[enemyType] });
+                        enemyMaterial = [
+                            material, material, material, material, material, material
+                        ];
+                    }
+                    const enemyMesh = new THREE.Mesh(enemyGeometry, enemyMaterial);
+                    enemyMesh.position.set(
+                        Math.round((Math.random() * gridSize - gridSize / 2)),
+                        cubeSize / 2,
+                        Math.round((Math.random() * gridSize - gridSize / 2))
+                    );
+                    scene.add(enemyMesh);
+                    const enemy = {
+                        type: enemyType,
+                        mesh: enemyMesh,
+                        health: enemyType === 'MonsterWeak' ? 80 : 30,
+                        maxHealth: enemyType === 'MonsterWeak' ? 80 : 30,
+                        alive: true,
+                        spawnTime: performance.now(),
+                        moveDelay: 0, // Used to make them stand still for 1.2 seconds
+                        moveInterval: enemyType === 'MonsterWeak' ? 1150 : 600,
+                        hpBarElement: null,
+                        isMoving: false,
+                        stunned: false,
+                        stunStartTime: 0
+                    };
+                    enemies.push(enemy);
+                }
+        
+                function updateEnemies() {
+                    const currentTime = performance.now();
+                    enemies.forEach(enemy => {
+                        if (!enemy.alive) return;
+                        const elapsedTime = (currentTime - enemy.spawnTime) / 1000;
+                        if (elapsedTime < 1.2) return; // Stand still for 1.2 seconds after spawning
+        
+                        // Check if enemy is stunned
+                        if (enemy.stunned) {
+                            if (currentTime - enemy.stunStartTime >= 2600) {
+                                enemy.stunned = false;
+                            } else {
+                                return; // Skip movement if stunned
+                            }
+                        }
+        
+                        if (enemy.isMoving || isGameOver) return;
+        
+                        // Move towards player in block spaces with rotation
+                        enemy.moveDelay += 20; // Adjust speed
+                        if (enemy.moveDelay >= enemy.moveInterval) { // Delay based on enemy type
+                            enemy.moveDelay = 0;
+                            moveEnemyTowardsPlayer(enemy);
+                        }
+                    });
+                }
+        
+                function moveEnemyTowardsPlayer(enemy) {
+                    const direction = new THREE.Vector3().subVectors(cube.position, enemy.mesh.position);
+                    direction.y = 0;
+                    if (Math.abs(direction.x) > Math.abs(direction.z)) {
+                        direction.z = 0;
+                        direction.x = Math.sign(direction.x);
+                    } else {
+                        direction.x = 0;
+                        direction.z = Math.sign(direction.z);
+                    }
+        
+                    const endPosition = enemy.mesh.position.clone().add(direction);
+        
+                    // Ensure enemy stays within bounds
+                    const halfGridSize = gridSize / 2;
+                    const minPosition = -halfGridSize + cubeSize / 2;
+                    const maxPosition = halfGridSize - cubeSize / 2;
+                    if (endPosition.x < minPosition || endPosition.x > maxPosition ||
+                        endPosition.z < minPosition || endPosition.z > maxPosition) {
+                        return;
+                    }
+        
+                    // Check for collision with other enemies
+                    const willCollide = enemies.some(otherEnemy => {
+                        if (otherEnemy === enemy || !otherEnemy.alive || otherEnemy.isMoving) return false;
+                        return otherEnemy.mesh.position.equals(endPosition);
+                    });
+        
+                    if (willCollide) {
+                        return; // Do not move if collision detected
+                    }
+        
+                    // Calculate rotation axis
+                    let rotationAxis = new THREE.Vector3();
+                    if (direction.x > 0) {
+                        rotationAxis.set(0, 0, -1);
+                    } else if (direction.x < 0) {
+                        rotationAxis.set(0, 0, 1);
+                    } else if (direction.z > 0) {
+                        rotationAxis.set(1, 0, 0);
+                    } else if (direction.z < 0) {
+                        rotationAxis.set(-1, 0, 0);
+                    } else {
+                        return;
+                    }
+        
+                    animateEnemyMove(enemy, direction, rotationAxis);
+                }
+        
+                function animateEnemyMove(enemy, direction, rotationAxis) {
+                    enemy.isMoving = true;
+                    const moveDuration = 500;
+                    const startTime = performance.now();
+                    const startPosition = enemy.mesh.position.clone();
+                    const endPosition = startPosition.clone().add(direction);
+        
+                    let previousProgress = 0;
+        
+                    function animate() {
+                        const elapsedTime = performance.now() - startTime;
+                        const progress = Math.min(elapsedTime / moveDuration, 1);
+        
+                        // Update position
+                        enemy.mesh.position.lerpVectors(startPosition, endPosition, progress);
+        
+                        // Update rotation using rotateOnWorldAxis
+                        const deltaProgress = progress - previousProgress;
+                        const deltaAngle = rotationAngle * deltaProgress;
+        
+                        enemy.mesh.rotateOnWorldAxis(rotationAxis, deltaAngle);
+        
+                        previousProgress = progress;
+        
+                        if (progress < 1) {
+                            requestAnimationFrame(animate);
+                        } else {
+                            // Movement finished
+                            enemy.mesh.position.copy(endPosition);
+                            // Ensure the enemy is centered on a block
+                            enemy.mesh.position.x = Math.round(enemy.mesh.position.x);
+                            enemy.mesh.position.z = Math.round(enemy.mesh.position.z);
+        
+                            enemy.isMoving = false;
+                        }
+                    }
+        
+                    animate();
+                }
+        
+                function checkEnemyCollisionDuringJump() {
+                    enemies.forEach(enemy => {
+                        if (!enemy.alive) return;
+                        const dx = enemy.mesh.position.x - cube.position.x;
+                        const dz = enemy.mesh.position.z - cube.position.z;
+                        const distanceXZ = Math.sqrt(dx * dx + dz * dz);
+                        const yDifference = cube.position.y - enemy.mesh.position.y;
+        
+                        if (distanceXZ < 0.5 && yDifference > 0 && yDifference < 1) {
+                            // Player is landing on enemy, do not take damage
+                            // Optional: You can add logic here if landing on enemy should defeat them
+                            return;
+                        }
+                    });
+                }
+        
+                // Create walls around the field
+                const wallTexture = textureLoader.load('https://file.garden/ZxZB7ZTKxiU0oJTj/Wall2.png');
+        
+                function createWallBlock(x, y, z) {
+                    const geometry = new THREE.BoxGeometry(tileSize, tileSize, tileSize);
+                    const material = new THREE.MeshLambertMaterial({ map: wallTexture });
+                    const wallBlock = new THREE.Mesh(geometry, material);
+                    wallBlock.position.set(x, y, z);
+                    wallBlock.castShadow = true;
+                    wallBlock.receiveShadow = true;
+                    scene.add(wallBlock);
+                }
+        
+                const wallHeight = 3; // 3 blocks high
+                const halfGridSize = gridSize / 2;
+                const minWallPosition = -halfGridSize - tileSize / 2;
+                const maxWallPosition = halfGridSize - tileSize / 2;
+        
+                // Walls along x-edges
+                for (let x = -halfGridSize + tileSize / 2; x <= halfGridSize - tileSize / 2; x += tileSize) {
+                    for (let y = tileSize / 2; y < wallHeight; y += tileSize) {
+                        // Wall at z = min
+                        createWallBlock(x, y, minWallPosition);
+                        // Wall at z = max
+                        createWallBlock(x, y, maxWallPosition + tileSize);
+                    }
+                }
+        
+                // Walls along z-edges
+                for (let z = -halfGridSize + tileSize / 2; z <= halfGridSize - tileSize / 2; z += tileSize) {
+                    for (let y = tileSize / 2; y < wallHeight; y += tileSize) {
+                        // Wall at x = min
+                        createWallBlock(minWallPosition, y, z);
+                        // Wall at x = max
+                        createWallBlock(maxWallPosition + tileSize, y, z);
+                    }
+                }
+        
+                function checkSprintStatus() {
+                    if (isSprinting) {
+                        const elapsedTime = (performance.now() - sprintStartTime) / 1000; // in seconds
+                        if (elapsedTime >= 4) { // 4 seconds sprint duration
+                            isSprinting = false;
+                            resetCubeColor();
+                        } else {
+                            // Transition from orange to light yellow over 4 seconds
+                            const progress = elapsedTime / 4;
+                            const startColor = new THREE.Color(0xFFA500); // Orange
+                            const endColor = new THREE.Color(0xFFFFE0); // Light yellow
+                            const colorValue = startColor.clone().lerp(endColor, progress);
+                            cube.material.forEach((material) => {
+                                material.color.set(colorValue);
+                            });
+                        }
+                    }
+                }
+        
+                // Render loop
+                function animate() {
+                    requestAnimationFrame(animate);
+        
+                    if (!isGameOver && !isTransitioning) {
+                        spawnEnemies();
+                        updateEnemies();
+                        checkConstantEnemyCollision();
+                    }
+        
+                    // Update energy aura if present
+                    updateEnergyAura();
+        
+                    // Update dust particles
+                    updateDustParticles();
+        
+                    // Update enemy HP bars
+                    updateEnemyHpBars();
+        
+                    // Update camera to follow the cube
+                    const radius = 7.5;
+                    const cameraOffset = new THREE.Vector3(
+                        radius * Math.sin(cameraAngle),
+                        5.25, // 5% higher
+                        radius * Math.cos(cameraAngle)
+                    );
+                    camera.position.copy(cube.position).add(cameraOffset);
+                    camera.lookAt(cube.position);
+        
+                    checkSprintStatus();
+        
+                    if (isInvincible && !isMaxPowerJump) {
+                        const elapsedTime = (performance.now() - invincibilityStartTime) / 1000;
+                        if (elapsedTime >= 3.1) {
+                            isInvincible = false;
+                            cube.visible = true;
+                        }
+                    }
+        
+                    // Create dust particles when sprinting and moving
+                    if (isSprinting && isMoving) {
+                        const dustPosition = cube.position.clone();
+                        // Offset the dust position behind the cube
+                        let forward = new THREE.Vector3();
+                        camera.getWorldDirection(forward);
+                        forward.y = 0;
+                        forward.normalize();
+                        let dustOffset = forward.clone().multiplyScalar(-0.5); // Behind the cube
+                        dustPosition.add(dustOffset);
+        
+                        createDustParticle(dustPosition);
+                    }
+        
+                    // Screen glow effect when health is low
+                    if (health <= maxHealth / 3) {
+                        const glowIntensity = 0.5 + 0.5 * Math.sin(performance.now() / 200);
+                        renderer.setClearColor(new THREE.Color(glowIntensity, 0, 0), 0.5);
+                    } else {
+                        renderer.setClearColor(new THREE.Color(0, 0, 0), 0);
+                    }
+        
+                    renderer.render(scene, camera);
+                }
+                animate();
+            </script>
+        </body>
+    </html>
