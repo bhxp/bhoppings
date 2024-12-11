@@ -1,0 +1,301 @@
+<html><head><base href="." /><base target="_blank" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>is anyone on the website yet?</title>
+    <style>
+        :root {
+            --primary-color: #2196F3;
+            --bg-color: #f0f0f0;
+            --text-color: #333;
+            --container-bg: white;
+            --font-family: 'Arial', sans-serif;
+        }
+
+        body.dark-mode {
+            --bg-color: #1a1a1a;
+            --text-color: #ffffff;
+            --container-bg: #2d2d2d;
+            --primary-color: #64b5f6;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: var(--font-family);
+            background-color: var(--bg-color);
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .container {
+            padding: 20px;
+            background-color: var(--container-bg);
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+        }
+
+        h1 {
+            color: var(--text-color);
+            margin-bottom: 20px;
+            font-size: 2em;
+        }
+
+        .count {
+            font-size: 4em;
+            color: var(--primary-color);
+            font-weight: bold;
+            margin: 20px 0;
+        }
+
+        .user-text {
+            font-size: 1.5em;
+            color: var(--text-color);
+        }
+
+        .people-icon {
+            width: 50px;
+            height: 50px;
+            margin: 20px;
+            fill: var(--primary-color);
+        }
+
+        .settings-panel {
+            margin-top: 20px;
+            padding: 20px;
+            border-top: 1px solid var(--primary-color);
+        }
+
+        .settings-toggle {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .settings-toggle:hover {
+            opacity: 0.9;
+        }
+
+        .settings-content {
+            display: none;
+            margin-top: 20px;
+        }
+
+        .settings-content.visible {
+            display: block;
+        }
+
+        .setting-item {
+            margin: 10px 0;
+        }
+
+        select, input {
+            padding: 5px;
+            margin: 5px;
+            border-radius: 5px;
+            border: 1px solid var(--primary-color);
+            background-color: var(--container-bg);
+            color: var(--text-color);
+        }
+
+        .reset-button {
+            background-color: #ff4444;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .reset-button:hover {
+            opacity: 0.9;
+        }
+
+        .music-control {
+            margin-top: 10px;
+        }
+
+        .volume-slider {
+            width: 200px;
+            margin: 10px;
+            display: none;
+        }
+
+        .volume-slider.visible {
+            display: inline-block;
+        }
+    </style>
+</head>
+<body>
+    <audio id="buttonClick" src="/button-click-made-with-Voicemod.mp3" preload="auto"></audio>
+    <audio id="backgroundMusic" src="/kevin-macleod---fluffing-a-duck-made-with-Voicemod.mp3" loop preload="auto"></audio>
+
+    <div class="container">
+        <h1>is anyone on the website yet?</h1>
+        <svg class="people-icon" viewBox="0 0 24 24">
+            <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/>
+        </svg>
+        <div class="count" id="userCount">1</div>
+        <div class="user-text" id="userText">person is here right now!</div>
+
+        <div class="settings-panel">
+            <button class="settings-toggle" onclick="playClickAndToggle()">⚙️ Customize Website</button>
+            <div class="settings-content" id="settingsContent">
+                <div class="setting-item">
+                    <label>Font Family:</label>
+                    <select id="fontSelect" onchange="playClickAndUpdateFont(this.value)">
+                        <option value="Arial">Arial</option>
+                        <option value="Times New Roman">Times New Roman</option>
+                        <option value="Courier New">Courier New</option>
+                        <option value="Georgia">Georgia</option>
+                        <option value="Verdana">Verdana</option>
+                    </select>
+                </div>
+                <div class="setting-item">
+                    <label>Primary Color:</label>
+                    <input type="color" id="colorPicker" value="#2196F3" onchange="playClickAndUpdateColor(this.value)">
+                </div>
+                <div class="setting-item">
+                    <label>Dark Mode:</label>
+                    <button class="settings-toggle" onclick="playClickAndToggleDark()">Toggle Dark Mode</button>
+                </div>
+                <div class="setting-item">
+                    <label>Background Music:</label>
+                    <button class="settings-toggle" onclick="playClickAndToggleMusic()">Toggle Music</button>
+                    <div>
+                        <input type="range" id="volumeSlider" class="volume-slider" min="0" max="100" value="100" 
+                               onchange="updateVolume(this.value)" oninput="updateVolume(this.value)">
+                    </div>
+                </div>
+                <div class="setting-item">
+                    <button class="reset-button" onclick="playClickAndReset()">Reset All Settings</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize WebSocket connection
+        const room = new WebsimSocket();
+        
+        // Background music control
+        const backgroundMusic = document.getElementById('backgroundMusic');
+        let isMusicPlaying = false;
+        const volumeSlider = document.getElementById('volumeSlider');
+
+        function toggleBackgroundMusic() {
+            if (isMusicPlaying) {
+                backgroundMusic.pause();
+                volumeSlider.classList.remove('visible');
+            } else {
+                backgroundMusic.play();
+                volumeSlider.classList.add('visible');
+            }
+            isMusicPlaying = !isMusicPlaying;
+        }
+
+        function updateVolume(value) {
+            const volume = value / 100;
+            backgroundMusic.volume = volume;
+        }
+
+        // Audio functions
+        function playClick() {
+            const audio = document.getElementById('buttonClick');
+            audio.currentTime = 0;
+            audio.play();
+        }
+
+        function updateUserCount(count) {
+            document.getElementById('userCount').textContent = count;
+            document.getElementById('userText').textContent = 
+                count === 1 ? 'person is here right now!' : 'people are here right now!';
+        }
+
+        // Update count whenever peer list changes
+        room.party.subscribe((peers) => {
+            const count = Object.keys(peers).length;
+            updateUserCount(count);
+        });
+
+        // Settings functionality with sound
+        function playClickAndToggle() {
+            playClick();
+            toggleSettings();
+        }
+
+        function playClickAndUpdateFont(value) {
+            playClick();
+            updateFont(value);
+        }
+
+        function playClickAndUpdateColor(value) {
+            playClick();
+            updateColor(value);
+        }
+
+        function playClickAndToggleDark() {
+            playClick();
+            toggleDarkMode();
+        }
+
+        function playClickAndToggleMusic() {
+            playClick();
+            toggleBackgroundMusic();
+        }
+
+        function playClickAndReset() {
+            playClick();
+            resetSettings();
+        }
+
+        function toggleSettings() {
+            const settingsContent = document.getElementById('settingsContent');
+            settingsContent.classList.toggle('visible');
+        }
+
+        function updateFont(fontFamily) {
+            document.documentElement.style.setProperty('--font-family', fontFamily);
+        }
+
+        function updateColor(color) {
+            document.documentElement.style.setProperty('--primary-color', color);
+        }
+
+        function toggleDarkMode() {
+            document.body.classList.toggle('dark-mode');
+        }
+
+        function resetSettings() {
+            // Reset font to default
+            document.documentElement.style.setProperty('--font-family', 'Arial');
+            document.getElementById('fontSelect').value = 'Arial';
+            
+            // Reset color to default
+            document.documentElement.style.setProperty('--primary-color', '#2196F3');
+            document.getElementById('colorPicker').value = '#2196F3';
+            
+            // Reset dark mode
+            document.body.classList.remove('dark-mode');
+
+            // Reset music and volume
+            if (isMusicPlaying) {
+                toggleBackgroundMusic();
+            }
+            volumeSlider.value = 100;
+            backgroundMusic.volume = 1;
+            volumeSlider.classList.remove('visible');
+        }
+    </script>
+</body></html>
