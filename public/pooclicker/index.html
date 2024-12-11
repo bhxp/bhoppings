@@ -1,0 +1,1237 @@
+<html><head><base href="https://example.com/" />
+<meta charset="UTF-8">
+<title>💩 Poop Clicker Adventure 💩</title>
+<style>
+body {
+    background: #f5e6d3;
+    font-family: Arial, sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+#poop {
+    font-size: 100px;
+    cursor: pointer;
+    transition: transform 0.1s, filter 0.2s;
+    user-select: none;
+}
+
+#poop:hover {
+    transform: scale(1.1);
+    filter: brightness(1.2);
+}
+
+#poop:active {
+    transform: scale(0.9);
+}
+
+.counter {
+    font-size: 24px;
+    margin: 20px;
+    color: #654321;
+}
+
+.upgrade {
+    background: #8b4513;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    margin: 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+.upgrade:hover {
+    background: #654321;
+}
+
+#inventoryButton {
+    position: fixed;
+    bottom: 20px; /* Changed from top: 20px */
+    left: 20px;
+    background: #8b4513;
+    color: white;
+    border: none;
+    padding: 15px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 20px;
+    z-index: 1002;
+}
+
+#inventoryButton:hover {
+    background: #654321;
+}
+
+#inventoryModal {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(139, 69, 19, 0.95);
+    padding: 20px;
+    border-radius: 15px;
+    color: white;
+    z-index: 1003;
+    min-width: 300px;
+    box-shadow: 0 0 20px rgba(0,0,0,0.5);
+}
+
+.inventory-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 15px;
+    margin: 20px 0;
+    padding: 10px;
+}
+
+.inventory-item {
+    background: rgba(255,255,255,0.1);
+    padding: 15px;
+    border-radius: 10px;
+    text-align: center;
+    font-size: 16px;
+    min-height: 80px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.diamond-poop {
+    font-size: 20px;
+    font-weight: bold;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 5px;
+    animation: sparkle 2s infinite;
+}
+
+@keyframes sparkle {
+    0% { filter: brightness(1); }
+    50% { filter: brightness(1.5); }
+    100% { filter: brightness(1); }
+}
+
+#modalClose {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: none;
+    border: none;
+    color: white;
+    font-size: 20px;
+    cursor: pointer;
+}
+
+.poop-rain {
+    position: absolute;
+    animation: fall 3s linear;
+    pointer-events: none;
+}
+
+.bonus-poop {
+    position: absolute;
+    font-size: 60px;
+    cursor: pointer;
+    animation: float 4s ease-in-out infinite;
+    z-index: 1000;
+}
+
+.shiny-poop {
+    position: absolute;
+    font-size: 80px;
+    cursor: pointer;
+    animation: shiny 2s ease-in-out infinite;
+    z-index: 1001;
+    text-shadow: 0 0 20px gold, 0 0 30px yellow;
+}
+
+@keyframes shiny {
+    0% { transform: scale(1) rotate(0deg); }
+    50% { transform: scale(1.2) rotate(180deg); }
+    100% { transform: scale(1) rotate(360deg); }
+}
+
+@keyframes fall {
+    0% { transform: translateY(-100vh) rotate(0deg); }
+    100% { transform: translateY(100vh) rotate(360deg); }
+}
+
+@keyframes float {
+    0% { transform: translateY(0) rotate(0deg); }
+    50% { transform: translateY(-20px) rotate(180deg); }
+    100% { transform: translateY(0) rotate(360deg); }
+}
+
+.bonus-multiplier {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: gold;
+    padding: 10px;
+    border-radius: 10px;
+    font-weight: bold;
+    animation: fadeOut 3s forwards;
+}
+
+@keyframes fadeOut {
+    0% { opacity: 1; }
+    80% { opacity: 1; }
+    100% { opacity: 0; }
+}
+
+#shopButton {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: #8b4513;
+    color: white;
+    border: none;
+    padding: 15px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 20px;
+    z-index: 1002;
+}
+
+#shopButton:hover {
+    background: #654321;
+}
+
+#shopModal {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(139, 69, 19, 0.95);
+    padding: 20px;
+    border-radius: 15px;
+    color: white;
+    z-index: 1003;
+    min-width: 300px;
+    box-shadow: 0 0 20px rgba(0,0,0,0.5);
+}
+
+.shop-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+    margin: 20px 0;
+}
+
+.hat-item {
+    background: rgba(255,255,255,0.1);
+    padding: 15px;
+    border-radius: 10px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.hat-item:hover {
+    transform: scale(1.05);
+    background: rgba(255,255,255,0.2);
+    box-shadow: 0 0 15px rgba(255,255,255,0.3);
+}
+
+.hat-item.owned {
+    border: 2px solid gold;
+    background: rgba(255,215,0,0.1);
+}
+
+.hat-item.selected {
+    background: rgba(255,215,0,0.3);
+    box-shadow: 0 0 20px rgba(255,215,0,0.5);
+}
+
+.hat-item .emoji {
+    font-size: 40px;
+    margin-bottom: 10px;
+}
+
+#poopWithHat {
+    position: relative;
+    display: inline-block;
+}
+
+.hat {
+    position: absolute;
+    top: -40px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 50px;
+    pointer-events: none;
+    transition: all 0.3s;
+    animation: floatHat 2s ease-in-out infinite;
+}
+
+@keyframes floatHat {
+    0%, 100% { transform: translateX(-50%) translateY(0); }
+    50% { transform: translateX(-50%) translateY(-5px); }
+}
+
+@keyframes rapGod {
+    0% { transform: scale(1); }
+    10% { transform: scale(1.2) rotate(-10deg); }
+    20% { transform: scale(1) rotate(10deg); }
+    30% { transform: scale(1.2) rotate(-10deg); }
+    40% { transform: scale(1) rotate(10deg); }
+    50% { transform: scale(1.2); }
+    60% { transform: translateY(-20px) scale(1.1); }
+    70% { transform: translateY(0) scale(1.2); }
+    80% { transform: translateX(-10px) scale(1.1); }
+    90% { transform: translateX(10px) scale(1.2); }
+    100% { transform: scale(1); }
+}
+
+.eminem-rap-god {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 150px;
+    z-index: 9999;
+    animation: rapGod 0.5s infinite;
+    text-shadow: 0 0 20px gold, 0 0 30px white;
+}
+
+.rap-lyrics {
+    position: fixed;
+    top: 30%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 24px;
+    color: gold;
+    text-shadow: 2px 2px 4px black;
+    font-weight: bold;
+    z-index: 9999;
+    white-space: nowrap;
+    animation: fadeInOut 3s infinite;
+}
+
+@keyframes fadeInOut {
+    0% { opacity: 0; }
+    50% { opacity: 1; }
+    100% { opacity: 0; }
+}
+
+.rap-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.8);
+    z-index: 9998;
+    animation: fadeIn 0.5s;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.world-item {
+    background: rgba(255,255,255,0.1);
+    padding: 15px;
+    border-radius: 10px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.world-item:hover {
+    transform: scale(1.05);
+    background: rgba(255,255,255,0.2);
+    box-shadow: 0 0 15px rgba(255,255,255,0.3);
+}
+
+.world-item.owned {
+    border: 2px solid #00ffff;
+    background: rgba(0,255,255,0.1);
+}
+
+.world-item.selected {
+    background: rgba(0,255,255,0.3);
+    box-shadow: 0 0 20px rgba(0,255,255,0.5);
+}
+
+.world-item .emoji {
+    font-size: 40px;
+    margin-bottom: 10px;
+}
+
+@keyframes floatUp {
+    0% { transform: translate(-50%, -50%); opacity: 1; }
+    100% { transform: translate(-50%, -200%); opacity: 0; }
+}
+
+/* Add styles for the upgrades section */
+.upgrades-container {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin: 20px;
+    max-width: 600px;
+    width: 100%;
+}
+
+.upgrade-category {
+    background: rgba(139, 69, 19, 0.2);
+    padding: 15px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+}
+
+.upgrade-category h2 {
+    color: #8b4513;
+    margin-top: 0;
+    margin-bottom: 15px;
+}
+
+.upgrade-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 10px;
+}
+
+.upgrade {
+    width: 100%;
+}
+</style>
+</head>
+<body>
+    <button id="inventoryButton">🎒 Inventory</button>
+    <button id="shopButton">🎩 Hat Shop</button>
+    <button id="worldShopButton" style="position: fixed; bottom: 20px; right: 200px; background: #4169E1; color: white; border: none; padding: 15px; border-radius: 10px; cursor: pointer; font-size: 20px; z-index: 1002;">
+        💎 World Shop
+    </button>
+    <button id="resetButton" style="position: fixed; bottom: 20px; right: 380px; background: #ff4444; color: white; border: none; padding: 15px; border-radius: 10px; cursor: pointer; font-size: 20px; z-index: 1002;">
+        🔄 Reset Game
+    </button>
+    <div id="resetModal" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(255, 68, 68, 0.95); padding: 20px; border-radius: 15px; color: white; z-index: 1004; min-width: 300px; box-shadow: 0 0 20px rgba(0,0,0,0.5);">
+        <h2>⚠️ Reset Game?</h2>
+        <p>Are you sure you want to reset all progress? This cannot be undone!</p>
+        <button id="confirmReset" style="background: #ff0000; color: white; border: none; padding: 10px 20px; margin: 10px; border-radius: 5px; cursor: pointer;">Yes, Reset Game</button>
+        <button id="cancelReset" style="background: #666666; color: white; border: none; padding: 10px 20px; margin: 10px; border-radius: 5px; cursor: pointer;">Cancel</button>
+    </div>
+    <div id="inventoryModal">
+        <button id="modalClose">×</button>
+        <h2>🎒 Inventory</h2>
+        <div class="inventory-grid">
+            <!-- Inventory items will be populated by JavaScript -->
+        </div>
+    </div>
+    <div id="shopModal">
+        <button id="modalClose">×</button>
+        <h2>🎩 Hat Shop</h2>
+        <div class="shop-grid">
+            <!-- Hats will be populated by JavaScript -->
+        </div>
+    </div>
+    <div id="worldShopModal" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(65, 105, 225, 0.95); padding: 20px; border-radius: 15px; color: white; z-index: 1003; min-width: 300px; box-shadow: 0 0 20px rgba(0,0,0,0.5);">
+        <button id="modalClose">×</button>
+        <h2>💎 World Shop</h2>
+        <div class="world-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin: 20px 0;"></div>
+    </div>
+
+    <h1>💩 Poop Clicker 💩</h1>
+    <div class="counter">Poops: <span id="poopCount">0</span></div>
+    <div class="counter">Poops per second: <span id="pps">0</span></div>
+    <div id="poop">💩</div>
+    
+    <div class="upgrades-container">
+        <div class="upgrade-category">
+            <h2>🏭 Production Upgrades</h2>
+            <div class="upgrade-grid">
+                <button class="upgrade" id="autoClicker" onclick="buyAutoClicker()">
+                    Buy Auto-Pooper (Cost: 10 poops)
+                </button>
+                <button class="upgrade" id="poopFactory" onclick="buyPoopFactory()">
+                    Poop Factory (Cost: 25,000 poops)
+                </button>
+                <button class="upgrade" id="superAutoPooper" onclick="buySuperAutoPooper()">
+                    Buy Super Auto-Pooper (Cost: 1,000,000 poops)
+                </button>
+            </div>
+        </div>
+        
+        <div class="upgrade-category">
+            <h2>⚡ Multipliers & Boosters</h2>
+            <div class="upgrade-grid">
+                <button class="upgrade" id="multiplier" onclick="buyMultiplier()">
+                    Buy Poop Multiplier (Cost: 50 poops)
+                </button>
+                <button class="upgrade" id="poopTraining" onclick="buyPoopTraining()">
+                    Poop Training (Cost: 100 poops)
+                </button>
+                <button class="upgrade" id="poopAlchemy" onclick="buyPoopAlchemy()">
+                    Poop Alchemy (Cost: 100,000 poops)
+                </button>
+            </div>
+        </div>
+        
+        <div class="upgrade-category">
+            <h2>✨ Special Features</h2>
+            <div class="upgrade-grid">
+                <button class="upgrade" id="goldenPoop" onclick="buyGoldenPoop()">
+                    Golden Poop Chance (Cost: 5,000 poops)
+                </button>
+            </div>
+        </div>
+    </div>
+
+<script>
+let poops = 0;
+let autoClickers = 0;
+let multiplier = 1;
+let autoClickerCost = 10;
+let multiplierCost = 50;
+let bonusMultiplier = 1;
+let bonusTimeout = null;
+let superAutoPooperCount = 0;
+let superAutoPooperCost = 1000000;
+let shinyClicksRemaining = 0;
+let diamondPoops = 0;
+
+let poopTrainingLevel = 0;
+let poopTrainingCost = 100;
+let goldenPoopChance = 0;
+let goldenPoopCost = 5000;
+let poopFactoryCount = 0;
+let poopFactoryCost = 25000;
+let poopAlchemyLevel = 0;
+let poopAlchemyCost = 100000;
+
+const inventoryButton = document.getElementById('inventoryButton');
+const inventoryModal = document.getElementById('inventoryModal');
+const modalClose = document.getElementById('modalClose');
+const shopButton = document.getElementById('shopButton');
+const shopModal = document.getElementById('shopModal');
+const worldShopButton = document.getElementById('worldShopButton');
+const worldShopModal = document.getElementById('worldShopModal');
+const resetButton = document.getElementById('resetButton');
+const resetModal = document.getElementById('resetModal');
+const confirmReset = document.getElementById('confirmReset');
+const cancelReset = document.getElementById('cancelReset');
+const poopElement = document.getElementById('poop');
+const poopCountElement = document.getElementById('poopCount');
+
+let totalClicks = 0;
+let totalBonusPoops = 0;
+let totalShinyPoops = 0;
+let highestMultiplier = 1;
+let startTime = Date.now();
+
+const worlds = [
+    { id: 1, name: "Space World", emoji: "🌎", cost: 5, multiplier: 2, background: "#000033" },
+    { id: 2, name: "Desert World", emoji: "🏜️", cost: 10, multiplier: 3, background: "#ffd700" },
+    { id: 3, name: "Ice World", emoji: "❄️", cost: 15, multiplier: 4, background: "#e0ffff" },
+    { id: 4, name: "Jungle World", emoji: "🌴", cost: 20, multiplier: 5, background: "#228b22" },
+    { id: 5, name: "Lava World", emoji: "🌋", cost: 30, multiplier: 7, background: "#ff4500" },
+    { id: 6, name: "Rainbow World", emoji: "🌈", cost: 50, multiplier: 10, background: "linear-gradient(45deg, red, orange, yellow, green, blue, indigo, violet)" }
+];
+
+let ownedWorlds = [];
+let selectedWorld = null;
+
+const hats = [
+    { id: 1, name: "Cowboy Hat", emoji: "🤠", cost: 1000, multiplier: 1.5 },
+    { id: 2, name: "Crown", emoji: "👑", cost: 10000, multiplier: 2 },
+    { id: 3, name: "Party Hat", emoji: "🎉", cost: 5000, multiplier: 1.7 },
+    { id: 4, name: "Wizard Hat", emoji: "🧙‍♂️", cost: 50000, multiplier: 3 },
+    { id: 5, name: "Ghost Hat", emoji: "👻", cost: 25000, multiplier: 2.5 },
+    { id: 6, name: "Alien Hat", emoji: "👽", cost: 100000, multiplier: 4 },
+    { id: 7, name: "Devil Horns", emoji: "😈", cost: 666666, multiplier: 6.66 },
+    { id: 8, name: "Rainbow Hat", emoji: "🌈", cost: 1000000, multiplier: 10 }
+];
+
+let ownedHats = [];
+let selectedHat = null;
+
+function saveGame() {
+    const gameData = {
+        poops,
+        autoClickers,
+        multiplier,
+        autoClickerCost,
+        multiplierCost,
+        superAutoPooperCount,
+        superAutoPooperCost,
+        diamondPoops,
+        ownedHats,
+        selectedHat,
+        ownedWorlds,
+        selectedWorld,
+        totalClicks,
+        totalBonusPoops,
+        totalShinyPoops,
+        highestMultiplier,
+        startTime,
+        poopTrainingLevel,
+        poopTrainingCost,
+        goldenPoopChance,
+        goldenPoopCost,
+        poopFactoryCount,
+        poopFactoryCost,
+        poopAlchemyLevel,
+        poopAlchemyCost
+    };
+    localStorage.setItem('poopClickerSave', JSON.stringify(gameData));
+}
+
+function loadGame() {
+    const savedData = localStorage.getItem('poopClickerSave');
+    if (savedData) {
+        const gameData = JSON.parse(savedData);
+        poops = gameData.poops;
+        autoClickers = gameData.autoClickers;
+        multiplier = gameData.multiplier;
+        autoClickerCost = gameData.autoClickerCost;
+        multiplierCost = gameData.multiplierCost;
+        superAutoPooperCount = gameData.superAutoPooperCount;
+        superAutoPooperCost = gameData.superAutoPooperCost;
+        diamondPoops = gameData.diamondPoops;
+        ownedHats = gameData.ownedHats;
+        selectedHat = gameData.selectedHat;
+        ownedWorlds = gameData.ownedWorlds || [];
+        selectedWorld = gameData.selectedWorld;
+
+        poopTrainingLevel = gameData.poopTrainingLevel || 0;
+        poopTrainingCost = gameData.poopTrainingCost || 100;
+        goldenPoopChance = gameData.goldenPoopChance || 0;
+        goldenPoopCost = gameData.goldenPoopCost || 5000;
+        poopFactoryCount = gameData.poopFactoryCount || 0;
+        poopFactoryCost = gameData.poopFactoryCost || 25000;
+        poopAlchemyLevel = gameData.poopAlchemyLevel || 0;
+        poopAlchemyCost = gameData.poopAlchemyCost || 100000;
+
+        if (selectedWorld) {
+            document.body.style.background = selectedWorld.background;
+        }
+        
+        // Update all displays
+        updateDisplay();
+        updateShopDisplay();
+        updateWorldShopDisplay();
+        updateInventoryDisplay();
+        updatePoopHat();
+        
+        // Update button texts
+        document.getElementById('autoClicker').textContent = `Buy Auto-Pooper (Cost: ${Math.floor(autoClickerCost)} poops)`;
+        document.getElementById('multiplier').textContent = `Buy Poop Multiplier (Cost: ${Math.floor(multiplierCost)} poops)`;
+        document.getElementById('superAutoPooper').textContent = `Buy Super Auto-Pooper (Cost: ${Math.floor(superAutoPooperCost)} poops)`;
+        document.getElementById('poopTraining').textContent = `Poop Training (Cost: ${Math.floor(poopTrainingCost)} poops)`;
+        document.getElementById('goldenPoop').textContent = `Golden Poop Chance (Cost: ${Math.floor(goldenPoopCost)} poops)`;
+        document.getElementById('poopFactory').textContent = `Poop Factory (Cost: ${Math.floor(poopFactoryCost)} poops)`;
+        document.getElementById('poopAlchemy').textContent = `Poop Alchemy (Cost: ${Math.floor(poopAlchemyCost)} poops)`;
+    }
+}
+
+// Add auto-save interval (saves every 30 seconds)
+setInterval(saveGame, 30000);
+
+// Add save on page unload
+window.onbeforeunload = saveGame;
+
+// Load game when the page loads
+window.onload = loadGame;
+
+// Add save after every important action
+const originalClickPoop = clickPoop;
+clickPoop = function() {
+    originalClickPoop();
+    saveGame();
+};
+
+const originalBuyAutoClicker = buyAutoClicker;
+buyAutoClicker = function() {
+    originalBuyAutoClicker();
+    saveGame();
+};
+
+const originalBuyMultiplier = buyMultiplier;
+buyMultiplier = function() {
+    originalBuyMultiplier();
+    saveGame();
+};
+
+const originalBuySuperAutoPooper = buySuperAutoPooper;
+buySuperAutoPooper = function() {
+    originalBuySuperAutoPooper();
+    saveGame();
+};
+
+const originalBuyHat = buyHat;
+buyHat = function(hat) {
+    originalBuyHat(hat);
+    saveGame();
+};
+
+const originalSelectHat = selectHat;
+selectHat = function(hat) {
+    originalSelectHat(hat);
+    saveGame();
+};
+
+const originalBuyWorld = buyWorld;
+buyWorld = function(world) {
+    originalBuyWorld(world);
+    saveGame();
+};
+
+const originalSelectWorld = selectWorld;
+selectWorld = function(world) {
+    originalSelectWorld(world);
+    saveGame();
+};
+
+function createBonusPoop() {
+    const bonusPoop = document.createElement('div');
+    bonusPoop.className = 'bonus-poop';
+    bonusPoop.innerHTML = '💩';
+    bonusPoop.style.left = Math.random() * (window.innerWidth - 60) + 'px';
+    bonusPoop.style.top = Math.random() * (window.innerHeight - 60) + 'px';
+    
+    bonusPoop.onclick = () => {
+        totalBonusPoops++;
+        const newMultiplier = Math.floor(Math.random() * 6) + 5;
+        bonusMultiplier = newMultiplier;
+        highestMultiplier = Math.max(highestMultiplier, newMultiplier);
+        const notification = document.createElement('div');
+        notification.className = 'bonus-multiplier';
+        notification.textContent = `${newMultiplier}x Bonus Active!`;
+        document.body.appendChild(notification);
+        
+        bonusPoop.remove();
+        
+        if (bonusTimeout) clearTimeout(bonusTimeout);
+        
+        bonusTimeout = setTimeout(() => {
+            bonusMultiplier = 1;
+            notification.remove();
+        }, 10000);
+    };
+    
+    document.body.appendChild(bonusPoop);
+    setTimeout(() => bonusPoop.remove(), 10000);
+}
+
+function trySpawnShinyPoop() {
+    if (Math.random() < 0.0001) {
+        const shinyPoop = document.createElement('div');
+        shinyPoop.className = 'shiny-poop';
+        shinyPoop.innerHTML = '💩';
+        shinyPoop.style.left = Math.random() * (window.innerWidth - 80) + 'px';
+        shinyPoop.style.top = Math.random() * (window.innerHeight - 80) + 'px';
+        
+        shinyPoop.onclick = () => {
+            totalShinyPoops++;
+            bonusMultiplier = 1000;
+            shinyClicksRemaining = 10;
+            highestMultiplier = Math.max(highestMultiplier, 1000);
+            const notification = document.createElement('div');
+            notification.className = 'bonus-multiplier';
+            notification.textContent = '1000x Multiplier for 10 clicks!';
+            document.body.appendChild(notification);
+            
+            shinyPoop.remove();
+            setTimeout(() => notification.remove(), 3000);
+        };
+        
+        document.body.appendChild(shinyPoop);
+        setTimeout(() => shinyPoop.remove(), 5000);
+    }
+}
+
+function createPoopRain() {
+    const poop = document.createElement('div');
+    poop.className = 'poop-rain';
+    poop.innerHTML = '💩';
+    poop.style.left = Math.random() * window.innerWidth + 'px';
+    document.body.appendChild(poop);
+    setTimeout(() => poop.remove(), 3000);
+}
+
+function tryGetDiamondPoop() {
+    if (Math.random() < 0.001) {
+        diamondPoops++;
+        const notification = document.createElement('div');
+        notification.className = 'bonus-multiplier';
+        notification.innerHTML = '💎 Diamond Poop Found! 💎';
+        document.body.appendChild(notification);
+        setTimeout(() => notification.remove(), 3000);
+        updateInventoryDisplay();
+    }
+}
+
+function triggerRapGod() {
+    const overlay = document.createElement('div');
+    overlay.className = 'rap-overlay';
+    document.body.appendChild(overlay);
+
+    const eminem = document.createElement('div');
+    eminem.className = 'eminem-rap-god';
+    eminem.innerHTML = '🎤👱‍♂️';
+    document.body.appendChild(eminem);
+
+    const lyrics = document.createElement('div');
+    lyrics.className = 'rap-lyrics';
+    document.body.appendChild(lyrics);
+
+    const rapGodLyrics = [
+        "Summa lumma dooma lumma",
+        "You assumin' I'm a human",
+        "What I gotta do to get it through to you",
+        "I'm superhuman",
+        "I'm made of rubber so that anything",
+        "You say is ricochetin' off of me",
+        "And it'll glue to you"
+    ];
+
+    let lyricIndex = 0;
+    const lyricInterval = setInterval(() => {
+        lyrics.textContent = rapGodLyrics[lyricIndex];
+        lyricIndex = (lyricIndex + 1) % rapGodLyrics.length;
+    }, 3000);
+
+    // Play for 20 seconds then clean up
+    setTimeout(() => {
+        clearInterval(lyricInterval);
+        overlay.remove();
+        eminem.remove();
+        lyrics.remove();
+        // Give massive bonus
+        poops *= 2;
+        updateDisplay();
+        const notification = document.createElement('div');
+        notification.className = 'bonus-multiplier';
+        notification.textContent = '🎤 Rap God Doubled Your Poops! 🎤';
+        document.body.appendChild(notification);
+        setTimeout(() => notification.remove(), 3000);
+    }, 20000);
+}
+
+function clickPoop() {
+    const hatMultiplier = selectedHat ? selectedHat.multiplier : 1;
+    const worldMultiplier = selectedWorld ? selectedWorld.multiplier : 1;
+    const trainingBonus = 1 + (poopTrainingLevel * 0.1);
+    const alchemyBonus = 1 + (poopAlchemyLevel * 0.5);
+    
+    let clickAmount = multiplier * bonusMultiplier * hatMultiplier * worldMultiplier * trainingBonus * alchemyBonus;
+    
+    // Golden poop chance
+    if (Math.random() < goldenPoopChance) {
+        clickAmount *= 10;
+        showFloatingText('💰 Golden Poop! x10 💰');
+    }
+    
+    poops += clickAmount;
+    totalClicks++;
+    
+    // Add Rap God chance (1 in 100 million)
+    if (Math.random() < 0.00000001) {
+        triggerRapGod();
+    }
+    
+    if (shinyClicksRemaining > 0) {
+        shinyClicksRemaining--;
+        if (shinyClicksRemaining === 0) {
+            bonusMultiplier = 1;
+        }
+    }
+    trySpawnShinyPoop();
+    tryGetDiamondPoop();
+    updateDisplay();
+}
+
+setInterval(() => {
+    const hatMultiplier = selectedHat ? selectedHat.multiplier : 1;
+    const worldMultiplier = selectedWorld ? selectedWorld.multiplier : 1;
+    poops += (autoClickers * multiplier * bonusMultiplier * hatMultiplier * worldMultiplier) / 10;
+    updateDisplay();
+}, 100);
+
+setInterval(() => {
+    const hatMultiplier = selectedHat ? selectedHat.multiplier : 1;
+    const worldMultiplier = selectedWorld ? selectedWorld.multiplier : 1;
+    poops += superAutoPooperCount * 10000 * bonusMultiplier * hatMultiplier * worldMultiplier;
+    updateDisplay();
+}, 1000);
+
+// Add this interval for poop factory production
+setInterval(() => {
+    const factoryProduction = poopFactoryCount * 1000;
+    if (factoryProduction > 0) {
+        poops += factoryProduction;
+        updateDisplay();
+    }
+}, 1000);
+
+// Add this interval for creating bonus poops
+setInterval(() => {
+    createBonusPoop();
+}, 30000);
+
+document.getElementById('poop').onclick = clickPoop;
+
+function updateDisplay() {
+    const hatMultiplier = selectedHat ? selectedHat.multiplier : 1;
+    const worldMultiplier = selectedWorld ? selectedWorld.multiplier : 1;
+    poopCountElement.textContent = Math.floor(poops);
+    document.getElementById('pps').textContent = ((autoClickers + superAutoPooperCount * 10000) * multiplier * bonusMultiplier * hatMultiplier * worldMultiplier).toFixed(1);
+}
+
+// Initial display update
+updateDisplay();
+updateShopDisplay();
+updateWorldShopDisplay();
+
+// Add click outside to close functionality
+window.onclick = (event) => {
+    if (event.target === inventoryModal) {
+        inventoryModal.style.display = 'none';
+    }
+    if (event.target === shopModal) {
+        shopModal.style.display = 'none';
+    }
+    if (event.target === worldShopModal) {
+        worldShopModal.style.display = 'none';
+    }
+    if (event.target === resetModal) {
+        resetModal.style.display = 'none';
+    }
+};
+
+// Add click outside to close functionality
+document.querySelectorAll('#inventoryModal #modalClose').forEach(button => {
+    button.onclick = () => {
+        inventoryModal.style.display = 'none';
+    };
+});
+
+document.querySelectorAll('#shopModal #modalClose').forEach(button => {
+    button.onclick = () => {
+        shopModal.style.display = 'none';
+    };
+});
+
+document.querySelectorAll('#worldShopModal #modalClose').forEach(button => {
+    button.onclick = () => {
+        worldShopModal.style.display = 'none';
+    };
+});
+
+resetButton.onclick = () => {
+    resetModal.style.display = 'block';
+};
+
+cancelReset.onclick = () => {
+    resetModal.style.display = 'none';
+};
+
+confirmReset.onclick = () => {
+    // Reset all game variables
+    poops = 0;
+    autoClickers = 0;
+    multiplier = 1;
+    autoClickerCost = 10;
+    multiplierCost = 50;
+    bonusMultiplier = 1;
+    superAutoPooperCount = 0;
+    superAutoPooperCost = 1000000;
+    shinyClicksRemaining = 0;
+    diamondPoops = 0;
+    ownedHats = [];
+    selectedHat = null;
+    ownedWorlds = [];
+    selectedWorld = null;
+    totalClicks = 0;
+    totalBonusPoops = 0;
+    totalShinyPoops = 0;
+    highestMultiplier = 1;
+    startTime = Date.now();
+
+    // Clear local storage
+    localStorage.removeItem('poopClickerSave');
+
+    // Reset displays
+    updateDisplay();
+    updateShopDisplay();
+    updateWorldShopDisplay();
+    updateInventoryDisplay();
+    updatePoopHat();
+    
+    // Reset background
+    document.body.style.background = '#f5e6d3';
+    
+    // Reset button texts
+    document.getElementById('autoClicker').textContent = `Buy Auto-Pooper (Cost: ${Math.floor(autoClickerCost)} poops)`;
+    document.getElementById('multiplier').textContent = `Buy Poop Multiplier (Cost: ${Math.floor(multiplierCost)} poops)`;
+    document.getElementById('superAutoPooper').textContent = `Buy Super Auto-Pooper (Cost: ${Math.floor(superAutoPooperCost)} poops)`;
+    document.getElementById('poopTraining').textContent = `Poop Training (Cost: ${Math.floor(poopTrainingCost)} poops)`;
+    document.getElementById('goldenPoop').textContent = `Golden Poop Chance (Cost: ${Math.floor(goldenPoopCost)} poops)`;
+    document.getElementById('poopFactory').textContent = `Poop Factory (Cost: ${Math.floor(poopFactoryCost)} poops)`;
+    document.getElementById('poopAlchemy').textContent = `Poop Alchemy (Cost: ${Math.floor(poopAlchemyCost)} poops)`;
+    
+    // Close reset modal
+    resetModal.style.display = 'none';
+};
+
+function buyAutoClicker() {
+    if (poops >= autoClickerCost) {
+        poops -= autoClickerCost;
+        autoClickers++;
+        autoClickerCost *= 1.5;
+        document.getElementById('autoClicker').textContent = `Buy Auto-Pooper (Cost: ${Math.floor(autoClickerCost)} poops)`;
+        updateDisplay();
+    }
+}
+
+function buyMultiplier() {
+    if (poops >= multiplierCost) {
+        poops -= multiplierCost;
+        multiplier++;
+        multiplierCost *= 2;
+        document.getElementById('multiplier').textContent = `Buy Poop Multiplier (Cost: ${Math.floor(multiplierCost)} poops)`;
+        updateDisplay();
+    }
+}
+
+function buySuperAutoPooper() {
+    if (poops >= superAutoPooperCost) {
+        poops -= superAutoPooperCost;
+        superAutoPooperCount++;
+        superAutoPooperCost *= 2;
+        document.getElementById('superAutoPooper').textContent = `Buy Super Auto-Pooper (Cost: ${Math.floor(superAutoPooperCost)} poops)`;
+        updateDisplay();
+    }
+}
+
+function buyPoopTraining() {
+    if (poops >= poopTrainingCost) {
+        poops -= poopTrainingCost;
+        poopTrainingLevel++;
+        poopTrainingCost *= 1.8;
+        document.getElementById('poopTraining').textContent = `Poop Training (Cost: ${Math.floor(poopTrainingCost)} poops)`;
+        updateDisplay();
+    }
+}
+
+function buyGoldenPoop() {
+    if (poops >= goldenPoopCost) {
+        poops -= goldenPoopCost;
+        goldenPoopChance += 0.01;
+        goldenPoopCost *= 2;
+        document.getElementById('goldenPoop').textContent = `Golden Poop Chance (Cost: ${Math.floor(goldenPoopCost)} poops)`;
+        updateDisplay();
+    }
+}
+
+function buyPoopFactory() {
+    if (poops >= poopFactoryCost) {
+        poops -= poopFactoryCost;
+        poopFactoryCount++;
+        poopFactoryCost *= 2.5;
+        document.getElementById('poopFactory').textContent = `Poop Factory (Cost: ${Math.floor(poopFactoryCost)} poops)`;
+        updateDisplay();
+    }
+}
+
+function buyPoopAlchemy() {
+    if (poops >= poopAlchemyCost) {
+        poops -= poopAlchemyCost;
+        poopAlchemyLevel++;
+        poopAlchemyCost *= 3;
+        document.getElementById('poopAlchemy').textContent = `Poop Alchemy (Cost: ${Math.floor(poopAlchemyCost)} poops)`;
+        updateDisplay();
+    }
+}
+
+function updateWorldShopDisplay() {
+    const grid = document.querySelector('.world-grid');
+    grid.innerHTML = '';
+    
+    worlds.forEach(world => {
+        const item = document.createElement('div');
+        item.className = 'world-item';
+        if (ownedWorlds.includes(world.id)) {
+            item.classList.add('owned');
+        }
+        if (selectedWorld && selectedWorld.id === world.id) {
+            item.classList.add('selected');
+        }
+        
+        item.innerHTML = `
+            <div class="emoji">${world.emoji}</div>
+            ${world.name}<br>
+            ${ownedWorlds.includes(world.id) ? 
+                `Owned (${world.multiplier}x multiplier)` : 
+                `Cost: ${world.cost} diamond poops`}
+        `;
+        
+        item.onclick = () => {
+            if (ownedWorlds.includes(world.id)) {
+                selectWorld(world);
+            } else {
+                buyWorld(world);
+            }
+        };
+        
+        grid.appendChild(item);
+    });
+}
+
+function buyWorld(world) {
+    if (diamondPoops >= world.cost && !ownedWorlds.includes(world.id)) {
+        diamondPoops -= world.cost;
+        ownedWorlds.push(world.id);
+        updateDisplay();
+        updateWorldShopDisplay();
+        updateInventoryDisplay();
+    }
+}
+
+function selectWorld(world) {
+    if (ownedWorlds.includes(world.id)) {
+        selectedWorld = world;
+        document.body.style.background = world.background;
+        updateWorldShopDisplay();
+    }
+}
+
+inventoryButton.onclick = () => {
+    inventoryModal.style.display = 'block';
+    updateInventoryDisplay();
+};
+
+shopButton.onclick = () => {
+    shopModal.style.display = 'block';
+    updateShopDisplay();
+};
+
+worldShopButton.onclick = () => {
+    worldShopModal.style.display = 'block';
+    updateWorldShopDisplay();
+};
+
+function formatTime(ms) {
+    const seconds = Math.floor((ms / 1000) % 60);
+    const minutes = Math.floor((ms / (1000 * 60)) % 60);
+    const hours = Math.floor(ms / (1000 * 60 * 60));
+    return `${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+}
+
+function updateInventoryDisplay() {
+    const grid = document.querySelector('.inventory-grid');
+    grid.innerHTML = '';
+    
+    // Show stacked diamond poops with count
+    if (diamondPoops > 0) {
+        const slot = document.createElement('div');
+        slot.className = 'inventory-item diamond-poop';
+        slot.innerHTML = `💎💩 x${diamondPoops}`;
+        grid.appendChild(slot);
+    }
+    
+    // Add owned hats to inventory
+    ownedHats.forEach(hatId => {
+        const hat = hats.find(h => h.id === hatId);
+        if (hat) {
+            const slot = document.createElement('div');
+            slot.className = 'inventory-item';
+            slot.innerHTML = `${hat.emoji}<br>${hat.name}`;
+            grid.appendChild(slot);
+        }
+    });
+}
+
+function updateShopDisplay() {
+    const grid = document.querySelector('.shop-grid');
+    grid.innerHTML = '';
+    
+    hats.forEach(hat => {
+        const item = document.createElement('div');
+        item.className = 'hat-item';
+        if (ownedHats.includes(hat.id)) {
+            item.classList.add('owned');
+        }
+        if (selectedHat && selectedHat.id === hat.id) {
+            item.classList.add('selected');
+        }
+        
+        item.innerHTML = `
+            ${hat.emoji}<br>
+            ${hat.name}<br>
+            ${ownedHats.includes(hat.id) ? 
+                `Owned (${hat.multiplier}x multiplier)` : 
+                `Cost: ${hat.cost} poops`}
+        `;
+        
+        item.onclick = () => {
+            if (ownedHats.includes(hat.id)) {
+                selectHat(hat);
+            } else {
+                buyHat(hat);
+            }
+        };
+        
+        grid.appendChild(item);
+    });
+}
+
+function buyHat(hat) {
+    if (poops >= hat.cost && !ownedHats.includes(hat.id)) {
+        poops -= hat.cost;
+        ownedHats.push(hat.id);
+        updateDisplay();
+        updateShopDisplay();
+    }
+}
+
+function selectHat(hat) {
+    if (ownedHats.includes(hat.id)) {
+        selectedHat = hat;
+        updatePoopHat();
+        updateShopDisplay();
+    }
+}
+
+function updatePoopHat() {
+    const poopElement = document.getElementById('poop');
+    poopElement.innerHTML = '💩';
+    if (selectedHat) {
+        const hatElement = document.createElement('div');
+        hatElement.className = 'hat';
+        hatElement.textContent = selectedHat.emoji;
+        poopElement.prepend(hatElement);
+    }
+}
+
+function showFloatingText(text) {
+    const floatingText = document.createElement('div');
+    floatingText.style.position = 'fixed';
+    floatingText.style.left = '50%';
+    floatingText.style.top = '40%';
+    floatingText.style.transform = 'translate(-50%, -50%)';
+    floatingText.style.fontSize = '24px';
+    floatingText.style.color = 'gold';
+    floatingText.style.textShadow = '2px 2px 4px black';
+    floatingText.style.zIndex = '1000';
+    floatingText.style.animation = 'floatUp 2s forwards';
+    floatingText.textContent = text;
+    
+    document.body.appendChild(floatingText);
+    
+    setTimeout(() => floatingText.remove(), 2000);
+}
+</script>
+</body></html>
