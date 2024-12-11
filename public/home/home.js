@@ -4,9 +4,9 @@ var cancelNavbarHide = true;
 var hideTimeout = null; // track the hide timeout
 var dropdownIndexes = [];
 
-$(document).on("mousedown", e => {
+$(document).on("mousedown", (e) => {
     if (hideTimeout) {
-        clearTimeout(hideTimeout);  // Clear any existing hide timeout
+        clearTimeout(hideTimeout); // Clear any existing hide timeout
     }
 
     hideTimeout = setTimeout(() => {
@@ -18,7 +18,9 @@ $(document).on("mousedown", e => {
 });
 
 function openDropdown(index) {
-    const dropdown = $("#navbar .navbar-item-top").eq(index).children(".dropdown");
+    const dropdown = $("#navbar .navbar-item-top")
+        .eq(index)
+        .children(".dropdown");
     cancelNavbarHide = true;
     dropdown.removeClass("hidden");
 
@@ -28,30 +30,37 @@ function openDropdown(index) {
     }
 
     console.log(navbar.find("div.dropdown"));
-    console.log($("#navbar .navbar-item-top").eq(index).children(".dropdown"))
+    console.log($("#navbar .navbar-item-top").eq(index).children(".dropdown"));
     console.log("dropdown shown");
 
     // Reset cancelNavbarHide after a short delay to avoid conflict with hide logic
     setTimeout(() => {
         cancelNavbarHide = false;
-    }, 100);  // Slightly longer than the hide delay to avoid conflicts
+    }, 100); // Slightly longer than the hide delay to avoid conflicts
 }
 
 $(document).ready((e) => {
     fetch("/config/home_navbar.json")
-        .then(response => response.json())
-        .then(items => {
+        .then((response) => response.json())
+        .then((items) => {
             navbarItems = items;
             let i = 0;
-            items.forEach(item => {
+            items.forEach((item) => {
                 let hr = $("<hr />");
                 if (item.multiple) {
                     console.log("multiple items");
-                    let element = $("<div class='navbar-item navbar-item-top'></div>");
+                    let element = $(
+                        "<div class='navbar-item navbar-item-top'></div>",
+                    );
                     element.text(item.text);
-                    element.attr("onclick", `openDropdown(${items.indexOf(item)})`);
-                    let dropdown = $("<div class='dropdown hidden'><img class='notch' src='/images/dropdown-notch.svg' /></div>");
-                    item.pages.forEach(page => {
+                    element.attr(
+                        "onclick",
+                        `openDropdown(${items.indexOf(item)})`,
+                    );
+                    let dropdown = $(
+                        "<div class='dropdown hidden'><img class='notch' src='/images/dropdown-notch.svg' /></div>",
+                    );
+                    item.pages.forEach((page) => {
                         let elem = $("<div>");
                         elem.addClass("navbar-item");
                         elem.text(page.text);
@@ -63,20 +72,30 @@ $(document).ready((e) => {
                     navbar.append(element);
                     dropdownIndexes.push(i);
                 } else {
-                    let element = $("<div class='navbar-item navbar-item-top'></div>");
-                    element.text(item.text);
+                    let element = $(
+                        `<div class='navbar-item navbar-item-top'></div>`,
+                    );
+
+                    const elementText = $(`<span>${item.text}</span>`);
+                    if (item.image) {
+                        console.log("image");
+                        const imageElement = $("<img>")
+                            .attr("src", `/images/${item.image}`)
+                            .addClass("navbar-item-image");
+                        element.append(imageElement);
+                    }
+                    element.append(elementText);
                     element.attr("onclick", `window.open("${item.url}");`);
                     element.append(hr);
                     navbar.append(element);
                 }
-                i ++;
+                i++;
             });
         })
-        .catch(error => {
+        .catch((error) => {
             console.error(error);
         });
-        $('#navbar .gradient-text').click(function() {
-            window.open('/home', '_self');
-        });
+    $("#navbar .gradient-text").click(function () {
+        window.open("/home", "_self");
+    });
 });
-
