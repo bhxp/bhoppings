@@ -1,0 +1,465 @@
+<html><head><base href="." />
+<title>SHITTYMP3</title>
+<style>
+    @font-face {
+        font-family: 'W95FA';
+        src: url('W95FA.otf') format('opentype');
+    }
+
+    body {
+        font-family: 'W95FA', 'Courier New', monospace;
+        background: #1a1a1a;
+        color: #6b4423; /* CGA brown */
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        min-height: 100vh;
+        margin: 0;
+        padding: 20px;
+        position: relative;
+        overflow: hidden; /* Prevent scrollbars from flying gifs */
+    }
+
+    .container {
+        background: #2a2a2a;
+        padding: 30px;
+        border-radius: 10px;
+        box-shadow: 0 0 20px rgba(107, 68, 35, 0.2);
+        max-width: 600px;
+        width: 100%;
+    }
+
+    h1 {
+        text-align: center;
+        text-shadow: 0 0 10px rgba(107, 68, 35, 0.5);
+        font-family: 'W95FA', 'Courier New', monospace;
+    }
+
+    .controls {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .input-group {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .button-group {
+        display: flex;
+        gap: 10px;
+        justify-content: center;
+    }
+
+    label {
+        font-weight: bold;
+        font-family: 'W95FA', 'Courier New', monospace;
+    }
+
+    input[type="file"],
+    input[type="range"],
+    select {
+        width: 100%;
+        padding: 10px;
+        background: #333;
+        border: 1px solid #6b4423;
+        color: #fff;
+        border-radius: 5px;
+        font-family: 'W95FA', 'Courier New', monospace;
+    }
+
+    button {
+        background: #6b4423;
+        color: #fff;
+        border: none;
+        padding: 15px;
+        border-radius: 5px;
+        cursor: pointer;
+        font-weight: bold;
+        transition: all 0.3s;
+        font-family: 'W95FA', 'Courier New', monospace;
+    }
+
+    button:hover {
+        background: #8b5e3c;
+        transform: scale(1.05);
+    }
+
+    .status {
+        text-align: center;
+        margin-top: 20px;
+        font-family: 'W95FA', 'Courier New', monospace;
+    }
+
+    .visualization {
+        width: 100%;
+        height: 100px;
+        background: #333;
+        margin: 20px 0;
+        border-radius: 5px;
+        overflow: hidden;
+    }
+
+    .progress-container {
+        width: 100%;
+        height: 20px;
+        background: #333;
+        border-radius: 10px;
+        overflow: hidden;
+        display: none;
+    }
+
+    .progress-bar {
+        width: 0%;
+        height: 100%;
+        background: #6b4423;
+        transition: width 0.3s;
+    }
+
+    #bitrateValue {
+        font-family: 'W95FA', 'Courier New', monospace;
+    }
+
+    #audioPlayer {
+        width: 100%;
+        margin-top: 20px;
+        display: none;
+    }
+
+    .coming-soon {
+        text-align: center;
+        margin-top: 30px;
+        font-size: 1.2em;
+        color: #6b4423;
+        text-shadow: 0 0 5px rgba(107, 68, 35, 0.5);
+        animation: blink 1s infinite;
+        font-family: 'W95FA', 'Courier New', monospace;
+    }
+
+    @keyframes blink {
+        0% { opacity: 1; }
+        50% { opacity: 0.5; }
+        100% { opacity: 1; }
+    }
+
+    .flying-shit {
+        position: fixed;
+        width: 32px;
+        height: 32px;
+        pointer-events: none; /* Make sure it doesn't interfere with clicks */
+        z-index: -1; /* Place behind other content */
+    }
+
+    @keyframes fly1 {
+        0% { transform: translate(-100px, 100vh) rotate(0deg); }
+        100% { transform: translate(100vw, -100px) rotate(720deg); }
+    }
+
+    @keyframes fly2 {
+        0% { transform: translate(100vw, 100vh) rotate(0deg); }
+        100% { transform: translate(-100px, -100px) rotate(-720deg); }
+    }
+
+    @keyframes fly3 {
+        0% { transform: translate(50vw, 100vh) rotate(0deg); }
+        100% { transform: translate(50vw, -100px) rotate(360deg); }
+    }
+</style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎵 SHITTYMP3 v1.0.0 🎵</h1>
+        
+        <div class="controls">
+            <div class="input-group">
+                <label for="audioFile">Select High Quality Audio File (MP3/WAV):</label>
+                <input type="file" id="audioFile" accept=".mp3,.wav">
+            </div>
+
+            <div class="input-group">
+                <label for="bitrate">Output Bitrate (kbps):</label>
+                <input type="range" id="bitrate" min="8" max="128" value="32">
+                <span id="bitrateValue">32 kbps</span>
+            </div>
+
+            <div class="input-group">
+                <label for="sampleRate">Sample Rate:</label>
+                <select id="sampleRate">
+                    <option value="4000">4000 Hz (ULTRA GARBAGE)</option>
+                    <option value="8000">8000 Hz (TELEPHONE TRASH)</option>
+                    <option value="11025">11025 Hz (90s CAMCORDER)</option>
+                    <option value="16000">16000 Hz (YOUTUBE 2005)</option>
+                    <option value="22050" selected>22050 Hz (RADIO GARBAGE)</option>
+                    <option value="32000">32000 Hz (SEMI-TRASH)</option>
+                    <option value="44100">44100 Hz (NORMAL AUDIO)</option>
+                </select>
+            </div>
+
+            <div class="input-group">
+                <label for="format">Output Format:</label>
+                <select id="format">
+                    <option value="mp3">MP3</option>
+                    <option value="wav">WAV</option>
+                </select>
+            </div>
+
+            <div class="button-group">
+                <button id="testButton">TEST THIS SHIT!!1</button>
+                <button id="processButton">DOWNLOAD THIS SHIT!!1</button>
+            </div>
+        </div>
+
+        <audio id="audioPlayer" controls></audio>
+        <div class="visualization" id="visualization"></div>
+        
+        <div class="progress-container" id="progressContainer">
+            <div class="progress-bar" id="progressBar"></div>
+        </div>
+
+        <div class="status" id="status"></div>
+        <div class="coming-soon">MORE SHITS ARE COMING SOON!11!!!</div>
+    </div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lamejs/1.2.0/lame.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const bitrateSlider = document.getElementById('bitrate');
+    const bitrateValue = document.getElementById('bitrateValue');
+    const processButton = document.getElementById('processButton');
+    const testButton = document.getElementById('testButton');
+    const status = document.getElementById('status');
+    const progressContainer = document.getElementById('progressContainer');
+    const progressBar = document.getElementById('progressBar');
+    const audioPlayer = document.getElementById('audioPlayer');
+
+    bitrateSlider.addEventListener('input', (e) => {
+        bitrateValue.textContent = `${e.target.value} kbps`;
+    });
+
+    async function processAudio(isTest = false) {
+        const audioFile = document.getElementById('audioFile').files[0];
+        if (!audioFile) {
+            status.textContent = 'Please select an audio file!';
+            return;
+        }
+
+        try {
+            status.textContent = 'Processing... Please wait...';
+            progressContainer.style.display = 'block';
+            progressBar.style.width = '0%';
+
+            const arrayBuffer = await audioFile.arrayBuffer();
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+
+            // Convert to lower quality
+            const offlineContext = new OfflineAudioContext({
+                numberOfChannels: audioBuffer.numberOfChannels,
+                length: audioBuffer.length,
+                sampleRate: parseInt(document.getElementById('sampleRate').value)
+            });
+
+            const source = offlineContext.createBufferSource();
+            source.buffer = audioBuffer;
+            source.connect(offlineContext.destination);
+            source.start();
+
+            const renderedBuffer = await offlineContext.startRendering();
+
+            // Convert to selected format
+            const format = document.getElementById('format').value;
+            const bitrate = parseInt(document.getElementById('bitrate').value);
+
+            if (format === 'mp3') {
+                // Convert to MP3 using lamejs
+                const mp3encoder = new lamejs.Mp3Encoder(
+                    renderedBuffer.numberOfChannels,
+                    renderedBuffer.sampleRate,
+                    bitrate
+                );
+
+                const channels = [];
+                const samples = [];
+                
+                // Get all channels
+                for (let i = 0; i < renderedBuffer.numberOfChannels; i++) {
+                    channels.push(renderedBuffer.getChannelData(i));
+                }
+                
+                // Convert Float32Array to Int16Array
+                const sampleBlockSize = 1152; // Multiple of 576
+                for (let i = 0; i < channels[0].length; i++) {
+                    for (let channel = 0; channel < channels.length; channel++) {
+                        const sample = channels[channel][i];
+                        // Convert float to int
+                        const val = Math.max(-1, Math.min(1, sample));
+                        samples.push(val * 0x7FFF);
+                    }
+                }
+
+                const mp3Data = [];
+                
+                // Process samples in chunks
+                for (let i = 0; i < samples.length; i += sampleBlockSize * renderedBuffer.numberOfChannels) {
+                    const sampleChunk = samples.slice(i, i + sampleBlockSize * renderedBuffer.numberOfChannels);
+                    let leftChunk = [];
+                    let rightChunk = [];
+                    
+                    // Separate channels
+                    for (let j = 0; j < sampleChunk.length; j += renderedBuffer.numberOfChannels) {
+                        leftChunk.push(sampleChunk[j]);
+                        if (renderedBuffer.numberOfChannels > 1) {
+                            rightChunk.push(sampleChunk[j + 1]);
+                        }
+                    }
+                    
+                    // Encode chunk
+                    let mp3buf;
+                    if (renderedBuffer.numberOfChannels === 1) {
+                        mp3buf = mp3encoder.encodeBuffer(new Int16Array(leftChunk));
+                    } else {
+                        mp3buf = mp3encoder.encodeBuffer(new Int16Array(leftChunk), new Int16Array(rightChunk));
+                    }
+                    
+                    if (mp3buf.length > 0) {
+                        mp3Data.push(new Int8Array(mp3buf));
+                    }
+                    
+                    // Update progress bar
+                    progressBar.style.width = `${(i / samples.length) * 100}%`;
+                }
+
+                const mp3buf = mp3encoder.flush();
+                if (mp3buf.length > 0) {
+                    mp3Data.push(new Int8Array(mp3buf));
+                }
+
+                const blob = new Blob(mp3Data, { type: 'audio/mp3' });
+                const url = URL.createObjectURL(blob);
+                
+                if (isTest) {
+                    audioPlayer.src = url;
+                    audioPlayer.style.display = 'block';
+                    status.textContent = 'Test preview ready!';
+                } else {
+                    // Create download link
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `degraded_${audioFile.name.replace(/\.[^/.]+$/, '')}.mp3`;
+                    a.click();
+                    status.textContent = 'Degradation complete! File downloaded.';
+                }
+            } else {
+                // WAV format
+                const wav = audioBufferToWav(renderedBuffer);
+                const blob = new Blob([wav], { type: 'audio/wav' });
+                const url = URL.createObjectURL(blob);
+                
+                if (isTest) {
+                    audioPlayer.src = url;
+                    audioPlayer.style.display = 'block';
+                    status.textContent = 'Test preview ready!';
+                } else {
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `degraded_${audioFile.name.replace(/\.[^/.]+$/, '')}.wav`;
+                    a.click();
+                    status.textContent = 'Degradation complete! File downloaded.';
+                }
+            }
+
+        } catch (error) {
+            status.textContent = `Error: ${error.message}`;
+        }
+    }
+
+    testButton.addEventListener('click', () => processAudio(true));
+    processButton.addEventListener('click', () => processAudio(false));
+
+    // Helper function to convert AudioBuffer to WAV
+    function audioBufferToWav(buffer) {
+        const numChannels = buffer.numberOfChannels;
+        const sampleRate = buffer.sampleRate;
+        const format = 1; // PCM
+        const bitDepth = 16;
+        
+        const bytesPerSample = bitDepth / 8;
+        const blockAlign = numChannels * bytesPerSample;
+        
+        const wav = new ArrayBuffer(44 + buffer.length * blockAlign);
+        const view = new DataView(wav);
+        
+        // Write WAV header
+        writeString(view, 0, 'RIFF');
+        view.setUint32(4, 36 + buffer.length * blockAlign, true);
+        writeString(view, 8, 'WAVE');
+        writeString(view, 12, 'fmt ');
+        view.setUint32(16, 16, true);
+        view.setUint16(20, format, true);
+        view.setUint16(22, numChannels, true);
+        view.setUint32(24, sampleRate, true);
+        view.setUint32(28, sampleRate * blockAlign, true);
+        view.setUint16(32, blockAlign, true);
+        view.setUint16(34, bitDepth, true);
+        writeString(view, 36, 'data');
+        view.setUint32(40, buffer.length * blockAlign, true);
+        
+        // Write audio data
+        const offset = 44;
+        for (let i = 0; i < buffer.length; i++) {
+            for (let channel = 0; channel < numChannels; channel++) {
+                const sample = Math.max(-1, Math.min(1, buffer.getChannelData(channel)[i]));
+                view.setInt16(offset + (i * blockAlign) + (channel * bytesPerSample),
+                    sample < 0 ? sample * 0x8000 : sample * 0x7FFF,
+                    true);
+            }
+        }
+        
+        return wav;
+    }
+
+    function writeString(view, offset, string) {
+        for (let i = 0; i < string.length; i++) {
+            view.setUint8(offset + i, string.charCodeAt(i));
+        }
+    }
+
+    // Create flying shit GIFs
+    function createFlyingShit() {
+        const animations = ['fly1', 'fly2', 'fly3'];
+        const durations = [6, 8, 7]; // Different durations for variety
+        
+        for (let i = 0; i < 5; i++) { // Create 5 flying shits
+            const shit = document.createElement('img');
+            shit.src = 'shit.gif';
+            shit.className = 'flying-shit';
+            document.body.appendChild(shit);
+            
+            function animate() {
+                const randomAnimation = animations[Math.floor(Math.random() * animations.length)];
+                const randomDuration = durations[Math.floor(Math.random() * durations.length)];
+                
+                shit.style.animation = `${randomAnimation} ${randomDuration}s linear`;
+                
+                // When animation ends, reset and start a new one
+                shit.onanimationend = () => {
+                    shit.style.animation = 'none';
+                    // Trigger reflow
+                    void shit.offsetWidth;
+                    // Start new animation
+                    animate();
+                };
+            }
+            
+            // Start animation with random delay
+            setTimeout(animate, Math.random() * 3000);
+        }
+    }
+
+    // Call the function when page loads
+    createFlyingShit();
+});
+</script>
+</body></html>
