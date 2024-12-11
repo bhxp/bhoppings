@@ -1,0 +1,603 @@
+<html><head><base href="https://"><link rel="icon" href="data:;base64,=">
+<style>
+  body { margin: 0; overflow: hidden; background: #000; }
+  .game-container { 
+    width: 100vw;
+    height: 100vh;
+    position: relative;
+    background: #1a1a1a;
+    overflow-x: scroll;
+    overflow-y: hidden;
+    scroll-behavior: smooth;
+    min-width: 1200px;
+  }
+  .player {
+    width: 50px;
+    height: 60px;
+    position: absolute;
+    fill: #ff6b00;
+  }
+  .platform {
+    position: absolute;
+    background: #fff;
+    height: 20px;
+  }
+  .heart {
+    position: absolute;
+    width: 30px;
+    height: 30px;
+    fill: #ff0000;
+  }
+  .chest {
+    position: absolute;
+    width: 40px;
+    height: 40px;
+    fill: #8b4513;
+  }
+  .blue-chest {
+    position: absolute;
+    width: 40px;
+    height: 40px;
+    fill: #0077ff;
+  }
+  .score {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    color: white;
+    font-family: Arial;
+    font-size: 24px;
+    z-index: 100;
+  }
+  .win-screen {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: white;
+    font-family: Arial;
+    font-size: 48px;
+    text-align: center;
+    z-index: 1000;
+  }
+  .boss {
+    position: absolute;
+    width: 100px;
+    height: 100px;
+    fill: #ff0000;
+  }
+  .projectile {
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    fill: #ff0000;
+    z-index: 10;
+  }
+  .fireball {
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    fill: #ffa500;
+    z-index: 10;
+  }
+  .boss-health {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    color: white;
+    font-family: Arial;
+    font-size: 24px;
+    z-index: 100;
+  }
+  .game-over {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: red;
+    font-family: Arial;
+    font-size: 48px;
+    text-align: center;
+    z-index: 1000;
+  }
+  .next-level-button {
+    display: none;
+    position: fixed;
+    top: 60%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    padding: 15px 30px;
+    background: #4CAF50;
+    color: white;
+    font-family: Arial;
+    font-size: 24px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    z-index: 1000;
+  }
+  .next-level-button:hover {
+    background: #45a049;
+  }
+</style>
+</head>
+<body>
+<div class="game-container">
+  <div class="score">Hearts: <span id="heartCount">0</span>/15</div>
+  <div class="boss-health">Boss Health: <span id="bossHealth">25</span></div>
+  <div class="win-screen" id="winScreen">You Win!</div>
+  <div class="game-over" id="gameOver">Game Over!</div>
+  <button class="next-level-button" id="nextLevelButton">Next Level</button>
+</div>
+
+<script>
+let currentLevel = 1;
+let baseBossHealth = 25;
+let bossHealth = baseBossHealth;
+let attackMultiplier = 1;
+let lastFrameTime = 0;
+const FRAME_RATE = 1000 / 60; // 60 FPS target
+
+function lerp(start, end, t) {
+    return start * (1 - t) + end * t;
+}
+
+const gameContainer = document.querySelector('.game-container');
+let player, hearts = [], chests = [], platforms = [], projectiles = [], fireballs = [];
+let playerX = 100;
+let playerY = 100;
+let velocityX = 0;
+let velocityY = 0;
+let isJumping = false;
+let heartCount = 0;
+let boss;
+let lastFireballTime = 0;
+let isGameOver = false;
+let finalHeartsSpawned = false;
+
+function createPlayer() {
+  const player = document.createElement('img');
+  player.src = "/a/6e5089f1-2a32-4e00-ab61-95fa465b7eb6";
+  player.classList.add('player');
+  gameContainer.appendChild(player);
+  return player;
+}
+
+function createBoss() {
+  const boss = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  boss.setAttribute("viewBox", "0 0 100 100");
+  boss.classList.add('boss');
+  boss.innerHTML = `
+    <rect x="10" y="10" width="80" height="80" />
+    <circle cx="30" cy="40" r="10" fill="black"/>
+    <circle cx="70" cy="40" r="10" fill="black"/>
+    <path d="M30 70 Q50 90 70 70" stroke="black" fill="none" stroke-width="5"/>
+  `;
+  boss.style.left = '1000px';
+  boss.style.top = '450px';
+  gameContainer.appendChild(boss);
+  
+  // Update level and health display
+  document.querySelector('.boss-health').textContent = `Level ${currentLevel} - Boss Health: ${bossHealth}`;
+  
+  return boss;
+}
+
+function startNextLevel() {
+  currentLevel++;
+  
+  // Increase boss health and damage multiplier
+  if (currentLevel === 2) {
+    baseBossHealth = 100;
+    attackMultiplier = 5;
+  } else if (currentLevel > 2) {
+    baseBossHealth *= 2;
+    attackMultiplier *= 5; // Multiply damage by 5 each level
+  }
+  
+  bossHealth = baseBossHealth;
+  
+  // Reset player position
+  playerX = 100;
+  playerY = 100;
+  velocityX = 0;
+  velocityY = 0;
+  
+  // Reset game state
+  heartCount = 0;
+  finalHeartsSpawned = false;
+  document.getElementById('heartCount').textContent = '0';
+  document.getElementById('winScreen').style.display = 'none';
+  document.getElementById('nextLevelButton').style.display = 'none';
+  
+  // Clear existing hearts, chests, projectiles, and fireballs
+  hearts.forEach(heart => heart.remove());
+  hearts = [];
+  chests.forEach(chest => chest.element.remove());
+  chests = [];
+  projectiles.forEach(proj => proj.remove());
+  projectiles = [];
+  fireballs.forEach(fire => fire.remove());
+  fireballs = [];
+  
+  // Create new boss and collectibles
+  if (boss) boss.remove();
+  boss = createBoss();
+  createCollectibles();
+  
+  // Reset scroll position
+  gameContainer.scrollLeft = 0;
+}
+
+function createPlatforms() {
+  const platformPositions = [
+    {x: 0, y: 500, width: 1200},
+    {x: 200, y: 400, width: 200},
+    {x: 500, y: 300, width: 200},
+    {x: 100, y: 200, width: 200},
+    {x: 400, y: 150, width: 200},
+    {x: 700, y: 350, width: 200},
+    {x: 900, y: 250, width: 200},
+    {x: 1000, y: 400, width: 200},
+  ];
+
+  platformPositions.forEach(pos => {
+    const platform = document.createElement('div');
+    platform.classList.add('platform');
+    platform.style.left = pos.x + 'px';
+    platform.style.top = pos.y + 'px';
+    platform.style.width = pos.width + 'px';
+    platforms.push(platform);
+    gameContainer.appendChild(platform);
+  });
+}
+
+function createProjectile(x, y, direction) {
+  const projectile = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  projectile.setAttribute("viewBox", "0 0 100 100");
+  projectile.classList.add('projectile');
+  projectile.innerHTML = `
+    <path d="M50 80 L20 50 A20 20 0 1 1 50 20 A20 20 0 1 1 80 50 Z"/>
+  `;
+  projectile.style.left = x + 'px';
+  projectile.style.top = y + 'px';
+  projectile.direction = direction;
+  projectiles.push(projectile);
+  gameContainer.appendChild(projectile);
+}
+
+function createFireball(x, y) {
+  const fireball = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  fireball.setAttribute("viewBox", "0 0 100 100");
+  fireball.classList.add('fireball');
+  fireball.innerHTML = `
+    <circle cx="50" cy="50" r="40"/>
+  `;
+  fireball.style.left = x + 'px';
+  fireball.style.top = y + 'px';
+  
+  const playerRect = player.getBoundingClientRect();
+  const angle = Math.atan2(
+    playerRect.top + playerRect.height/2 - y,
+    playerRect.left + playerRect.width/2 - x
+  );
+  
+  fireball.velocityX = Math.cos(angle) * 5;
+  fireball.velocityY = Math.sin(angle) * 5;
+  
+  fireballs.push(fireball);
+  gameContainer.appendChild(fireball);
+}
+
+function createCollectibles() {
+  const heartPositions = [
+    {x: 250, y: 350, inChest: true},
+    {x: 550, y: 250, inChest: true},
+    {x: 150, y: 150, inChest: true},
+    {x: 300, y: 450, inChest: false},
+    {x: 600, y: 450, inChest: false},
+    {x: 400, y: 100, inChest: true},
+    {x: 700, y: 450, inChest: false},
+    {x: 450, y: 350, inChest: true},
+    {x: 200, y: 150, inChest: false},
+    {x: 350, y: 250, inChest: true},
+    {x: 500, y: 450, inChest: false},
+    {x: 650, y: 250, inChest: true},
+    {x: 100, y: 450, inChest: false},
+    {x: 250, y: 250, inChest: true}
+  ];
+
+  heartPositions.forEach(pos => {
+    if (pos.inChest) {
+      const chest = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+      chest.setAttribute("viewBox", "0 0 100 100");
+      chest.classList.add('chest');
+      chest.innerHTML = `
+        <path d="M 10 40 L 10 90 L 90 90 L 90 40 Z" fill="#8b4513"/>
+        <path d="M 20 30 L 20 40 L 80 40 L 80 30 Z" fill="#8b4513"/>
+        <rect x="45" y="50" width="10" height="10" fill="#ffd700"/> <!-- Lock -->
+        <path d="M 15 60 L 85 60" stroke="#ffd700" stroke-width="2"/> <!-- Decorative line -->
+      `;
+      chest.style.left = pos.x + 'px';
+      chest.style.top = pos.y + 'px';
+      chests.push({element: chest, hasHeart: true});
+      gameContainer.appendChild(chest);
+    } else {
+      const heart = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+      heart.setAttribute("viewBox", "0 0 100 100");
+      heart.classList.add('heart');
+      heart.innerHTML = `
+        <path d="M50 80 L20 50 A20 20 0 1 1 50 20 A20 20 0 1 1 80 50 Z"/>
+      `;
+      heart.style.left = pos.x + 'px';
+      heart.style.top = pos.y + 'px';
+      hearts.push(heart);
+      gameContainer.appendChild(heart);
+    }
+  });
+}
+
+function spawnFinalHearts() {
+  if (finalHeartsSpawned) return;
+  
+  const bossPosition = {
+    x: parseInt(boss.style.left),
+    y: parseInt(boss.style.top)
+  };
+  
+  const finalHeartPositions = [
+    {x: bossPosition.x - 50, y: bossPosition.y},
+    {x: bossPosition.x - 30, y: bossPosition.y},
+    {x: bossPosition.x - 10, y: bossPosition.y},
+    {x: bossPosition.x + 10, y: bossPosition.y},
+    {x: bossPosition.x + 30, y: bossPosition.y},
+    {x: bossPosition.x + 50, y: bossPosition.y}
+  ];
+
+  finalHeartPositions.forEach(pos => {
+    const heart = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    heart.setAttribute("viewBox", "0 0 100 100");
+    heart.classList.add('heart');
+    heart.innerHTML = `
+      <path d="M50 80 L20 50 A20 20 0 1 1 50 20 A20 20 0 1 1 80 50 Z"/>
+    `;
+    heart.style.left = pos.x + 'px';
+    heart.style.top = pos.y + 'px';
+    hearts.push(heart);
+    gameContainer.appendChild(heart);
+  });
+  
+  finalHeartsSpawned = true;
+}
+
+function updateBossHealthDisplay() {
+  document.querySelector('.boss-health').textContent = 
+    `Level ${currentLevel} - Boss Health: ${bossHealth}`;
+}
+
+function gameLoop(timestamp) {
+  if (isGameOver) return;
+  
+  // Limit frame rate
+  if (timestamp - lastFrameTime < FRAME_RATE) {
+    requestAnimationFrame(gameLoop);
+    return;
+  }
+  lastFrameTime = timestamp;
+
+  // Batch DOM reads at start of frame
+  const playerRect = player.getBoundingClientRect();
+  const bossRect = boss ? boss.getBoundingClientRect() : null;
+
+  // Screen boundary check with optimized scrolling
+  if (playerX < 0 || playerX > 1200) {
+    playerX = 1000;
+    playerY = 450;
+    gameContainer.scrollLeft = 800;
+  }
+
+  // Boss movement - only calculate if boss exists and has health
+  if (boss && bossHealth > 0) {
+    // Calculate direction to player once
+    const dx = playerRect.left - bossRect.left;
+    const dy = playerRect.top - bossRect.top;
+    const angle = Math.atan2(dy, dx);
+    
+    // Single calculation for boss position
+    const speed = 2;
+    const newX = parseInt(boss.style.left) + Math.cos(angle) * speed;
+    const newY = parseInt(boss.style.top) + Math.sin(angle) * speed;
+    
+    boss.style.left = Math.max(800, Math.min(1150, newX)) + 'px';
+    boss.style.top = Math.max(100, Math.min(450, newY));
+
+    // Optimize fireball creation
+    const currentTime = Date.now();
+    if (currentTime - lastFireballTime > 2000) {
+      createFireball(newX, newY);
+      lastFireballTime = currentTime;
+    }
+  }
+
+  // Batch projectile updates
+  for (let i = projectiles.length - 1; i >= 0; i--) {
+    const projectile = projectiles[i];
+    const currentX = parseInt(projectile.style.left);
+    const newX = currentX + projectile.direction * 10;
+    
+    if (newX < 0 || newX > 2000) {
+      projectile.remove();
+      projectiles.splice(i, 1);
+      continue;
+    }
+
+    projectile.style.left = newX + 'px';
+
+    if (boss && bossHealth > 0) {
+      const projectileRect = projectile.getBoundingClientRect();
+      if (projectileRect.right > bossRect.left &&
+          projectileRect.left < bossRect.right &&
+          projectileRect.bottom > bossRect.top &&
+          projectileRect.top < bossRect.bottom) {
+        projectile.remove();
+        projectiles.splice(i, 1);
+        bossHealth -= attackMultiplier;
+        updateBossHealthDisplay();
+        if (bossHealth <= 0) boss.remove();
+      }
+    }
+  }
+
+  // Batch fireball updates
+  for (let i = fireballs.length - 1; i >= 0; i--) {
+    const fireball = fireballs[i];
+    const currentX = parseInt(fireball.style.left);
+    const currentY = parseInt(fireball.style.top);
+    const newX = currentX + fireball.velocityX;
+    const newY = currentY + fireball.velocityY;
+
+    if (newX < 0 || newX > 2000 || newY < 0 || newY > 1000) {
+      fireball.remove();
+      fireballs.splice(i, 1);
+      continue;
+    }
+
+    fireball.style.left = newX + 'px';
+    fireball.style.top = newY + 'px';
+
+    const fireballRect = fireball.getBoundingClientRect();
+    if (fireballRect.right - 5 > playerRect.left + 5 &&
+        fireballRect.left + 5 < playerRect.right - 5 &&
+        fireballRect.bottom - 5 > playerRect.top + 5 &&
+        fireballRect.top + 5 < playerRect.bottom - 5) {
+      isGameOver = true;
+      document.getElementById('gameOver').style.display = 'block';
+      return;
+    }
+  }
+
+  // Rest of the game loop...
+  
+  velocityY += 0.5;
+  playerX += velocityX;
+  playerY += velocityY;
+
+  platforms.forEach(platform => {
+    const platformRect = platform.getBoundingClientRect();
+    const playerRect = player.getBoundingClientRect();
+
+    if (playerRect.bottom > platformRect.top &&
+        playerRect.top < platformRect.bottom &&
+        playerRect.right > platformRect.left &&
+        playerRect.left < platformRect.right) {
+      if (velocityY > 0) {
+        playerY = platformRect.top - playerRect.height;
+        velocityY = 0;
+        isJumping = false;
+      }
+    }
+  });
+
+  hearts.forEach((heart, index) => {
+    const heartRect = heart.getBoundingClientRect();
+    const playerRect = player.getBoundingClientRect();
+
+    if (playerRect.right > heartRect.left &&
+        playerRect.left < heartRect.right &&
+        playerRect.bottom > heartRect.top &&
+        playerRect.top < heartRect.bottom) {
+      heart.remove();
+      hearts.splice(index, 1);
+      heartCount++;
+      document.getElementById('heartCount').textContent = heartCount;
+    }
+  });
+
+  chests.forEach((chest, index) => {
+    if (!chest.hasHeart) return;
+    
+    const chestRect = chest.element.getBoundingClientRect();
+    const playerRect = player.getBoundingClientRect();
+
+    if (playerRect.right > chestRect.left &&
+        playerRect.left < chestRect.right &&
+        playerRect.bottom > chestRect.top &&
+        playerRect.top < chestRect.bottom) {
+      chest.hasHeart = false;
+      heartCount++;
+      document.getElementById('heartCount').textContent = heartCount;
+      chest.element.remove(); // Remove the chest element
+      chests.splice(index, 1); // Remove the chest from the array
+    }
+  });
+
+  if (heartCount >= 15 && bossHealth <= 0) {
+    document.getElementById('winScreen').textContent = `Level ${currentLevel} Complete!`;
+    document.getElementById('winScreen').style.display = 'block';
+    document.getElementById('nextLevelButton').style.display = 'block';
+  }
+
+  player.style.left = playerX + 'px';
+  player.style.top = playerY + 'px';
+
+  const containerWidth = gameContainer.clientWidth;
+  const targetScrollX = playerX - containerWidth / 2 + 25;
+  gameContainer.scrollLeft = lerp(gameContainer.scrollLeft, targetScrollX, 0.1);
+
+  requestAnimationFrame(gameLoop);
+}
+
+document.addEventListener('keydown', (e) => {
+  if (isGameOver) return;
+  
+  switch(e.key.toLowerCase()) {
+    case 'arrowleft':
+    case 'a':
+      velocityX = -5;
+      player.style.transform = 'scaleX(-1)';
+      break;
+    case 'arrowright':
+    case 'd':
+      velocityX = 5;
+      player.style.transform = 'scaleX(1)';
+      break;
+    case 'arrowup':
+    case 'w':
+    case ' ':
+      if (!isJumping) {
+        velocityY = -12;
+        isJumping = true;
+      }
+      break;
+    case 'h':
+      const direction = player.style.transform === 'scaleX(-1)' ? -1 : 1;
+      createProjectile(playerX + 25, playerY + 30, direction);
+      break;
+  }
+});
+
+document.addEventListener('keyup', (e) => {
+  switch(e.key.toLowerCase()) {
+    case 'arrowleft':
+    case 'arrowright':
+    case 'a':
+    case 'd':
+      velocityX = 0;
+      break;
+  }
+});
+
+document.getElementById('nextLevelButton').addEventListener('click', () => {
+  document.getElementById('nextLevelButton').style.display = 'none';
+  startNextLevel();
+});
+
+player = createPlayer();
+boss = createBoss();
+createPlatforms();
+createCollectibles();
+gameLoop();
+</script>
+</body></html>
