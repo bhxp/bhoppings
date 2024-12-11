@@ -1,0 +1,563 @@
+<html><head><base href="." />
+<title>Meme Empire - Build Your Viral Kingdom!</title>
+<style>
+:root {
+  --primary: #ff6b6b;
+  --secondary: #4ecdc4;
+  --dark: #2c3e50;
+  --light: #f7f9fc;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Segoe UI', sans-serif;
+  background: var(--dark);
+  color: var(--light);
+}
+
+.game-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+.header {
+  background: rgba(0,0,0,0.8);
+  padding: 1rem;
+  text-align: center;
+}
+
+.game-grid {
+  display: grid;
+  grid-template-columns: repeat(10, 1fr);
+  gap: 2px;
+  padding: 10px;
+  background: rgba(0,0,0,0.5);
+  flex-grow: 1;
+}
+
+.tile {
+  background: var(--dark);
+  border: 1px solid var(--secondary);
+  aspect-ratio: 1;
+  position: relative;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.tile:hover {
+  background: var(--secondary);
+  transform: scale(1.05);
+}
+
+.tile.occupied {
+  cursor: pointer;
+}
+
+.tile.occupied:hover {
+  background: rgba(255,0,0,0.3);
+  transform: scale(1.05);
+}
+
+.resources {
+  display: flex;
+  justify-content: space-around;
+  padding: 1rem;
+  background: rgba(0,0,0,0.8);
+}
+
+.resource {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.icon {
+  width: 24px;
+  height: 24px;
+}
+
+.building-menu {
+  position: fixed;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(0,0,0,0.9);
+  padding: 1rem;
+  border-left: 2px solid var(--primary);
+}
+
+.building {
+  margin: 0.5rem 0;
+  padding: 0.5rem;
+  background: var(--dark);
+  border: 1px solid var(--primary);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.building:hover {
+  background: var(--primary);
+}
+
+.building.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.sell-mode {
+  background: #ff4444;
+  color: white;
+  padding: 0.5rem;
+  margin-top: 1rem;
+  cursor: pointer;
+  border: 1px solid white;
+}
+
+.sell-mode.active {
+  background: #cc0000;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1); }
+}
+
+.selected {
+  animation: pulse 1s infinite;
+}
+
+/* New Menu Styles */
+.main-menu {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, rgba(44, 62, 80, 0.95), rgba(0, 0, 0, 0.98)), 
+              url('memecollagesitmage.png');
+  background-size: cover;
+  background-position: center;
+  background-blend-mode: multiply;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.menu-button {
+  background: linear-gradient(45deg, var(--primary), #ff8787);
+  color: white;
+  border: none;
+  padding: 1rem 2rem;
+  margin: 1rem;
+  font-size: 1.2rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border-radius: 25px;
+  font-weight: bold;
+  letter-spacing: 1px;
+  position: relative;
+  overflow: hidden;
+}
+
+.menu-button:hover {
+  background: linear-gradient(45deg, var(--secondary), #6fe7df);
+  box-shadow: 0 4px 20px rgba(78, 205, 196, 0.5);
+  transform: translateY(-2px);
+}
+
+.menu-button:active {
+  transform: translateY(1px);
+}
+
+/* Add decorative elements */
+.menu-decoration {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  opacity: 0.15; /* Slightly increased opacity */
+}
+
+@keyframes glow {
+  from {
+    text-shadow: 0 0 10px rgba(255, 107, 107, 0.5);
+  }
+  to {
+    text-shadow: 0 0 20px rgba(255, 107, 107, 0.8),
+                 0 0 30px rgba(255, 107, 107, 0.6);
+  }
+}
+
+.version {
+  position: absolute;
+  bottom: 1rem;
+  right: 1rem;
+  color: rgba(255, 255, 255, 0.3);
+  font-size: 0.8rem;
+}
+</style>
+</head>
+<body>
+
+<!-- Update the main menu HTML structure -->
+<div id="main-menu" class="main-menu">
+  <!-- Add decorative background -->
+  <div class="menu-decoration">
+    <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none">
+      <defs>
+        <pattern id="meme-pattern" x="0" y="0" width="50" height="50" patternUnits="userSpaceOnUse">
+          <!-- Meme-style emoji pattern -->
+          <rect width="50" height="50" fill="transparent"/>
+          <text x="10" y="15" font-size="15" fill="white">😂</text>
+          <text x="30" y="25" font-size="15" fill="white">🔥</text>
+          <text x="15" y="40" font-size="15" fill="white">💯</text>
+          <text x="35" y="45" font-size="15" fill="white">👌</text>
+          <text x="25" y="15" font-size="15" fill="white">🎮</text>
+          <text x="5" y="30" font-size="15" fill="white">🚀</text>
+          <text x="40" y="35" font-size="15" fill="white">⭐</text>
+          <text x="20" y="25" font-size="15" fill="white">🎯</text>
+          <text x="45" y="15" font-size="15" fill="white">🏆</text>
+          <text x="10" y="45" font-size="15" fill="white">🌟</text>
+        </pattern>
+      </defs>
+      <rect width="100%" height="100%" fill="url(#meme-pattern)"/>
+    </svg>
+  </div>
+  
+  <h1>👑 Meme Empire</h1>
+  <p style="font-size: 1.2rem; margin-bottom: 2rem; color: var(--secondary);">
+    Build Your Viral Kingdom!
+  </p>
+  <button class="menu-button" onclick="startNewGame()">
+    🎮 New Game
+  </button>
+  <button class="menu-button" onclick="loadGame()">
+    💾 Load Game
+  </button>
+  <div class="version">v1.5.9</div>
+</div>
+
+<!-- Rest of the game HTML -->
+<div id="game-content" style="display: none;">
+  <div class="game-container">
+    <header class="header">
+      <h1>🎮 Meme Empire</h1>
+      <p>Build your viral kingdom and conquer the internet!</p>
+      <button class="menu-button" onclick="saveGame()">Save Game</button>
+    </header>
+    
+    <div class="resources">
+      <div class="resource">
+        <svg class="icon" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="10" fill="yellow"/>
+          <text x="12" y="16" text-anchor="middle" fill="black" font-size="12">😂</text>
+        </svg>
+        <span id="meme-coins">1000</span> MemeCoins
+      </div>
+      <div class="resource">
+        <svg class="icon" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="10" fill="red"/>
+          <text x="12" y="16" text-anchor="middle" fill="white" font-size="12">❤️</text>
+        </svg>
+        <span id="followers">100</span> Population
+      </div>
+    </div>
+
+    <div id="game-grid" class="game-grid"></div>
+
+    <div class="building-menu">
+      <h3>Buildings</h3>
+      <div class="building" data-cost="100" onclick="selectBuilding('meme-factory')">
+        🏭 Meme Factory (100 MC)
+      </div>
+      <div class="building" data-cost="200" onclick="selectBuilding('viral-lab')">
+        🧪 Viral Lab (200 MC)
+      </div>
+      <div class="building" data-cost="500" onclick="selectBuilding('influence-tower')">
+        🗼 Influence Tower (500 MC)
+      </div>
+      <div class="building" data-cost="915" onclick="selectBuilding('control-center')">
+        🏰 Control Center (915 MC)
+      </div>
+      <div class="sell-mode" onclick="toggleSellMode()">
+        🗑️ Sell Building
+      </div>
+    </div>
+  </div>
+</div>
+
+<audio id="clickSound" src="click.wav"></audio>
+<audio id="cashSound" src="Cash_register_game_s.mp3"></audio>
+<audio id="bgMusic" src="C418  - Sweden - Minecraft Volume Alpha - InfernalEntertain (1).mp3" loop></audio>
+
+<script>
+let selectedBuilding = null;
+let memeCoins = 1000;
+let followers = 100;
+let hasControlCenter = false;
+let memeCoinMultiplier = 1;
+let sellMode = false;
+let buildingIntervals = new Map();
+const clickSound = document.getElementById('clickSound');
+const cashSound = document.getElementById('cashSound');
+
+function playClick() {
+  clickSound.currentTime = 0;
+  clickSound.play().catch(e => console.log("Audio play failed:", e));
+}
+
+function playCashSound() {
+  cashSound.currentTime = 0;
+  cashSound.play().catch(e => console.log("Cash sound play failed:", e));
+}
+
+function toggleSellMode() {
+  playClick();
+  sellMode = !sellMode;
+  selectedBuilding = null;
+  document.querySelectorAll('.building').forEach(b => b.classList.remove('selected'));
+  document.querySelector('.sell-mode').classList.toggle('active');
+}
+
+function initializeGrid() {
+  const grid = document.getElementById('game-grid');
+  for(let i = 0; i < 100; i++) {
+    const tile = document.createElement('div');
+    tile.className = 'tile';
+    tile.onclick = () => handleTileClick(tile);
+    grid.appendChild(tile);
+  }
+}
+
+function handleTileClick(tile) {
+  playClick();
+  if (sellMode && tile.classList.contains('occupied')) {
+    sellBuilding(tile);
+  } else if (!tile.classList.contains('occupied')) {
+    placeBuildingOnTile(tile);
+  }
+}
+
+function sellBuilding(tile) {
+  const buildingType = tile.getAttribute('data-building-type');
+  const cost = parseInt(tile.getAttribute('data-building-cost'));
+  
+  const interval = buildingIntervals.get(tile);
+  if (interval) {
+    clearInterval(interval);
+    buildingIntervals.delete(tile);
+  }
+  
+  if (buildingType === 'control-center') {
+    hasControlCenter = false;
+    memeCoinMultiplier = 1;
+    document.querySelector('[onclick="selectBuilding(\'control-center\')"]').classList.remove('disabled');
+  }
+  
+  memeCoins += cost;
+  updateResources();
+  
+  tile.innerHTML = '';
+  tile.classList.remove('occupied');
+  tile.removeAttribute('data-building-type');
+  tile.removeAttribute('data-building-cost');
+}
+
+function selectBuilding(buildingType) {
+  playClick();
+  if(buildingType === 'control-center' && hasControlCenter) {
+    alert("Only one Control Center can be built!");
+    return;
+  }
+  sellMode = false;
+  document.querySelector('.sell-mode').classList.remove('active');
+  selectedBuilding = buildingType;
+  document.querySelectorAll('.building').forEach(b => b.classList.remove('selected'));
+  event.target.classList.add('selected');
+}
+
+function placeBuildingOnTile(tile) {
+  if(!selectedBuilding || tile.classList.contains('occupied')) return;
+  
+  const cost = parseInt(document.querySelector(`[onclick="selectBuilding('${selectedBuilding}')"]`).dataset.cost);
+  
+  if(selectedBuilding === 'control-center' && hasControlCenter) {
+    alert("Only one Control Center can be built!");
+    return;
+  }
+  
+  if(memeCoins >= cost) {
+    memeCoins -= cost;
+    updateResources();
+    
+    tile.innerHTML = '';
+    const building = document.createElement('div');
+    building.style.width = '100%';
+    building.style.height = '100%';
+    building.style.display = 'flex';
+    building.style.alignItems = 'center';
+    building.style.justifyContent = 'center';
+    
+    tile.setAttribute('data-building-type', selectedBuilding);
+    tile.setAttribute('data-building-cost', cost);
+    
+    let interval;
+    switch(selectedBuilding) {
+      case 'meme-factory':
+        building.innerHTML = '🏭';
+        interval = setInterval(() => {
+          generateMemeCoins(5);
+          playCashSound();
+        }, 5000);
+        break;
+      case 'viral-lab':
+        building.innerHTML = '🧪';
+        interval = setInterval(() => {
+          generateMemeCoins(10);
+          playCashSound();
+        }, 4000);
+        break;
+      case 'influence-tower':
+        building.innerHTML = '🗼';
+        interval = setInterval(() => generateFollowers(5), 3000);
+        break;
+      case 'control-center':
+        building.innerHTML = '🏰';
+        hasControlCenter = true;
+        memeCoinMultiplier = 2;
+        interval = setInterval(() => generateFollowers(90), 300000);
+        document.querySelector('[onclick="selectBuilding(\'control-center\')"]').classList.add('disabled');
+        break;
+    }
+    
+    if (interval) {
+      buildingIntervals.set(tile, interval);
+    }
+    
+    tile.appendChild(building);
+    tile.classList.add('occupied');
+  } else {
+    alert("Not enough MemeCoins!");
+  }
+}
+
+function generateMemeCoins(amount) {
+  memeCoins += amount * memeCoinMultiplier;
+  updateResources();
+}
+
+function generateFollowers(amount) {
+  followers += amount;
+  updateResources();
+}
+
+function updateResources() {
+  document.getElementById('meme-coins').textContent = memeCoins;
+  document.getElementById('followers').textContent = followers;
+}
+
+// Add new save/load functions
+function saveGame() {
+  playClick();
+  const gameState = {
+    memeCoins,
+    followers,
+    hasControlCenter,
+    memeCoinMultiplier,
+    buildingData: []
+  };
+  
+  // Save building data
+  document.querySelectorAll('.tile.occupied').forEach(tile => {
+    gameState.buildingData.push({
+      buildingType: tile.getAttribute('data-building-type'),
+      buildingCost: tile.getAttribute('data-building-cost')
+    });
+  });
+  
+  localStorage.setItem('memeEmpireData', JSON.stringify(gameState));
+  alert('Game Saved Successfully!');
+}
+
+function loadGame() {
+  playClick();
+  const savedData = localStorage.getItem('memeEmpireData');
+  if (savedData) {
+    const gameState = JSON.parse(savedData);
+    
+    // Reset current game state
+    memeCoins = gameState.memeCoins;
+    followers = gameState.followers;
+    hasControlCenter = gameState.hasControlCenter;
+    memeCoinMultiplier = gameState.memeCoinMultiplier;
+    
+    // Clear existing grid
+    const grid = document.getElementById('game-grid');
+    grid.innerHTML = '';
+    buildingIntervals.forEach(interval => clearInterval(interval));
+    buildingIntervals.clear();
+    
+    // Recreate grid with saved buildings
+    for(let i = 0; i < 100; i++) {
+      const tile = document.createElement('div');
+      tile.className = 'tile';
+      tile.onclick = () => handleTileClick(tile);
+      grid.appendChild(tile);
+    }
+    
+    // Place saved buildings
+    const tiles = document.querySelectorAll('.tile');
+    gameState.buildingData.forEach((building, index) => {
+      const tile = tiles[index];
+      selectedBuilding = building.buildingType;
+      placeBuildingOnTile(tile);
+    });
+    
+    selectedBuilding = null;
+    document.querySelectorAll('.building').forEach(b => b.classList.remove('selected'));
+    
+    // Show game content
+    document.getElementById('main-menu').style.display = 'none';
+    document.getElementById('game-content').style.display = 'block';
+    
+    updateResources();
+  } else {
+    alert('No saved game found!');
+  }
+}
+
+function startNewGame() {
+  playClick();
+  document.getElementById('main-menu').style.display = 'none';
+  document.getElementById('game-content').style.display = 'block';
+  
+  // Start playing background music
+  const bgMusic = document.getElementById('bgMusic');
+  bgMusic.volume = 0.5; // Set volume to 50%
+  bgMusic.play().catch(e => console.log("Background music play failed:", e));
+  
+  // Reset game state
+  memeCoins = 1000;
+  followers = 100;
+  hasControlCenter = false;
+  memeCoinMultiplier = 1;
+  buildingIntervals.forEach(interval => clearInterval(interval));
+  buildingIntervals.clear();
+  
+  // Clear grid
+  const grid = document.getElementById('game-grid');
+  grid.innerHTML = '';
+  initializeGrid();
+  updateResources();
+}
+
+// Initialize game
+document.getElementById('game-content').style.display = 'none';
+initializeGrid();
+</script>
+</body></html>
