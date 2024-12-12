@@ -41,7 +41,7 @@
             { "text": "piss clicker", "url": "/pissclicker" },
             { "text": "cat clicker", "url": "/catclicker" },
             { "text": "hydro hop", "url": "/hydrohop" },
-            { "text": "inflation fetish", "url": "/inflationfetish" }
+            { "text": "inflation fetish", "url": "/inflation-fetish" }
         ]
     },
     {
@@ -52,13 +52,13 @@
             { "text": "minecraft clicker", "url": "/minecraftclicker" },
             { "text": "minecraft world explore", "url": "/minecraftworldexplore" },
             { "text": "offroad", "url": "/offroad" },
-            { "text": "ping ping", "url": "/pingpong" },
+            { "text": "ping pong", "url": "/pingpong" },
             { "text": "poo burger", "url": "/pooburger" },
             { "text": "poo clicker", "url": "/pooclicker" },
             { "text": "portal", "url": "/portal" },
             { "text": "rocket runner", "url": "/rocketrunner" },
             { "text": "rooms explorer", "url": "/roomsexplorer" },
-            { "text": "shittycraft", "url": "/shittycraft" },
+            { "text": "shitcraft", "url": "/shitcraft" },
             { "text": "sla p3d", "url": "/slap3d" },
             { "text": "slot wars", "url": "/slotwars" },
             { "text": "spherical minecraft", "url": "/sphericalminecraft" },
@@ -80,7 +80,7 @@
             { "text": "internet speed test", "url": "/internetspeedtest" },
             { "text": "is anyone on the website?", "url": "/isanyoneonthewebsite" },
             { "text": "meme maker", "url": "/mememaker" },
-            { "text": "shitty mp3", "url": "/shiitymp3" },
+            { "text": "shitty mp3", "url": "/shittymp3" },
             { "text": "tango clicker", "url": "/tangoclicker" }
         ]
     },
@@ -108,7 +108,7 @@
             { "text": "airplane simulator", "url": "/airplanesim" },
             { "text": "city builder", "url": "/citybuilder" },
             { "text": "car playground", "url": "/carplayground" },
-            { "text": "motorcycle playground", "url": "/motercycleplayground" },
+            { "text": "motorcycle playground", "url": "/motorcycleplayground" },
             { "text": "dream maze", "url": "/dreammaze" },
             { "text": "planet gen 2", "url": "/planetgen2" },
             { "text": "bhorizon", "url": "/bhorizon" },
@@ -120,7 +120,7 @@
             { "text": "molten cheese drinking simulator", "url": "/moltencheesedrinkingsim" },
             { "text": "real life", "url": "/real-life" },
             { "text": "snow globe", "url": "/snowglobe" },
-            { "text": "toilet simulation", "url": "/" }
+            { "text": "toilet simulation", "url": "/toiletsim" }
         ]
     },
     {
@@ -135,9 +135,9 @@
             { "text": "poogle", "url": "/poogle" },
             { "text": "poogle photos", "url": "/pooglephotos" },
             { "text": "poopstagram", "url": "/poopstagram" },
-            { "text": "don't poop your pants", "url": "/dontpoopyourpants" },
+            { "text": "don't poop your pants", "url": "/dontpooyourpants" },
             { "text": "lost", "url": "/lost" },
-            { "text": "mcdonalds", "url": "/" },
+            { "text": "mcdonalds", "url": "/mcdonalds" },
             { "text": "meme kingdom", "url": "/memekingdom" },
             { "text": "px fun", "url": "/pxfun" },
             { "text": "tesseract", "url": "/tesseract" },
