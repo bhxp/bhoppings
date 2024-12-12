@@ -1,0 +1,624 @@
+<html><head><base href="https://bhoppings.de"><title>Glassmorphism Generator</title>
+<style>
+:root {
+  --glass-bg: rgba(255, 255, 255, 0.2);
+  --glass-border: rgba(255, 255, 255, 0.3);
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  transition: background-image 0.5s ease;
+  display: flex;
+  color: white;
+}
+
+/* Custom scrollbar styles */
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 5px;
+  border: 2px solid rgba(20,20,35,0.95);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* Add Firefox scrollbar styling */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+}
+
+.controls {
+  width: 350px;
+  background: linear-gradient(to bottom, rgba(20,20,35,0.95), rgba(20,20,35,0.85));
+  border-right: 1px solid rgba(255,255,255,0.1);
+  box-shadow: 0 0 30px rgba(0,0,0,0.3);
+  height: 100vh;
+  padding: 20px;
+  padding-right: 25px; /* Increase right padding to prevent content overlap with scrollbar */  
+  overflow-y: auto;
+}
+
+.controls h2 {
+  font-size: 24px;
+  margin: 0 0 25px 0;
+  padding-bottom: 15px;
+  border-bottom: 2px solid rgba(255,255,255,0.1);
+  color: #fff;
+}
+
+.control-group {
+  position: relative;
+  background: rgba(0,0,0,0.2);
+  padding: 15px;
+  border-radius: 8px;
+  margin-bottom: 25px;
+  border: 1px solid rgba(255,255,255,0.05);
+}
+
+.control-group-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  padding-bottom: 15px;
+  margin-bottom: 15px;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+.control-group-header label {
+  margin: 0;
+}
+
+.control-group-content {
+  transition: max-height 0.3s ease-out, opacity 0.2s ease-out, padding 0.3s ease-out;
+  overflow: hidden;
+  max-height: 1000px;
+  opacity: 1;
+}
+
+.control-group-content.collapsed {
+  max-height: 0;
+  opacity: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+  margin: 0;
+}
+
+.collapse-icon {
+  width: 20px;
+  height: 20px;
+  position: relative;
+}
+
+.collapse-icon::before,
+.collapse-icon::after {
+  content: '';
+  position: absolute;
+  background: rgba(255,255,255,0.7);
+  border-radius: 1px;
+  transition: transform 0.3s ease;
+}
+
+.collapse-icon::before {
+  width: 2px;
+  height: 12px;
+  top: 4px;
+  left: 9px;
+}
+
+.collapse-icon::after {
+  width: 12px;
+  height: 2px;
+  top: 9px;
+  left: 4px;
+}
+
+.collapsed .collapse-icon::before {
+  transform: rotate(-90deg);
+}
+
+.slider-group {
+  background: rgba(0,0,0,0.2);
+  padding: 10px;
+  border-radius: 6px;
+  margin-bottom: 15px;
+}
+
+input[type="range"] {
+  height: 6px;
+  border-radius: 3px;
+  background: rgba(255,255,255,0.1);
+  cursor: pointer;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  width: 16px;
+  height: 16px;
+  background: #fff;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+input[type="number"] {
+  width: 70px;
+  padding: 5px 8px;
+  border-radius: 4px;
+  border: 1px solid rgba(255,255,255,0.2);
+  background: rgba(0,0,0,0.2);
+  color: #fff;
+  font-size: 14px;
+}
+
+select {
+  width: 100%;
+  padding: 8px 12px;
+  border-radius: 4px;
+  border: 1px solid rgba(255,255,255,0.2);
+  background: rgba(0,0,0,0.2);
+  color: #fff;
+  cursor: pointer;
+  margin-bottom: 15px;
+}
+
+.bg-preview {
+  width: 70px;
+  height: 45px;
+  border-radius: 8px;
+  margin: 5px;
+  border: 2px solid rgba(255,255,255,0.1);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  transition: all 0.3s ease;
+}
+
+.bg-preview:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+
+.bg-preview.active {
+  border-color: #fff;
+  box-shadow: 0 0 0 2px rgba(255,255,255,0.3);
+}
+
+.color-inputs {
+  background: rgba(0,0,0,0.2);
+  padding: 10px;
+  border-radius: 6px;
+  margin-bottom: 15px;
+}
+
+input[type="color"] {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  border: 2px solid rgba(255,255,255,0.2);
+  cursor: pointer;
+}
+
+.code-output {
+  background: rgba(0,0,0,0.3);
+  padding: 15px;
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.1);
+  font-size: 13px;
+  line-height: 1.4;
+  color: #a0e9ff;
+}
+
+.slider-group label {
+  position: relative;
+  cursor: help;
+  margin-bottom: 5px;
+  display: block;
+}
+
+.slider-group label:hover::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 5px 10px;
+  background: rgba(0,0,0,0.8);
+  border-radius: 4px;
+  font-size: 12px;
+  white-space: nowrap;
+  z-index: 10;
+  margin-top: 5px;
+}
+
+.preview {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.glass-card {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 10px;
+  padding: 20px;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  transform-style: preserve-3d;
+  transition: all 0.3s ease;
+}
+
+.copy-button {
+  display: block;
+  width: 100%;
+  padding: 10px;
+  margin-top: 10px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  color: #fff;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.copy-button:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.copy-button:active {
+  transform: scale(0.98);
+}
+
+.copy-button.copied {
+  background: rgba(0, 255, 100, 0.2);
+}
+</style>
+</head>
+<body>
+<div class="controls">
+  <h2>Glass Card Generator</h2>
+  
+  <div class="control-group">
+    <div class="control-group-header">
+      <label>Background</label>
+      <div class="collapse-icon"></div>
+    </div>
+    <div class="control-group-content">
+      <div id="bg-previews"></div>
+    </div>
+  </div>
+
+  <div class="control-group">
+    <div class="control-group-header">
+      <label>Card Size</label>
+      <div class="collapse-icon"></div>
+    </div>
+    <div class="control-group-content">
+      <div class="slider-group">
+        <input type="range" id="width" min="100" max="500" value="200">
+        <input type="number" id="width-number" value="200" min="0" max="1000">
+        <label data-tooltip="Set the width of the card">Width: <span id="width-value">200px</span></label>
+      </div>
+      
+      <div class="slider-group">
+        <input type="range" id="height" min="100" max="500" value="200">
+        <input type="number" id="height-number" value="200" min="0" max="1000">
+        <label data-tooltip="Set the height of the card">Height: <span id="height-value">200px</span></label>
+      </div>
+    </div>
+  </div>
+
+  <div class="control-group">
+    <div class="control-group-header">
+      <label>Glass Effect</label>
+      <div class="collapse-icon"></div>
+    </div>
+    <div class="control-group-content">
+      <select id="glass-type">
+        <option value="clear">Clear</option>
+        <option value="frosted">Frosted</option>
+        <option value="tinted">Tinted</option>
+        <option value="rainbow">Rainbow</option>
+        <option value="custom">Custom Color</option>
+      </select>
+      
+      <div class="color-inputs" id="custom-color-group" style="display: none;">
+        <input type="color" id="glass-color" value="#ffffff">
+        <label>Custom Color</label>
+      </div>
+      
+      <div class="slider-group">
+        <input type="range" id="opacity" min="0" max="100" value="20">
+        <input type="number" id="opacity-number" value="20" min="0" max="100">
+        <label data-tooltip="Adjusts the opacity of the glass effect">Opacity: <span id="opacity-value">20%</span></label>
+      </div>
+      
+      <div class="slider-group">
+        <input type="range" id="blur" min="0" max="20" value="10">
+        <input type="number" id="blur-number" value="10" min="0" max="50">
+        <label data-tooltip="Adjusts the blur intensity of the backdrop">Blur: <span id="blur-value">10px</span></label>
+      </div>
+    </div>
+  </div>
+
+  <div class="control-group">
+    <div class="control-group-header">
+      <label>Border</label>
+      <div class="collapse-icon"></div>
+    </div>
+    <div class="control-group-content">
+      <div class="slider-group">
+        <input type="range" id="border-width" min="0" max="10" value="1">
+        <input type="number" id="border-width-number" value="1" min="0" max="50">
+        <label data-tooltip="Sets the width of the border">Width: <span id="border-width-value">1px</span></label>
+      </div>
+      
+      <div class="slider-group">
+        <input type="range" id="border-opacity" min="0" max="100" value="30">
+        <input type="number" id="border-opacity-number" value="30" min="0" max="100">
+        <label data-tooltip="Adjusts the opacity of the border">Opacity: <span id="border-opacity-value">30%</span></label>
+      </div>
+
+      <div class="color-inputs">
+        <input type="color" id="border-color" value="#ffffff">
+        <label>Border Color</label>
+      </div>
+    </div>
+  </div>
+
+  <div class="control-group">
+    <div class="control-group-header">
+      <label>3D Effect</label>
+      <div class="collapse-icon" style="transform: rotate(-90deg);"></div>
+    </div>
+    <div class="control-group-content collapsed">
+      <div class="slider-group">
+        <input type="range" id="rotate-x" min="-180" max="180" value="0">
+        <input type="number" id="rotate-x-number" value="0" min="-180" max="180">
+        <label data-tooltip="Rotates the card along the X-axis">Rotate X: <span id="rotate-x-value">0deg</span></label>
+      </div>
+      
+      <div class="slider-group">
+        <input type="range" id="rotate-y" min="-180" max="180" value="0">
+        <input type="number" id="rotate-y-number" value="0" min="-180" max="180">
+        <label data-tooltip="Rotates the card along the Y-axis">Rotate Y: <span id="rotate-y-value">0deg</span></label>
+      </div>
+
+      <div class="slider-group">
+        <input type="range" id="scale" min="50" max="150" value="100">
+        <input type="number" id="scale-number" value="100" min="0" max="200">
+        <label data-tooltip="Scales the size of the card">Scale: <span id="scale-value">100%</span></label>
+      </div>
+    </div>
+  </div>
+
+  <div class="control-group">
+    <div class="control-group-header">
+      <label>Shadow</label>
+      <div class="collapse-icon"></div>
+    </div>
+    <div class="control-group-content">
+      <div class="slider-group">
+        <input type="range" id="shadow-blur" min="0" max="100" value="20">
+        <input type="number" id="shadow-blur-number" value="20" min="0" max="200">
+        <label data-tooltip="Adjusts the blur intensity of the shadow">Blur: <span id="shadow-blur-value">20px</span></label>
+      </div>
+      
+      <div class="slider-group">
+        <input type="range" id="shadow-spread" min="0" max="100" value="0">
+        <input type="number" id="shadow-spread-number" value="0" min="0" max="200">
+        <label data-tooltip="Adjusts the spread radius of the shadow">Spread: <span id="shadow-spread-value">0px</span></label>
+      </div>
+
+      <div class="color-inputs">
+        <input type="color" id="shadow-color" value="#000000">
+        <label>Shadow Color</label>
+      </div>
+    </div>
+  </div>
+
+  <div class="control-group">
+    <div class="control-group-header">
+      <label>Code Output</label>
+      <div class="collapse-icon"></div>
+    </div>
+    <div class="control-group-content">
+      <div class="code-output" id="css-output"></div>
+      <button id="copy-css" class="copy-button">Copy CSS</button>
+    </div>
+  </div>
+</div>
+
+<div class="preview">
+  <div class="glass-card">
+    <h3>Glass Card</h3>
+    <p>Adjust the controls to customize this card's appearance.</p>
+  </div>
+</div>
+
+<script>
+const backgrounds = [
+  { name: 'Mojave Night', url: 'https://i.imgur.com/9f8H0RK.jpeg' },
+  { name: 'Big Sur Light', url: 'https://i.imgur.com/5NHdsyY.png' },
+  { name: 'Big Sur Dark', url: 'https://i.imgur.com/zmz4sAk.png' },
+  { name: 'MacBook Air Blue', url: 'https://i.imgur.com/YRa9Fzr.png' }
+];
+
+function setupBackgrounds() {
+  const container = document.getElementById('bg-previews');
+  backgrounds.forEach((bg, index) => {
+    const preview = document.createElement('div');
+    preview.className = 'bg-preview' + (index === 0 ? ' active' : '');
+    preview.style.backgroundImage = `url(${bg.url})`;
+    preview.addEventListener('click', () => {
+      document.querySelectorAll('.bg-preview').forEach(p => p.classList.remove('active'));
+      preview.classList.add('active');
+      document.body.style.backgroundImage = `url(${bg.url})`;
+    });
+    container.appendChild(preview);
+  });
+  document.body.style.backgroundImage = `url(${backgrounds[0].url})`;
+}
+
+function setupCollapsibleSections() {
+  const controlGroups = document.querySelectorAll('.control-group');
+  
+  controlGroups.forEach(group => {
+    const header = group.querySelector('.control-group-header');
+    const content = group.querySelector('.control-group-content');
+    const collapseIcon = header.querySelector('.collapse-icon');
+    
+    // Only collapse 3D section by default
+    if (header.querySelector('label').textContent.trim() === '3D Effect') {
+      content.classList.add('collapsed');
+      collapseIcon.style.transform = 'rotate(-90deg)';
+    }
+    
+    header.addEventListener('click', () => {
+      content.classList.toggle('collapsed');
+      collapseIcon.style.transform = content.classList.contains('collapsed') ? 'rotate(-90deg)' : '';
+    });
+  });
+}
+
+function updateCard() {
+  const card = document.querySelector('.glass-card');
+  const width = document.getElementById('width').value;
+  const height = document.getElementById('height').value;
+  const glassType = document.getElementById('glass-type').value;
+  const opacity = document.getElementById('opacity').value;
+  const blur = document.getElementById('blur').value;
+  const borderWidth = document.getElementById('border-width').value;
+  const borderOpacity = document.getElementById('border-opacity').value;
+  const rotateX = document.getElementById('rotate-x').value;
+  const rotateY = document.getElementById('rotate-y').value;
+  const shadowBlur = document.getElementById('shadow-blur').value;
+  const shadowSpread = document.getElementById('shadow-spread').value;
+  const scale = document.getElementById('scale').value;
+  const glassColor = document.getElementById('glass-color').value;
+  const borderColor = document.getElementById('border-color').value;
+  const shadowColor = document.getElementById('shadow-color').value;
+
+  card.style.width = `${width}px`;
+  card.style.height = `${height}px`;
+  
+  let backgroundColor = `rgba(255, 255, 255, ${opacity/100})`;
+  let backdropFilter = `blur(${blur}px)`;
+  
+  switch(glassType) {
+    case 'frosted':
+      backdropFilter += ' saturate(180%)';
+      break;
+    case 'tinted':
+      backgroundColor = `rgba(200, 220, 255, ${opacity/100})`;
+      break;
+    case 'rainbow':
+      card.style.background = `linear-gradient(45deg, 
+        rgba(255,0,0,${opacity/100}), 
+        rgba(255,255,0,${opacity/100}), 
+        rgba(0,255,0,${opacity/100}), 
+        rgba(0,255,255,${opacity/100}), 
+        rgba(0,0,255,${opacity/100}), 
+        rgba(255,0,255,${opacity/100}))`;
+      break;
+    case 'custom':
+      const r = parseInt(glassColor.substr(1,2), 16);
+      const g = parseInt(glassColor.substr(3,2), 16);
+      const b = parseInt(glassColor.substr(5,2), 16);
+      backgroundColor = `rgba(${r},${g},${b},${opacity/100})`;
+      break;
+  }
+
+  if (glassType !== 'rainbow') {
+    card.style.background = backgroundColor;
+  }
+  
+  const borderColorRGB = hexToRGB(borderColor);
+  const shadowColorRGB = hexToRGB(shadowColor);
+  
+  card.style.backdropFilter = backdropFilter;
+  card.style.webkitBackdropFilter = backdropFilter;
+  card.style.border = `${borderWidth}px solid rgba(${borderColorRGB.r},${borderColorRGB.g},${borderColorRGB.b},${borderOpacity/100})`;
+  card.style.transform = `rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(${scale/100})`;
+  card.style.boxShadow = `0 0 ${shadowBlur}px ${shadowSpread}px rgba(${shadowColorRGB.r},${shadowColorRGB.g},${shadowColorRGB.b},0.3)`;
+
+  updateCSSOutput(card.style.cssText);
+}
+
+function hexToRGB(hex) {
+  const r = parseInt(hex.substr(1,2), 16);
+  const g = parseInt(hex.substr(3,2), 16);
+  const b = parseInt(hex.substr(5,2), 16);
+  return {r, g, b};
+}
+
+function updateCSSOutput(cssText) {
+  const formatted = cssText.split(';').join(';\n  ');
+  document.getElementById('css-output').textContent = `.glass-card {\n  ${formatted}\n}`;
+}
+
+// Setup event listeners
+document.querySelectorAll('input, select').forEach(input => {
+  input.addEventListener('input', (e) => {
+    const valueSpan = document.getElementById(`${e.target.id}-value`);
+    if (valueSpan) {
+      valueSpan.textContent = `${e.target.value}${e.target.type === 'range' ? 'px' : ''}`;
+    }
+    
+    // Sync number input with range input and vice versa
+    if (e.target.type === 'range') {
+      const numberInput = document.getElementById(`${e.target.id}-number`);
+      if (numberInput) numberInput.value = e.target.value;
+    } else if (e.target.type === 'number') {
+      const rangeInput = document.getElementById(e.target.id.replace('-number', ''));
+      if (rangeInput) rangeInput.value = e.target.value;
+    }
+    
+    if (e.target.id === 'glass-type') {
+      document.getElementById('custom-color-group').style.display = 
+        e.target.value === 'custom' ? 'flex' : 'none';
+    }
+    
+    updateCard();
+  });
+});
+
+// Copy CSS functionality
+document.getElementById('copy-css').addEventListener('click', async () => {
+  const cssText = document.getElementById('css-output').textContent;
+  
+  try {
+    await navigator.clipboard.writeText(cssText);
+    const button = document.getElementById('copy-css');
+    button.textContent = 'Copied!';
+    button.classList.add('copied');
+    
+    setTimeout(() => {
+      button.textContent = 'Copy CSS';
+      button.classList.remove('copied');
+    }, 2000);
+  } catch (err) {
+    console.error('Failed to copy text: ', err);
+  }
+});
+
+// Initialize
+setupBackgrounds();
+setupCollapsibleSections();
+updateCard();
+</script>
+</body></html>
