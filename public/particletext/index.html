@@ -1,0 +1,200 @@
+<html><head><base href=".">
+<style>
+  body {
+    margin: 0;
+    overflow: hidden;
+    background: #000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+  }
+  
+  canvas {
+    background: black;
+  }
+</style>
+</head>
+<body>
+<canvas id="canvas"></canvas>
+
+<script>
+const canvas = document.querySelector('#canvas');
+const ctx = canvas.getContext('2d');
+
+let width = canvas.width = window.innerWidth;
+let height = canvas.height = window.innerHeight;
+
+const particles = [];
+const spacing = 10; // Decreased spacing for denser text
+const ripples = [];
+let text = ''; // Store typed text
+
+// Particle class
+class Particle {
+  constructor(x, y, char = '') {
+    this.originX = x;
+    this.originY = y;
+    this.x = x;
+    this.y = y;
+    this.vx = 0;
+    this.vy = 0;
+    this.char = char;
+  }
+
+  update(mouseX, mouseY) {
+    const dx = this.x - mouseX;
+    const dy = this.y - mouseY;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    
+    if (distance < 150) {
+      const force = (150 - distance) / 150 * 2;
+      this.vx += (dx / distance) * force;
+      this.vy += (dy / distance) * force;
+    }
+    
+    ripples.forEach(ripple => {
+      const rdx = this.x - ripple.x;
+      const rdy = this.y - ripple.y;
+      const rippleDistance = Math.sqrt(rdx * rdx + rdy * rdy);
+      
+      const distanceFromRippleEdge = Math.abs(rippleDistance - ripple.radius);
+      if (distanceFromRippleEdge < 10) {
+        const rippleForce = ripple.opacity * 0.5;
+        this.vx += (rdx / rippleDistance) * rippleForce;
+        this.vy += (rdy / rippleDistance) * rippleForce;
+      }
+    });
+    
+    this.vx += (this.originX - this.x) * 0.05;
+    this.vy += (this.originY - this.y) * 0.05;
+    
+    this.vx *= 0.9;
+    this.vy *= 0.9;
+    
+    this.x += this.vx;
+    this.y += this.vy;
+  }
+
+  draw() {
+    if (this.char) {
+      // Draw dots instead of characters
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, 2, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+      ctx.fill();
+    }
+  }
+}
+
+class Ripple {
+  constructor(x, y) {
+    this.x = x;
+    this.y = y;
+    this.radius = 0;
+    this.maxRadius = 200;
+    this.speed = 8;
+    this.opacity = 1;
+  }
+
+  update() {
+    this.radius += this.speed;
+    this.opacity -= 0.02;
+    return this.opacity > 0;
+  }
+
+  draw() {
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+    ctx.strokeStyle = `rgba(255, 255, 255, ${this.opacity})`;
+    ctx.stroke();
+  }
+}
+
+// Initialize particles to form text
+function initializeParticles() {
+  particles.length = 0;
+  
+  // Set up large text
+  ctx.font = '120px Arial';
+  ctx.fillStyle = 'white';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  
+  // Create temporary canvas for text
+  const tempCanvas = document.createElement('canvas');
+  const tempCtx = tempCanvas.getContext('2d');
+  tempCanvas.width = width;
+  tempCanvas.height = height;
+  
+  // Draw text on temporary canvas
+  tempCtx.font = '120px Arial';
+  tempCtx.fillStyle = 'white';
+  tempCtx.textAlign = 'center';
+  tempCtx.textBaseline = 'middle';
+  tempCtx.fillText(text || 'Type...', width/2, height/2);
+  
+  // Sample pixels and create particles
+  const imageData = tempCtx.getImageData(0, 0, width, height);
+  const data = imageData.data;
+  
+  for (let y = 0; y < height; y += spacing) {
+    for (let x = 0; x < width; x += spacing) {
+      const index = (y * width + x) * 4;
+      if (data[index] > 0) { // If pixel is not black
+        particles.push(new Particle(x, y, '.'));
+      }
+    }
+  }
+}
+
+let mouseX = 0;
+let mouseY = 0;
+
+canvas.addEventListener('mousemove', (e) => {
+  mouseX = e.clientX;
+  mouseY = e.clientY;
+});
+
+canvas.addEventListener('click', (e) => {
+  ripples.push(new Ripple(e.clientX, e.clientY));
+});
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Backspace') {
+    text = text.slice(0, -1);
+  } else if (e.key.length === 1) {
+    text += e.key;
+  }
+  initializeParticles();
+});
+
+function animate() {
+  ctx.clearRect(0, 0, width, height);
+  
+  particles.forEach(particle => {
+    particle.update(mouseX, mouseY);
+    particle.draw();
+  });
+  
+  for (let i = ripples.length - 1; i >= 0; i--) {
+    if (!ripples[i].update()) {
+      ripples.splice(i, 1);
+    } else {
+      ripples[i].draw();
+    }
+  }
+  
+  requestAnimationFrame(animate);
+}
+
+window.addEventListener('resize', () => {
+  width = canvas.width = window.innerWidth;
+  height = canvas.height = window.innerHeight;
+  initializeParticles();
+});
+
+initializeParticles();
+animate();
+</script>
+</body></html>
