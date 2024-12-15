@@ -1,0 +1,375 @@
+<html><head><base href="." />
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>3D Fluid Simulation - Slime with Bloom</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<!-- Adding postprocessing for bloom effect -->
+<script src="https://unpkg.com/three@0.128.0/examples/js/postprocessing/EffectComposer.js"></script>
+<script src="https://unpkg.com/three@0.128.0/examples/js/postprocessing/RenderPass.js"></script>
+<script src="https://unpkg.com/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
+<script src="https://unpkg.com/three@0.128.0/examples/js/shaders/LuminosityHighPassShader.js"></script>
+<script src="https://unpkg.com/three@0.128.0/examples/js/shaders/CopyShader.js"></script>
+<script src="https://unpkg.com/three@0.128.0/examples/js/postprocessing/ShaderPass.js"></script>
+<style>
+  body {
+    margin: 0;
+    overflow: hidden;
+    background: #000;
+  }
+  canvas {
+    width: 100vw;
+    height: 100vh;
+  }
+  .controls {
+    position: fixed;
+    top: 10px;
+    left: 10px;
+    color: white;
+    font-family: Arial, sans-serif;
+    background: rgba(0,0,0,0.5);
+    padding: 10px;
+    border-radius: 5px;
+  }
+  .state-buttons {
+    margin-top: 10px;
+  }
+  button {
+    background: #444;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    margin: 2px;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: background 0.3s;
+  }
+  button:hover {
+    background: #666;
+  }
+  button.active {
+    background: #00ff88;
+    color: black;
+  }
+  .pc-notice {
+    position: fixed;
+    bottom: 10px;
+    left: 10px;
+    color: white;
+    font-family: Arial, sans-serif;
+    background: rgba(0,0,0,0.5);
+    padding: 10px;
+    border-radius: 5px;
+    font-size: 14px;
+  }
+</style>
+</head>
+<body>
+<div class="controls">
+  Click and drag to interact with fluid<br>
+  Mouse wheel to zoom<br>
+  Right click + drag to orbit
+  <div class="state-buttons">
+    <button onclick="setState('slime')" class="active">Slime</button>
+    <button onclick="setState('liquid')">Liquid</button>
+    <button onclick="setState('gas')">Gas</button>
+  </div>
+</div>
+<div class="pc-notice">Works Best on PC</div>
+<script>
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+const renderer = new THREE.WebGLRenderer({
+  antialias: true,
+  powerPreference: "high-performance"
+});
+renderer.setSize(window.innerWidth, window.innerHeight);
+document.body.appendChild(renderer.domElement);
+
+// Setup bloom composer
+const renderScene = new THREE.RenderPass(scene, camera);
+const bloomPass = new THREE.UnrealBloomPass(
+  new THREE.Vector2(window.innerWidth, window.innerHeight),
+  1.5,  // bloom strength
+  0.4,  // bloom radius
+  0.85  // bloom threshold
+);
+const composer = new THREE.EffectComposer(renderer);
+composer.addPass(renderScene);
+composer.addPass(bloomPass);
+
+// Orbit controls
+let isDraggingOrbit = false;
+let previousMousePosition = {
+    x: 0,
+    y: 0
+};
+let cameraAngle = {
+    x: 0,
+    y: 0
+};
+
+// Fluid state parameters
+const stateParams = {
+  slime: {
+    cohesion: 0.001,
+    viscosity: 0.985,
+    gravity: 0.0005,
+    repulsion: 0.00015,
+    interactionRadius: 0.3,
+    boundsRadius: 2.0,
+    color: 0x00ff88,
+    bloomStrength: 1.5
+  },
+  liquid: {
+    cohesion: 0.0005,
+    viscosity: 0.99,
+    gravity: 0.001,
+    repulsion: 0.0001,
+    interactionRadius: 0.4,
+    boundsRadius: 2.5,
+    color: 0x0088ff,
+    bloomStrength: 1.2
+  },
+  gas: {
+    cohesion: 0.0001,
+    viscosity: 0.995,
+    gravity: 0.0001,
+    repulsion: 0.00005,
+    interactionRadius: 0.6,
+    boundsRadius: 3.0,
+    color: 0xff8800,
+    bloomStrength: 2.0
+  }
+};
+
+let currentState = 'slime';
+
+// Create fluid particles
+const particleCount = 2000;
+const particles = new THREE.BufferGeometry();
+const positions = new Float32Array(particleCount * 3);
+const velocities = [];
+const particleMaterial = new THREE.PointsMaterial({
+  color: stateParams[currentState].color,
+  size: 0.15,
+  transparent: true,
+  opacity: 0.9,
+  blending: THREE.AdditiveBlending
+});
+
+// Initialize particles
+const radius = 1.2;
+for (let i = 0; i < particleCount * 3; i += 3) {
+  const theta = Math.random() * Math.PI * 2;
+  const phi = Math.random() * Math.PI;
+  const r = Math.random() * radius;
+  
+  positions[i] = r * Math.sin(phi) * Math.cos(theta);
+  positions[i + 1] = r * Math.sin(phi) * Math.sin(theta);
+  positions[i + 2] = r * Math.cos(phi);
+  
+  velocities.push({
+    x: Math.random() * 0.01 - 0.005,
+    y: Math.random() * 0.01 - 0.005,
+    z: Math.random() * 0.01 - 0.005
+  });
+}
+
+particles.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+const particleSystem = new THREE.Points(particles, particleMaterial);
+scene.add(particleSystem);
+
+camera.position.z = 5;
+
+const mouse = new THREE.Vector2();
+const mouseDown = new THREE.Vector2();
+let isMouseDown = false;
+
+function setState(state) {
+  currentState = state;
+  particleMaterial.color.setHex(stateParams[state].color);
+  bloomPass.strength = stateParams[state].bloomStrength;
+  document.querySelectorAll('.state-buttons button').forEach(btn => {
+    btn.classList.remove('active');
+    if (btn.textContent.toLowerCase() === state) {
+      btn.classList.add('active');
+    }
+  });
+}
+
+document.addEventListener('mousemove', (event) => {
+  mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+  mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+  if (isDraggingOrbit) {
+    const deltaMove = {
+      x: event.clientX - previousMousePosition.x,
+      y: event.clientY - previousMousePosition.y
+    };
+
+    cameraAngle.x += deltaMove.y * 0.01;
+    cameraAngle.y += deltaMove.x * 0.01;
+
+    cameraAngle.x = Math.max(-Math.PI/2, Math.min(Math.PI/2, cameraAngle.x));
+
+    const radius = camera.position.length();
+    camera.position.x = radius * Math.cos(cameraAngle.x) * Math.sin(cameraAngle.y);
+    camera.position.y = radius * Math.sin(cameraAngle.x);
+    camera.position.z = radius * Math.cos(cameraAngle.x) * Math.cos(cameraAngle.y);
+    camera.lookAt(scene.position);
+
+    previousMousePosition = {
+      x: event.clientX,
+      y: event.clientY
+    };
+  }
+});
+
+document.addEventListener('mousedown', (event) => {
+  if (event.button === 0) {
+    isMouseDown = true;
+    mouseDown.x = mouse.x;
+    mouseDown.y = mouse.y;
+  } else if (event.button === 2) {
+    isDraggingOrbit = true;
+    previousMousePosition = {
+      x: event.clientX,
+      y: event.clientY
+    };
+  }
+});
+
+document.addEventListener('mouseup', (event) => {
+  if (event.button === 0) {
+    isMouseDown = false;
+  } else if (event.button === 2) {
+    isDraggingOrbit = false;
+  }
+});
+
+document.addEventListener('contextmenu', (event) => {
+  event.preventDefault();
+});
+
+document.addEventListener('wheel', (event) => {
+  camera.position.multiplyScalar(1 + event.deltaY * 0.001);
+  camera.position.clampLength(2, 10);
+});
+
+function calculateCenterOfMass() {
+  let centerX = 0, centerY = 0, centerZ = 0;
+  const positions = particles.attributes.position.array;
+  
+  for (let i = 0; i < positions.length; i += 3) {
+    centerX += positions[i];
+    centerY += positions[i + 1];
+    centerZ += positions[i + 2];
+  }
+  
+  return {
+    x: centerX / particleCount,
+    y: centerY / particleCount,
+    z: centerZ / particleCount
+  };
+}
+
+function animate() {
+  requestAnimationFrame(animate);
+  
+  const positions = particles.attributes.position.array;
+  const centerOfMass = calculateCenterOfMass();
+  const params = stateParams[currentState];
+  
+  for (let i = 0; i < positions.length; i += 3) {
+    positions[i] += velocities[i/3].x;
+    positions[i + 1] += velocities[i/3].y;
+    positions[i + 2] += velocities[i/3].z;
+    
+    const distanceToCenter = {
+      x: centerOfMass.x - positions[i],
+      y: centerOfMass.y - positions[i + 1],
+      z: centerOfMass.z - positions[i + 2]
+    };
+    
+    const dist = Math.sqrt(
+      distanceToCenter.x * distanceToCenter.x +
+      distanceToCenter.y * distanceToCenter.y +
+      distanceToCenter.z * distanceToCenter.z
+    );
+    
+    const cohesionStrength = params.cohesion * (dist > 0.8 ? dist * 0.8 : 0.1);
+    velocities[i/3].x += distanceToCenter.x * cohesionStrength;
+    velocities[i/3].y += distanceToCenter.y * cohesionStrength;
+    velocities[i/3].z += distanceToCenter.z * cohesionStrength;
+    
+    for (let j = 0; j < positions.length; j += 3) {
+      if (i !== j) {
+        const dx = positions[i] - positions[j];
+        const dy = positions[i + 1] - positions[j + 1];
+        const dz = positions[i + 2] - positions[j + 2];
+        const distance = Math.sqrt(dx * dx + dy * dy + dz * dz);
+        
+        if (distance < params.interactionRadius) {
+          const force = params.repulsion / (distance * distance);
+          velocities[i/3].x += dx * force;
+          velocities[i/3].y += dy * force;
+          velocities[i/3].z += dz * force;
+        }
+      }
+    }
+    
+    const distFromCenter = Math.sqrt(
+      positions[i] * positions[i] + 
+      positions[i + 1] * positions[i + 1] + 
+      positions[i + 2] * positions[i + 2]
+    );
+    
+    if (distFromCenter > params.boundsRadius) {
+      const scale = params.boundsRadius / distFromCenter;
+      positions[i] *= scale;
+      positions[i + 1] *= scale;
+      positions[i + 2] *= scale;
+      
+      velocities[i/3].x *= -0.5;
+      velocities[i/3].y *= -0.5;
+      velocities[i/3].z *= -0.5;
+    }
+    
+    if (isMouseDown) {
+      const dx = mouse.x * 5 - positions[i];
+      const dy = mouse.y * 5 - positions[i + 1];
+      const distance = Math.sqrt(dx * dx + dy * dy);
+      
+      if (distance < 2.5) {
+        velocities[i/3].x += dx * 0.04;
+        velocities[i/3].y += dy * 0.04;
+        velocities[i/3].z += (Math.random() - 0.5) * 0.03;
+      }
+    }
+    
+    velocities[i/3].y -= params.gravity;
+    velocities[i/3].x *= params.viscosity;
+    velocities[i/3].y *= params.viscosity;
+    velocities[i/3].z *= params.viscosity;
+  }
+  
+  particles.attributes.position.needsUpdate = true;
+  
+  composer.render();
+}
+
+window.addEventListener('resize', () => {
+  const width = window.innerWidth;
+  const height = window.innerHeight;
+  
+  camera.aspect = width / height;
+  camera.updateProjectionMatrix();
+  
+  renderer.setSize(width, height);
+  composer.setSize(width, height);
+});
+
+animate();
+</script>
+</body>
+</html>
