@@ -1,0 +1,268 @@
+<html><head><base href="https://example.com/">
+  <style>
+    body {
+      background: black;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+
+    .clock {
+      width: 300px;
+      height: 300px;
+      border-radius: 50%;
+      background: radial-gradient(farthest-side, #333, #111);
+      position: relative;
+      box-shadow: 0 0 50px rgba(255, 255, 255, 0.1),
+                  inset 0 0 25px rgba(255, 255, 255, 0.1),
+                  inset 0 0 3px #111;
+    }
+
+    .hand {
+      position: absolute;
+      left: 50%;
+      width: 4px;
+      border-radius: 2px;
+      transform-origin: bottom;
+    }
+
+    .millisecond {
+      height: 135px;
+      top: 15px;
+      background: linear-gradient(180deg, #52b8fd, #0072d2);
+    }
+
+    .second1, .second2 {
+      height: 130px;
+      top: 20px;
+      background: white;
+    }
+
+    .minute1, .minute2, .minute3 {
+      height: 120px;
+      top: 30px;
+      background: linear-gradient(180deg, #fddb52, #ffa600);
+    }
+
+    .hour1, .hour2, .hour3, .hour4 {
+      height: 90px;
+      top: 60px;
+      background: linear-gradient(180deg, #fd6a52, #d24100);
+    }
+
+    .day {
+      height: 80px;
+      top: 70px;
+      background: linear-gradient(180deg, #9d52fd, #6200d2);
+    }
+
+    .week {
+      height: 70px;
+      top: 80px;
+      background: linear-gradient(180deg, #52fdd8, #00d296);
+    }
+
+    .month {
+      height: 60px;
+      top: 90px;
+      background: linear-gradient(180deg, #fd52b8, #d2006e);
+    }
+
+    .year {
+      height: 50px;
+      top: 100px;
+      background: black;
+      outline: 1px solid white;
+    }
+
+    .decade {
+      height: 40px; 
+      top: 110px;
+      background: linear-gradient(180deg, #fdd752, #d29600);
+    }
+
+    .century {
+      height: 30px;
+      top: 120px; 
+      background: linear-gradient(180deg, #52d8fd, #0096d2);
+    }
+
+    .millennium {
+      height: 20px;
+      top: 130px;
+      background: linear-gradient(180deg, #d752fd, #9600d2);  
+    }
+
+    .center {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background-color: #ddd;
+    }
+
+    .side-panel {
+      position: fixed;
+      right: 20px;
+      top: 20px;
+      background-color: rgba(255, 255, 255, 0.8);
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+    }
+
+    .legend {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      margin-bottom: 10px;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      margin-bottom: 5px;
+    }
+
+    .legend-color {
+      width: 20px;
+      height: 20px;
+      margin-right: 10px;
+      border-radius: 50%;
+    }
+  </style>
+</head>
+<body>
+  <div class="clock">
+    <div class="hand millisecond"></div>
+    <div class="hand second1"></div>
+    <div class="hand second2"></div>
+    <div class="hand minute1"></div>
+    <div class="hand minute2"></div>
+    <div class="hand minute3"></div>
+    <div class="hand hour1"></div>
+    <div class="hand hour2"></div>
+    <div class="hand hour3"></div>
+    <div class="hand hour4"></div>
+    <div class="hand day"></div>
+    <div class="hand week"></div>
+    <div class="hand month"></div>
+    <div class="hand year"></div>
+    <div class="hand decade"></div>
+    <div class="hand century"></div>
+    <div class="hand millennium"></div>
+    <div class="center"></div>
+  </div>
+
+  <div class="side-panel">
+    <div class="legend">
+      <div class="legend-item">
+        <div class="legend-color" style="background: linear-gradient(180deg, #52b8fd, #0072d2);"></div>
+        <span>Milliseconds</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-color" style="background: white;"></div>
+        <span>Seconds</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-color" style="background: linear-gradient(180deg, #fddb52, #ffa600);"></div>
+        <span>Minutes</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-color" style="background: linear-gradient(180deg, #fd6a52, #d24100);"></div>
+        <span>Hours</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-color" style="background: linear-gradient(180deg, #9d52fd, #6200d2);"></div>
+        <span>Days</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-color" style="background: linear-gradient(180deg, #52fdd8, #00d296);"></div>
+        <span>Weeks</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-color" style="background: linear-gradient(180deg, #fd52b8, #d2006e);"></div>
+        <span>Months</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-color" style="background: black; outline: 1px solid white;"></div>
+        <span>Years</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-color" style="background: linear-gradient(180deg, #fdd752, #d29600);"></div>
+        <span>Decades</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-color" style="background: linear-gradient(180deg, #52d8fd, #0096d2);"></div>
+        <span>Centuries</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-color" style="background: linear-gradient(180deg, #d752fd, #9600d2);"></div>
+        <span>Millennia</span>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function updateClock() {
+      const now = new Date();
+      const milliseconds = now.getMilliseconds();
+      const seconds = now.getSeconds();
+      const minutes = now.getMinutes();
+      const hours = now.getHours() % 12 + minutes / 60;
+      const days = now.getDate();
+      const weeks = Math.floor(days / 7) + 1;
+      const months = now.getMonth() + 1;
+      const years = now.getFullYear() % 100;
+      const decades = Math.floor(years / 10);
+      const centuries = Math.floor(years / 100);
+      const millennia = Math.floor(years / 1000);
+
+      const millisecondHand = document.querySelector('.millisecond');
+      const second1Hand = document.querySelector('.second1');
+      const second2Hand = document.querySelector('.second2');
+      const minute1Hand = document.querySelector('.minute1');
+      const minute2Hand = document.querySelector('.minute2');
+      const minute3Hand = document.querySelector('.minute3');
+      const hour1Hand = document.querySelector('.hour1');
+      const hour2Hand = document.querySelector('.hour2');
+      const hour3Hand = document.querySelector('.hour3');
+      const hour4Hand = document.querySelector('.hour4');
+      const dayHand = document.querySelector('.day');
+      const weekHand = document.querySelector('.week');
+      const monthHand = document.querySelector('.month');
+      const yearHand = document.querySelector('.year');
+      const decadeHand = document.querySelector('.decade');
+      const centuryHand = document.querySelector('.century');
+      const millenniumHand = document.querySelector('.millennium');
+
+      millisecondHand.style.transform = `rotate(${milliseconds * 0.36}deg)`;
+      second1Hand.style.transform = `rotate(${seconds * 6}deg)`;
+      second2Hand.style.transform = `rotate(${(seconds + 30) * 6}deg)`;
+      minute1Hand.style.transform = `rotate(${minutes * 6}deg)`;
+      minute2Hand.style.transform = `rotate(${(minutes + 20) * 6}deg)`;
+      minute3Hand.style.transform = `rotate(${(minutes + 40) * 6}deg)`;
+      hour1Hand.style.transform = `rotate(${hours * 30}deg)`;
+      hour2Hand.style.transform = `rotate(${(hours + 6) * 30}deg)`;
+      hour3Hand.style.transform = `rotate(${(hours + 12) * 30}deg)`;
+      hour4Hand.style.transform = `rotate(${(hours + 18) * 30}deg)`;
+      dayHand.style.transform = `rotate(${(days - 1) * 360 / 31}deg)`;
+      weekHand.style.transform = `rotate(${(weeks - 1) * 360 / 52}deg)`;
+      monthHand.style.transform = `rotate(${(months - 1) * 360 / 12}deg)`;
+      yearHand.style.transform = `rotate(${years * 3.6}deg)`;
+      decadeHand.style.transform = `rotate(${decades * 36}deg)`;
+      centuryHand.style.transform = `rotate(${centuries * 3.6}deg)`;
+      millenniumHand.style.transform = `rotate(${millennia * 0.36}deg)`;
+
+      requestAnimationFrame(updateClock);
+    }
+
+    updateClock();
+  </script>
+</body>
+</html>
