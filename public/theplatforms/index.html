@@ -1,0 +1,884 @@
+<html><head><base href="https://example.com/">
+<title>Platformer Adventure</title>
+<link href="https://fonts.googleapis.com/css2?family=Bubblegum+Sans&display=swap" rel="stylesheet">
+<style>
+    body {
+        margin: 0;
+        overflow: hidden;
+        background: linear-gradient(135deg, #222, #444);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+    }
+    #gameContainer {
+        position: relative;
+        width: 800px;
+        height: 600px;
+        background: linear-gradient(180deg, 
+            #add8e6,
+            #87CEEB 30%,
+            #5994b3 70%,
+            #4682b4
+        );
+        overflow: hidden;
+        box-shadow: 
+            inset 0 0 50px rgba(255,255,255,0.3),
+            0 0 30px rgba(0,0,0,0.4);
+    }
+    #player {
+        position: absolute;
+        width: 40px;
+        height: 40px;
+        background: linear-gradient(135deg, 
+            #ff9999,
+            #ff7777 30%,
+            #ff3333 60%,
+            #ff0000
+        );
+        border-radius: 5px;
+        border: 3px solid #8b0000;
+        box-sizing: border-box;
+        transition: transform 0.1s cubic-bezier(0.34, 1.56, 0.64, 1);
+        box-shadow: 
+            inset -4px -4px 8px rgba(0,0,0,0.3),
+            inset 4px 4px 8px rgba(255,255,255,0.3),
+            0 4px 8px rgba(0,0,0,0.4);
+        z-index: 3; /* Ensure player is above platforms */
+    }
+    #player::before, #player::after {
+        content: '';
+        position: absolute;
+        width: 2px;
+        height: 8px;
+        background: #8b0000;
+        top: 8px;
+        transition: transform 0.2s ease;
+        box-shadow: 1px 1px 1px rgba(0,0,0,0.2);
+    }
+    #player::before { left: 12px; }
+    #player::after { right: 12px; }
+    #player.look-right::before, #player.look-right::after {
+        transform: translateX(2px);
+    }
+    #player.look-left::before, #player.look-left::after {
+        transform: translateX(-2px);
+    }
+    #player.look-up::before, #player.look-up::after {
+        transform: translateY(-2px);
+    }
+    #player.look-up.look-right::before, #player.look-up.look-right::after {
+        transform: translate(2px, -2px);
+    }
+    #player.look-up.look-left::before, #player.look-up.look-left::after {
+        transform: translate(-2px, -2px);
+    }
+    .platform {
+        position: absolute;
+        background: linear-gradient(to bottom, 
+            #4d3427,
+            #5c4033 30%,
+            #6b4f3e 70%,
+            #8b6b4f
+        );
+        border-radius: 4px;
+        box-shadow: 
+            inset 0 2px 3px rgba(255,255,255,0.2),
+            inset 0 -2px 3px rgba(0,0,0,0.2),
+            0 4px 6px rgba(0,0,0,0.3);
+        z-index: 2; /* Ensure platforms are above clouds */
+    }
+    .platform::before {
+        content: '';
+        position: absolute;
+        top: -4px;
+        left: 0;
+        right: 0;
+        height: 8px;
+        background: linear-gradient(to bottom,
+            #90EE90,
+            #32CD32
+        );
+        border-radius: 4px 4px 0 0;
+        box-shadow: 
+            0 -1px 2px rgba(0,0,0,0.1),
+            inset 0 1px 2px rgba(255,255,255,0.5);
+    }
+    .platform::after {
+        content: '';
+        position: absolute;
+        top: 8px;  /* Move pattern below grass */
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-image: 
+            linear-gradient(45deg, 
+                rgba(0,0,0,0.1) 25%, 
+                transparent 25%,
+                transparent 75%,
+                rgba(0,0,0,0.1) 75%
+            ),
+            linear-gradient(45deg,
+                rgba(0,0,0,0.1) 25%,
+                transparent 25%,
+                transparent 75%,
+                rgba(0,0,0,0.1) 75%
+            );
+        background-size: 20px 20px;
+        background-position: 0 0, 10px 10px;
+        border-radius: 0 0 4px 4px;
+    }
+    #hud {
+        position: absolute;
+        top: 20px;
+        left: 20px;
+        color: white;
+        font-family: 'Bubblegum Sans', cursive;
+        font-size: 24px;
+        text-shadow: 2px 2px 2px rgba(0,0,0,0.5);
+        background: linear-gradient(
+            135deg,
+            rgba(0,0,0,0.4),
+            rgba(0,0,0,0.2)
+        );
+        padding: 10px 20px;
+        border-radius: 20px;
+        backdrop-filter: blur(5px);
+        z-index: 4;
+        box-shadow: 
+            inset 0 0 10px rgba(0,0,0,0.3),
+            0 0 20px rgba(0,0,0,0.2),
+            0 4px 8px rgba(0,0,0,0.2);
+        border: 1px solid rgba(255,255,255,0.1);
+        letter-spacing: 1px;
+    }
+    #levelDisplay {
+        background: linear-gradient(135deg, #ffd700, #ffa500);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        padding: 0 5px;
+        font-weight: bold;
+        text-shadow: none;
+        position: relative;
+    }
+    #levelDisplay::after {
+        content: '';
+        position: absolute;
+        top: -2px;
+        left: -2px;
+        right: -2px;
+        bottom: -2px;
+        background: linear-gradient(135deg, rgba(255,215,0,0.2), rgba(255,165,0,0.2));
+        border-radius: 4px;
+        z-index: -1;
+    }
+    #stageName {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        color: white;
+        font-family: 'Bubblegum Sans', cursive;
+        font-size: 24px;
+        text-shadow: 
+            2px 2px 2px rgba(0,0,0,0.5),
+            0 0 10px rgba(255,255,255,0.2);
+        background: linear-gradient(
+            135deg,
+            rgba(0,0,0,0.4),
+            rgba(0,0,0,0.2)
+        );
+        padding: 10px 20px;
+        border-radius: 20px;
+        backdrop-filter: blur(5px);
+        z-index: 4;
+        box-shadow: 
+            inset 0 0 10px rgba(0,0,0,0.3),
+            0 0 20px rgba(0,0,0,0.2),
+            0 4px 8px rgba(0,0,0,0.2);
+        border: 1px solid rgba(255,255,255,0.1);
+        letter-spacing: 1px;
+        animation: fadeInRight 1s ease-out;
+        border-left: 3px solid rgba(255,255,255,0.2);
+        border-top: 1px solid rgba(255,255,255,0.15);
+    }
+    #stageName::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(
+            135deg,
+            rgba(255,255,255,0.1),
+            transparent
+        );
+        pointer-events: none;
+    }
+    #mobileControls {
+        position: fixed;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        gap: 20px;
+        z-index: 1000; /* Add this line to ensure controls are on top */
+    }
+    .controlBtn {
+        width: 80px;
+        height: 80px;
+        background: linear-gradient(
+            135deg,
+            rgba(255,255,255,0.95),
+            rgba(255,255,255,0.8) 30%,
+            rgba(255,255,255,0.7) 60%,
+            rgba(255,255,255,0.6)
+        );
+        border-radius: 50%;
+        border: none;
+        font-size: 24px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        cursor: pointer;
+        user-select: none;
+        -webkit-tap-highlight-color: transparent;
+        box-shadow: 
+            0 4px 10px rgba(0,0,0,0.3),
+            inset 0 -2px 5px rgba(0,0,0,0.2),
+            inset 0 2px 5px rgba(255,255,255,0.7);
+    }
+    .controlBtn:active {
+        background: linear-gradient(
+            135deg,
+            rgba(255,255,255,0.85),
+            rgba(255,255,255,0.7) 30%,
+            rgba(255,255,255,0.6) 60%,
+            rgba(255,255,255,0.5)
+        );
+        box-shadow: 
+            0 2px 5px rgba(0,0,0,0.3),
+            inset 0 -1px 3px rgba(0,0,0,0.2),
+            inset 0 1px 3px rgba(255,255,255,0.7);
+    }
+    .cloud {
+        position: absolute;
+        opacity: 0.7;
+        filter: blur(2px);
+        z-index: 1; /* Lower z-index for background clouds */
+    }
+    .cloud-1 {
+        animation: moveCloud 45s linear infinite;
+        top: 80px;
+        transform: scale(2);
+    }
+    .cloud-2 {
+        animation: moveCloud 35s linear infinite;
+        top: 180px;
+        transform: scale(1.5);
+    }
+    .cloud-3 {
+        animation: moveCloud 40s linear infinite;
+        top: 30px;
+        transform: scale(2.2);
+    }
+    .cloud-4 {
+        animation: moveCloud 50s linear infinite;
+        top: 250px;
+        transform: scale(1.8);
+    }
+    .cloud-5 {
+        animation: moveCloud 38s linear infinite;
+        top: 120px;
+        transform: scale(1.7);
+    }
+    @keyframes moveCloud {
+        from {
+            transform: translateX(-300px) scale(var(--scale, 1));
+        }
+        to {
+            transform: translateX(1000px) scale(var(--scale, 1));
+        }
+    }
+    @keyframes fadeInLeft {
+        from {
+            opacity: 0;
+            transform: translateX(-100px);
+        }
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+    @keyframes fadeOut {
+        from {
+            opacity: 1;
+        }
+        to {
+            opacity: 0;
+        }
+    }
+    @keyframes subtitleFloat {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-10px); }
+    }
+    @keyframes subtitleGlow {
+        0%, 100% { text-shadow: 0 0 10px rgba(255,255,255,0.3); }
+        50% { text-shadow: 0 0 20px rgba(255,255,255,0.5); }
+    }
+    @keyframes titlePulse {
+        0%, 100% { 
+            transform: scale(1);
+            text-shadow: 
+                0 0 20px rgba(255, 255, 255, 0.5),
+                2px 2px 4px rgba(0, 0, 0, 0.3),
+                4px 4px 0px rgba(0, 0, 0, 0.2),
+                6px 6px 30px rgba(0, 0, 0, 0.2);
+        }
+        50% { 
+            transform: scale(1.02);
+            text-shadow: 
+                0 0 25px rgba(255, 255, 255, 0.6),
+                2px 2px 4px rgba(0, 0, 0, 0.3),
+                4px 4px 0px rgba(0, 0, 0, 0.2),
+                6px 6px 35px rgba(0, 0, 0, 0.3);
+        }
+    }
+    @keyframes titleFloat {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-15px); }
+    }
+    #titleScreen {
+        background: 
+            linear-gradient(135deg, 
+                rgba(44, 62, 80, 0.9), 
+                rgba(52, 73, 94, 0.9)
+            ),
+            repeating-linear-gradient(
+                45deg,
+                transparent,
+                transparent 10px,
+                rgba(255, 255, 255, 0.02) 10px,
+                rgba(255, 255, 255, 0.02) 20px
+            ),
+            radial-gradient(
+                circle at 50% 50%,
+                rgba(255, 255, 255, 0.05) 0%,
+                transparent 60%
+            );
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: flex-start;
+        z-index: 1000;
+        padding-left: 50px;
+        overflow: hidden;
+        box-shadow: inset 0 0 100px rgba(0, 0, 0, 0.3);
+    }
+    #titleScreen.fade-out {
+        animation: fadeOut 1s ease-out forwards;
+        pointer-events: none;
+    }
+    #titleScreen h1 {
+        color: white;
+        font-family: 'Bubblegum Sans', cursive;
+        font-size: 72px;
+        margin-bottom: 20px;
+        text-shadow: 
+            0 0 20px rgba(255, 255, 255, 0.5),
+            2px 2px 4px rgba(0, 0, 0, 0.3),
+            4px 4px 0px rgba(0, 0, 0, 0.2),
+            6px 6px 30px rgba(0, 0, 0, 0.2);
+        animation: 
+            titlePulse 2s infinite ease-in-out,
+            fadeInLeft 1s ease-out,
+            titleFloat 3s infinite ease-in-out;
+        letter-spacing: 2px;
+        position: relative;
+        padding: 10px 20px;
+        background: linear-gradient(
+            135deg,
+            rgba(255, 255, 255, 0.1),
+            rgba(255, 255, 255, 0.05)
+        );
+        border-radius: 10px;
+        backdrop-filter: blur(5px);
+        border-left: 3px solid rgba(255, 255, 255, 0.2);
+        border-top: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    #titleScreen::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: 
+            radial-gradient(
+                circle at 30% 30%,
+                rgba(255, 255, 255, 0.1) 0%,
+                transparent 60%
+            ),
+            radial-gradient(
+                circle at 70% 70%,
+                rgba(255, 255, 255, 0.05) 0%,
+                transparent 60%
+            );
+        pointer-events: none;
+    }
+    #titleScreen::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: 
+            repeating-linear-gradient(
+                -45deg,
+                transparent,
+                transparent 5px,
+                rgba(255, 255, 255, 0.02) 5px,
+                rgba(255, 255, 255, 0.02) 10px
+            );
+        pointer-events: none;
+    }
+    #playButton {
+        position: absolute;
+        right: 100px;
+        bottom: -100px;
+        padding: 15px 40px;
+        font-size: 24px;
+        background: linear-gradient(135deg, 
+            #4CAF50,
+            #45a049 50%,
+            #388E3C
+        );
+        color: white;
+        border: none;
+        border-radius: 25px;
+        cursor: pointer;
+        font-family: 'Bubblegum Sans', cursive;
+        box-shadow: 
+            0 4px 15px rgba(0,0,0,0.2),
+            inset 0 2px 4px rgba(255,255,255,0.3),
+            inset 0 -2px 4px rgba(0,0,0,0.2);
+        transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), 
+                    box-shadow 0.3s ease-out,
+                    background 0.3s ease-out;
+        animation: slideUpButton 1.2s cubic-bezier(0.34, 1.56, 0.64, 1) 1s forwards;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        letter-spacing: 1px;
+        border: 2px solid rgba(255,255,255,0.1);
+        overflow: hidden;
+    }
+    #playButton::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(
+            135deg,
+            transparent,
+            rgba(255,255,255,0.1) 50%,
+            transparent
+        );
+        transform: translateX(-100%);
+        transition: transform 0.5s ease;
+    }
+    #playButton:hover {
+        transform: translateY(50%) translateY(-3px);
+        box-shadow: 
+            0 6px 20px rgba(0,0,0,0.3),
+            inset 0 2px 4px rgba(255,255,255,0.4),
+            inset 0 -2px 4px rgba(0,0,0,0.3);
+        background: linear-gradient(135deg, 
+            #57c45c,
+            #4CAF50 50%,
+            #43A047
+        );
+    }
+    #playButton:hover::before {
+        transform: translateX(100%);
+    }
+    #playButton:active {
+        transform: translateY(50%) translateY(0);
+        box-shadow: 
+            0 3px 10px rgba(0,0,0,0.2),
+            inset 0 2px 4px rgba(255,255,255,0.2),
+            inset 0 -2px 4px rgba(0,0,0,0.4);
+        background: linear-gradient(135deg, 
+            #388E3C,
+            #43A047 50%,
+            #4CAF50
+        );
+    }
+    @keyframes slideUpButton {
+        0% {
+            bottom: -100px;
+            opacity: 0;
+        }
+        50% {
+            opacity: 1;
+        }
+        100% {
+            bottom: 50%;
+            transform: translateY(50%);
+            opacity: 1;
+        }
+    }
+    #titleScreen .subtitle {
+        color: #ecf0f1;
+        font-size: 24px;
+        margin-bottom: 40px;
+        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+        animation: 
+            fadeInLeft 1s ease-out 0.3s both,
+            subtitleGlow 2s ease-in-out infinite;
+        font-family: 'Bubblegum Sans', cursive;
+        letter-spacing: 1px;
+        background: linear-gradient(45deg, #ecf0f1, #bdc3c7);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        padding: 10px 20px;
+        position: relative;
+        border-radius: 8px;
+        backdrop-filter: blur(3px);
+        border-left: 2px solid rgba(255, 255, 255, 0.2);
+        box-shadow: 
+            0 5px 15px rgba(0, 0, 0, 0.1),
+            inset 0 0 15px rgba(255, 255, 255, 0.1);
+    }
+    @keyframes fadeInRight {
+        from {
+            opacity: 0;
+            transform: translateX(50px);
+        }
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+</style>
+</head>
+<body>
+    <div id="gameContainer">
+        <div id="titleScreen">
+            <h1>The Platforms</h1>
+            <div class="subtitle">An Epic Journey Awaits</div>
+            <button id="playButton">Play!</button>
+        </div>
+        <svg class="cloud cloud-1" width="100" height="40" viewBox="0 0 100 40">
+            <path fill="#ffffff" d="M5,25c0-5.5,4.5-10,10-10c2.5,0,4.8,1,6.5,2.5C23.5,11,29.5,6,37,6c8.5,0,15.5,6.9,15.5,15.4c0,0.2,0,0.4,0,0.6c1-0.3,2-0.5,3-0.5c5,0,9,4,9,9c0,5-4,9-9,9H15C9.5,39.5,5,35,5,29.5C5,28,5.2,26.5,5.7,25H5z"/>
+        </svg>
+        <svg class="cloud cloud-2" width="80" height="30" viewBox="0 0 100 40">
+            <path fill="#ffffff" d="M5,25c0-5.5,4.5-10,10-10c2.5,0,4.8,1,6.5,2.5C23.5,11,29.5,6,37,6c8.5,0,15.5,6.9,15.5,15.4c0,0.2,0,0.4,0,0.6c1-0.3,2-0.5,3-0.5c5,0,9,4,9,9c0,5-4,9-9,9H15C9.5,39.5,5,35,5,29.5C5,28,5.2,26.5,5.7,25H5z"/>
+        </svg>
+        <svg class="cloud cloud-3" width="120" height="45" viewBox="0 0 100 40">
+            <path fill="#ffffff" d="M5,25c0-5.5,4.5-10,10-10c2.5,0,4.8,1,6.5,2.5C23.5,11,29.5,6,37,6c8.5,0,15.5,6.9,15.5,15.4c0,0.2,0,0.4,0,0.6c1-0.3,2-0.5,3-0.5c5,0,9,4,9,9c0,5-4,9-9,9H15C9.5,39.5,5,35,5,29.5C5,28,5.2,26.5,5.7,25H5z"/>
+        </svg>
+        <svg class="cloud cloud-4" width="120" height="45" viewBox="0 0 100 40">
+            <path fill="#ffffff" d="M5,25c0-5.5,4.5-10,10-10c2.5,0,4.8,1,6.5,2.5C23.5,11,29.5,6,37,6c8.5,0,15.5,6.9,15.5,15.4c0,0.2,0,0.4,0,0.6c1-0.3,2-0.5,3-0.5c5,0,9,4,9,9c0,5-4,9-9,9H15C9.5,39.5,5,35,5,29.5C5,28,5.2,26.5,5.7,25H5z"/>
+        </svg>
+        <svg class="cloud cloud-5" width="120" height="45" viewBox="0 0 100 40">
+            <path fill="#ffffff" d="M5,25c0-5.5,4.5-10,10-10c2.5,0,4.8,1,6.5,2.5C23.5,11,29.5,6,37,6c8.5,0,15.5,6.9,15.5,15.4c0,0.2,0,0.4,0,0.6c1-0.3,2-0.5,3-0.5c5,0,9,4,9,9c0,5-4,9-9,9H15C9.5,39.5,5,35,5,29.5C5,28,5.2,26.5,5.7,25H5z"/>
+        </svg>
+        <div id="player"></div>
+        <div id="hud">Level: <span id="levelDisplay">1</span></div>
+        <div id="stageName">"Around"</div>
+    </div>
+    <div id="mobileControls">
+        <button class="controlBtn" id="leftBtn">←</button>
+        <button class="controlBtn" id="jumpBtn">↑</button>
+        <button class="controlBtn" id="rightBtn">→</button>
+    </div>
+
+<script>
+let gameStarted = false;
+let circlingProgress = 0;
+let lastPosition = 'left'; // Can be 'left', 'right', or 'middle'
+const middlePlatformBounds = {
+    x: 350,
+    y: 300,
+    width: 120,
+    height: 20
+};
+
+// Initial game setup
+let player = {
+    element: document.getElementById('player'),
+    x: 50,
+    y: 460,
+    velX: 0,
+    velY: 0,
+    speed: 2.5,
+    jumpForce: -15,
+    grounded: false,
+    direction: 'none'
+};
+player.element.style.transform = `translate(${player.x}px, ${player.y}px)`;
+
+let currentLevel = 1;
+const gravity = 0.8;
+const friction = 0.8;
+let platforms = [];
+
+const levels = [
+    {
+        platforms: [
+            // Base ground platform
+            {x: 0, y: 500, width: 800, height: 50},
+            
+            // Lower middle platforms
+            {x: 250, y: 400, width: 120, height: 20},
+            {x: 450, y: 400, width: 120, height: 20},
+            
+            // Middle platforms
+            {x: 150, y: 300, width: 120, height: 20},
+            {x: 350, y: 300, width: 120, height: 20},
+            {x: 550, y: 300, width: 120, height: 20},
+            
+            // Upper platforms
+            {x: 250, y: 200, width: 120, height: 20},
+            {x: 450, y: 200, width: 120, height: 20},
+        ]
+    },
+    {
+        platforms: [
+            // Base ground with gaps
+            {x: 0, y: 500, width: 250, height: 50},
+            {x: 300, y: 500, width: 250, height: 50},
+            {x: 600, y: 500, width: 200, height: 50},
+            
+            // Middle platforms in ascending pattern
+            {x: 200, y: 400, width: 100, height: 20},
+            {x: 350, y: 350, width: 100, height: 20},
+            {x: 500, y: 300, width: 100, height: 20},
+            
+            // Upper centered platforms
+            {x: 250, y: 250, width: 150, height: 20},
+            {x: 450, y: 200, width: 150, height: 20},
+            
+            // Top challenge platforms
+            {x: 200, y: 150, width: 80, height: 20},
+            {x: 500, y: 150, width: 80, height: 20}
+        ]
+    }
+];
+
+const keys = {};
+window.addEventListener('keydown', e => keys[e.key] = true);
+window.addEventListener('keyup', e => keys[e.key] = false);
+
+const leftBtn = document.getElementById('leftBtn');
+const rightBtn = document.getElementById('rightBtn');
+const jumpBtn = document.getElementById('jumpBtn');
+
+let isTouchingLeft = false;
+let isTouchingRight = false;
+let isTouchingJump = false;
+
+leftBtn.addEventListener('touchstart', (e) => {
+    e.preventDefault();
+    isTouchingLeft = true;
+});
+leftBtn.addEventListener('touchend', () => {
+    isTouchingLeft = false;
+});
+
+rightBtn.addEventListener('touchstart', (e) => {
+    e.preventDefault();
+    isTouchingRight = true;
+});
+rightBtn.addEventListener('touchend', () => {
+    isTouchingRight = false;
+});
+
+jumpBtn.addEventListener('touchstart', (e) => {
+    e.preventDefault();
+    isTouchingJump = true;
+});
+jumpBtn.addEventListener('touchend', () => {
+    isTouchingJump = false;
+});
+
+function checkCollision(rect1, rect2) {
+    return rect1.x < rect2.x + rect2.width &&
+           rect1.x + rect1.width > rect2.x &&
+           rect1.y < rect2.y + rect2.height &&
+           rect1.y + rect1.height > rect2.y;
+}
+
+function checkCirclingProgress() {
+    const playerCenter = player.x + 20;
+    const platformCenter = middlePlatformBounds.x + (middlePlatformBounds.width / 2);
+    
+    // Determine current position
+    let currentPosition;
+    if (playerCenter < middlePlatformBounds.x) {
+        currentPosition = 'left';
+    } else if (playerCenter > middlePlatformBounds.x + middlePlatformBounds.width) {
+        currentPosition = 'right';
+    } else {
+        currentPosition = 'middle';
+    }
+    
+    // Check for position changes that count towards progress
+    if (lastPosition === 'left' && currentPosition === 'right') {
+        circlingProgress += 0.5;
+    } else if (lastPosition === 'right' && currentPosition === 'left') {
+        circlingProgress += 0.5;
+    }
+    
+    // Update last position
+    lastPosition = currentPosition;
+    
+    // Check for completion when on middle platform
+    if (circlingProgress >= 2 && 
+        currentPosition === 'middle' && 
+        player.grounded && 
+        Math.abs(player.y + 40 - middlePlatformBounds.y) < 2) {
+        advanceToNextLevel();
+    }
+}
+
+function advanceToNextLevel() {
+    if (currentLevel < levels.length) {
+        currentLevel++;
+        document.getElementById('levelDisplay').textContent = currentLevel;
+        loadLevel(currentLevel);
+        // Reset progress for next level
+        circlingProgress = 0;
+        lastPosition = 'left';
+        
+        // Update stage name
+        const stageNames = ["Around", "Ascend"];
+        document.getElementById('stageName').textContent = `"${stageNames[currentLevel-1]}"`;
+    }
+}
+
+function updateGame() {
+    if (!gameStarted) {
+        requestAnimationFrame(updateGame);
+        return;
+    }
+    
+    if (keys['ArrowLeft'] || isTouchingLeft) {
+        player.velX -= player.speed;
+        player.direction = 'left';
+        player.element.classList.add('look-left');
+        player.element.classList.remove('look-right');
+    } else if (keys['ArrowRight'] || isTouchingRight) {
+        player.velX += player.speed;
+        player.direction = 'right';
+        player.element.classList.add('look-right');
+        player.element.classList.remove('look-left');
+    } else if (Math.abs(player.velX) < 0.1) {
+        player.direction = 'none';
+        player.element.classList.remove('look-left', 'look-right');
+    }
+    
+    if ((keys['ArrowUp'] || isTouchingJump) && player.grounded) {
+        player.velY = player.jumpForce;
+        player.grounded = false;
+    }
+
+    if (!player.grounded && player.velY < 0) {
+        player.element.classList.add('look-up');
+    } else {
+        player.element.classList.remove('look-up');
+    }
+    
+    player.velX *= friction;
+    player.velY += gravity;
+    
+    player.x += player.velX;
+    player.y += player.velY;
+    
+    player.grounded = false;
+    platforms.forEach(platform => {
+        if (checkCollision({
+            x: player.x,
+            y: player.y,
+            width: 40,
+            height: 40
+        }, platform)) {
+            if (player.velY > 0 && player.y + 40 - player.velY <= platform.y) {
+                player.y = platform.y - 40;
+                player.velY = 0;
+                player.grounded = true;
+            } else if (player.velY < 0 && player.y >= platform.y + platform.height) {
+                player.y = platform.y + platform.height;
+                player.velY = 0;
+            }
+        }
+    });
+    
+    if (player.x < 0) player.x = 0;
+    if (player.x > 760) player.x = 760;
+    if (player.y > 600) {
+        player.y = 460;
+        player.x = 50;
+        player.velY = 0;
+    }
+    
+    player.element.style.transform = `translate(${player.x}px, ${player.y}px)`;
+    
+    if (currentLevel === 1) {
+        checkCirclingProgress();
+    }
+    
+    requestAnimationFrame(updateGame); 
+}
+
+function loadLevel(levelNum) {
+    platforms.forEach(p => p.element.remove());
+    platforms = [];
+    
+    const level = levels[levelNum - 1];
+    
+    level.platforms.forEach(p => {
+        const platform = document.createElement('div');
+        platform.className = 'platform';
+        platform.style.left = p.x + 'px';
+        platform.style.top = p.y + 'px';
+        platform.style.width = p.width + 'px';
+        platform.style.height = p.height + 'px';
+        document.getElementById('gameContainer').appendChild(platform);
+        platforms.push({
+            element: platform,
+            x: p.x,
+            y: p.y,
+            width: p.width,
+            height: p.height
+        });
+    });
+    
+    player.element.style.transform = `translate(${player.x}px, ${player.y}px)`;
+}
+
+loadLevel(currentLevel);
+
+// Start the game loop immediately
+requestAnimationFrame(updateGame);
+
+document.getElementById('playButton').addEventListener('click', () => {
+    const titleScreen = document.getElementById('titleScreen');
+    titleScreen.classList.add('fade-out');
+    
+    // Just start the game since it's already loaded
+    setTimeout(() => {
+        titleScreen.style.display = 'none';
+        gameStarted = true;
+    }, 1000);
+});
+</script>
+</body>
+</html>
