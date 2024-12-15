@@ -1,0 +1,492 @@
+<html><head><base href=".">
+<title>3D Terrain Generator</title>
+<style>
+    body {
+        margin: 0;
+        background: #1a1a1a;
+        color: #fff;
+        font-family: 'Arial', sans-serif;
+        overflow: hidden;
+    }
+    .controls {
+        position: fixed;
+        top: 20px;
+        left: 20px;
+        background: rgba(0,0,0,0.7);
+        padding: 20px;
+        border-radius: 10px;
+        z-index: 100;
+        max-height: 90vh;
+        overflow-y: auto;
+    }
+    .control-group {
+        margin-bottom: 15px;
+    }
+    label {
+        display: block;
+        margin-bottom: 5px;
+    }
+    input[type="range"] {
+        width: 200px;
+        accent-color: #4CAF50;
+    }
+    input[type="color"] {
+        width: 50px;
+        height: 30px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+    }
+    button {
+        background: #4CAF50;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: background 0.3s;
+        width: 100%;
+        margin-bottom: 10px;
+    }
+    button:hover {
+        background: #45a049;
+    }
+    #terrainCanvas {
+        width: 100vw;
+        height: 100vh;
+    }
+    .value-display {
+        float: right;
+        color: #4CAF50;
+    }
+    .info-panel {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: rgba(0,0,0,0.7);
+        padding: 20px;
+        border-radius: 10px;
+        max-width: 400px;
+        max-height: 90vh;
+        overflow-y: auto;
+        color: #fff;
+        font-size: 14px;
+        z-index: 100;
+    }
+    .info-panel h2 {
+        color: #4CAF50;
+        margin-top: 0;
+    }
+    .info-panel h3 {
+        color: #4CAF50;
+        margin-top: 20px;
+    }
+    .info-panel ul, .info-panel ol {
+        padding-left: 20px;
+    }
+    .info-panel li {
+        margin-bottom: 8px;
+    }
+    .code-example {
+        background: rgba(0,0,0,0.5);
+        padding: 15px;
+        border-radius: 5px;
+        margin-top: 10px;
+    }
+    .code-example pre {
+        white-space: pre-wrap;
+        font-family: monospace;
+        color: #a5d6a7;
+        margin: 0;
+        padding: 10px;
+        background: rgba(0,0,0,0.3);
+        border-radius: 3px;
+    }
+    .code-example h4 {
+        color: #4CAF50;
+        margin: 10px 0;
+    }
+    #controlsContent {
+        transition: all 0.3s ease;
+    }
+    #toggleInfo {
+        background: #4CAF50;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: background 0.3s;
+    }
+    #toggleInfo:hover {
+        background: #45a049;
+    }
+    #infoPanelContent {
+        transition: all 0.3s ease;
+    }
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/simplex-noise/2.4.0/simplex-noise.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/exporters/STLExporter.js"></script>
+</head>
+<body>
+    <div class="controls">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+        <h2 style="margin: 0;">Terrain Generator</h2>
+        <button id="toggleControls" style="width: auto; margin: 0; padding: 5px 10px;">Minimize</button>
+    </div>
+    <div id="controlsContent">
+        <div class="control-group">
+            <label for="heightScale">Height Scale <span id="heightScaleValue" class="value-display">5.0</span></label>
+            <input type="range" id="heightScale" min="1" max="100" value="50">
+        </div>
+        <div class="control-group">
+            <label for="detail">Detail Level <span id="detailValue" class="value-display">100</span></label>
+            <input type="range" id="detail" min="50" max="200" value="100">
+        </div>
+        <div class="control-group">
+            <label for="roughness">Roughness <span id="roughnessValue" class="value-display">0.5</span></label>
+            <input type="range" id="roughness" min="1" max="10" value="5">
+        </div>
+        <div class="control-group">
+            <label for="octaves">Octaves <span id="octavesValue" class="value-display">4</span></label>
+            <input type="range" id="octaves" min="1" max="8" value="4">
+        </div>
+        <div class="control-group">
+            <label for="persistence">Persistence <span id="persistenceValue" class="value-display">0.5</span></label>
+            <input type="range" id="persistence" min="1" max="9" value="5">
+        </div>
+        <div class="control-group">
+            <label for="terrainColor">Terrain Color</label>
+            <input type="color" id="terrainColor" value="#44aa44">
+        </div>
+        <div class="control-group">
+            <label for="waterLevel">Water Level <span id="waterLevelValue" class="value-display">0</span></label>
+            <input type="range" id="waterLevel" min="0" max="50" value="0">
+        </div>
+        <div class="control-group">
+            <label for="waterColor">Water Color</label>
+            <input type="color" id="waterColor" value="#0077be">
+        </div>
+        <button id="generateButton">Generate New Terrain</button>
+        <button id="exportButton">Export Terrain</button>
+        <button id="wireframeButton">Toggle Wireframe</button>
+        <button id="smoothButton">Smooth Terrain</button>
+        <button id="resetCameraButton">Reset Camera</button>
+    </div>
+</div>
+    <canvas id="terrainCanvas"></canvas>
+
+    <div class="info-panel" style="top: auto; bottom: 20px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+            <h2 style="margin: 0;">3D Terrain Generator</h2>
+            <button id="toggleInfo" style="width: auto; margin: 0; padding: 5px 10px;">Minimize</button>
+        </div>
+        <div id="infoPanelContent">
+            <p>Welcome to the 3D Terrain Generator by niggabeana - a powerful tool for creating realistic 3D landscapes for games and simulations.</p>
+            
+            <h3>Features:</h3>
+            <ul>
+                <li>Real-time terrain generation with customizable parameters</li>
+                <li>Export to STL format for 3D printing or game engines</li>
+                <li>Water level simulation with animated waves</li>
+                <li>Wireframe view for detailed mesh inspection</li>
+                <li>Smoothing tools for terrain refinement</li>
+            </ul>
+
+            <h3>How to Use:</h3>
+            <ol>
+                <li>Adjust the sliders to modify terrain parameters</li>
+                <li>Click "Generate New Terrain" to create a new landscape</li>
+                <li>Use mouse to orbit (left click), pan (right click), and zoom (scroll)</li>
+                <li>Export your terrain when satisfied</li>
+            </ol>
+
+            <h3>Integration Tutorial:</h3>
+            <div class="code-example">
+                <h4>Unity Integration:</h4>
+                <pre>1. Export terrain as STL
+2. Import into Unity using these steps:
+   - Assets &gt; Import New Asset &gt; Select STL
+   - Create new material for terrain
+   - Drag STL into scene
+   - Apply material to mesh
+
+Example Unity Code:
+using UnityEngine;
+
+public class TerrainLoader : MonoBehaviour {
+    public Mesh terrainMesh;
+    public Material terrainMaterial;
+    
+    void Start() {
+        GameObject terrain = new GameObject("Terrain");
+        MeshFilter meshFilter = terrain.AddComponent<meshfilter>();
+        MeshRenderer meshRenderer = terrain.AddComponent<meshrenderer>();
+        
+        meshFilter.mesh = terrainMesh;
+        meshRenderer.material = terrainMaterial;
+        
+        // Add collider for physics
+        terrain.AddComponent<meshcollider>();
+    }
+}
+                </pre>
+
+                <h4>Unreal Engine Integration:</h4>
+                <pre>1. Export terrain as STL
+2. Import into Unreal:
+   - Content Browser &gt; Import
+   - Set up material in Material Editor
+   - Drag into scene
+   - Add collision as needed
+
+Blueprint Setup:
+- Create Blueprint Actor
+- Add Static Mesh Component
+- Set mesh to imported terrain
+- Add collision setup as needed
+                </pre>
+            </div>
+        </div>
+    </div>
+
+<script>
+let scene, camera, renderer, terrain, controls, water;
+const simplex = new SimplexNoise();
+let isWireframe = false;
+
+function updateValueDisplay(inputId, value, suffix = '') {
+    document.getElementById(inputId + 'Value').textContent = value + suffix;
+}
+
+function smoothTerrain() {
+    if (!terrain) return;
+    
+    const positions = terrain.geometry.attributes.position.array;
+    const vertices = [];
+    
+    // Convert the positions array into more manageable vertices
+    for (let i = 0; i < positions.length; i += 3) {
+        vertices.push({
+            x: positions[i],
+            y: positions[i + 1],
+            z: positions[i + 2]
+        });
+    }
+    
+    // Apply smoothing
+    const smoothedPositions = positions.slice();
+    const detail = parseInt(document.getElementById('detail').value);
+    const verticesPerRow = detail + 1;
+    
+    for (let i = 0; i < vertices.length; i++) {
+        if (i % verticesPerRow === 0 || i % verticesPerRow === verticesPerRow - 1 ||
+            i < verticesPerRow || i > vertices.length - verticesPerRow) continue;
+            
+        const neighbors = [
+            vertices[i - 1],
+            vertices[i + 1],
+            vertices[i - verticesPerRow],
+            vertices[i + verticesPerRow]
+        ];
+        
+        let avgZ = neighbors.reduce((sum, v) => sum + v.z, 0) / neighbors.length;
+        smoothedPositions[i * 3 + 2] = (avgZ + vertices[i].z) / 2;
+    }
+    
+    terrain.geometry.attributes.position.array = smoothedPositions;
+    terrain.geometry.attributes.position.needsUpdate = true;
+    terrain.geometry.computeVertexNormals();
+}
+
+function generateNewTerrain() {
+    if (terrain) scene.remove(terrain);
+    if (water) scene.remove(water);
+    
+    const heightScale = document.getElementById('heightScale').value / 10;
+    const detail = parseInt(document.getElementById('detail').value);
+    const roughness = document.getElementById('roughness').value / 10;
+    const octaves = parseInt(document.getElementById('octaves').value);
+    const persistence = document.getElementById('persistence').value / 10;
+    const terrainColor = document.getElementById('terrainColor').value;
+    const waterLevel = document.getElementById('waterLevel').value / 10;
+    const waterColor = document.getElementById('waterColor').value;
+    
+    updateValueDisplay('heightScale', heightScale);
+    updateValueDisplay('detail', detail);
+    updateValueDisplay('roughness', roughness);
+    updateValueDisplay('octaves', octaves);
+    updateValueDisplay('persistence', persistence);
+    updateValueDisplay('waterLevel', waterLevel);
+    
+    const geometry = new THREE.PlaneGeometry(100, 100, detail, detail);
+    
+    // Generate height map with improved noise
+    const vertices = geometry.attributes.position.array;
+    for(let i = 0; i < vertices.length; i += 3) {
+        const x = vertices[i];
+        const y = vertices[i + 1];
+        const scale = 0.02;
+        
+        let elevation = 0;
+        let amplitude = 1;
+        let frequency = 1;
+        
+        for(let o = 0; o < octaves; o++) {
+            elevation += simplex.noise2D(x * scale * roughness * frequency, 
+                                      y * scale * roughness * frequency) * amplitude;
+            amplitude *= persistence;
+            frequency *= 2;
+        }
+        
+        vertices[i + 2] = elevation * heightScale;
+    }
+    
+    geometry.computeVertexNormals();
+    
+    const material = new THREE.MeshPhongMaterial({
+        color: terrainColor,
+        flatShading: true,
+        wireframe: isWireframe,
+        specular: 0x222222,
+        shininess: 10
+    });
+    
+    terrain = new THREE.Mesh(geometry, material);
+    terrain.rotation.x = -Math.PI / 2;
+    terrain.castShadow = true;
+    terrain.receiveShadow = true;
+    scene.add(terrain);
+    
+    // Add water plane if water level > 0
+    if (waterLevel > 0) {
+        const waterGeometry = new THREE.PlaneGeometry(100, 100);
+        const waterMaterial = new THREE.MeshPhongMaterial({
+            color: waterColor,
+            transparent: true,
+            opacity: 0.6,
+            shininess: 90
+        });
+        water = new THREE.Mesh(waterGeometry, waterMaterial);
+        water.rotation.x = -Math.PI / 2;
+        water.position.y = -waterLevel;
+        scene.add(water);
+    }
+}
+
+function resetCamera() {
+    camera.position.set(0, 50, 100);
+    camera.lookAt(0, 0, 0);
+    controls.reset();
+}
+
+function init() {
+    scene = new THREE.Scene();
+    scene.fog = new THREE.Fog(0x1a1a1a, 100, 300);
+    
+    camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    renderer = new THREE.WebGLRenderer({ 
+        canvas: document.getElementById('terrainCanvas'), 
+        antialias: true 
+    });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.shadowMap.enabled = true;
+    
+    camera.position.set(0, 50, 100);
+    camera.lookAt(0, 0, 0);
+    
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+    scene.add(ambientLight);
+    
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+    directionalLight.position.set(50, 50, 50);
+    directionalLight.castShadow = true;
+    scene.add(directionalLight);
+    
+    controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.05;
+    
+    // Event listeners
+    document.getElementById('generateButton').addEventListener('click', generateNewTerrain);
+    document.getElementById('exportButton').addEventListener('click', exportTerrain);
+    document.getElementById('wireframeButton').addEventListener('click', toggleWireframe);
+    document.getElementById('smoothButton').addEventListener('click', smoothTerrain);
+    document.getElementById('resetCameraButton').addEventListener('click', resetCamera);
+    
+    // Add event listener for toggle controls button
+    document.getElementById('toggleControls').addEventListener('click', function() {
+        const content = document.getElementById('controlsContent');
+        const button = document.getElementById('toggleControls');
+        if (content.style.display === 'none') {
+            content.style.display = 'block';
+            button.textContent = 'Minimize';
+        } else {
+            content.style.display = 'none';
+            button.textContent = 'Maximize';
+        }
+    });
+
+    // Add event listener for toggle info button
+    document.getElementById('toggleInfo').addEventListener('click', function() {
+        const content = document.getElementById('infoPanelContent');
+        const button = document.getElementById('toggleInfo');
+        if (content.style.display === 'none') {
+            content.style.display = 'block';
+            button.textContent = 'Minimize';
+        } else {
+            content.style.display = 'none';
+            button.textContent = 'Maximize';
+        }
+    });
+
+    // Add real-time updates for all sliders
+    ['heightScale', 'detail', 'roughness', 'octaves', 'persistence', 'waterLevel'].forEach(id => {
+        document.getElementById(id).addEventListener('input', generateNewTerrain);
+    });
+    
+    ['terrainColor', 'waterColor'].forEach(id => {
+        document.getElementById(id).addEventListener('input', generateNewTerrain);
+    });
+    
+    generateNewTerrain();
+    animate();
+}
+
+function exportTerrain() {
+    const exporter = new THREE.STLExporter();
+    const result = exporter.parse(scene);
+    const blob = new Blob([result], {type: 'text/plain'});
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'terrain.stl';
+    link.click();
+}
+
+function toggleWireframe() {
+    isWireframe = !isWireframe;
+    if (terrain) {
+        terrain.material.wireframe = isWireframe;
+    }
+}
+
+function animate() {
+    requestAnimationFrame(animate);
+    controls.update();
+    if (water) {
+        water.position.z = Math.sin(Date.now() * 0.001) * 0.1;
+    }
+    renderer.render(scene, camera);
+}
+
+window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+init();
+</script>
+</body></html>
