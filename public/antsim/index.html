@@ -1,0 +1,1043 @@
+<html><head><base href="https://simulant.ai/ant-colony" />
+<title>SimulAnt: Optimized Advanced Ant Colony Simulator</title>
+<style>
+  body, html {
+    font-family: 'Roboto', Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    overflow: hidden;
+    background-color: #f0f0f0;
+    color: #333;
+  }
+  #simulation-container {
+    display: flex;
+    width: 100%;
+    height: 100%;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+  }
+  #controls {
+    width: 280px;
+    padding: 20px;
+    background-color: #1a1a2e;
+    color: #e0e0e0;
+    border-right: 1px solid #16213e;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+  }
+  #canvas-container {
+    flex-grow: 1;
+    position: relative;
+  }
+  #canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+  }
+  #background-image {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: url('https://gardentabs.com/wp-content/uploads/2021/09/Sandy-texture-photographed-up-close.jpg');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    opacity: 0.3;
+  }
+  .control-group {
+    background-color: #16213e;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 20px;
+  }
+  .control-group h3 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    color: #4ecca3;
+    font-size: 18px;
+  }
+  select, input[type="range"] {
+    width: 100%;
+    margin-bottom: 15px;
+    background-color: #232f3e;
+    border: none;
+    color: #e0e0e0;
+    padding: 8px;
+    border-radius: 4px;
+  }
+  label {
+    display: inline-block;
+    margin-bottom: 8px;
+    font-weight: bold;
+  }
+  .stat {
+    margin-bottom: 10px;
+    display: flex;
+    justify-content: space-between;
+  }
+  .checkbox-container {
+    display: flex;
+    align-items: center;
+    margin-bottom: 15px;
+  }
+  .checkbox-container input {
+    margin-right: 10px;
+  }
+  button {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 15px;
+    background-color: #4ecca3;
+    color: #1a1a2e;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    font-weight: bold;
+  }
+  button:hover {
+    background-color: #45b393;
+  }
+  #population-graph-container {
+    width: 100%;
+    margin-top: auto;
+    padding-top: 20px;
+  }
+  #population-graph {
+    width: 100%;
+    height: 100px;
+    background-color: #232f3e;
+    border-radius: 8px;
+  }
+  #egg-count-graph {
+    width: 100%;
+    height: 100px;
+    background-color: #232f3e;
+    border-radius: 8px;
+    margin-top: 10px;
+  }
+  #food-count-graph {
+    width: 100%;
+    height: 100px;
+    background-color: #232f3e;
+    border-radius: 8px;
+    margin-top: 10px;
+  }
+  #graph-legend {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 10px;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    margin: 0 10px;
+  }
+  .legend-color {
+    width: 12px;
+    height: 12px;
+    margin-right: 5px;
+    border-radius: 50%;
+  }
+  input[type="range"] {
+    -webkit-appearance: none;
+    height: 8px;
+    border-radius: 4px;
+    background: #232f3e;
+    outline: none;
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #4ecca3;
+    cursor: pointer;
+  }
+  input[type="range"]::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #4ecca3;
+    cursor: pointer;
+  }
+  .slider-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 15px;
+  }
+  .slider-value {
+    margin-bottom: 5px;
+    font-weight: bold;
+  }
+</style>
+</head>
+<body>
+<div id="simulation-container">
+  <div id="controls">
+    <div class="control-group">
+      <h3>Colony Management</h3>
+      <button id="spawnAntButton1">Spawn Worker Ant (Colony 1)</button>
+      <button id="spawnAntButton2">Spawn Worker Ant (Colony 2)</button>
+      <button id="resetSimulationButton">Reset Simulation</button>
+    </div>
+    
+    <div class="control-group">
+      <h3>Food Generation</h3>
+      <div class="checkbox-container">
+        <input type="checkbox" id="autoFoodToggle" checked>
+        <label for="autoFoodToggle">Auto Generate Food</label>
+      </div>
+      <label for="foodGenerationSpeed">Generation Speed:</label>
+      <div class="slider-container">
+        <span id="foodGenSpeedValue" class="slider-value">85</span>
+        <input type="range" id="foodGenerationSpeed" min="1" max="100" value="85">
+      </div>
+      
+      <label for="foodDistribution">Distribution:</label>
+      <select id="foodDistribution">
+        <option value="random">Random</option>
+        <option value="cluster" selected>Cluster</option>
+        <option value="grid">Grid</option>
+      </select>
+      
+      <div class="checkbox-container">
+        <input type="checkbox" id="clusterOnClickToggle" checked>
+        <label for="clusterOnClickToggle">Add Dense Cluster on Click</label>
+      </div>
+    </div>
+    
+    <div class="control-group">
+      <h3>Ant Parameters</h3>
+      <label for="antLifespan">Ant Lifespan:</label>
+      <div class="slider-container">
+        <span id="antLifespanValue" class="slider-value">4800</span>
+        <input type="range" id="antLifespan" min="500" max="10000" value="4800" step="100">
+      </div>
+      
+      <label for="antSightRadius">Ant Sight Radius:</label>
+      <div class="slider-container">
+        <span id="antSightRadiusValue" class="slider-value">40</span>
+        <input type="range" id="antSightRadius" min="10" max="300" value="40" step="1">
+      </div>
+      
+      <div class="checkbox-container">
+        <input type="checkbox" id="showSightRadiusToggle">
+        <label for="showSightRadiusToggle">Show Ant Sight Radius</label>
+      </div>
+    </div>
+    
+    <div class="control-group">
+      <h3>Simulation Stats</h3>
+      <div class="stat">Colony 1 Ants: <span id="antCount1">17</span></div>
+      <div class="stat">Colony 2 Ants: <span id="antCount2">17</span></div>
+      <div class="stat">Colony 1 Eggs: <span id="eggCount1">0</span></div>
+      <div class="stat">Colony 2 Eggs: <span id="eggCount2">0</span></div>
+      <div class="stat">Food: <span id="foodCount">0</span></div>
+      <div class="stat">Colony 1 Queen's Food: <span id="queenFoodCount1">0</span></div>
+      <div class="stat">Colony 2 Queen's Food: <span id="queenFoodCount2">0</span></div>
+    </div>
+    
+    <div class="control-group">
+      <h3>Performance</h3>
+      <div id="fpsCounter">FPS: 60</div>
+    </div>
+    
+    <div id="population-graph-container">
+      <div id="graph-legend">
+        <div class="legend-item">
+          <div class="legend-color" style="background-color: #FF4136;"></div>
+          <span>Colony 1</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-color" style="background-color: #0074D9;"></div>
+          <span>Colony 2</span>
+        </div>
+      </div>
+      <canvas id="population-graph"></canvas>
+      <h4>Egg Count over Time</h4>
+      <canvas id="egg-count-graph"></canvas>
+      <h4>Food Count over Time</h4>
+      <canvas id="food-count-graph"></canvas>
+    </div>
+  </div>
+  <div id="canvas-container">
+    <div id="background-image"></div>
+    <canvas id="canvas"></canvas>
+  </div>
+</div>
+
+<script>
+const SIGNIFICANT_POPULATION_LEAD = 10; // Adjust this value as needed
+const LOW_POPULATION_THRESHOLD = 20;
+const HIGH_POPULATION_THRESHOLD = 50;
+const MAX_EGGS_PER_CYCLE = 5;
+
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+const populationGraph = document.getElementById('population-graph');
+const graphCtx = populationGraph.getContext('2d');
+const eggCountGraph = document.getElementById('egg-count-graph');
+const foodCountGraph = document.getElementById('food-count-graph');
+const eggGraphCtx = eggCountGraph.getContext('2d');
+const foodGraphCtx = foodCountGraph.getContext('2d');
+
+let ants = [];
+let eggs = [];
+let food = [];
+let queens = [];
+let autoFoodGeneration = true;
+let foodDistribution = 'cluster';
+let foodGenerationRate = 85;
+let foodGenerationCounter = 0;
+let antLifespan = 4800;
+let antSightRadius = 40;
+let showSightRadius = false;
+let clusterOnClick = true;
+
+const graphDataPoints = {
+  colony1: [],
+  colony2: [],
+  eggCount1: [],
+  eggCount2: [],
+  foodCount: []
+};
+const graphTimeWindow = 60 * 60;
+
+let frameCount = 0;
+let lastFPSUpdate = 0;
+let fps = 0;
+
+// Load ant images for both colonies
+const antImage1 = new Image();
+antImage1.src = 'https://cdn-icons-png.flaticon.com/512/357/357573.png';
+const antImage2 = new Image();
+antImage2.src = 'https://cdn-icons-png.freepik.com/512/12802/12802711.png';
+
+function resizeCanvas() {
+  canvas.width = canvas.offsetWidth;
+  canvas.height = canvas.offsetHeight;
+  populationGraph.width = populationGraph.offsetWidth;
+  populationGraph.height = populationGraph.offsetHeight;
+  eggCountGraph.width = eggCountGraph.offsetWidth;
+  eggCountGraph.height = eggCountGraph.offsetHeight;
+  foodCountGraph.width = foodCountGraph.offsetWidth;
+  foodCountGraph.height = foodCountGraph.offsetHeight;
+}
+
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas();
+
+class Ant {
+  constructor(x, y, isQueen = false, colonyId) {
+    this.x = x;
+    this.y = y;
+    this.isQueen = isQueen;
+    this.colonyId = colonyId;
+    this.hasFood = false;
+    this.target = null;
+    this.speed = 1;
+    this.energy = antLifespan;
+    this.direction = Math.random() * Math.PI * 2;
+    this.lastFoodDirection = null;
+    this.wanderCounter = 0;
+  }
+
+  move() {
+    const currentQueen = queens.find(q => q.colonyId === this.colonyId);
+    
+    if (this.target instanceof Queen) {
+      if (!currentQueen || this.target !== currentQueen) {
+        this.energy = Math.min(this.energy + antLifespan / 2, antLifespan);
+        this.hasFood = false;
+        this.target = null;
+      }
+    }
+
+    if (this.isQueen) return;
+
+    this.energy--;
+
+    if (this.target) {
+      const dx = this.target.x - this.x;
+      const dy = this.target.y - this.y;
+      const distance = Math.hypot(dx, dy);
+
+      if (distance < 2) {
+        if (this.target instanceof Food) {
+          this.collectFood();
+        } else if (this.target instanceof Queen && this.target === currentQueen) {
+          this.feedQueen();
+        }
+      } else {
+        this.x += (dx / distance) * this.speed;
+        this.y += (dy / distance) * this.speed;
+        this.direction = Math.atan2(dy, dx);
+      }
+    } else if (this.lastFoodDirection !== null) {
+      this.x += Math.cos(this.lastFoodDirection) * this.speed;
+      this.y += Math.sin(this.lastFoodDirection) * this.speed;
+      this.direction = this.lastFoodDirection;
+      this.lastFoodDirection = null;
+    } else {
+      this.wander();
+    }
+
+    this.x = Math.max(0, Math.min(canvas.width, this.x));
+    this.y = Math.max(0, Math.min(canvas.height, this.y));
+
+    if (this.energy <= 0) {
+      this.die();
+    }
+  }
+
+  wander() {
+    this.wanderCounter++;
+    if (this.wanderCounter >= 100) {
+      this.direction += (Math.random() - 0.5) * Math.PI / 2;
+      this.wanderCounter = 0;
+    }
+
+    this.direction += (Math.random() - 0.5) * 0.1;
+
+    this.x += Math.cos(this.direction) * this.speed;
+    this.y += Math.sin(this.direction) * this.speed;
+
+    const edgeBuffer = 20;
+    if (this.x < edgeBuffer || this.x > canvas.width - edgeBuffer ||
+        this.y < edgeBuffer || this.y > canvas.height - edgeBuffer) {
+      this.direction = Math.atan2(canvas.height/2 - this.y, canvas.width/2 - this.x);
+      this.direction += (Math.random() - 0.5) * Math.PI / 4;
+    }
+  }
+
+  collectFood() {
+    if (!this.hasFood && this.target instanceof Food) {
+      this.hasFood = true;
+      food = food.filter(f => f !== this.target);
+      this.target = null;
+      this.energy = Math.min(this.energy + antLifespan / 4, antLifespan);
+    }
+  }
+
+  feedQueen() {
+    if (this.hasFood) {
+      const queen = queens.find(q => q.colonyId === this.colonyId);
+      if (queen) {
+        const accepted = queen.receiveFood();
+        if (accepted) {
+          this.hasFood = false;
+          this.target = null;
+        } else {
+          this.energy = Math.min(this.energy + antLifespan / 4, antLifespan);
+          this.hasFood = false;
+          this.target = null;
+        }
+      } else {
+        this.energy = Math.min(this.energy + antLifespan / 2, antLifespan);
+        this.hasFood = false;
+        this.target = null;
+      }
+    }
+  }
+
+  findTarget() {
+    if (this.target instanceof Queen && !queens.some(q => q === this.target)) {
+      this.target = null;
+      this.hasFood = false;
+      this.energy = Math.min(this.energy + antLifespan / 2, antLifespan);
+    }
+
+    if (!this.target) {
+      if (this.hasFood) {
+        const queen = queens.find(q => q.colonyId === this.colonyId);
+        if (queen) {
+          this.target = queen;
+        } else {
+          this.energy = Math.min(this.energy + antLifespan / 2, antLifespan);
+          this.hasFood = false;
+          this.target = null;
+        }
+      } else {
+        this.target = this.findClosestFoodInSight();
+        if (!this.target) {
+          this.followPheromone();
+        }
+      }
+    }
+
+    if (this.target instanceof Food && !food.includes(this.target)) {
+      this.target = null;
+    }
+  }
+
+  findClosestFoodInSight() {
+    let closestFood = null;
+    let closestDistance = Infinity;
+    for (let f of food) {
+      const distance = Math.hypot(f.x - this.x, f.y - this.y);
+      if (distance < antSightRadius && distance < closestDistance) {
+        closestFood = f;
+        closestDistance = distance;
+      }
+    }
+    return closestFood;
+  }
+
+  followPheromone() {
+    const thisQueen = queens.find(q => q.colonyId === this.colonyId);
+    if (!thisQueen) return;
+
+    for (let ant of ants) {
+      if (ant !== this && ant.hasFood) {
+        const distance = Math.hypot(ant.x - this.x, ant.y - this.y);
+        if (distance < antSightRadius) {
+          const antQueen = queens.find(q => q.colonyId === ant.colonyId);
+          if (!antQueen) continue;
+
+          if (ant.colonyId === this.colonyId) {
+            this.lastFoodDirection = Math.atan2(thisQueen.y - ant.y, thisQueen.x - ant.x) + Math.PI;
+          } else {
+            this.lastFoodDirection = Math.atan2(ant.y - antQueen.y, ant.x - antQueen.x);
+          }
+          this.direction = this.lastFoodDirection;
+          break;
+        }
+      }
+    }
+  }
+
+  die() {
+    ants = ants.filter(ant => ant !== this);
+  }
+
+  draw() {
+    ctx.save();
+    ctx.translate(this.x, this.y);
+    ctx.rotate(this.direction + Math.PI / 2);
+    
+    const size = this.isQueen ? 24 : 8;
+    const antImage = this.colonyId === 0 ? antImage1 : antImage2;
+    ctx.drawImage(antImage, -size/2, -size/2, size, size);
+
+    if (this.hasFood) {
+      ctx.beginPath();
+      ctx.arc(0, -size/2, 2, 0, Math.PI * 2);
+      ctx.fillStyle = 'green';
+      ctx.fill();
+    }
+
+    ctx.restore();
+
+    if (!this.isQueen) {
+      ctx.fillStyle = `rgb(${255 - this.energy / (antLifespan / 255)}, ${this.energy / (antLifespan / 255)}, 0)`;
+      ctx.fillRect(this.x - 3, this.y - 5, (this.energy / antLifespan) * 6, 1);
+    }
+
+    if (showSightRadius && !this.isQueen) {
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, antSightRadius, 0, Math.PI * 2);
+      ctx.strokeStyle = this.colonyId === 0 ? 'rgba(255, 65, 54, 0.1)' : 'rgba(0, 116, 217, 0.1)';
+      ctx.stroke();
+    }
+  }
+}
+
+class Queen extends Ant {
+  constructor(x, y, colonyId) {
+    super(x, y, true, colonyId);
+    this.foodCount = 0;
+    this.eggLayingTimer = 0;
+    this.eggLayingInterval = 60;
+  }
+
+  getColonyPopulation() {
+    return ants.filter(ant => ant.colonyId === this.colonyId && !ant.isQueen).length;
+  }
+
+  receiveFood() {
+    const MAX_FOOD_STORAGE = 200;
+    this.foodCount++;
+
+    if (this.foodCount > MAX_FOOD_STORAGE) {
+      this.layEgg();
+      this.foodCount--;
+    }
+    return true;
+  }
+
+  layEgg() {
+    if (this.foodCount > 0) {
+      this.foodCount--;
+      eggs.push(new Egg(this.x + Math.random() * 20 - 10, this.y + Math.random() * 20 - 10, this.colonyId));
+    }
+  }
+
+  feedEggs() {
+    const MAX_FOOD_STORAGE = 200;
+
+    if (this.foodCount > MAX_FOOD_STORAGE) {
+      while (this.foodCount > MAX_FOOD_STORAGE) {
+        this.layEgg();
+        this.foodCount--;
+      }
+    }
+
+    const colonyPopulation = this.getColonyPopulation();
+    const otherColonyId = this.colonyId === 0 ? 1 : 0;
+    const otherColonyPopulation = ants.filter(
+      ant => ant.colonyId === otherColonyId && !ant.isQueen
+    ).length;
+    const hungryEggs = eggs.filter(
+      egg => !egg.isFed && egg.colonyId === this.colonyId
+    );
+
+    const eggFeedingRate = Math.max(1, Math.floor(colonyPopulation / 10));
+    for (
+      let i = 0;
+      i < eggFeedingRate && this.foodCount > 0 && hungryEggs.length > 0;
+      i++
+    ) {
+      hungryEggs.pop().feed();
+      this.foodCount--;
+    }
+
+    if (this.eggLayingTimer > 0) {
+      this.eggLayingTimer--;
+    }
+
+    let shouldLayEgg = false;
+    if (
+      colonyPopulation < LOW_POPULATION_THRESHOLD ||
+      otherColonyPopulation > colonyPopulation
+    ) {
+      shouldLayEgg = true;
+    } else if (colonyPopulation > HIGH_POPULATION_THRESHOLD) {
+      shouldLayEgg = false;
+    } else {
+      if (this.foodCount > colonyPopulation / 5) {
+        shouldLayEgg = true;
+      }
+    }
+
+    if (shouldLayEgg) {
+      this.eggLayingInterval = 5; 
+    } else {
+      this.eggLayingInterval = 60; 
+    }
+
+    if (shouldLayEgg && this.foodCount > 0 && this.eggLayingTimer <= 0) {
+      this.layEgg();
+      this.eggLayingTimer = this.eggLayingInterval;
+    }
+  }
+}
+
+class Egg {
+  constructor(x, y, colonyId) {
+    this.x = x;
+    this.y = y;
+    this.colonyId = colonyId;
+    this.isFed = false;
+    this.age = 0;
+  }
+
+  feed() {
+    this.isFed = true;
+  }
+
+  update() {
+    if (++this.age > 300 && this.isFed) {
+      this.hatch();
+    }
+  }
+
+  hatch() {
+    ants.push(new Ant(this.x, this.y, false, this.colonyId));
+    eggs = eggs.filter(egg => egg !== this);
+  }
+
+  draw() {
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, 2, 0, Math.PI * 2);
+    ctx.fillStyle = this.isFed ? (this.colonyId === 0 ? '#FF4136' : 'white') : 'white';
+    ctx.fill();
+  }
+}
+
+class Food {
+  constructor(x, y) {
+    this.x = x;
+    this.y = y;
+  }
+
+  draw() {
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, 2, 0, Math.PI * 2);
+    ctx.fillStyle = 'green';
+    ctx.fill();
+  }
+}
+
+function init() {
+  queens = [
+    new Queen(canvas.width * 0.25, canvas.height / 2, 0),
+    new Queen(canvas.width * 0.75, canvas.height / 2, 1)
+  ];
+  ants = [...queens];
+  
+  for (let i = 0; i < 16; i++) {
+    const angle = (i / 16) * Math.PI * 2;
+    const distance = 60;
+    ants.push(new Ant(queens[0].x + Math.cos(angle) * distance, queens[0].y + Math.sin(angle) * distance, false, 0));
+    ants.push(new Ant(queens[1].x + Math.cos(angle) * distance, queens[1].y + Math.sin(angle) * distance, false, 1));
+  }
+
+  generateLargeFoodCluster(canvas.width / 2, canvas.height / 2);
+}
+
+function update() {
+  const currentAnts = ants.filter(ant => !ant.isQueen);
+  for (let ant of currentAnts) {
+    ant.move();
+    ant.findTarget();
+  }
+
+  for (let egg of eggs) {
+    egg.update();
+  }
+
+  for (let queen of queens) {
+    queen.feedEggs();
+  }
+
+  if (autoFoodGeneration && ++foodGenerationCounter >= Math.max(1, 100 - foodGenerationRate)) {
+    generateFood();
+    foodGenerationCounter = 0;
+  }
+
+  checkColonyExtinction();
+  updateStats();
+}
+
+function checkColonyExtinction() {
+  for (let i = 0; i < 2; i++) {
+    const workerAnts = ants.filter(ant => ant.colonyId === i && !ant.isQueen);
+    if (workerAnts.length === 0) {
+      queens = queens.filter(queen => queen.colonyId !== i);
+      eggs = eggs.filter(egg => egg.colonyId !== i);
+      ants = ants.filter(ant => ant.colonyId !== i);
+
+      console.log(`Colony ${i + 1} has been eliminated`);
+
+      if (queens.length === 1) {
+        const survivingQueen = queens[0];
+        survivingQueen.x = canvas.width / 2;
+        survivingQueen.y = canvas.height / 2;
+      }
+    }
+  }
+}
+
+function updateStats() {
+  document.getElementById('antCount1').textContent = ants.filter(ant => ant.colonyId === 0 && !ant.isQueen).length;
+  document.getElementById('antCount2').textContent = ants.filter(ant => ant.colonyId === 1 && !ant.isQueen).length;
+  document.getElementById('eggCount1').textContent = eggs.filter(egg => egg.colonyId === 0).length;
+  document.getElementById('eggCount2').textContent = eggs.filter(egg => egg.colonyId === 1).length;
+  document.getElementById('foodCount').textContent = food.length;
+  document.getElementById('queenFoodCount1').textContent = queens.find(queen => queen.colonyId === 0)?.foodCount || 0;
+  document.getElementById('queenFoodCount2').textContent = queens.find(queen => queen.colonyId === 1)?.foodCount || 0;
+
+  graphDataPoints.colony1.push(ants.filter(ant => ant.colonyId === 0).length);
+  graphDataPoints.colony2.push(ants.filter(ant => ant.colonyId === 1).length);
+  graphDataPoints.eggCount1.push(eggs.filter(egg => egg.colonyId === 0).length);
+  graphDataPoints.eggCount2.push(eggs.filter(egg => egg.colonyId === 1).length);
+  graphDataPoints.foodCount.push(food.length);
+
+  if (graphDataPoints.colony1.length > graphTimeWindow) {
+    graphDataPoints.colony1.shift();
+    graphDataPoints.colony2.shift();
+    graphDataPoints.eggCount1.shift();
+    graphDataPoints.eggCount2.shift();
+    graphDataPoints.foodCount.shift();
+  }
+}
+
+function draw() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  
+  for (let f of food) {
+    f.draw();
+  }
+  
+  for (let egg of eggs) {
+    egg.draw();
+  }
+  
+  for (let ant of ants) {
+    ant.draw();
+  }
+
+  drawPopulationGraph();
+  drawEggCountGraph();
+  drawFoodCountGraph();
+}
+
+function updateFPS(currentTime) {
+  if (currentTime > lastFPSUpdate + 1000) {
+    fps = frameCount;
+    frameCount = 0;
+    lastFPSUpdate = currentTime;
+    document.getElementById('fpsCounter').textContent = `FPS: ${fps}`;
+  }
+  frameCount++;
+}
+
+function drawPopulationGraph() {
+  graphCtx.clearRect(0, 0, populationGraph.width, populationGraph.height);
+  
+  const maxPopulation = Math.max(
+    ...graphDataPoints.colony1,
+    ...graphDataPoints.colony2,
+    1
+  );
+  const graphHeight = populationGraph.height - 10;
+  const graphWidth = populationGraph.width - 10;
+  
+  function drawColonyLine(colonyData, color) {
+    graphCtx.beginPath();
+    graphCtx.moveTo(5, graphHeight + 5);
+    
+    colonyData.forEach((population, i) => {
+      const x = 5 + (i / (graphTimeWindow - 1)) * graphWidth;
+      const y = graphHeight + 5 - (population / maxPopulation) * graphHeight;
+      graphCtx.lineTo(x, y);
+    });
+    
+    graphCtx.strokeStyle = color;
+    graphCtx.lineWidth = 2;
+    graphCtx.stroke();
+  }
+
+  drawColonyLine(graphDataPoints.colony1, '#FF4136');
+  drawColonyLine(graphDataPoints.colony2, '#0074D9');
+  
+  graphCtx.beginPath();
+  graphCtx.moveTo(5, 5);
+  graphCtx.lineTo(5, graphHeight + 5);
+  graphCtx.lineTo(graphWidth + 5, graphHeight + 5);
+  graphCtx.strokeStyle = 'rgba(200, 200, 200, 0.5)';
+  graphCtx.lineWidth = 1;
+  graphCtx.stroke();
+  
+  graphCtx.fillStyle = 'rgba(200, 200, 200, 0.8)';
+  graphCtx.font = '10px Arial';
+  graphCtx.fillText(maxPopulation, 2, 10);
+}
+
+function drawEggCountGraph() {
+  eggGraphCtx.clearRect(0, 0, eggCountGraph.width, eggCountGraph.height);
+  const maxEggs = Math.max(...graphDataPoints.eggCount1, ...graphDataPoints.eggCount2, 1);
+  
+  function drawLine(eggCounts, color) {
+    eggGraphCtx.beginPath();
+    eggGraphCtx.moveTo(5, eggCountGraph.height + 5);
+    eggCounts.forEach((count, i) => {
+      const x = 5 + (i / (graphTimeWindow - 1)) * (eggCountGraph.width - 10);
+      const y = eggCountGraph.height + 5 - (count / maxEggs) * (eggCountGraph.height - 10);
+      eggGraphCtx.lineTo(x, y);
+    });
+    eggGraphCtx.strokeStyle = color;
+    eggGraphCtx.lineWidth = 2;
+    eggGraphCtx.stroke();
+  }
+
+  drawLine(graphDataPoints.eggCount1, '#FF4136');  
+  drawLine(graphDataPoints.eggCount2, '#0074D9');  
+}
+
+function drawFoodCountGraph() {
+  foodGraphCtx.clearRect(0, 0, foodCountGraph.width, foodCountGraph.height);
+  const maxFood = Math.max(...graphDataPoints.foodCount, 1);
+  
+  foodGraphCtx.beginPath();
+  foodGraphCtx.moveTo(5, foodCountGraph.height + 5);
+  graphDataPoints.foodCount.forEach((count, i) => {
+    const x = 5 + (i / (graphTimeWindow - 1)) * (foodCountGraph.width - 10);
+    const y = foodCountGraph.height + 5 - (count / maxFood) * (foodCountGraph.height - 10);
+    foodGraphCtx.lineTo(x, y);
+  });
+  
+  foodGraphCtx.strokeStyle = 'green';
+  foodGraphCtx.lineWidth = 2;
+  foodGraphCtx.stroke();
+}
+
+function generateFood() {
+  const methods = {
+    random: generateRandomFood,
+    cluster: generateClusteredFood,
+    grid: generateGridFood
+  };
+  methods[foodDistribution]();
+}
+
+function generateRandomFood() {
+  food.push(new Food(Math.random() * canvas.width, Math.random() * canvas.height));
+}
+
+function generateClusteredFood() {
+  if (food.length === 0) {
+    generateFoodCluster(Math.random() * canvas.width, Math.random() * canvas.height);
+  } else {
+    const centerFood = food[Math.floor(Math.random() * food.length)];
+    const angle = Math.random() * Math.PI * 2;
+    const distance = Math.random() * 50;
+    const x = centerFood.x + Math.cos(angle) * distance;
+    const y = centerFood.y + Math.sin(angle) * distance;
+    food.push(new Food(
+      Math.max(0, Math.min(canvas.width, x)),
+      Math.max(0, Math.min(canvas.height, y))
+    ));
+  }
+}
+
+function generateGridFood() {
+  const gridSize = 50;
+  const x = Math.floor(Math.random() * (canvas.width / gridSize)) * gridSize;
+  const y = Math.floor(Math.random() * (canvas.height / gridSize)) * gridSize;
+  food.push(new Food(x, y));
+}
+
+function generateFoodCluster(centerX, centerY, size = 50, radius = 20) {
+  for (let i = 0; i < size; i++) {
+    const angle = Math.random() * Math.PI * 2;
+    const distance = Math.random() * radius;
+    const x = centerX + Math.cos(angle) * distance;
+    const y = centerY + Math.sin(angle) * distance;
+    food.push(new Food(
+      Math.max(0, Math.min(canvas.width, x)),
+      Math.max(0, Math.min(canvas.height, y))
+    ));
+  }
+}
+
+function generateLargeFoodCluster(centerX, centerY) {
+  generateFoodCluster(centerX, centerY, 200, 60);
+}
+
+function resetSimulation() {
+  ants = [];
+  eggs = [];
+  food = [];
+  queens = [];
+  autoFoodGeneration = true;
+  foodDistribution = 'cluster';
+  foodGenerationRate = 85;
+  foodGenerationCounter = 0;
+  antLifespan = 4800;
+  antSightRadius = 40;
+  showSightRadius = false;
+  clusterOnClick = true;
+
+  graphDataPoints.colony1 = [];
+  graphDataPoints.colony2 = [];
+  graphDataPoints.eggCount1 = [];
+  graphDataPoints.eggCount2 = [];
+  graphDataPoints.foodCount = [];
+
+  frameCount = 0;
+  lastFPSUpdate = 0;
+  fps = 0;
+
+  init();
+
+  document.getElementById('fpsCounter').textContent = `FPS: 60`;
+}
+
+canvas.addEventListener('click', (e) => {
+  const rect = canvas.getBoundingClientRect();
+  const x = e.clientX - rect.left;
+  const y = e.clientY - rect.top;
+  
+  if (clusterOnClick) {
+    generateFoodCluster(x, y);
+  } else {
+    food.push(new Food(x, y));
+  }
+});
+
+document.getElementById('autoFoodToggle').addEventListener('change', (e) => {
+  autoFoodGeneration = e.target.checked;
+});
+
+document.getElementById('foodGenerationSpeed').addEventListener('input', (e) => {
+  foodGenerationRate = parseInt(e.target.value);
+  document.getElementById('foodGenSpeedValue').textContent = foodGenerationRate;
+});
+
+document.getElementById('antLifespan').addEventListener('input', (e) => {
+  antLifespan = parseInt(e.target.value);
+  document.getElementById('antLifespanValue').textContent = antLifespan;
+});
+
+document.getElementById('antSightRadius').addEventListener('input', (e) => {
+  antSightRadius = parseInt(e.target.value);
+  document.getElementById('antSightRadiusValue').textContent = antSightRadius;
+});
+
+document.getElementById('showSightRadiusToggle').addEventListener('change', (e) => {
+  showSightRadius = e.target.checked;
+});
+
+document.getElementById('foodDistribution').addEventListener('change', (e) => {
+  foodDistribution = e.target.value;
+});
+
+document.getElementById('clusterOnClickToggle').addEventListener('change', (e) => {
+  clusterOnClick = e.target.checked;
+});
+
+document.getElementById('spawnAntButton1').addEventListener('click', () => {
+  const queen = queens.find(q => q.colonyId === 0);
+  if (queen) {
+    const newAnt = new Ant(queen.x + Math.random() * 20 - 10, queen.y + Math.random() * 20 - 10, false, 0);
+    ants.push(newAnt);
+  }
+});
+
+document.getElementById('spawnAntButton2').addEventListener('click', () => {
+  const queen = queens.find(q => q.colonyId === 1);
+  if (queen) {
+    const newAnt = new Ant(queen.x + Math.random() * 20 - 10, queen.y + Math.random() * 20 - 10, false, 1);
+    ants.push(newAnt);
+  }
+});
+
+document.getElementById('resetSimulationButton').addEventListener('click', resetSimulation);
+
+init();
+
+let lastTime = 0;
+function gameLoop(currentTime) {
+  const deltaTime = currentTime - lastTime;
+  if (deltaTime >= 16) {
+    update();
+    draw();
+    lastTime = currentTime;
+  }
+  updateFPS(currentTime);
+  requestAnimationFrame(gameLoop);
+}
+
+gameLoop(0);
+</script>
+</body>
+</html>
