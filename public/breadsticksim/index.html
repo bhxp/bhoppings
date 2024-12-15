@@ -1,0 +1,190 @@
+<html><head><base href="/" />
+<meta charset="UTF-8">
+<title>Ultimate Breadstick Simulator</title>
+<style>
+body {
+    margin: 0;
+    padding: 20px;
+    background: #f5e6d3;
+    font-family: Arial, sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.breadstick-container {
+    position: relative;
+    width: 400px;
+    height: 300px;
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.breadstick {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    transition: all 0.3s ease;
+}
+
+.controls {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+button {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    background: #8b4513;
+    color: white;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+button:hover {
+    background: #a0522d;
+}
+
+.stats {
+    background: white;
+    padding: 15px;
+    border-radius: 5px;
+    margin-top: 20px;
+    width: 400px;
+}
+
+@keyframes bake {
+    0% { fill: #deb887; }
+    100% { fill: #8b4513; }
+}
+
+@keyframes steam {
+    0% { opacity: 0; transform: translateY(0); }
+    50% { opacity: 0.7; }
+    100% { opacity: 0; transform: translateY(-20px); }
+}
+
+.steam {
+    opacity: 0;
+}
+
+</style>
+</head>
+<body>
+    <h1>🥖 Breadstick Simulator 🥖</h1>
+    
+    <div class="breadstick-container">
+        <svg class="breadstick" width="200" height="40" viewBox="0 0 200 40">
+            <path class="stick" d="M10,20 Q100,5 190,20" stroke="#deb887" stroke-width="15" fill="none" stroke-linecap="round"/>
+            <circle class="steam steam1" cx="50" cy="10" r="2" fill="#666" />
+            <circle class="steam steam2" cx="100" cy="5" r="2" fill="#666" />
+            <circle class="steam steam3" cx="150" cy="10" r="2" fill="#666" />
+        </svg>
+    </div>
+
+    <div class="controls">
+        <button onclick="bake()">Bake</button>
+        <button onclick="addGarlic()">Add Garlic</button>
+        <button onclick="addSalt()">Add Salt</button>
+        <button onclick="reset()">New Breadstick</button>
+    </div>
+
+    <div class="stats">
+        <h3>Breadstick Stats:</h3>
+        <p>Baking Level: <span id="bakeLevel">0</span>%</p>
+        <p>Garlic Level: <span id="garlicLevel">0</span>%</p>
+        <p>Salt Level: <span id="saltLevel">0</span>%</p>
+    </div>
+
+<script>
+let bakeLevel = 0;
+let garlicLevel = 0;
+let saltLevel = 0;
+let isBaking = false;
+
+function bake() {
+    if (isBaking) return;
+    isBaking = true;
+    
+    const stick = document.querySelector('.stick');
+    stick.style.animation = 'bake 3s forwards';
+    
+    const steams = document.querySelectorAll('.steam');
+    steams.forEach((steam, index) => {
+        steam.style.animation = `steam 2s infinite ${index * 0.3}s`;
+    });
+
+    const bakeInterval = setInterval(() => {
+        if (bakeLevel < 100) {
+            bakeLevel += 10;
+            document.getElementById('bakeLevel').textContent = bakeLevel;
+        } else {
+            clearInterval(bakeInterval);
+            isBaking = false;
+        }
+    }, 300);
+}
+
+function addGarlic() {
+    if (garlicLevel < 100) {
+        garlicLevel += 20;
+        document.getElementById('garlicLevel').textContent = garlicLevel;
+        
+        // Add garlic visual effect
+        const breadstick = document.querySelector('.breadstick');
+        const sparkle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+        sparkle.setAttribute("cx", Math.random() * 180 + 10);
+        sparkle.setAttribute("cy", Math.random() * 30 + 5);
+        sparkle.setAttribute("r", "2");
+        sparkle.setAttribute("fill", "#fff");
+        breadstick.appendChild(sparkle);
+        
+        setTimeout(() => sparkle.remove(), 1000);
+    }
+}
+
+function addSalt() {
+    if (saltLevel < 100) {
+        saltLevel += 20;
+        document.getElementById('saltLevel').textContent = saltLevel;
+        
+        // Add salt visual effect
+        const breadstick = document.querySelector('.breadstick');
+        const salt = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+        salt.setAttribute("cx", Math.random() * 180 + 10);
+        salt.setAttribute("cy", Math.random() * 30 + 5);
+        salt.setAttribute("r", "1");
+        salt.setAttribute("fill", "#f0f0f0");
+        breadstick.appendChild(salt);
+        
+        setTimeout(() => salt.remove(), 1000);
+    }
+}
+
+function reset() {
+    bakeLevel = 0;
+    garlicLevel = 0;
+    saltLevel = 0;
+    isBaking = false;
+    
+    document.getElementById('bakeLevel').textContent = bakeLevel;
+    document.getElementById('garlicLevel').textContent = garlicLevel;
+    document.getElementById('saltLevel').textContent = saltLevel;
+    
+    const stick = document.querySelector('.stick');
+    stick.style.animation = 'none';
+    stick.offsetHeight; // Trigger reflow
+    
+    const steams = document.querySelectorAll('.steam');
+    steams.forEach(steam => {
+        steam.style.animation = 'none';
+    });
+}
+</script>
+</body></html>
