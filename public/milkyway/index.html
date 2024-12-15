@@ -1,0 +1,181 @@
+<html><head><base href=""><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Milky Way Simulation (With Controls)</title>
+<style>
+body, html {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background-color: #000;
+}
+canvas {
+    display: block;
+}
+#info {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    color: white;
+    font-family: Arial, sans-serif;
+    font-size: 14px;
+    background-color: rgba(0, 0, 0, 0.5);
+    padding: 10px;
+    border-radius: 5px;
+}
+</style>
+</head>
+<body>
+<div id="info">
+    <h2>Milky Way Simulation</h2>
+    <p>Use mouse to rotate. Scroll to zoom.</p>
+    <p>Stars: <span id="starCount">0</span></p>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.7.7/dat.gui.min.js"></script>
+<script>
+let scene, camera, renderer, stars = [], params;
+
+function init() {
+    scene = new THREE.Scene();
+    camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    renderer = new THREE.WebGLRenderer();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.body.appendChild(renderer.domElement);
+
+    camera.position.z = 15;
+    camera.position.y = 5;
+    camera.lookAt(0, 0, 0);
+
+    params = {
+        stars: 50000,
+        size: 0.015,
+        radius: 10,
+        branches: 5,
+        spin: 1,
+        randomness: 0.2,
+        randomnessPower: 3,
+        insideColor: '#ff6030',
+        outsideColor: '#1b3984'
+    };
+
+    generateGalaxy();
+
+    setupGUI();
+
+    window.addEventListener('resize', onWindowResize, false);
+
+    // Add mouse controls
+    document.addEventListener('mousemove', onMouseMove, false);
+    document.addEventListener('wheel', onMouseWheel, false);
+}
+
+function generateGalaxy() {
+    if (stars.length > 0) {
+        const geometry = stars[0].geometry;
+        const material = stars[0].material;
+
+        geometry.dispose();
+        material.dispose();
+        scene.remove(stars[0]);
+    }
+
+    const geometry = new THREE.BufferGeometry();
+    const positions = new Float32Array(params.stars * 3);
+    const colors = new Float32Array(params.stars * 3);
+
+    const insideColor = new THREE.Color(params.insideColor);
+    const outsideColor = new THREE.Color(params.outsideColor);
+
+    for (let i = 0; i < params.stars; i++) {
+        const i3 = i * 3;
+        const radius = Math.random() * params.radius;
+        const spinAngle = radius * params.spin;
+        const branchAngle = (i % params.branches) / params.branches * Math.PI * 2;
+
+        const randomX = Math.pow(Math.random(), params.randomnessPower) * (Math.random() < 0.5 ? 1 : -1) * params.randomness * radius;
+        const randomY = Math.pow(Math.random(), params.randomnessPower) * (Math.random() < 0.5 ? 1 : -1) * params.randomness * radius;
+        const randomZ = Math.pow(Math.random(), params.randomnessPower) * (Math.random() < 0.5 ? 1 : -1) * params.randomness * radius;
+
+        positions[i3] = Math.cos(branchAngle + spinAngle) * radius + randomX;
+        positions[i3 + 1] = randomY;
+        positions[i3 + 2] = Math.sin(branchAngle + spinAngle) * radius + randomZ;
+
+        const mixedColor = insideColor.clone();
+        mixedColor.lerp(outsideColor, radius / params.radius);
+
+        colors[i3] = mixedColor.r;
+        colors[i3 + 1] = mixedColor.g;
+        colors[i3 + 2] = mixedColor.b;
+    }
+
+    geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+
+    const material = new THREE.PointsMaterial({
+        size: params.size,
+        sizeAttenuation: true,
+        depthWrite: false,
+        blending: THREE.AdditiveBlending,
+        vertexColors: true
+    });
+
+    const points = new THREE.Points(geometry, material);
+    scene.add(points);
+    stars = [points];
+
+    document.getElementById('starCount').textContent = params.stars;
+}
+
+function setupGUI() {
+    const gui = new dat.GUI();
+    gui.add(params, 'stars', 100, 500000).step(100).onFinishChange(generateGalaxy);
+    gui.add(params, 'size', 0.001, 0.1).step(0.001).onFinishChange(generateGalaxy);
+    gui.add(params, 'radius', 0.01, 20).step(0.01).onFinishChange(generateGalaxy);
+    gui.add(params, 'branches', 2, 20).step(1).onFinishChange(generateGalaxy);
+    gui.add(params, 'spin', -5, 5).step(0.001).onFinishChange(generateGalaxy);
+    gui.add(params, 'randomness', 0, 2).step(0.001).onFinishChange(generateGalaxy);
+    gui.add(params, 'randomnessPower', 1, 10).step(0.001).onFinishChange(generateGalaxy);
+    gui.addColor(params, 'insideColor').onFinishChange(generateGalaxy);
+    gui.addColor(params, 'outsideColor').onFinishChange(generateGalaxy);
+}
+
+function onWindowResize() {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+}
+
+let mouseX = 0, mouseY = 0;
+let targetRotationX = 0, targetRotationY = 0;
+const windowHalfX = window.innerWidth / 2;
+const windowHalfY = window.innerHeight / 2;
+
+function onMouseMove(event) {
+    mouseX = (event.clientX - windowHalfX) / 100;
+    mouseY = (event.clientY - windowHalfY) / 100;
+
+    targetRotationX = mouseX * 0.02;
+    targetRotationY = mouseY * 0.02;
+}
+
+function onMouseWheel(event) {
+    const delta = event.wheelDelta ? event.wheelDelta : -event.deltaY;
+    camera.position.z += delta * 0.01;
+    camera.position.z = Math.max(5, Math.min(camera.position.z, 50));
+}
+
+function animate() {
+    requestAnimationFrame(animate);
+    
+    // Smoothly rotate the scene based on mouse position
+    scene.rotation.y += (targetRotationX - scene.rotation.y) * 0.05;
+    scene.rotation.x += (targetRotationY - scene.rotation.x) * 0.05;
+
+    renderer.render(scene, camera);
+}
+
+init();
+animate();
+</script>
+</body>
+</html>
