@@ -1,0 +1,447 @@
+<html><head><base href="https://ripplecreator.net/"><title>Play with Particles - Gravity Simulator</title><style>
+  body, html {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    overflow: hidden;
+    background: #000000;
+    font-family: Arial, sans-serif;
+  }
+  canvas {
+    display: block;
+  }
+  #fullscreenButton, #customizationToggle {
+    position: absolute;
+    top: 10px;
+    background-color: rgba(255,255,255,0.2);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    font-size: 16px;
+    cursor: pointer;
+    border-radius: 5px;
+    transition: background-color 0.3s;
+  }
+  #fullscreenButton {
+    right: 10px;
+  }
+  #customizationToggle {
+    left: 10px;
+  }
+  #fullscreenButton:hover, #customizationToggle:hover {
+    background-color: rgba(255,255,255,0.3);
+  }
+  #customizationMenu {
+    position: absolute;
+    top: 50px;
+    left: 10px;
+    background-color: rgba(0,0,0,0.7);
+    padding: 15px;
+    border-radius: 10px;
+    color: white;
+    display: none;
+    transition: opacity 0.3s ease-in-out;
+    opacity: 0;
+  }
+  #customizationMenu.visible {
+    display: block;
+    opacity: 1;
+  }
+  #customizationMenu h2 {
+    margin-top: 0;
+    font-size: 18px;
+  }
+  #customizationMenu label {
+    display: block;
+    margin-top: 10px;
+  }
+  #customizationMenu input[type="color"],
+  #customizationMenu input[type="range"] {
+    width: 100%;
+    margin-top: 5px;
+  }
+  #colorModeSelect {
+    width: 100%;
+    margin-top: 5px;
+    background-color: rgba(255,255,255,0.1);
+    color: white;
+    border: none;
+    padding: 5px;
+  }
+</style></head><body>
+<canvas id="pulsarCanvas"></canvas>
+<button id="fullscreenButton">Full Screen</button>
+<button id="customizationToggle">Customize</button>
+
+<div id="customizationMenu">
+  <h2>Customize Particles</h2>
+  <label for="colorMode">Color Mode:</label>
+  <select id="colorMode">
+    <option value="multi">Multicolored</option>
+    <option value="single">Single Color</option>
+  </select>
+  <label for="particleColor">Particle Color:</label>
+  <input type="color" id="particleColor" value="#ffffff" style="display: none;">
+  <label for="particleSize">Particle Size:</label>
+  <input type="range" id="particleSize" min="0.5" max="5" step="0.1" value="1.5">
+  <span id="particleSizeValue">1.5</span>
+  <label for="particleAmount">Particle Amount:</label>
+  <input type="range" id="particleAmount" min="100" max="3800" step="100" value="1200">
+  <span id="particleAmountValue">1200</span>
+</div>
+
+<script>
+const canvas = document.getElementById('pulsarCanvas');
+const ctx = canvas.getContext('2d');
+
+let width = canvas.width = window.innerWidth;
+let height = canvas.height = window.innerHeight;
+
+const particles = [];
+let MAX_PARTICLES = 1200;
+const gravityWells = new Map();
+const pulses = [];
+const MAX_SPEED = 8;
+const G = 6.67430e-11; // Gravitational constant
+const SCALE_FACTOR = 1e9; // Scale factor to make gravity more noticeable
+const DECELERATION_FACTOR = 0.98; // Deceleration factor
+
+// Customization variables
+let particleColor = "#ffffff";
+let particleSize = 1.5;
+let colorMode = "multi";
+
+function Particle(x, y) {
+  this.x = x;
+  this.y = y;
+  this.radius = particleSize;
+  this.mass = Math.random() * 0.9 + 0.1; // Mass between 0.1 and 1
+  this.vx = (Math.random() - 0.5) * 0.5;
+  this.vy = (Math.random() - 0.5) * 0.5;
+  this.color = colorMode === "single" ? particleColor : getRandomColor();
+}
+
+function getRandomColor() {
+  return `hsl(${Math.random() * 360}, 100%, 50%)`;
+}
+
+Particle.prototype.draw = function() {
+  ctx.globalAlpha = 1;
+  ctx.fillStyle = this.color;
+  ctx.beginPath();
+  ctx.arc(this.x, this.y, this.radius * Math.sqrt(this.mass), 0, Math.PI * 2);
+  ctx.fill();
+};
+
+Particle.prototype.update = function() {
+  let totalForceX = 0;
+  let totalForceY = 0;
+  let isAffectedByGravity = false;
+
+  const wellArray = Array.from(gravityWells.values());
+  
+  for (let i = 0; i < wellArray.length; i++) {
+    const well = wellArray[i];
+    const dx = well.x - this.x;
+    const dy = well.y - this.y;
+    const distanceSquared = dx * dx + dy * dy;
+    const distance = Math.sqrt(distanceSquared);
+    
+    // Calculate gravitational force
+    const force = (G * this.mass * well.mass) / distanceSquared * SCALE_FACTOR;
+    
+    totalForceX += (dx / distance) * force;
+    totalForceY += (dy / distance) * force;
+
+    // Realistic orbital velocity calculation
+    const orbitalSpeed = Math.sqrt((G * well.mass) / distance) * SCALE_FACTOR;
+    const tangentX = -dy / distance;
+    const tangentY = dx / distance;
+    
+    this.vx += tangentX * orbitalSpeed * 0.01;
+    this.vy += tangentY * orbitalSpeed * 0.01;
+
+    isAffectedByGravity = true;
+  }
+
+  // Particle-particle interactions (simplified for performance)
+  for (let i = 0; i < particles.length; i += 10) {
+    if (this === particles[i]) continue;
+    const dx = particles[i].x - this.x;
+    const dy = particles[i].y - this.y;
+    const distanceSquared = dx * dx + dy * dy;
+    if (distanceSquared < 100) { // Only consider nearby particles
+      const distance = Math.sqrt(distanceSquared);
+      const force = (G * this.mass * particles[i].mass) / distanceSquared * SCALE_FACTOR * 0.1;
+      totalForceX += (dx / distance) * force;
+      totalForceY += (dy / distance) * force;
+      isAffectedByGravity = true;
+    }
+  }
+
+  pulses.forEach(pulse => {
+    const dx = this.x - pulse.x;
+    const dy = this.y - pulse.y;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    if (distance < pulse.radius) {
+      const force = pulse.strength * (1 - distance / pulse.radius) / this.mass;
+      totalForceX += (dx / distance) * force;
+      totalForceY += (dy / distance) * force;
+      isAffectedByGravity = true;
+    }
+  });
+
+  // Apply forces
+  const ax = totalForceX / this.mass;
+  const ay = totalForceY / this.mass;
+  this.vx += ax;
+  this.vy += ay;
+
+  // Apply speed limit
+  const speed = Math.sqrt(this.vx * this.vx + this.vy * this.vy);
+  if (speed > MAX_SPEED) {
+    const ratio = MAX_SPEED / speed;
+    this.vx *= ratio;
+    this.vy *= ratio;
+  }
+
+  this.x += this.vx;
+  this.y += this.vy;
+
+  // Apply deceleration
+  if (!isAffectedByGravity) {
+    this.vx *= DECELERATION_FACTOR;
+    this.vy *= DECELERATION_FACTOR;
+  }
+
+  // Ensure particles stay within the screen bounds
+  const effectiveRadius = this.radius * Math.sqrt(this.mass);
+  if (this.x < effectiveRadius) {
+    this.x = effectiveRadius;
+    this.vx = Math.abs(this.vx) * 0.8; // Reduce bounce velocity
+  } else if (this.x > width - effectiveRadius) {
+    this.x = width - effectiveRadius;
+    this.vx = -Math.abs(this.vx) * 0.8; // Reduce bounce velocity
+  }
+  
+  if (this.y < effectiveRadius) {
+    this.y = effectiveRadius;
+    this.vy = Math.abs(this.vy) * 0.8; // Reduce bounce velocity
+  } else if (this.y > height - effectiveRadius) {
+    this.y = height - effectiveRadius;
+    this.vy = -Math.abs(this.vy) * 0.8; // Reduce bounce velocity
+  }
+};
+
+function createInitialParticles() {
+  particles.length = 0; // Clear existing particles
+  for (let i = 0; i < MAX_PARTICLES; i++) {
+    const x = Math.random() * (width - 6) + 3; // Ensure initial position is within bounds
+    const y = Math.random() * (height - 6) + 3;
+    particles.push(new Particle(x, y));
+  }
+}
+
+function animate() {
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+  ctx.fillRect(0, 0, width, height);
+  
+  particles.forEach(particle => {
+    particle.update();
+    particle.draw();
+  });
+  
+  const wellArray = Array.from(gravityWells.values());
+  for (let i = 0; i < wellArray.length; i++) {
+    const well = wellArray[i];
+    const gradientRadius = 75 * Math.sqrt(well.mass / 1e6);
+    const gradient = ctx.createRadialGradient(well.x, well.y, 0, well.x, well.y, gradientRadius);
+    gradient.addColorStop(0, 'rgba(255, 255, 255, 0.3)');
+    gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+    
+    ctx.beginPath();
+    ctx.arc(well.x, well.y, gradientRadius, 0, Math.PI * 2);
+    ctx.fillStyle = gradient;
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.arc(well.x, well.y, 5 * Math.sqrt(well.mass / 1e6), 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+    ctx.fill();
+
+    for (let j = i + 1; j < wellArray.length; j++) {
+      const otherWell = wellArray[j];
+      const dx = otherWell.x - well.x;
+      const dy = otherWell.y - well.y;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+      if (distance < 150) {
+        ctx.beginPath();
+        ctx.moveTo(well.x, well.y);
+        ctx.lineTo(otherWell.x, otherWell.y);
+        ctx.strokeStyle = `rgba(255, 255, 255, ${0.5 * (1 - distance / 150)})`;
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      }
+    }
+  }
+  
+  pulses.forEach((pulse, index) => {
+    ctx.beginPath();
+    ctx.arc(pulse.x, pulse.y, pulse.radius, 0, Math.PI * 2);
+    ctx.strokeStyle = `rgba(255, 255, 255, ${1 - pulse.radius / pulse.maxRadius})`;
+    ctx.lineWidth = 3;
+    ctx.stroke();
+    
+    pulse.radius += pulse.speed;
+    if (pulse.radius > pulse.maxRadius) {
+      pulses.splice(index, 1);
+    }
+  });
+  
+  requestAnimationFrame(animate);
+}
+
+function handleStart(event) {
+  event.preventDefault();
+  const touches = event.changedTouches || [{ identifier: 'mouse', clientX: event.clientX, clientY: event.clientY }];
+  for (let i = 0; i < touches.length; i++) {
+    const touch = touches[i];
+    gravityWells.set(touch.identifier, { 
+      x: touch.clientX, 
+      y: touch.clientY, 
+      mass: 1e6,
+      strength: 3000
+    });
+  }
+}
+
+function handleMove(event) {
+  event.preventDefault();
+  const touches = event.changedTouches || [{ identifier: 'mouse', clientX: event.clientX, clientY: event.clientY }];
+  for (let i = 0; i < touches.length; i++) {
+    const touch = touches[i];
+    if (gravityWells.has(touch.identifier)) {
+      const well = gravityWells.get(touch.identifier);
+      well.x = touch.clientX;
+      well.y = touch.clientY;
+    }
+  }
+}
+
+function handleEnd(event) {
+  event.preventDefault();
+  const touches = event.changedTouches || [{ identifier: 'mouse' }];
+  for (let i = 0; i < touches.length; i++) {
+    const touch = touches[i];
+    if (gravityWells.has(touch.identifier)) {
+      const well = gravityWells.get(touch.identifier);
+      pulses.push({
+        x: well.x,
+        y: well.y,
+        radius: 0,
+        maxRadius: Math.max(width, height) / 2,
+        speed: 10,
+        strength: 100
+      });
+      gravityWells.delete(touch.identifier);
+    }
+  }
+}
+
+canvas.addEventListener('touchstart', handleStart, false);
+canvas.addEventListener('touchmove', handleMove, false);
+canvas.addEventListener('touchend', handleEnd, false);
+
+// Add mouse event listeners
+canvas.addEventListener('mousedown', handleStart, false);
+canvas.addEventListener('mousemove', (event) => {
+  if (gravityWells.has('mouse')) {
+    handleMove(event);
+  }
+}, false);
+canvas.addEventListener('mouseup', handleEnd, false);
+
+window.addEventListener('resize', () => {
+  width = canvas.width = window.innerWidth;
+  height = canvas.height = window.innerHeight;
+  createInitialParticles(); // Recreate particles within new bounds
+});
+
+// Fullscreen functionality
+const fullscreenButton = document.getElementById('fullscreenButton');
+
+fullscreenButton.addEventListener('click', () => {
+  if (!document.fullscreenElement) {
+    document.documentElement.requestFullscreen().catch(err => {
+      console.log(`Error attempting to enable fullscreen: ${err.message}`);
+    });
+  } else {
+    document.exitFullscreen();
+  }
+});
+
+document.addEventListener('fullscreenchange', () => {
+  if (document.fullscreenElement) {
+    fullscreenButton.textContent = 'Exit FullScreen';
+  } else {
+    fullscreenButton.textContent = 'Full Screen';
+  }
+  // Update canvas size and recreate particles when fullscreen changes
+  width = canvas.width = window.innerWidth;
+  height = canvas.height = window.innerHeight;
+  createInitialParticles();
+});
+
+// Customization menu functionality
+const customizationMenu = document.getElementById('customizationMenu');
+const customizationToggle = document.getElementById('customizationToggle');
+const colorModeSelect = document.getElementById('colorMode');
+const particleColorInput = document.getElementById('particleColor');
+const particleSizeInput = document.getElementById('particleSize');
+const particleSizeValue = document.getElementById('particleSizeValue');
+const particleAmountInput = document.getElementById('particleAmount');
+const particleAmountValue = document.getElementById('particleAmountValue');
+
+customizationToggle.addEventListener('click', () => {
+  customizationMenu.classList.toggle('visible');
+  customizationToggle.textContent = customizationMenu.classList.contains('visible') ? 'Hide Customize' : 'Customize';
+});
+
+colorModeSelect.addEventListener('change', (event) => {
+  colorMode = event.target.value;
+  if (colorMode === "single") {
+    particleColorInput.style.display = "block";
+  } else {
+    particleColorInput.style.display = "none";
+  }
+  createInitialParticles();
+});
+
+particleColorInput.addEventListener('input', (event) => {
+  particleColor = event.target.value;
+  if (colorMode === "single") {
+    createInitialParticles();
+  }
+});
+
+particleSizeInput.addEventListener('input', (event) => {
+  particleSize = parseFloat(event.target.value);
+  particleSizeValue.textContent = particleSize.toFixed(1);
+  createInitialParticles();
+});
+
+particleAmountInput.addEventListener('input', (event) => {
+  MAX_PARTICLES = parseInt(event.target.value);
+  particleAmountValue.textContent = MAX_PARTICLES;
+  createInitialParticles();
+});
+
+// Set the default particle amount to 1200
+MAX_PARTICLES = 1200;
+particleAmountInput.value = MAX_PARTICLES;
+particleAmountValue.textContent = MAX_PARTICLES;
+
+createInitialParticles();
+animate();
+</script>
+</body></html>
