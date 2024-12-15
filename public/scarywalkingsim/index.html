@@ -1,0 +1,285 @@
+<html><head><base href="." />
+<meta charset="UTF-8">
+<title>Retro Walking Simulator</title>
+<style>
+  body { 
+    margin: 0;
+    overflow: hidden;
+    background: #000;
+  }
+  canvas {
+    image-rendering: pixelated;
+    width: 100vw;
+    height: 100vh;
+  }
+  #fog {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    mix-blend-mode: multiply;
+    animation: fogMove 20s infinite linear;
+  }
+  #instructions {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: white;
+    font-family: monospace;
+    text-align: center;
+    pointer-events: none;
+  }
+  #map {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 80vw;
+    height: 80vh;
+    background: rgba(0, 0, 0, 0.9);
+    border: 2px solid #4a4a4a;
+    display: none;
+    color: #8b0000;
+    font-family: 'Times New Roman', serif;
+    text-align: center;
+    padding: 20px;
+    pointer-events: none;
+  }
+  #map h1 {
+    font-size: 3em;
+    margin: 0;
+    text-transform: uppercase;
+    letter-spacing: 4px;
+    font-weight: bold;
+    text-shadow: 2px 2px 4px rgba(139, 0, 0, 0.5);
+  }
+  #map h2 {
+    font-size: 1.5em;
+    margin: 10px 0;
+    font-style: italic;
+    opacity: 0.8;
+  }
+  .map-content {
+    width: 100%;
+    height: calc(100% - 100px);
+    border: 1px solid #4a4a4a;
+    margin-top: 20px;
+    position: relative;
+  }
+  .player-marker {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    background: #8b0000;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+  }
+</style>
+</head>
+<body>
+<canvas id="game"></canvas>
+<div id="instructions">Click to start<br>WASD - Move<br>Mouse - Look around<br>ESC - Release mouse<br>M - Open Map</div>
+<div id="map">
+  <h1>Silent Hill</h1>
+  <h2>Enjoy your stay!</h2>
+  <div class="map-content">
+    <div class="player-marker"></div>
+  </div>
+</div>
+<audio id="bgMusic" loop>
+  <source src="/Silent Hill 2 OST - White Noiz (Extended).mp3" type="audio/mpeg">
+</audio>
+<svg id="fog" xmlns="http://www.w3.org/2000/svg">
+  <filter id="noise">
+    <feTurbulence type="fractalNoise" baseFrequency="0.015" numOctaves="3"/>
+    <feColorMatrix type="saturate" values="0"/>
+    <feComponentTransfer>
+      <feFuncA type="table" tableValues="0 0.3"/>
+    </feComponentTransfer>
+  </filter>
+  <rect width="100%" height="100%" filter="url(#noise)"/>
+</svg>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+const canvas = document.getElementById('game');
+const instructions = document.getElementById('instructions');
+const bgMusic = document.getElementById('bgMusic');
+const mapElement = document.getElementById('map');
+const playerMarker = document.querySelector('.player-marker');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: false });
+
+let mapOpen = false;
+
+function resizeRenderer() {
+  const width = canvas.clientWidth;
+  const height = canvas.clientHeight;
+  const needResize = canvas.width !== width || canvas.height !== height;
+  if (needResize) {
+    renderer.setSize(width, height, false);
+    camera.aspect = width / height;
+    camera.updateProjectionMatrix();
+  }
+}
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x111111);
+scene.fog = new THREE.FogExp2(0x111111, 0.15);
+
+const camera = new THREE.PerspectiveCamera(75, 1, 0.1, 100);
+camera.position.y = 1.6;
+
+const textureLoader = new THREE.TextureLoader();
+
+// Load the ground texture
+const groundTexture = textureLoader.load('/d2r5exk-810ebab7-609f-4df4-a62f-7ee38e36e8ad.jpg', (texture) => {
+  texture.wrapS = THREE.RepeatWrapping;
+  texture.wrapT = THREE.RepeatWrapping;
+  texture.repeat.set(10, 10);
+});
+
+// Load the watcher texture with the new image
+const watcherTexture = textureLoader.load('/Defamer.webp');
+
+// Create a plane for the watcher in the sky
+const watcherGeometry = new THREE.PlaneGeometry(27.5, 27.5); // 45% smaller (50 * 0.55 = 27.5)
+const watcherMaterial = new THREE.MeshBasicMaterial({
+  map: watcherTexture,
+  transparent: true,
+  opacity: 0.52, // 35% more transparent (0.8 * 0.65 = 0.52)
+  depthWrite: false,
+  fog: false
+});
+const watcher = new THREE.Mesh(watcherGeometry, watcherMaterial);
+watcher.position.y = 40; // Higher in the sky (was 30)
+watcher.position.z = -40;
+scene.add(watcher);
+
+const groundGeometry = new THREE.PlaneGeometry(1000, 1000);
+const groundMaterial = new THREE.MeshBasicMaterial({
+  map: groundTexture,
+  fog: true
+});
+const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+ground.rotation.x = -Math.PI / 2;
+scene.add(ground);
+
+let moveForward = false;
+let moveBackward = false;
+let moveLeft = false;
+let moveRight = false;
+let isLocked = false;
+
+document.addEventListener('keydown', (e) => {
+  switch(e.key.toLowerCase()) {
+    case 'w': moveForward = true; break;
+    case 's': moveBackward = true; break;
+    case 'a': moveLeft = true; break;
+    case 'd': moveRight = true; break;
+    case 'm': 
+      mapOpen = !mapOpen;
+      mapElement.style.display = mapOpen ? 'block' : 'none';
+      break;
+  }
+});
+
+document.addEventListener('keyup', (e) => {
+  switch(e.key.toLowerCase()) {
+    case 'w': moveForward = false; break;
+    case 's': moveBackward = false; break;
+    case 'a': moveLeft = false; break;
+    case 'd': moveRight = false; break;
+  }
+});
+
+canvas.addEventListener('click', () => {
+  if (!isLocked) {
+    canvas.requestPointerLock();
+    bgMusic.play().catch(e => console.log("Audio play failed:", e));
+  }
+});
+
+document.addEventListener('pointerlockchange', () => {
+  isLocked = document.pointerLockElement === canvas;
+  instructions.style.display = isLocked ? 'none' : 'block';
+  
+  if (isLocked) {
+    bgMusic.play().catch(e => console.log("Audio play failed:", e));
+  }
+});
+
+const euler = new THREE.Euler(0, 0, 0, 'YXZ');
+document.addEventListener('mousemove', (e) => {
+  if (isLocked) {
+    euler.setFromQuaternion(camera.quaternion);
+    euler.y -= e.movementX * 0.002;
+    euler.x = Math.max(-Math.PI/2, Math.min(Math.PI/2, euler.x - e.movementY * 0.002));
+    camera.quaternion.setFromEuler(euler);
+  }
+});
+
+const velocity = new THREE.Vector3();
+const direction = new THREE.Vector3();
+
+const raycaster = new THREE.Raycaster();
+const downVector = new THREE.Vector3(0, -1, 0);
+const playerHeight = 1.6;
+
+function updatePlayerMarker() {
+  const mapContent = document.querySelector('.map-content');
+  const mapWidth = mapContent.clientWidth;
+  const mapHeight = mapContent.clientHeight;
+  
+  const x = ((camera.position.x + 500) / 1000) * mapWidth;
+  const z = ((camera.position.z + 500) / 1000) * mapHeight;
+  
+  playerMarker.style.left = `${x}px`;
+  playerMarker.style.top = `${z}px`;
+}
+
+function animate() {
+  requestAnimationFrame(animate);
+  resizeRenderer();
+
+  // Make the watcher always face the camera
+  watcher.lookAt(camera.position);
+  
+  // Update watcher position relative to camera
+  watcher.position.x = camera.position.x;
+  watcher.position.z = camera.position.z - 40;
+
+  const speed = 0.1;
+  velocity.set(0, 0, 0);
+
+  if (moveForward) velocity.z = -speed;
+  if (moveBackward) velocity.z = speed;
+  if (moveLeft) velocity.x = -speed;
+  if (moveRight) velocity.x = speed;
+
+  direction.copy(velocity).applyQuaternion(camera.quaternion);
+  const prevPos = camera.position.clone();
+  
+  camera.position.x += direction.x;
+  camera.position.z += direction.z;
+
+  raycaster.set(camera.position, downVector);
+  const intersects = raycaster.intersectObject(ground);
+  
+  if (intersects.length > 0) {
+    camera.position.y = intersects[0].point.y + playerHeight;
+  } else {
+    camera.position.copy(prevPos);
+  }
+
+  renderer.render(scene, camera);
+  updatePlayerMarker();
+}
+
+animate();
+
+bgMusic.volume = 0.5;
+</script>
+</body></html>
