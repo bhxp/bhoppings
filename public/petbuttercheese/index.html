@@ -1,0 +1,1699 @@
+<html><head><base href="https://3d-butter-cheese-sandwich-pet.com/">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>3D Pet Butter Cheese Sandwich - Homer's Aero Home</title>
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Samsung+Sans:wght@300;400;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap');
+
+  body {
+    font-family: 'Samsung Sans', sans-serif;
+    margin: 0;
+    padding: 0;
+    background: linear-gradient(135deg, #4a4a4a, #2a2a2a);
+    color: #33ff33;
+    overflow: hidden;
+  }
+
+  .city-skybox {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: url('https://example.com/city_skyline.jpg') center / cover no-repeat;
+    z-index: -1;
+  }
+
+  #scene-container {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+  }
+
+  .aero-ui {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 20px;
+    padding: 15px;
+    background: rgba(0, 0, 0, 0.7);
+    border: 2px solid #4CAF50;
+    box-shadow: 0 0 15px #4CAF50;
+    border-radius: 20px;
+    z-index: 1000;
+  }
+
+  .stat-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .stat-label {
+    font-size: 14px;
+    font-weight: 400;
+    color: #33ff33;
+    margin-bottom: 5px;
+  }
+
+  .stat-bar {
+    width: 100px;
+    height: 10px;
+    background-color: #1a1a1a;
+    border: 1px solid #33ff33;
+    border-radius: 10px;
+    overflow: hidden;
+  }
+
+  .stat-fill {
+    height: 100%;
+    transition: width 0.5s;
+  }
+
+  #hunger-fill { background-color: #ff6b6b; }
+  #energy-fill { background-color: #4ecdc4; }
+  #happiness-fill { background-color: #feca57; }
+
+  .touchwiz-status-bar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 30px;
+    background-color: rgba(0, 0, 0, 0.8);
+    border-bottom: 2px solid #33ff33;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    padding: 0 10px;
+    z-index: 1001;
+    color: white;
+  }
+
+  .touchwiz-status-bar i {
+    margin-left: 10px;
+    font-size: 18px;
+    color: white;
+  }
+
+  .touchwiz-tabs {
+    position: fixed;
+    top: 40px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    background-color: rgba(0, 0, 0, 0.8);
+    border: 2px solid #33ff33;
+    border-radius: 20px;
+    overflow: hidden;
+    z-index: 1000;
+  }
+
+  .touchwiz-tab {
+    padding: 10px 20px;
+    background: none;
+    border: 1px solid #33ff33;
+    cursor: pointer;
+    transition: all 0.3s;
+    font-size: 16px;
+    font-weight: 400;
+    color: #33ff33;
+  }
+
+  .touchwiz-tab.active {
+    background-color: #33ff33;
+    color: #000;
+  }
+
+  .action-buttons {
+    position: fixed;
+    bottom: 100px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 10px;
+    background-color: rgba(0, 0, 0, 0.8);
+    border: 2px solid #33ff33;
+    border-radius: 20px;
+    padding: 10px;
+    z-index: 1000;
+  }
+
+  .action-button {
+    background: #1a1a1a;
+    color: #4CAF50;
+    border: 1px solid #4CAF50;
+    border-radius: 15px;
+    padding: 10px 15px;
+    margin: 5px;
+    font-size: 16px;
+    font-weight: 400;
+    text-shadow: 0 0 5px #4CAF50;
+    transition: all 0.3s;
+  }
+
+  .action-button:hover {
+    background-color: #4CAF50;
+    color: #1a1a1a;
+  }
+
+  .action-button:active {
+    transform: scale(0.95);
+  }
+
+  #app-drawer-button {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background-color: rgba(0, 0, 0, 0.8);
+    border: 2px solid #33ff33;
+    border-radius: 50%;
+    padding: 10px;
+    z-index: 1002;
+  }
+
+  .touchwiz-panel {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 0;
+    background-color: rgba(0, 0, 0, 0.9);
+    border-top: 2px solid #33ff33;
+    overflow: hidden;
+    transition: height 0.3s ease-in-out;
+    z-index: 1003;
+  }
+
+  .panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    background-color: #008b8b;
+    color: #32cd32;
+    font-size: 18px;
+    font-weight: 700;
+  }
+
+  .notification-list {
+    padding: 10px;
+  }
+
+  .notification {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+    font-size: 14px;
+    font-weight: 400;
+  }
+
+  .notification i {
+    margin-right: 10px;
+  }
+
+  .quick-settings-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    padding: 10px;
+    background-color: #008b8b;
+    justify-items: center;
+    align-items: center;
+  }
+
+  .quick-setting-button {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 90px;
+    height: 90px;
+    background-color: #006666;
+    color: #4CAF50;
+    border: 1px solid #4CAF50;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 400;
+  }
+
+  .language-list {
+    display: flex;
+    flex-direction: column;
+    padding: 10px;
+  }
+
+  .language-button {
+    background: none;
+    border: none;
+    color: #33ff33;
+    font-size: 16px;
+    padding: 10px;
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .language-button:hover {
+    background-color: rgba(51, 255, 51, 0.1);
+  }
+
+  #clock-widget {
+    position: fixed;
+    top: 40px;
+    left: 20px;
+    background-color: rgba(0, 0, 0, 0.8);
+    border: 2px solid #33ff33;
+    color: white;
+    padding: 10px;
+    border-radius: 10px;
+    z-index: 1002;
+    text-shadow: 0 0 5px #33ff33;
+  }
+
+  #clock-time {
+    font-size: 28px;
+    font-weight: 700;
+  }
+
+  #clock-date {
+    font-size: 16px;
+    font-weight: 300;
+  }
+
+  .animated-object {
+    animation: floatAnimation 3s ease-in-out infinite alternate;
+  }
+
+  @keyframes floatAnimation {
+    from {
+      transform: translateY(0);
+    }
+    to {
+      transform: translateY(-20px);
+    }
+  }
+
+  .glow-effect {
+    animation: glow 1.5s infinite alternate;
+  }
+
+  @keyframes glow {
+    from {
+      box-shadow: 0 0 5px #fff;
+    }
+    to {
+      box-shadow: 0 0 20px #33ff33;
+    }
+  }
+
+  .interactive-element:hover {
+    cursor: pointer;
+    opacity: 0.8;
+  }
+
+  .smart-alarm-content {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .alarm-time-picker input {
+    font-size: 24px;
+    padding: 10px;
+    border: 2px solid #33ff33;
+    background-color: rgba(0, 0, 0, 0.7);
+    color: #33ff33;
+    border-radius: 10px;
+  }
+
+  .alarm-days {
+    display: flex;
+    justify-content: space-between;
+    margin: 20px 0;
+  }
+
+  .day-button {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 2px solid #33ff33;
+    background-color: rgba(0, 0, 0, 0.7);
+    color: #33ff33;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.3s;
+  }
+
+  .day-button.active {
+    background-color: #33ff33;
+    color: black;
+  }
+
+  .alarm-options {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    margin: 20px 0;
+  }
+
+  .alarm-options label {
+    margin: 10px 0;
+    color: #33ff33;
+    font-size: 16px;
+  }
+
+  #save-alarm {
+    margin-top: 20px;
+  }
+</style>
+</head>
+<body>
+<div class="city-skybox"></div>
+<div class="touchwiz-status-bar">
+  <i class="material-icons">signal_cellular_alt</i>
+  <i class="material-icons">wifi</i>
+  <i class="material-icons">battery_full</i>
+</div>
+
+<div class="touchwiz-tabs">
+  <button class="touchwiz-tab active" onclick="changeRoom('garden')" data-translate="garden">Garden</button>
+  <button class="touchwiz-tab" onclick="changeRoom('kitchen')" data-translate="kitchen">Kitchen</button>
+  <button class="touchwiz-tab" onclick="changeRoom('bedroom')" data-translate="bedroom">Bedroom</button>
+  <button class="touchwiz-tab" onclick="changeRoom('playroom')" data-translate="playroom">Playroom</button>
+</div>
+
+<div id="scene-container"></div>
+
+<div class="aero-ui">
+  <div class="stat-container">
+    <span class="stat-label" data-translate="hunger">Hunger</span>
+    <div class="stat-bar">
+      <div id="hunger-fill" class="stat-fill" style="width: 100%;"></div>
+    </div>
+  </div>
+  <div class="stat-container">
+    <span class="stat-label" data-translate="energy">Energy</span>
+    <div class="stat-bar">
+      <div id="energy-fill" class="stat-fill" style="width: 100%;"></div>
+    </div>
+  </div>
+  <div class="stat-container">
+    <span class="stat-label" data-translate="happiness">Happiness</span>
+    <div class="stat-bar">
+      <div id="happiness-fill" class="stat-fill" style="width: 100%;"></div>
+    </div>
+  </div>
+</div>
+
+<div class="action-buttons">
+  <button class="action-button" onclick="feedSandwich('hamburger')" data-translate="feedHamburger">Feed Hamburger</button>
+  <button class="action-button" onclick="feedSandwich('cake')" data-translate="feedCake">Feed Cake</button>
+  <button class="action-button" onclick="feedSandwich('icecream')" data-translate="feedIceCream">Feed Ice Cream</button>
+  <button class="action-button" onclick="feedSandwich('orangejuice')" data-translate="giveOrangeJuice">Give Orange Juice</button>
+  <button class="action-button" onclick="feedSandwich('meatballs')" data-translate="feedMeatballs">Feed Meatballs</button>
+  <button class="action-button" onclick="playSandwich()" data-translate="play">Play</button>
+</div>
+
+<button id="app-drawer-button" class="touchwiz-button">
+  <i class="material-icons">apps</i>
+</button>
+
+<div id="notification-panel" class="touchwiz-panel">
+  <div class="panel-header">
+    <span>Notifications</span>
+    <button id="close-notification-panel" class="touchwiz-button">
+      <i class="material-icons">close</i>
+    </button>
+  </div>
+  <div class="notification-list">
+    <div class="notification">
+      <i class="material-icons">notifications</i>
+      <span>Your pet is hungry!</span>
+    </div>
+    <div class="notification">
+      <i class="material-icons">notifications</i>
+      <span>Time to play with your pet!</span>
+    </div>
+  </div>
+</div>
+
+<div id="quick-settings-panel" class="touchwiz-panel">
+  <div class="panel-header">
+    <span>Quick Settings</span>
+    <button id="close-quick-settings" class="touchwiz-button">
+      <i class="material-icons">close</i>
+    </button>
+  </div>
+  <div class="quick-settings-grid">
+    <button class="quick-setting-button">
+      <i class="material-icons">wifi</i>
+      <span>Wi-Fi</span>
+    </button>
+    <button class="quick-setting-button">
+      <i class="material-icons">bluetooth</i>
+      <span>Bluetooth</span>
+    </button>
+    <button class="quick-setting-button">
+      <i class="material-icons">do_not_disturb_on</i>
+      <span>Do Not Disturb</span>
+    </button>
+    <button class="quick-setting-button">
+      <i class="material-icons">brightness_medium</i>
+      <span>Brightness</span>
+    </button>
+    <button class="quick-setting-button" id="language-button">
+      <i class="material-icons">language</i>
+      <span>Language</span>
+    </button>
+    <button class="quick-setting-button" id="smart-alarm-button">
+      <i class="material-icons">alarm</i>
+      <span>Smart Alarm</span>
+    </button>
+  </div>
+</div>
+
+<div id="language-panel" class="touchwiz-panel">
+  <div class="panel-header">
+    <span>Select Language</span>
+    <button id="close-language-panel" class="touchwiz-button">
+      <i class="material-icons">close</i>
+    </button>
+  </div>
+  <div class="language-list">
+    <button class="language-button" data-lang="en">English</button>
+    <button class="language-button" data-lang="es">Español</button>
+    <button class="language-button" data-lang="ru">Русский</button>
+    <button class="language-button" data-lang="tr">Türkçe</button>
+    <button class="language-button" data-lang="en-GB">British English</button>
+    <button class="language-button" data-lang="pl">Polski</button>
+    <button class="language-button" data-lang="ar">العربية</button>
+    <button class="language-button" data-lang="fr">Français</button>
+    <button class="language-button" data-lang="pt">Português</button>
+    <button class="language-button" data-lang="ja">日本語</button>
+    <button class="language-button" data-lang="zh">中文</button>
+    <button class="language-button" data-lang="ko">한국어</button>
+  </div>
+</div>
+
+<div id="smart-alarm-panel" class="touchwiz-panel">
+  <div class="panel-header">
+    <span>Smart Alarm</span>
+    <button id="close-smart-alarm" class="touchwiz-button">
+      <i class="material-icons">close</i>
+    </button>
+  </div>
+  <div class="smart-alarm-content">
+    <div class="alarm-time-picker">
+      <input type="time" id="alarm-time" value="07:00">
+    </div>
+    <div class="alarm-days">
+      <button class="day-button" data-day="0">S</button>
+      <button class="day-button" data-day="1">M</button>
+      <button class="day-button" data-day="2">T</button>
+      <button class="day-button" data-day="3">W</button>
+      <button class="day-button" data-day="4">T</button>
+      <button class="day-button" data-day="5">F</button>
+      <button class="day-button" data-day="6">S</button>
+    </div>
+    <div class="alarm-options">
+      <label>
+        <input type="checkbox" id="smart-wake" checked>
+        Smart Wake
+      </label>
+      <label>
+        <input type="checkbox" id="nature-sounds" checked>
+        Nature Sounds
+      </label>
+    </div>
+    <button id="save-alarm" class="action-button">Save Alarm</button>
+  </div>
+</div>
+
+<div id="clock-widget" class="touchwiz-widget">
+  <div id="clock-time">12:00</div>
+  <div id="clock-date">Monday, January 1</div>
+</div>
+
+<script>
+let scene, camera, renderer, sandwich, listener;
+let currentRoom = 'kitchen';
+let hunger = 100;
+let energy = 100;
+let happiness = 100;
+
+const translations = {
+  en: {
+    garden: "Garden",
+    kitchen: "Kitchen",
+    bedroom: "Bedroom",
+    playroom: "Playroom",
+    hunger: "Hunger",
+    energy: "Energy",
+    happiness: "Happiness",
+    feedHamburger: "Feed Hamburger",
+    feedCake: "Feed Cake",
+    feedIceCream: "Feed Ice Cream",
+    giveOrangeJuice: "Give Orange Juice",
+    feedMeatballs: "Feed Meatballs",
+    play: "Play"
+  },
+  es: {
+    garden: "Jardín",
+    kitchen: "Cocina",
+    bedroom: "Dormitorio",
+    playroom: "Sala de juegos",
+    hunger: "Hambre",
+    energy: "Energía",
+    happiness: "Felicidad",
+    feedHamburger: "Dar Hamburguesa",
+    feedCake: "Dar Pastel",
+    feedIceCream: "Dar Helado",
+    giveOrangeJuice: "Dar Jugo de Naranja",
+    feedMeatballs: "Dar Albóndigas",
+    play: "Jugar"
+  },
+  ru: {
+    garden: "Сад",
+    kitchen: "Кухня",
+    bedroom: "Спальня",
+    playroom: "Игровая комната",
+    hunger: "Голод",
+    energy: "Энергия",
+    happiness: "Счастье",
+    feedHamburger: "Покормить Гамбургером",
+    feedCake: "Покормить Тортом",
+    feedIceCream: "Покормить Мороженым",
+    giveOrangeJuice: "Дать Апельсиновый Сок",
+    feedMeatballs: "Покормить Фрикадельками",
+    play: "Играть"
+  },
+  tr: {
+    garden: "Bahçe",
+    kitchen: "Mutfak",
+    bedroom: "Yatak Odası",
+    playroom: "Oyun odası",
+    hunger: "Açlık",
+    energy: "Enerji",
+    happiness: "Mutluluk",
+    feedHamburger: "Hamburger Ver",
+    feedCake: "Pasta Ver",
+    feedIceCream: "Dondurma Ver",
+    giveOrangeJuice: "Portakal Suyu Ver",
+    feedMeatballs: "Köfte Ver",
+    play: "Oyna"
+  },
+  "en-GB": {
+    garden: "Garden",
+    kitchen: "Kitchen",
+    bedroom: "Bedroom",
+    playroom: "Playroom",
+    hunger: "Hunger",
+    energy: "Energy",
+    happiness: "Happiness",
+    feedHamburger: "Feed Burger",
+    feedCake: "Feed Cake",
+    feedIceCream: "Feed Ice Cream",
+    giveOrangeJuice: "Give Orange Juice",
+    feedMeatballs: "Feed Meatballs",
+    play: "Play"
+  },
+  pl: {
+    garden: "Ogród",
+    kitchen: "Kuchnia",
+    bedroom: "Sypialnia",
+    playroom: "Pokój zabaw",
+    hunger: "Głód",
+    energy: "Energia",
+    happiness: "Szczęście",
+    feedHamburger: "Nakarm Hamburgerem",
+    feedCake: "Nakarm Ciastem",
+    feedIceCream: "Nakarm Lodami",
+    giveOrangeJuice: "Daj Sok Pomarańczowy",
+    feedMeatballs: "Nakarm Klopsikami",
+    play: "Baw się"
+  },
+  ar: {
+    garden: "حديقة",
+    kitchen: "مطبخ",
+    bedroom: "غرفة نوم",
+    playroom: "غرفة اللعب",
+    hunger: "جوع",
+    energy: "طاقة",
+    happiness: "سعادة",
+    feedHamburger: "أطعم برغر",
+    feedCake: "أطعم كعكة",
+    feedIceCream: "أطعم آيس كريم",
+    giveOrangeJuice: "قدم عصير برتقال",
+    feedMeatballs: "أطعم كرات اللحم",
+    play: "العب"
+  },
+  fr: {
+    garden: "Jardin",
+    kitchen: "Cuisine",
+    bedroom: "Chambre",
+    playroom: "Salle de jeux",
+    hunger: "Faim",
+    energy: "Énergie",
+    happiness: "Bonheur",
+    feedHamburger: "Donner un hamburger",
+    feedCake: "Donner un gâteau",
+    feedIceCream: "Donner une glace",
+    giveOrangeJuice: "Donner du jus d'orange",
+    feedMeatballs: "Donner des boulettes",
+    play: "Jouer"
+  },
+  pt: {
+    garden: "Jardim",
+    kitchen: "Cozinha",
+    bedroom: "Quarto",
+    playroom: "Sala de jogos",
+    hunger: "Fome",
+    energy: "Energia",
+    happiness: "Felicidade",
+    feedHamburger: "Dar hambúrguer",
+    feedCake: "Dar bolo",
+    feedIceCream: "Dar sorvete",
+    giveOrangeJuice: "Dar suco de laranja",
+    feedMeatballs: "Dar almôndegas",
+    play: "Brincar"
+  },
+  ja: {
+    garden: "庭",
+    kitchen: "キッチン",
+    bedroom: "寝室",
+    playroom: "プレイルーム",
+    hunger: "空腹",
+    energy: "エネルギー",
+    happiness: "幸福度",
+    feedHamburger: "ハンバーガーを与える",
+    feedCake: "ケーキを与える",
+    feedIceCream: "アイスクリームを与える",
+    giveOrangeJuice: "オレンジジュースを与える",
+    feedMeatballs: "ミートボールを与える",
+    play: "遊ぶ"
+  },
+  zh: {
+    garden: "花园",
+    kitchen: "厨房",
+    bedroom: "卧室",
+    playroom: "游戏室",
+    hunger: "饥饿",
+    energy: "能量",
+    happiness: "幸福感",
+    feedHamburger: "喂汉堡",
+    feedCake: "喂蛋糕",
+    feedIceCream: "喂冰淇淋",
+    giveOrangeJuice: "给橙汁",
+    feedMeatballs: "喂肉丸",
+    play: "玩耍"
+  },
+  ko: {
+    garden: "정원",
+    kitchen: "주방",
+    bedroom: "침실",
+    playroom: "놀이방",
+    hunger: "배고픔",
+    energy: "에너지",
+    happiness: "행복",
+    feedHamburger: "햄버거 주기",
+    feedCake: "케이크 주기",
+    feedIceCream: "아이스크림 주기",
+    giveOrangeJuice: "오렌지 주스 주기",
+    feedMeatballs: "미트볼 주기",
+    play: "놀기"
+  }
+};
+
+let currentLanguage = 'en';
+
+function changeLanguage(lang) {
+  currentLanguage = lang;
+  document.querySelectorAll('[data-translate]').forEach(element => {
+    const key = element.getAttribute('data-translate');
+    element.textContent = translations[lang][key];
+  });
+  document.documentElement.lang = lang;
+  document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+}
+
+function init() {
+  scene = new THREE.Scene();
+  camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+  renderer = new THREE.WebGLRenderer({ antialias: true });
+  renderer.setPixelRatio(window.devicePixelRatio);
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setClearColor(0xf0f0f0);
+  document.getElementById('scene-container').appendChild(renderer.domElement);
+
+  const ambientLight = new THREE.AmbientLight(0xffffff, 0.7); 
+  scene.add(ambientLight);
+  
+  const petLight = new THREE.SpotLight(0xffffff, 0.5, 10, Math.PI / 6, 0.1); 
+  petLight.position.set(0, 3, 5);
+  scene.add(petLight);
+
+  createSandwich();
+  createHome();
+  createInteractiveElements();
+
+  camera.position.set(0, 1.5, 5);
+  camera.lookAt(0, 0, 0);
+  
+  addRetroMusic();
+  animate();
+}
+
+function createSandwich() {
+  sandwich = new THREE.Group();
+
+  const breadGeometry = new THREE.BoxGeometry(1, 0.2, 0.8);
+  const breadMaterial = new THREE.MeshPhongMaterial({ color: 0xf5d76e, emissive: 0xf5d76e, emissiveIntensity: 0.2 });
+  const bottomBread = new THREE.Mesh(breadGeometry, breadMaterial);
+  sandwich.add(bottomBread);
+
+  const cheeseGeometry = new THREE.BoxGeometry(0.9, 0.05, 0.7);
+  const cheeseMaterial = new THREE.MeshPhongMaterial({ color: 0xffa600, emissive: 0xffa600, emissiveIntensity: 0.1 });
+  const cheese = new THREE.Mesh(cheeseGeometry, cheeseMaterial);
+  cheese.position.y = 0.125;
+  sandwich.add(cheese);
+
+  const topBread = bottomBread.clone();
+  topBread.position.y = 0.25;
+  sandwich.add(topBread);
+
+  const eyeGeometry = new THREE.SphereGeometry(0.08, 32, 32);
+  const eyeMaterial = new THREE.MeshPhongMaterial({ color: 0xffffff });
+  const leftEye = new THREE.Mesh(eyeGeometry, eyeMaterial);
+  const rightEye = new THREE.Mesh(eyeGeometry, eyeMaterial);
+
+  leftEye.position.set(-0.2, 0.3, 0.35);
+  rightEye.position.set(0.2, 0.3, 0.35);
+  sandwich.add(leftEye, rightEye);
+
+  const pupilGeometry = new THREE.SphereGeometry(0.04, 32, 32);
+  const pupilMaterial = new THREE.MeshPhongMaterial({ color: 0x000000 });
+  const leftPupil = new THREE.Mesh(pupilGeometry, pupilMaterial);
+  const rightPupil = new THREE.Mesh(pupilGeometry, pupilMaterial);
+
+  leftPupil.position.set(-0.2, 0.3, 0.4);
+  rightPupil.position.set(0.2, 0.3, 0.4);
+  sandwich.add(leftPupil, rightPupil);
+
+  const mouthGeometry = new THREE.TorusGeometry(0.1, 0.02, 16, 100, Math.PI);
+  const mouthMaterial = new THREE.MeshPhongMaterial({ color: 0x8b4513 });
+  const mouth = new THREE.Mesh(mouthGeometry, mouthMaterial);
+
+  mouth.position.set(0, 0.15, 0.4);
+  mouth.rotation.x = Math.PI;
+  sandwich.add(mouth);
+
+  const limbGeometry = new THREE.CylinderGeometry(0.03, 0.03, 0.3, 32);
+  const limbMaterial = new THREE.MeshPhongMaterial({ color: 0x8b4513 });
+
+  const leftArm = new THREE.Mesh(limbGeometry, limbMaterial);
+  const rightArm = new THREE.Mesh(limbGeometry, limbMaterial);
+  const leftLeg = new THREE.Mesh(limbGeometry, limbMaterial);
+  const rightLeg = new THREE.Mesh(limbGeometry, limbMaterial);
+
+  leftArm.position.set(-0.5, 0, 0);
+  rightArm.position.set(0.5, 0, 0);
+  leftLeg.position.set(-0.3, -0.25, 0);
+  rightLeg.position.set(0.3, -0.25, 0);
+
+  leftArm.rotation.z = Math.PI / 4;
+  rightArm.rotation.z = -Math.PI / 4;
+
+  sandwich.add(leftArm, rightArm, leftLeg, rightLeg);
+  sandwich.position.y = 1;
+  scene.add(sandwich);
+}
+
+function createHome() {
+  const textureLoader = new THREE.TextureLoader();
+  const wallTexture = textureLoader.load('https://example.com/wall_texture.jpg');
+
+  const floorGeometry = new THREE.PlaneGeometry(10, 10);
+  const floorMaterial = new THREE.MeshPhongMaterial({ color: 0xcccccc });
+  const floor = new THREE.Mesh(floorGeometry, floorMaterial);
+  floor.rotation.x = -Math.PI / 2;
+  scene.add(floor);
+
+  const wallGeometry = new THREE.BoxGeometry(10, 4, 0.1);
+  const wallMaterial = new THREE.MeshPhongMaterial({ map: wallTexture });
+
+  const backWall = new THREE.Mesh(wallGeometry, wallMaterial);
+  backWall.position.z = -5;
+  backWall.position.y = 2;
+
+  scene.add(backWall);
+
+  const leftWall = new THREE.Mesh(wallGeometry, wallMaterial);
+  leftWall.position.x = -5;
+  leftWall.position.y = 2;
+  leftWall.rotation.y = Math.PI / 2;
+  scene.add(leftWall);
+
+  const rightWall = new THREE.Mesh(wallGeometry, wallMaterial);
+  rightWall.position.x = 5;
+  rightWall.position.y = 2;
+  rightWall.rotation.y = Math.PI / 2;
+  scene.add(rightWall);
+
+  createFurniture();
+
+  const light = new THREE.PointLight(0xffffff, 1, 100);
+  light.position.set(0, 3, 0);
+  scene.add(light);
+}
+
+function createFurniture() {
+  const tableGeometry = new THREE.BoxGeometry(1.5, 0.1, 1);
+  const tableMaterial = new THREE.MeshPhongMaterial({ color: 0x8b4513 });
+  const table = new THREE.Mesh(tableGeometry, tableMaterial);
+  table.position.set(0, 0.5, -2);
+  scene.add(table);
+
+  const chairSeat = new THREE.BoxGeometry(0.6, 0.1, 0.6);
+  const chairBack = new THREE.BoxGeometry(0.6, 0.8, 0.1);
+  const chairMaterial = new THREE.MeshPhongMaterial({ color: 0x8b4513 });
+
+  const chair = new THREE.Group();
+  const seat = new THREE.Mesh(chairSeat, chairMaterial);
+  const back = new THREE.Mesh(chairBack, chairMaterial);
+
+  seat.position.y = 0.3;
+  back.position.y = 0.7;
+  back.position.z = -0.25;
+
+  chair.add(seat);
+  chair.add(back);
+  chair.position.set(0, 0, -1);
+  scene.add(chair);
+
+  const potGeometry = new THREE.CylinderGeometry(0.2, 0.15, 0.3, 32);
+  const potMaterial = new THREE.MeshPhongMaterial({ color: 0xa52a2a });
+  const pot = new THREE.Mesh(potGeometry, potMaterial);
+
+  const plantGeometry = new THREE.SphereGeometry(0.2, 32, 32);
+  const plantMaterial = new THREE.MeshPhongMaterial({ color: 0x228b22 });
+  const plant = new THREE.Mesh(plantGeometry, plantMaterial);
+
+  pot.position.set(-2, 0.15, -4);
+  plant.position.set(-2, 0.5, -4);
+
+  scene.add(pot);
+  scene.add(plant);
+
+  const toyBoxGeometry = new THREE.BoxGeometry(0.8, 0.6, 0.8);
+  const toyBoxMaterial = new THREE.MeshPhongMaterial({ color: 0x4682b4 });
+  const toyBox = new THREE.Mesh(toyBoxGeometry, toyBoxMaterial);
+  toyBox.position.set(2, 0.3, -4);
+  scene.add(toyBox);
+
+  const ballGeometry = new THREE.SphereGeometry(0.15, 32, 32);
+  const ballMaterial = new THREE.MeshPhongMaterial({ color: 0xff4500 });
+  const ball = new THREE.Mesh(ballGeometry, ballMaterial);
+  ball.position.set(2.5, 0.15, -3);
+  scene.add(ball);
+}
+
+function createBirchTree(x, z) {
+  const birchGroup = new THREE.Group();
+
+  const trunkGeometry = new THREE.CylinderGeometry(0.2, 0.3, 5, 8);
+  const trunkMaterial = new THREE.MeshPhongMaterial({ 
+    color: 0xFFFFFF,
+    bumpMap: new THREE.TextureLoader().load('https://example.com/birch_bark_texture.jpg'),
+    bumpScale: 0.05
+  });
+  const trunk = new THREE.Mesh(trunkGeometry, trunkMaterial);
+  trunk.position.y = 2.5;
+  birchGroup.add(trunk);
+
+  const leavesGeometry = new THREE.SphereGeometry(1.5, 8, 8);
+  const leavesMaterial = new THREE.MeshPhongMaterial({ color: 0x81C784 });
+  const leaves = new THREE.Mesh(leavesGeometry, leavesMaterial);
+  leaves.position.y = 5;
+  leaves.scale.y = 1.5;
+  birchGroup.add(leaves);
+
+  birchGroup.position.set(x, 0, z);
+  return birchGroup;
+}
+
+function setupGardenScene() {
+  const existingSkybox = document.querySelector('.skybox');
+  if (existingSkybox) {
+    existingSkybox.remove();
+  }
+
+  const citySkybox = document.createElement('div');
+  citySkybox.className = 'city-skybox';
+  document.body.appendChild(citySkybox);
+
+  const grassGeometry = new THREE.PlaneGeometry(20, 20);
+  const grassMaterial = new THREE.MeshPhongMaterial({ color: 0x7cfc00, emissive: 0x1a3300, emissiveIntensity: 0.2 });
+  const grass = new THREE.Mesh(grassGeometry, grassMaterial);
+  grass.rotation.x = -Math.PI / 2;
+  scene.add(grass);
+
+  const pondGeometry = new THREE.CircleGeometry(2, 32);
+  const pondMaterial = new THREE.MeshPhongMaterial({ color: 0x4FC3F7, shininess: 100 });
+  const pond = new THREE.Mesh(pondGeometry, pondMaterial);
+  pond.rotation.x = -Math.PI / 2;
+  pond.position.set(3, 0.01, 2);
+  scene.add(pond);
+
+  const benchGeometry = new THREE.BoxGeometry(1.5, 0.5, 0.5);
+  const benchMaterial = new THREE.MeshPhongMaterial({ color: 0x8B4513 });
+  const bench = new THREE.Mesh(benchGeometry, benchMaterial);
+  bench.position.set(-3, 0.25, 2);
+  scene.add(bench);
+
+  const flowerColors = [0xFF69B4, 0xFFFF00, 0xFF6347, 0x9932CC];
+  for (let i = 0; i < 20; i++) {
+    const flowerGeometry = new THREE.SphereGeometry(0.2, 8, 8);
+    const flowerMaterial = new THREE.MeshPhongMaterial({ color: flowerColors[Math.floor(Math.random() * flowerColors.length)] });
+    const flower = new THREE.Mesh(flowerGeometry, flowerMaterial);
+    flower.position.set(Math.random() * 18 - 9, 0.2, Math.random() * 18 - 9);
+    scene.add(flower);
+  }
+
+  const houseWidth = 8;
+  const houseHeight = 5;
+  const houseDepth = 7;
+  const house = new THREE.Group();
+
+  const houseGeometry = new THREE.BoxGeometry(houseWidth, houseHeight, houseDepth);
+  const houseMaterial = new THREE.MeshPhongMaterial({ 
+    color: 0xf0e68c, 
+    map: new THREE.TextureLoader().load('https://example.com/brick_texture.jpg'),
+    bumpMap: new THREE.TextureLoader().load('https://example.com/brick_bump.jpg'),
+    bumpScale: 0.02
+  });
+  const houseMesh = new THREE.Mesh(houseGeometry, houseMaterial);
+  house.add(houseMesh);
+
+  const roofGeometry = new THREE.ConeGeometry(houseWidth * 0.7, houseHeight * 0.5, 4);
+  const roofMaterial = new THREE.MeshPhongMaterial({ color: 0x8b4513 });
+  const roof = new THREE.Mesh(roofGeometry, roofMaterial);
+  roof.position.set(0, houseHeight + roofGeometry.parameters.height / 2, 0);
+  roof.rotation.y = Math.PI / 4;
+  house.add(roof);
+
+  const windowGeometry = new THREE.PlaneGeometry(1.5, 2);
+  const windowMaterial = new THREE.MeshPhongMaterial({ 
+    color: 0x87CEEB, 
+    transparent: true, 
+    opacity: 0.7,
+    emissive: 0x87CEEB,
+    emissiveIntensity: 0.2
+  });
+
+  const window1 = new THREE.Mesh(windowGeometry, windowMaterial);
+  window1.position.set(-houseWidth/2 + 0.1, 0.5, houseDepth/2 + 0.01);
+  house.add(window1);
+
+  const window2 = window1.clone();
+  window2.position.set(houseWidth/2 - 0.1, 0.5, houseDepth/2 + 0.01);
+  house.add(window2);
+
+  const doorGeometry = new THREE.PlaneGeometry(1.5, 3);
+  const doorMaterial = new THREE.MeshPhongMaterial({ color: 0x8b4513 });
+  const door = new THREE.Mesh(doorGeometry, doorMaterial);
+  door.position.set(0, -houseHeight/2 + 1.5, houseDepth/2 + 0.01);
+  house.add(door);
+
+  house.position.set(-8, houseHeight / 2, -12);
+  scene.add(house);
+
+  const sunLight = new THREE.DirectionalLight(0xffffcc, 1.5);
+  sunLight.position.set(10, 10, 10);
+  scene.add(sunLight);
+
+  const ambientLight = new THREE.AmbientLight(0xccccff, 0.8);
+  scene.add(ambientLight);
+
+  const treeGeometry = new THREE.ConeGeometry(1, 3, 8);
+  const treeMaterial = new THREE.MeshPhongMaterial({ color: 0x228B22 });
+  const tree = new THREE.Mesh(treeGeometry, treeMaterial);
+  tree.position.set(5, 1.5, -5);
+  scene.add(tree);
+
+  const birchTree = createBirchTree(-4, 3);
+  scene.add(birchTree);
+}
+
+function createInteractiveElements() {
+  const vaseGeometry = new THREE.CylinderGeometry(0.5, 0.3, 1, 32);
+  const vaseMaterial = new THREE.MeshPhongMaterial({ color: 0xFFD700 });
+  const vase = new THREE.Mesh(vaseGeometry, vaseMaterial);
+  vase.position.set(-3, 0.5, -2);
+  vase.userData.interactive = true;
+
+  vase.userData.update = function () {
+    this.rotation.y += 0.01;
+  };
+
+  vase.addEventListener('click', () => {
+    alert('This vase has ancient powers!');
+  });
+
+  scene.add(vase);
+}
+
+function addRetroMusic() {
+  const audio = new Audio('https://example.com/retro_game_music.mp3');
+  audio.loop = true;
+  audio.volume = 0.5;
+
+  const playButton = document.createElement('button');
+  playButton.textContent = 'Play Music';
+  playButton.style.position = 'fixed';
+  playButton.style.bottom = '10px';
+  playButton.style.left = '10px';
+  playButton.style.zIndex = '1000';
+  document.body.appendChild(playButton);
+
+  playButton.addEventListener('click', () => {
+    audio.play().catch(error => {
+      console.error('Error playing audio:', error);
+    });
+    playButton.style.display = 'none';
+  });
+}
+
+document.addEventListener('DOMContentLoaded', init);
+
+function animate() {
+  requestAnimationFrame(animate);
+
+  scene.traverse(function (object) {
+    if (object.userData.update) {
+      object.userData.update.call(object);
+    }
+  });
+
+  if (currentRoom === 'garden') {
+    addPlane();
+  }
+
+  renderer.render(scene, camera);
+}
+
+function addPlane() {
+  if (Math.random() < 0.15) {
+    const planeGeometry = new THREE.ConeGeometry(0.1, 0.5, 4);
+    const planeMaterial = new THREE.MeshPhongMaterial({ color: 0xFFFFFF });
+    const plane = new THREE.Mesh(planeGeometry, planeMaterial);
+    
+    plane.position.set(-15, 8 + Math.random() * 4, -10);
+    plane.rotation.z = Math.PI / 2;
+    scene.add(plane);
+
+    function animatePlane() {
+      plane.position.x += 0.1;
+      if (plane.position.x > 15) {
+        scene.remove(plane);
+      } else {
+        requestAnimationFrame(animatePlane);
+      }
+    }
+    animatePlane();
+  }
+}
+
+function changeRoom(room) {
+  if (room === currentRoom) return;
+
+  updateTabs(room);
+
+  while(scene.children.length > 0){ 
+    scene.remove(scene.children[0]); 
+  }
+
+  scene.add(sandwich);
+
+  switch(room) {
+    case 'garden':
+      setupGardenScene();
+      happiness = Math.min(happiness + 10, 100);
+      energy = Math.max(energy - 5, 0);
+      break;
+    case 'kitchen':
+      scene.background = new THREE.Color(0xffdab9);
+      setupKitchenScene();
+      hunger = Math.min(hunger + 20, 100);
+      break;
+    case 'bedroom':
+      scene.background = new THREE.Color(0xe6e6fa);
+      setupBedroomScene();
+      energy = Math.min(energy + 30, 100);
+      hunger = Math.max(hunger - 10, 0);
+      break;
+    case 'playroom':
+      scene.background = new THREE.Color(0xadd8e6);
+      setupPlayroomScene();
+      happiness = Math.min(happiness + 20, 100);
+      energy = Math.max(energy - 10, 0);
+      break;
+  }
+
+  currentRoom = room;
+  updateStats();
+}
+
+function setupPlayroomScene() {
+  const floorGeometry = new THREE.PlaneGeometry(10, 10);
+  const floorMaterial = new THREE.MeshPhongMaterial({ color: 0x00ff00 });
+  const floor = new THREE.Mesh(floorGeometry, floorMaterial);
+  floor.rotation.x = -Math.PI / 2;
+  scene.add(floor);
+
+  const wallGeometry = new THREE.BoxGeometry(10, 4, 0.1);
+  const wallMaterial = new THREE.MeshPhongMaterial({ color: 0x87ceeb });
+  
+  const backWall = new THREE.Mesh(wallGeometry, wallMaterial);
+  backWall.position.z = -5;
+  backWall.position.y = 2;
+  scene.add(backWall);
+
+  const sideWall = new THREE.Mesh(wallGeometry, wallMaterial);
+  sideWall.position.x = -5;
+  sideWall.position.y = 2;
+  sideWall.rotation.y = Math.PI / 2;
+  scene.add(sideWall);
+
+  const toyBoxGeometry = new THREE.BoxGeometry(1, 1, 1);
+  const toyBoxMaterial = new THREE.MeshPhongMaterial({ color: 0xff0000 });
+  const toyBox = new THREE.Mesh(toyBoxGeometry, toyBoxMaterial);
+  toyBox.position.set(-3, 0.5, -4);
+  scene.add(toyBox);
+
+  const slideGeometry = new THREE.BoxGeometry(1, 2, 3);
+  const slideMaterial = new THREE.MeshPhongMaterial({ color: 0xffff00 });
+  const slide = new THREE.Mesh(slideGeometry, slideMaterial);
+  slide.position.set(3, 1, -4);
+  slide.rotation.x = -Math.PI / 6;
+  scene.add(slide);
+
+  const ballGeometry = new THREE.SphereGeometry(0.2, 32, 32);
+  const ballMaterials = [
+    new THREE.MeshPhongMaterial({ color: 0xff0000 }),
+    new THREE.MeshPhongMaterial({ color: 0x00ff00 }),
+    new THREE.MeshPhongMaterial({ color: 0x0000ff })
+  ];
+
+  for (let i = 0; i < 5; i++) {
+    const ball = new THREE.Mesh(ballGeometry, ballMaterials[i % 3]);
+    ball.position.set(Math.random() * 6 - 3, 0.2, Math.random() * 6 - 3);
+    scene.add(ball);
+  }
+
+  const ceilingLight = new THREE.PointLight(0xffffd4, 1, 10);
+  ceilingLight.position.set(0, 3.5, 0);
+  scene.add(ceilingLight);
+
+  const ambientLight = new THREE.AmbientLight(0x404040, 0.5);
+  scene.add(ambientLight);
+}
+
+function updateTabs(room) {
+  const tabs = document.querySelectorAll('.touchwiz-tab');
+  tabs.forEach(tab => {
+    if (tab.textContent.toLowerCase() === room) {
+      tab.classList.add('active');
+    } else {
+      tab.classList.remove('active');
+    }
+  });
+}
+
+function setupKitchenScene() {
+  const floorGeometry = new THREE.PlaneGeometry(10, 10);
+  const floorMaterial = new THREE.MeshPhongMaterial({ color: 0xd3d3d3 });
+  const floor = new THREE.Mesh(floorGeometry, floorMaterial);
+  floor.rotation.x = -Math.PI / 2;
+  scene.add(floor);
+
+  const wallGeometry = new THREE.BoxGeometry(10, 4, 0.1);
+  const wallMaterial = new THREE.MeshPhongMaterial({ color: 0xf0e68c });
+  
+  const backWall = new THREE.Mesh(wallGeometry, wallMaterial);
+  backWall.position.z = -5;
+  backWall.position.y = 2;
+  scene.add(backWall);
+
+  const sideWall = new THREE.Mesh(wallGeometry, wallMaterial);
+  sideWall.position.x = -5;
+  sideWall.position.y = 2;
+  sideWall.rotation.y = Math.PI / 2;
+  scene.add(sideWall);
+
+  const counterGeometry = new THREE.BoxGeometry(8, 1, 2);
+  const counterMaterial = new THREE.MeshStandardMaterial({ 
+    color: 0xFFFFFF,
+    roughness: 0.2,
+    metalness: 0.1
+  });
+  const counter = new THREE.Mesh(counterGeometry, counterMaterial);
+  counter.position.set(0, 0.5, -4);
+  scene.add(counter);
+
+  const sinkGeometry = new THREE.BoxGeometry(1, 0.2, 1);
+  const sinkMaterial = new THREE.MeshStandardMaterial({ 
+    color: 0xC0C0C0,
+    roughness: 0.1,
+    metalness: 0.8
+  });
+  const sink = new THREE.Mesh(sinkGeometry, sinkMaterial);
+  sink.position.set(-3, 1.1, -4);
+  scene.add(sink);
+
+  const faucetGeometry = new THREE.CylinderGeometry(0.05, 0.05, 0.5, 16);
+  const faucetMaterial = new THREE.MeshStandardMaterial({ 
+    color: 0xC0C0C0,
+    roughness: 0.1,
+    metalness: 0.9
+  });
+  const faucet = new THREE.Mesh(faucetGeometry, faucetMaterial);
+  faucet.rotation.x = Math.PI / 2;
+  faucet.position.set(-3, 1.3, -3.7);
+  scene.add(faucet);
+
+  const stoveGeometry = new THREE.BoxGeometry(2, 1, 2);
+  const stoveMaterial = new THREE.MeshStandardMaterial({ 
+    color: 0x303030,
+    roughness: 0.5,
+    metalness: 0.5
+  });
+  const stove = new THREE.Mesh(stoveGeometry, stoveMaterial);
+  stove.position.set(3, 0.5, -4);
+  scene.add(stove);
+
+  for (let i = 0; i < 4; i++) {
+    const burnerGeometry = new THREE.RingGeometry(0.1, 0.2, 32);
+    const burnerMaterial = new THREE.MeshBasicMaterial({ color: 0x000000 });
+    const burner = new THREE.Mesh(burnerGeometry, burnerMaterial);
+    burner.rotation.x = -Math.PI / 2;
+    burner.position.set(2.5 + (i % 2) * 1, 1.01, -4.5 + Math.floor(i / 2) * 1);
+    scene.add(burner);
+  }
+
+  const fridgeGeometry = new THREE.BoxGeometry(1.5, 3, 1);
+  const fridgeMaterial = new THREE.MeshStandardMaterial({ 
+    color: 0xFFFFFF,
+    roughness: 0.2,
+    metalness: 0.1
+  });
+  const fridge = new THREE.Mesh(fridgeGeometry, fridgeMaterial);
+  fridge.position.set(-4, 1.5, -4.5);
+  scene.add(fridge);
+
+  const windowFrameGeometry = new THREE.BoxGeometry(3, 2, 0.1);
+  const windowFrameMaterial = new THREE.MeshStandardMaterial({ color: 0x8B4513 });
+  const windowFrame = new THREE.Mesh(windowFrameGeometry, windowFrameMaterial);
+  windowFrame.position.set(0, 2, -4.95);
+  scene.add(windowFrame);
+
+  const windowGlassGeometry = new THREE.PlaneGeometry(2.8, 1.8);
+  const windowGlassMaterial = new THREE.MeshPhongMaterial({ 
+    color: 0x87CEEB,
+    transparent: true,
+    opacity: 0.6,
+    side: THREE.DoubleSide
+  });
+  const windowGlass = new THREE.Mesh(windowGlassGeometry, windowGlassMaterial);
+  windowGlass.position.set(0, 2, -4.9);
+  scene.add(windowGlass);
+
+  for (let i = 0; i < 3; i++) {
+    const potGeometry = new THREE.CylinderGeometry(0.1, 0.15, 0.2, 32);
+    const potMaterial = new THREE.MeshStandardMaterial({ color: 0x8B4513 });
+    const plantGeometry = new THREE.SphereGeometry(0.15, 32, 16);
+    const plantMaterial = new THREE.MeshStandardMaterial({ color: 0x228B22 });
+
+    const pot = new THREE.Mesh(potGeometry, potMaterial);
+    pot.position.set(-0.8 + i * 0.8, 1.1, -4.8);
+    scene.add(pot);
+
+    const plant = new THREE.Mesh(plantGeometry, plantMaterial);
+    plant.position.set(-0.8 + i * 0.8, 1.3, -4.8);
+    scene.add(plant);
+  }
+
+  const ceilingLight = new THREE.PointLight(0xffffd4, 1, 10);
+  ceilingLight.position.set(0, 3.5, 0);
+  scene.add(ceilingLight);
+
+  const windowLight = new THREE.DirectionalLight(0xffffff, 0.5);
+  windowLight.position.set(0, 2, -5);
+  scene.add(windowLight);
+
+  const ambientLight = new THREE.AmbientLight(0x404040, 0.5);
+  scene.add(ambientLight);
+
+  for (let i = 0; i < 5; i++) {
+    const utensilGeometry = new THREE.CylinderGeometry(0.02, 0.02, 0.3, 32);
+    const utensilMaterial = new THREE.MeshStandardMaterial({ 
+      color: 0xC0C0C0,
+      roughness: 0.1,
+      metalness: 0.9
+    });
+    const utensil = new THREE.Mesh(utensilGeometry, utensilMaterial);
+    utensil.rotation.z = Math.PI / 2;
+    utensil.position.set(-1.8 + i * 0.2, 1.1, -3.5);
+    scene.add(utensil);
+  }
+
+  const bowlGeometry = new THREE.SphereGeometry(0.3, 32, 16, 0, Math.PI * 2, 0, Math.PI * 0.5);
+  const bowlMaterial = new THREE.MeshStandardMaterial({ 
+    color: 0xD2691E,
+    roughness: 0.5,
+    metalness: 0.1
+  });
+  const bowl = new THREE.Mesh(bowlGeometry, bowlMaterial);
+  bowl.position.set(0, 1.05, -3);
+  scene.add(bowl);
+
+  const fruitColors = [0xFF0000, 0xFFFF00, 0xFFA500, 0x008000];
+  for (let i = 0; i < 5; i++) {
+    const fruitGeometry = new THREE.SphereGeometry(0.1, 16, 16);
+    const fruitMaterial = new THREE.MeshStandardMaterial({ 
+      color: fruitColors[Math.floor(Math.random() * fruitColors.length)],
+      roughness: 0.8,
+      metalness: 0.1
+    });
+    const fruit = new THREE.Mesh(fruitGeometry, fruitMaterial);
+    fruit.position.set(Math.random() * 0.4 - 0.2, 1.2 + Math.random() * 0.1, -3 + Math.random() * 0.4 - 0.2);
+    scene.add(fruit);
+  }
+
+  const tableGeometry = new THREE.BoxGeometry(2.5, 0.1, 1.5);
+  const tableMaterial = new THREE.MeshStandardMaterial({ 
+    color: 0x8b4513,
+    roughness: 0.8,
+    metalness: 0.2
+  });
+  const table = new THREE.Mesh(tableGeometry, tableMaterial);
+  table.position.set(0, 0.75, 0);
+  scene.add(table);
+
+  const chairGeometry = new THREE.BoxGeometry(0.5, 0.5, 0.5);
+  const chairMaterial = new THREE.MeshStandardMaterial({ 
+    color: 0x8b4513,
+    roughness: 0.8,
+    metalness: 0.2
+  });
+  for (let i = 0; i < 4; i++) {
+    const chair = new THREE.Mesh(chairGeometry, chairMaterial);
+    chair.position.set(i % 2 === 0 ? -1 : 1, 0.25, i < 2 ? -0.75 : 0.75);
+    scene.add(chair);
+  }
+
+  const chandelierGeometry = new THREE.SphereGeometry(0.2, 32, 16);
+  const chandelierMaterial = new THREE.MeshStandardMaterial({ 
+    color: 0xFFD700,
+    roughness: 0.1,
+    metalness: 0.8
+  });
+  const chandelier = new THREE.Mesh(chandelierGeometry, chandelierMaterial);
+  chandelier.position.set(0, 3, 0);
+  scene.add(chandelier);
+
+  const chandelierLight = new THREE.PointLight(0xFFD700, 0.7, 5);
+  chandelierLight.position.set(0, 2.8, 0);
+  scene.add(chandelierLight);
+}
+
+function setupBedroomScene() {
+  const floorGeometry = new THREE.PlaneGeometry(10, 10);
+  const floorMaterial = new THREE.MeshPhongMaterial({ color: 0x8b4513 });
+  const floor = new THREE.Mesh(floorGeometry, floorMaterial);
+  floor.rotation.x = -Math.PI / 2;
+  scene.add(floor);
+
+  const wallGeometry = new THREE.BoxGeometry(10, 4, 0.1);
+  const wallMaterial = new THREE.MeshPhongMaterial({ color: 0xe6e6fa });
+  
+  const backWall = new THREE.Mesh(wallGeometry, wallMaterial);
+  backWall.position.z = -5;
+  backWall.position.y = 2;
+  scene.add(backWall);
+
+  const sideWall = new THREE.Mesh(wallGeometry, wallMaterial);
+  sideWall.position.x = -5;
+  sideWall.position.y = 2;
+  sideWall.rotation.y = Math.PI / 2;
+  scene.add(sideWall);
+
+  const bedFrameGeometry = new THREE.BoxGeometry(2, 0.5, 3);
+  const bedFrameMaterial = new THREE.MeshPhongMaterial({ color: 0x8b4513 });
+  const bedFrame = new THREE.Mesh(bedFrameGeometry, bedFrameMaterial);
+  bedFrame.position.set(-3, 0.25, -3.5);
+  scene.add(bedFrame);
+
+  const mattressGeometry = new THREE.BoxGeometry(1.9, 0.3, 2.9);
+  const mattressMaterial = new THREE.MeshPhongMaterial({ color: 0xffffff });
+  const mattress = new THREE.Mesh(mattressGeometry, mattressMaterial);
+  mattress.position.set(-3, 0.65, -3.5);
+  scene.add(mattress);
+
+  const wardrobeGeometry = new THREE.BoxGeometry(2, 3, 1);
+  const wardrobeMaterial = new THREE.MeshPhongMaterial({ color: 0x8b4513 });
+  const wardrobe = new THREE.Mesh(wardrobeGeometry, wardrobeMaterial);
+  wardrobe.position.set(3, 1.5, -4.5);
+  scene.add(wardrobe);
+
+  const tableGeometry = new THREE.BoxGeometry(0.8, 0.5, 0.8);
+  const tableMaterial = new THREE.MeshPhongMaterial({ color: 0x8b4513 });
+  const table = new THREE.Mesh(tableGeometry, tableMaterial);
+  table.position.set(-4.5, 0.25, -2);
+  scene.add(table);
+
+  const lampBaseGeometry = new THREE.CylinderGeometry(0.1, 0.2, 0.5, 32);
+  const lampBaseMaterial = new THREE.MeshPhongMaterial({ color: 0xd3d3d3 });
+  const lampBase = new THREE.Mesh(lampBaseGeometry, lampBaseMaterial);
+  lampBase.position.set(-4.5, 0.5, -2);
+  scene.add(lampBase);
+
+  const lampShadeGeometry = new THREE.ConeGeometry(0.3, 0.4, 32);
+  const lampShadeMaterial = new THREE.MeshPhongMaterial({ color: 0xfffafa });
+  const lampShade = new THREE.Mesh(lampShadeGeometry, lampShadeMaterial);
+  lampShade.position.set(-4.5, 1, -2);
+  scene.add(lampShade);
+
+  const lampLight = new THREE.PointLight(0xffffe0, 0.8, 10);
+  lampLight.position.set(-4.5, 1, -2);
+  scene.add(lampLight);
+
+  const ceilingLight = new THREE.PointLight(0xffffd4, 1, 10);
+  ceilingLight.position.set(0, 3.5, 0);
+  scene.add(ceilingLight);
+
+  const ambientLight = new THREE.AmbientLight(0x404040, 0.3);
+  scene.add(ambientLight);
+
+  const rugGeometry = new THREE.CircleGeometry(2, 32);
+  const rugMaterial = new THREE.MeshPhongMaterial({ color: 0x9370DB });
+  const rug = new THREE.Mesh(rugGeometry, rugMaterial);
+  rug.rotation.x = -Math.PI / 2;
+  rug.position.set(0, 0.01, 0);
+  scene.add(rug);
+
+  const shelfGeometry = new THREE.BoxGeometry(1.5, 2, 0.5);
+  const shelfMaterial = new THREE.MeshPhongMaterial({ color: 0x8B4513 });
+  const bookshelf = new THREE.Mesh(shelfGeometry, shelfMaterial);
+  bookshelf.position.set(4, 1, -4.5);
+  scene.add(bookshelf);
+
+  const bookColors = [0xFF0000, 0x008000, 0x0000FF, 0xFFFF00, 0xFFA500];
+  for (let i = 0; i < 10; i++) {
+    const bookGeometry = new THREE.BoxGeometry(0.1, 0.3, 0.2);
+    const bookMaterial = new THREE.MeshPhongMaterial({ color: bookColors[Math.floor(Math.random() * bookColors.length)] });
+    const book = new THREE.Mesh(bookGeometry, bookMaterial);
+    book.position.set(3.8 + Math.random() * 0.4, 0.5 + Math.floor(i / 2) * 0.4, -4.3);
+    scene.add(book);
+  }
+}
+
+function feedSandwich(food) {
+  switch(food) {
+    case 'hamburger':
+      hunger = Math.min(hunger + 30, 150);
+      happiness = Math.min(happiness + 10, 100);
+      break;
+    case 'cake':
+      hunger = Math.min(hunger + 20, 150);
+      happiness = Math.min(happiness + 20, 100);
+      break;
+    case 'icecream':
+      hunger = Math.min(hunger + 15, 150);
+      happiness = Math.min(happiness + 25, 100);
+      break;
+    case 'orangejuice':
+      hunger = Math.min(hunger + 5, 150);
+      energy = Math.min(energy + 15, 100);
+      break;
+    case 'meatballs':
+      hunger = Math.min(hunger + 25, 150);
+      energy = Math.min(energy + 10, 100);
+      break;
+  }
+  updateStats();
+}
+
+function playSandwich() {
+  happiness = Math.min(happiness + 20, 100);
+  energy = Math.max(energy - 15, 0);
+  hunger = Math.max(hunger - 10, 0);
+  updateStats();
+}
+
+function updateStats() {
+  document.getElementById('hunger-fill').style.width = `${hunger}%`;
+  document.getElementById('energy-fill').style.width = `${energy}%`;
+  document.getElementById('happiness-fill').style.width = `${happiness}%`;
+  
+  document.getElementById('hunger-fill').style.backgroundColor = hunger < 30 ? '#ff0000' : '#ff6b6b';
+  document.getElementById('energy-fill').style.backgroundColor = energy < 30 ? '#ff8c00' : '#4ecdc4';
+  document.getElementById('happiness-fill').style.backgroundColor = happiness < 30 ? '#ff4500' : '#feca57';
+}
+
+setInterval(() => {
+  hunger = Math.max(hunger - 1, 0);
+  energy = Math.max(energy - 1, 0);
+  happiness = Math.max(happiness - 1, 0);
+  updateStats();
+}, 1000);
+
+function updateClock() {
+  const now = new Date();
+  document.getElementById('clock-time').textContent = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  document.getElementById('clock-date').textContent = now.toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric' });
+}
+
+setInterval(updateClock, 1000);
+updateClock();
+
+window.addEventListener('resize', () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+document.getElementById('app-drawer-button').addEventListener('click', () => {
+  const notificationPanel = document.getElementById('notification-panel');
+  const quickSettingsPanel = document.getElementById('quick-settings-panel');
+  const languagePanel = document.getElementById('language-panel');
+  const smartAlarmPanel = document.getElementById('smart-alarm-panel');
+  
+  if (notificationPanel.style.height === '300px') {
+    notificationPanel.style.height = '0';
+    quickSettingsPanel.style.height = '300px';
+  } else if (quickSettingsPanel.style.height === '300px') {
+    quickSettingsPanel.style.height = '0';
+  } else if (smartAlarmPanel.style.height === '300px') {
+    smartAlarmPanel.style.height = '0';
+  } else {
+    notificationPanel.style.height = '300px';
+  }
+});
+
+document.getElementById('close-notification-panel').addEventListener('click', () => {
+  document.getElementById('notification-panel').style.height = '0';
+});
+
+document.getElementById('close-quick-settings').addEventListener('click', () => {
+  document.getElementById('quick-settings-panel').style.height = '0';
+});
+
+document.getElementById('language-button').addEventListener('click', () => {
+  document.getElementById('quick-settings-panel').style.height = '0';
+  document.getElementById('language-panel').style.height = '300px';
+});
+
+document.getElementById('close-language-panel').addEventListener('click', () => {
+  document.getElementById('language-panel').style.height = '0';
+});
+
+document.querySelectorAll('.language-button').forEach(button => {
+  button.addEventListener('click', (e) => {
+    changeLanguage(e.target.getAttribute('data-lang'));
+    document.getElementById('language-panel').style.height = '0';
+  });
+});
+
+document.getElementById('smart-alarm-button').addEventListener('click', () => {
+  document.getElementById('quick-settings-panel').style.height = '0';
+  document.getElementById('smart-alarm-panel').style.height = '300px';
+});
+
+document.getElementById('close-smart-alarm').addEventListener('click', () => {
+  document.getElementById('smart-alarm-panel').style.height = '0';
+});
+
+let alarmTime = '07:00';
+let alarmDays = [false, true, true, true, true, true, false];
+let smartWake = true;
+let natureSounds = true;
+
+document.getElementById('alarm-time').addEventListener('change', (e) => {
+  alarmTime = e.target.value;
+});
+
+document.querySelectorAll('.day-button').forEach(button => {
+  button.addEventListener('click', (e) => {
+    const day = parseInt(e.target.getAttribute('data-day'));
+    alarmDays[day] = !alarmDays[day];
+    e.target.classList.toggle('active');
+  });
+});
+
+document.getElementById('smart-wake').addEventListener('change', (e) => {
+  smartWake = e.target.checked;
+});
+
+document.getElementById('nature-sounds').addEventListener('change', (e) => {
+  natureSounds = e.target.checked;
+});
+
+document.getElementById('save-alarm').addEventListener('click', () => {
+  alert('Alarm saved: ' + alarmTime + ' on ' + alarmDays.map((d, i) => d ? ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][i] : '').filter(d => d).join(', ') + 
+        '\nSmart Wake: ' + (smartWake ? 'On' : 'Off') + 
+        '\nNature Sounds: ' + (natureSounds ? 'On' : 'Off'));
+  document.getElementById('smart-alarm-panel').style.height = '0';
+});
+
+// Function to check and trigger alarm
+function checkAlarm() {
+  const now = new Date();
+  const currentTime = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
+  const currentDay = now.getDay();
+
+  if (currentTime === alarmTime && alarmDays[currentDay]) {
+    triggerAlarm();
+  }
+}
+
+function triggerAlarm() {
+  alert('Wake up! It\'s time to feed your sandwich pet!');
+}
+
+// Check alarm every minute
+setInterval(checkAlarm, 60000);
+
+document.addEventListener('DOMContentLoaded', () => {
+  changeLanguage(currentLanguage);
+});
+</script>
+</body>
+</html>
