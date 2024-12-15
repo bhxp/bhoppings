@@ -1,0 +1,584 @@
+<html><head><base href="https://ker.os/" />
+<title>kerOS - Your Futuristic Desktop</title>
+<style>
+  body, html {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    font-family: 'Arial', sans-serif;
+    overflow: hidden;
+    background: linear-gradient(135deg, #9b59b6, #ff758c);
+  }
+  #desktop {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  #widget {
+    width: 300px;
+    height: 300px;
+    background: linear-gradient(45deg, #3a1c71, #d76d77, #ffaf7b);
+    border-radius: 30px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    position: relative;
+    overflow: hidden;
+    transform: rotate(-15deg);
+  }
+  #widget::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(
+      0deg,
+      transparent,
+      transparent,
+      #ff00de,
+      #ff00de,
+      #ff00de
+    );
+    transform-origin: bottom right;
+    animation: rotate 6s linear infinite;
+  }
+  @keyframes rotate {
+    0% {
+      transform: rotate(0deg);
+    }
+    100% {
+      transform: rotate(360deg);
+    }
+  }
+  #widget-content {
+    background: rgba(0,0,0,0.8);
+    border-radius: 20px;
+    padding: 20px;
+    position: absolute;
+    inset: 5px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+  }
+  #time {
+    font-size: 48px;
+    font-weight: bold;
+    margin-bottom: 10px;
+  }
+  #date {
+    font-size: 18px;
+  }
+  #taskbar {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: rgba(255,255,255,0.2);
+    backdrop-filter: blur(10px);
+    border-radius: 30px;
+    padding: 10px 20px;
+    display: flex;
+    align-items: center;
+    z-index: 10001;
+  }
+  .taskbar-icon {
+    width: 40px;
+    height: 40px;
+    margin: 0 10px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+  .taskbar-icon:hover {
+    transform: scale(1.1);
+  }
+  #app-dock {
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    background-color: rgba(255,255,255,0.2);
+    backdrop-filter: blur(10px);
+    border-radius: 20px;
+    padding: 10px;
+    display: flex;
+    align-items: center;
+    z-index: 10001;
+  }
+  .app-icon {
+    width: 50px;
+    height: 50px;
+    margin: 0 5px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border-radius: 12px;
+  }
+  .app-icon:hover {
+    transform: scale(1.1);
+    box-shadow: 0 0 15px rgba(255,255,255,0.5);
+  }
+  #volume-control {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    display: flex;
+    align-items: center;
+    background-color: rgba(255,255,255,0.2);
+    backdrop-filter: blur(10px);
+    border-radius: 30px;
+    padding: 10px;
+    transition: width 0.3s ease;
+    overflow: hidden;
+    width: 50px;
+    z-index: 10001;
+  }
+  #volume-control:hover {
+    width: 200px;
+  }
+  #volume-icon {
+    width: 30px;
+    height: 30px;
+    fill: white;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  #volume-slider {
+    width: 0;
+    opacity: 0;
+    transition: all 0.3s ease;
+    margin-left: 10px;
+  }
+  #volume-control:hover #volume-slider {
+    width: 120px;
+    opacity: 1;
+  }
+  #keros-button {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #FFA500, #FFD700);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 32px;
+    font-weight: bold;
+    color: white;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+  }
+  #keros-button:hover {
+    transform: scale(1.1);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+  }
+  #keros-menu {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 600px;
+    background: linear-gradient(135deg, rgba(255,255,255,0.8), rgba(0,120,255,0.8));
+    backdrop-filter: blur(10px);
+    border-radius: 20px;
+    padding: 20px;
+    display: none;
+    flex-wrap: wrap;
+    justify-content: space-around;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    transition: all 0.3s ease;
+    opacity: 0;
+    pointer-events: none;
+  }
+  #keros-menu.active {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  .menu-section {
+    width: 45%;
+    margin-bottom: 20px;
+  }
+  .menu-section h3 {
+    color: white;
+    margin-bottom: 10px;
+    font-size: 18px;
+  }
+  .menu-item {
+    display: flex;
+    align-items: center;
+    padding: 10px;
+    border-radius: 10px;
+    transition: background 0.3s ease;
+    cursor: pointer;
+  }
+  .menu-item:hover {
+    background: rgba(255,255,255,0.1);
+  }
+  .menu-item svg {
+    width: 24px;
+    height: 24px;
+    margin-right: 10px;
+    fill: white;
+  }
+  .menu-item span {
+    color: white;
+    font-size: 14px;
+  }
+  #file-manager {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 80%;
+    height: 80%;
+    background: linear-gradient(135deg, rgba(255,255,255,0.9), rgba(230,240,255,0.9));
+    backdrop-filter: blur(10px);
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    display: none;
+    flex-direction: column;
+    overflow: hidden;
+    transition: all 0.3s ease;
+  }
+  #file-manager.active {
+    display: flex;
+  }
+  #file-manager-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    background: linear-gradient(90deg, #4b6cb7, #182848);
+    color: white;
+  }
+  #file-manager-title {
+    font-size: 18px;
+    font-weight: bold;
+  }
+  #window-controls {
+    display: flex;
+  }
+  .window-control {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 18px;
+    margin-left: 10px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+  .window-control:hover {
+    transform: scale(1.1);
+  }
+  #split-screen:hover {
+    color: #4CAF50;
+  }
+  #minimize:hover {
+    color: #FFC107;
+  }
+  #maximize:hover {
+    color: #2196F3;
+  }
+  #close:hover {
+    color: #F44336;
+  }
+  #file-manager-content {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+  }
+  #file-manager-sidebar {
+    width: 200px;
+    background: rgba(255, 255, 255, 0.1);
+    border-right: 1px solid rgba(0, 0, 0, 0.1);
+    padding: 10px;
+    overflow-y: auto;
+  }
+  #file-manager-main {
+    flex: 1;
+    padding: 20px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 10px;
+  }
+  .sidebar-item, .file-item {
+    padding: 15px;
+    margin-bottom: 5px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background 0.3s ease;
+  }
+  .sidebar-item:hover, .file-item:hover {
+    background: rgba(75, 108, 183, 0.1);
+  }
+  .file-item {
+    background: rgba(255, 255, 255, 0.7);
+    border-radius: 10px;
+    padding: 10px;
+    transition: all 0.3s ease;
+  }
+  .file-item:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+  }
+  .file-icon {
+    width: 50px;
+    height: 50px;
+    margin-bottom: 5px;
+  }
+  .file-name {
+    font-size: 12px;
+    word-break: break-word;
+  }
+</style>
+</head>
+<body>
+  <div id="desktop">
+    <div id="widget">
+      <div id="widget-content">
+        <div id="time">12:00</div>
+        <div id="date">Friday, December 5</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="taskbar">
+    <svg class="taskbar-icon" viewBox="0 0 24 24" fill="white">
+      <path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/>
+    </svg>
+    <div id="keros-button">K</div>
+    <svg class="taskbar-icon" viewBox="0 0 24 24" fill="white">
+      <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+    </svg>
+  </div>
+
+  <div id="app-dock">
+    <svg class="app-icon" viewBox="0 0 24 24" fill="#FFC107">
+      <path d="M20 6h-8l-2-2H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm0 12H4V8h16v10z"/>
+    </svg>
+    <svg class="app-icon" viewBox="0 0 24 24" fill="#2196F3">
+      <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/>
+    </svg>
+    <svg class="app-icon" viewBox="0 0 24 24" fill="#4CAF50">
+      <path d="M7 14c-1.66 0-3 1.34-3 3 0 1.31-1.16 2-2 2 .92 1.22 2.49 2 4 2 2.21 0 4-1.79 4-4 0-1.66-1.34-3-3-3zm13.71-9.37l-1.34-1.34c-.39-.39-1.02-.39-1.41 0L9 12.25 11.75 15l8.96-8.96c.39-.39.39-1.02 0-1.41z"/>
+    </svg>
+    <svg class="app-icon" viewBox="0 0 24 24" fill="#E91E63">
+      <path d="M9.4 10.5l4.77-8.26C13.47 2.09 12.75 2 12 2c-2.4 0-4.6.85-6.32 2.25l3.66 6.35.06-.1zM21.54 9c-.92-2.92-3.15-5.26-6-6.34L11.88 9h9.66zm.26 1h-7.49l.29.5 4.76 8.25C21 16.97 22 14.61 22 12c0-.69-.07-1.35-.2-2zM8.54 12l-3.9-6.75C3.01 7.03 2 9.39 2 12c0 .69.07 1.35.2 2h7.49l-1.15-2zm-6.08 3c.92 2.92 3.15 5.26 6 6.34L12.12 15H2.46zm11.27 0l-3.9 6.76c.7.15 1.42.24 2.17.24 2.4 0 4.6-.85 6.32-2.25l-3.66-6.35-.93 1.6z"/>
+    </svg>
+  </div>
+
+  <div id="volume-control">
+    <svg id="volume-icon" viewBox="0 0 24 24">
+      <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
+    </svg>
+    <input type="range" id="volume-slider" min="0" max="100" value="50">
+  </div>
+
+  <div id="keros-menu">
+    <div class="menu-section">
+      <h3>Most Used</h3>
+      <div class="menu-item">
+        <svg viewBox="0 0 24 24"><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>
+        <span>Email</span>
+      </div>
+      <div class="menu-item">
+        <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+        <span>Browser</span>
+      </div>
+    </div>
+    <div class="menu-section">
+      <h3>Noticias</h3>
+      <div id="news-items">
+        <!-- News items will be dynamically inserted here -->
+      </div>
+    </div>
+    <div class="menu-section">
+      <h3>Videos Recomendados</h3>
+      <div id="recommended-videos">
+        <!-- Recommended videos will be dynamically inserted here -->
+      </div>
+    </div>
+    <div class="menu-section">
+      <h3>System</h3>
+      <div class="menu-item">
+        <svg viewBox="0 0 24 24"><path d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.07-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.74,8.87 C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.07,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.44-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.47-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"/></svg>
+        <span>Settings</span>
+      </div>
+      <div class="menu-item">
+        <svg viewBox="0 0 24 24"><path d="M13 3h-2v10h2V3zm4.83 2.17l-1.42 1.42C17.99 7.86 19 9.81 19 12c0 3.87-3.13 7-7 7s-7-3.13-7-7c0-2.19 1.01-4.14 2.58-5.42L6.17 5.17C4.23 6.82 3 9.26 3 12c0 4.97 4.03 9 9 9s9-4.03 9-9c0-2.74-1.23-5.18-3.17-6.83z"/></svg>
+        <span>Power</span>
+      </div>
+    </div>
+  </div>
+
+  <div id="file-manager">
+    <div id="file-manager-header">
+      <div id="file-manager-title">File Manager</div>
+      <div id="window-controls">
+        <button class="window-control" id="split-screen">⧉</button>
+        <button class="window-control" id="minimize">_</button>
+        <button class="window-control" id="maximize">□</button>
+        <button class="window-control" id="close">×</button>
+      </div>
+    </div>
+    <div id="file-manager-content">
+      <div id="file-manager-sidebar">
+        <div class="sidebar-item">Documents</div>
+        <div class="sidebar-item">Downloads</div>
+        <div class="sidebar-item">Pictures</div>
+        <div class="sidebar-item">Music</div>
+        <div class="sidebar-item">Videos</div>
+      </div>
+      <div id="file-manager-main">
+        <!-- File items will be dynamically added here -->
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function updateDateTime() {
+      const now = new Date();
+      const timeString = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+      const dateString = now.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+      document.getElementById('time').textContent = timeString;
+      document.getElementById('date').textContent = dateString;
+    }
+
+    updateDateTime();
+    setInterval(updateDateTime, 1000);
+
+    document.querySelectorAll('.taskbar-icon, .app-icon').forEach(icon => {
+      icon.addEventListener('click', function() {
+        alert('Opening app...');
+      });
+    });
+
+    const volumeSlider = document.getElementById('volume-slider');
+    const volumeIcon = document.getElementById('volume-icon');
+
+    volumeSlider.addEventListener('input', function() {
+      const volume = this.value;
+      updateVolumeIcon(volume);
+    });
+
+    function updateVolumeIcon(volume) {
+      if (volume == 0) {
+        volumeIcon.innerHTML = '<path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/>';
+      } else if (volume < 50) {
+        volumeIcon.innerHTML = '<path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>';
+      } else {
+        volumeIcon.innerHTML = '<path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>';
+      }
+    }
+
+    updateVolumeIcon(volumeSlider.value);
+
+    const kerosButton = document.getElementById('keros-button');
+    const kerosMenu = document.getElementById('keros-menu');
+    let isMenuOpen = false;
+
+    kerosButton.addEventListener('click', function() {
+      if (isMenuOpen) {
+        closeMenu();
+      } else {
+        openMenu();
+      }
+    });
+
+    function openMenu() {
+      kerosMenu.style.display = 'flex';
+      setTimeout(() => {
+        kerosMenu.classList.add('active');
+      }, 10);
+      isMenuOpen = true;
+    }
+
+    function closeMenu() {
+      kerosMenu.classList.remove('active');
+      setTimeout(() => {
+        kerosMenu.style.display = 'none';
+      }, 300);
+      isMenuOpen = false;
+    }
+
+    document.querySelectorAll('.menu-item').forEach(item => {
+      item.addEventListener('click', function() {
+        const itemText = this.querySelector('span').textContent;
+        if (itemText.startsWith('http')) {
+          window.open(itemText, '_blank');
+        } else {
+          alert('Opening ' + itemText + '...');
+        }
+        kerosMenu.style.display = 'none';
+        isMenuOpen = false;
+      });
+    });
+
+    const fileManagerIcon = document.querySelector('.app-icon');
+    const fileManager = document.getElementById('file-manager');
+    
+    function showFileManager() {
+      fileManager.style.display = 'flex';
+      fileManager.classList.add('active');
+      fileManager.style.width = '80%';
+      fileManager.style.height = '80%';
+      fileManager.style.top = '50%';
+      fileManager.style.left = '50%';
+      fileManager.style.transform = 'translate(-50%, -50%)';
+    }
+
+    fileManagerIcon.addEventListener('click', showFileManager);
+
+    document.getElementById('close').addEventListener('click', () => {
+      fileManager.classList.remove('active');
+      fileManager.style.display = 'none';
+    });
+
+    document.getElementById('minimize').addEventListener('click', () => {
+      fileManager.style.display = 'none';
+    });
+
+    document.getElementById('maximize').addEventListener('click', () => {
+      if (fileManager.style.width === '100%') {
+        fileManager.style.width = '80%';
+        fileManager.style.height = 'calc(100% - 100px)';
+        fileManager.style.top = '0';
+        fileManager.style.left = '50%';
+        fileManager.style.transform = 'translateX(-50%)';
+      } else {
+        fileManager.style.width = '100%';
+        fileManager.style.height = 'calc(100% - 100px)';
+        fileManager.style.top = '0';
+        fileManager.style.left = '0';
+        fileManager.style.transform = 'none';
+      }
+    });
+
+    document.getElementById('split-screen').addEventListener('click', () => {
+      if (fileManager.style.width === '50%') {
+        fileManager.style.width = '80%';
+        fileManager.style.height = '80%';
+        fileManager.style.left = '50%';
+        fileManager.style.transform = 'translateX(-50%)';
+      } else {
+        fileManager.style.width = '50%';
+        fileManager.style.height = '100%';
+        fileManager.style.left = '0';
+        fileManager.style.transform = 'none';
+      }
+    });
+
+    document.addEventListener('click', function(event) {
+      if (!fileManager.contains(event.target) && !fileManagerIcon.contains(event.target)) {
+        // Removed functionality to close file manager on outside click
+      }
+    });
+  </script>
+</body>
+</html>
