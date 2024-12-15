@@ -1,0 +1,968 @@
+<html><head><base href="." />
+<meta charset="UTF-8">
+<title>SatisClicker</title>
+<style>
+body {
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    background: linear-gradient(135deg, #1a1a2e, #16213e);
+    color: #fff;
+    font-family: 'Arial', sans-serif;
+}
+
+.clicker {
+    position: relative;
+    width: 200px;
+    height: 200px;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    padding: 60px; /* Increased padding for even better hitbox */
+    margin: -60px; /* Adjusted margin to compensate */
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Add transition for smoother hover effect */
+.clicker .circle {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background: linear-gradient(45deg, #ff6b6b, #ffd93d);
+    box-shadow: 0 0 30px rgba(255, 107, 107, 0.5),
+                inset 0 0 20px rgba(255, 255, 255, 0.3);
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    transform-origin: center;
+}
+
+/* Enhanced hover effect */
+.clicker:hover .circle {
+    filter: brightness(1.2);
+    box-shadow: 0 0 50px rgba(255, 107, 107, 0.8),
+                inset 0 0 40px rgba(255, 255, 255, 0.5);
+    transform: scale(1.05);
+}
+
+/* Enhanced active state */
+.clicker:active .circle {
+    transform: scale(0.95);
+    filter: brightness(1.4);
+    box-shadow: 0 0 100px rgba(255, 107, 107, 1),
+                inset 0 0 60px rgba(255, 255, 255, 0.6);
+}
+
+.score {
+    font-size: 2.5em;
+    margin: 20px 0;
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.5),
+                 0 0 20px rgba(255, 107, 107, 0.3);
+    transition: transform 0.2s;
+}
+
+.points-popup {
+    position: absolute;
+    pointer-events: none;
+    font-size: 1.6em; /* Enhanced score popup animation */
+    font-weight: bold;
+    color: #fff;
+    text-shadow: 0 0 10px rgba(255, 107, 107, 0.8),
+                 0 0 20px rgba(255, 217, 61, 0.6);
+    animation: float-up 1.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+    filter: blur(0px);
+}
+
+@keyframes float-up {
+    0% {
+        transform: translateY(0) scale(0.8);
+        opacity: 0;
+        filter: blur(4px);
+    }
+    20% {
+        transform: translateY(-15px) scale(1.2);
+        opacity: 1;
+        filter: blur(0px);
+    }
+    80% {
+        opacity: 1;
+        filter: blur(0px);
+    }
+    100% {
+        transform: translateY(-100px) scale(0.9);
+        opacity: 0;
+        filter: blur(2px);
+    }
+}
+
+@keyframes ripple {
+    to {
+        transform: scale(4);
+        opacity: 0;
+    }
+}
+
+/* Add ripple effect */
+.ripple {
+    position: absolute;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0) 70%);
+    transform: scale(0);
+    animation: ripple 0.8s ease-out;
+    pointer-events: none;
+}
+
+.score-bounce {
+    animation: score-bounce 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes score-bounce {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.15); }
+    100% { transform: scale(1); }
+}
+
+.multiplier {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 10px 20px;
+    border-radius: 20px;
+    margin: 10px 0;
+    cursor: pointer;
+    transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.multiplier:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: scale(1.08);
+}
+
+.multiplier.shake {
+    animation: shake 0.5s;
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    75% { transform: translateX(5px); }
+}
+
+.particles {
+    position: absolute;
+    pointer-events: none;
+}
+
+.combo-text {
+    position: fixed;
+    top: 20px;
+    font-size: 1.5em;
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.streak-bonus {
+    position: fixed;
+    bottom: 20px;
+    font-size: 1.2em;
+    color: #ffd700;
+    text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+    transition: transform 0.3s, color 0.3s;
+}
+
+.circle-pulse {
+    animation: pulse 3s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); filter: brightness(1); }
+    50% { transform: scale(1.05); filter: brightness(1.2); }
+    100% { transform: scale(1); filter: brightness(1); }
+}
+
+.streak-warning {
+    animation: warning-flash 0.5s infinite;
+}
+
+@keyframes warning-flash {
+    0%, 100% { color: #ffd700; }
+    50% { color: #ff0000; }
+}
+
+.streak-milestone {
+    animation: milestone-bounce 0.5s ease;
+}
+
+@keyframes milestone-bounce {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.2); }
+}
+
+.corner-effect {
+    position: fixed;
+    width: 0;
+    height: 0;
+    pointer-events: none;
+    opacity: 0;
+    transition: all 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+    background: radial-gradient(circle at center, 
+        rgba(255, 107, 107, 0.8) 0%,
+        rgba(255, 217, 61, 0.4) 70%,
+        transparent 100%);
+    border-radius: 50%;
+    filter: blur(20px);
+    transform: scale(0) rotate(0deg);
+}
+
+.corner-effect.active {
+    opacity: 0.9;
+    transform: scale(1) rotate(360deg);
+}
+
+.fire-effect {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+}
+
+.fire-particle {
+    position: absolute;
+    width: 8px;
+    height: 16px;
+    background: linear-gradient(to top, #ff6b6b, #ffd93d, transparent);
+    border-radius: 50%;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+@keyframes fire-rise {
+    0% { transform: translateY(0) scale(1); opacity: 0.8; }
+    100% { transform: translateY(-40px) scale(0); opacity: 0; }
+}
+
+.streak-text {
+    position: fixed;
+    font-size: 2.5em;
+    color: #ffd93d;
+    text-shadow: 0 0 15px rgba(255, 217, 61, 0.6);
+    background: linear-gradient(45deg, #ff6b6b, #ffd93d);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-weight: bold;
+    opacity: 0;
+    pointer-events: none;
+    transform: translate(-50%, -50%);
+    transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+    z-index: 1000;
+}
+
+@keyframes streak-popup {
+    0% {
+        transform: translate(-50%, -50%) scale(0) rotate(-10deg);
+        opacity: 0;
+        filter: blur(10px);
+    }
+    20% {
+        transform: translate(-50%, -50%) scale(1.3) rotate(5deg);
+        opacity: 1;
+        filter: blur(0px);
+    }
+    80% {
+        transform: translate(-50%, -50%) scale(1) rotate(0deg);
+        opacity: 1;
+        filter: blur(0px);
+    }
+    100% {
+        transform: translate(-50%, -50%) scale(0.8) rotate(5deg);
+        opacity: 0;
+        filter: blur(5px);
+    }
+}
+
+.fire-meter-container {
+    position: fixed;
+    left: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 30px;
+    height: 200px;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 15px;
+    padding: 3px;
+}
+
+.fire-meter {
+    position: relative;
+    width: 100%;
+    height: 0%;
+    background: linear-gradient(to top, #ff4d4d, #ff8533, #ffd93d);
+    border-radius: 12px;
+    transition: height 0.6s cubic-bezier(0.34, 1.56, 0.64, 1),
+                box-shadow 0.4s ease;
+}
+
+.fire-meter.active {
+    animation: meter-pulse 2s infinite;
+}
+
+@keyframes meter-pulse {
+    0%, 100% { filter: brightness(1); }
+    50% { filter: brightness(1.3); }
+}
+
+.fire-meter::after {
+    content: '🔥';
+    position: absolute;
+    top: -25px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 20px;
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.fire-meter.active::after {
+    opacity: 1;
+}
+
+@keyframes screen-shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(3px); }
+    75% { transform: translateX(-3px); }
+}
+
+.critical-hit {
+    position: fixed;
+    color: #ff4081;
+    font-size: 2em;
+    font-weight: bold;
+    text-shadow: 0 0 10px rgba(255, 64, 129, 0.8);
+    pointer-events: none;
+    z-index: 1000;
+}
+
+.enhanced-particle {
+    box-shadow: 0 0 10px currentColor;
+    mix-blend-mode: screen;
+}
+
+.clicker::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0);
+    transition: background 0.3s;
+    pointer-events: none;
+}
+
+.clicker:hover::before {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+/* Add auto-clicker upgrade button */
+.upgrade-button {
+    background: linear-gradient(45deg, #4CAF50, #45a049);
+    padding: 12px 24px;
+    border-radius: 25px;
+    color: white;
+    cursor: pointer;
+    margin: 10px;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    box-shadow: 0 0 20px rgba(76, 175, 80, 0.4);
+}
+
+.upgrade-button:hover {
+    transform: scale(1.1);
+    filter: brightness(1.2);
+    box-shadow: 0 0 30px rgba(76, 175, 80, 0.6);
+}
+
+.falling-button {
+    position: fixed;
+    top: -60px;
+    padding: 15px 25px;
+    border-radius: 25px;
+    color: white;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 1.2em;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    transform-origin: center;
+    animation: fallDown 8s linear forwards;
+    z-index: 1000;
+    transition: transform 0.2s;
+}
+
+.falling-button:hover {
+    transform: scale(1.1);
+    filter: brightness(1.2);
+}
+
+@keyframes fallDown {
+    0% {
+        transform: translateY(0) rotate(0deg);
+        opacity: 0;
+    }
+    10% {
+        opacity: 1;
+    }
+    100% {
+        transform: translateY(calc(100vh + 60px)) rotate(360deg);
+        opacity: 0;
+    }
+}
+
+.powerup-indicator {
+    position: fixed;
+    right: 20px;
+    top: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    z-index: 1000;
+}
+
+.powerup-timer {
+    background: rgba(255,255,255,0.1);
+    padding: 8px 15px;
+    border-radius: 15px;
+    color: white;
+    font-size: 0.9em;
+    backdrop-filter: blur(5px);
+    animation: fadeIn 0.3s;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateX(20px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+
+.background-orb {
+    position: fixed;
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    filter: blur(80px);
+    opacity: 0.3;
+    pointer-events: none;
+    mix-blend-mode: screen;
+    z-index: -1;
+}
+</style>
+</head>
+<body>
+    <div class="combo-text"></div>
+    <div class="score">0</div>
+    <div class="clicker">
+        <div class="circle"></div>
+        <div class="fire-effect"></div>
+    </div>
+    <div class="multiplier">Multiplier: x1 (Cost: 100)</div>
+    <div class="streak-bonus">Click Streak: 0</div>
+    <div class="streak-text"></div>
+    <div class="fire-meter-container">
+        <div class="fire-meter"></div>
+    </div>
+    <div class="corner-effect top-left"></div>
+    <div class="corner-effect top-right"></div>
+    <div class="corner-effect bottom-left"></div>
+    <div class="corner-effect bottom-right"></div>
+    <div class="powerup-indicator"></div>
+    <div class="upgrade-button">Auto-Clicker (Cost: 500)</div>
+
+<script>
+function adjustColor(color, amount) {
+    // Remove the '#' if present
+    color = color.replace('#', '');
+    
+    // Convert to RGB
+    let r = parseInt(color.substring(0, 2), 16);
+    let g = parseInt(color.substring(2, 4), 16);
+    let b = parseInt(color.substring(4, 6), 16);
+    
+    // Adjust each component
+    r = Math.max(0, Math.min(255, r + amount));
+    g = Math.max(0, Math.min(255, g + amount));
+    b = Math.max(0, Math.min(255, b + amount));
+    
+    // Convert back to hex
+    const rHex = r.toString(16).padStart(2, '0');
+    const gHex = g.toString(16).padStart(2, '0');
+    const bHex = b.toString(16).padStart(2, '0');
+    
+    return `#${rHex}${gHex}${bHex}`;
+}
+
+// Update the spawnFallingButton function with more powerups and better effects
+function spawnFallingButton() {
+    const powerups = [
+        { 
+            name: 'Double Points', 
+            duration: 10, 
+            color: '#4CAF50',
+            icon: '×2',
+            effect: () => activatePowerup('doublePoints', 10)
+        },
+        { 
+            name: 'Triple Streak', 
+            duration: 8, 
+            color: '#2196F3',
+            icon: '⚡',
+            effect: () => activatePowerup('tripleStreak', 8)
+        },
+        { 
+            name: 'Auto Clicker', 
+            duration: 5, 
+            color: '#9C27B0',
+            icon: '🔄',
+            effect: () => activatePowerup('autoClicker', 5)
+        },
+        { 
+            name: 'Mega Combo', 
+            duration: 12, 
+            color: '#FF9800',
+            icon: '🌟',
+            effect: () => activatePowerup('megaCombo', 12)
+        },
+        { 
+            name: 'Time Warp', 
+            duration: 15, 
+            color: '#E91E63',
+            icon: '⏰',
+            effect: () => activatePowerup('timeWarp', 15)
+        },
+        { 
+            name: 'Gold Rush', 
+            duration: 8, 
+            color: '#FFD700',
+            icon: '💰',
+            effect: () => activatePowerup('goldRush', 8)
+        },
+        {
+            name: 'Score Frenzy',
+            duration: 10,
+            color: '#FF4081',
+            icon: '🎯',
+            effect: () => activatePowerup('scoreFrenzy', 10)
+        },
+        {
+            name: 'Chain Reaction',
+            duration: 8,
+            color: '#7C4DFF',
+            icon: '⚡',
+            effect: () => activatePowerup('chainReaction', 8)
+        },
+        {
+            name: 'Lucky Strikes',
+            duration: 12,
+            color: '#00BCD4',
+            icon: '🍀',
+            effect: () => activatePowerup('luckyStrikes', 12)
+        }
+    ];
+
+    const powerup = powerups[Math.floor(Math.random() * powerups.length)];
+    const button = document.createElement('div');
+    button.className = 'falling-button';
+    button.innerHTML = `${powerup.icon} ${powerup.name}`;
+    button.style.background = `linear-gradient(45deg, ${powerup.color}, ${adjustColor(powerup.color, -20)})`;
+    button.style.left = Math.random() * (window.innerWidth - 150) + 'px';
+
+    button.addEventListener('click', () => {
+        // Create explosion effect
+        createPowerupExplosion(button, powerup.color);
+        powerup.effect();
+        playRewardSound();
+        button.remove();
+    });
+
+    document.body.appendChild(button);
+    setTimeout(() => button.remove(), 8000);
+}
+
+// Add new explosion effect function
+function createPowerupExplosion(element, color) {
+    const rect = element.getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
+    const centerY = rect.top + rect.height / 2;
+
+    // Create shockwave
+    const shockwave = document.createElement('div');
+    shockwave.style.cssText = `
+        position: fixed;
+        left: ${centerX}px;
+        top: ${centerY}px;
+        width: 10px;
+        height: 10px;
+        background: ${color};
+        border-radius: 50%;
+        transform: translate(-50%, -50%);
+        pointer-events: none;
+        z-index: 1000;
+    `;
+    document.body.appendChild(shockwave);
+
+    shockwave.animate([
+        { transform: 'translate(-50%, -50%) scale(1)', opacity: 0.8 },
+        { transform: 'translate(-50%, -50%) scale(50)', opacity: 0 }
+    ], {
+        duration: 800,
+        easing: 'cubic-bezier(0.11, 0, 0.5, 0)'
+    }).onfinish = () => shockwave.remove();
+
+    // Create spinning particles
+    for (let i = 0; i < 12; i++) {
+        const particle = document.createElement('div');
+        const angle = (i / 12) * Math.PI * 2;
+        const distance = 100;
+        
+        particle.style.cssText = `
+            position: fixed;
+            left: ${centerX}px;
+            top: ${centerY}px;
+            width: 15px;
+            height: 15px;
+            background: ${color};
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+            z-index: 1000;
+        `;
+        
+        document.body.appendChild(particle);
+
+        particle.animate([
+            { 
+                transform: 'translate(-50%, -50%) scale(1)',
+                opacity: 1
+            },
+            { 
+                transform: `translate(
+                    calc(-50% + ${Math.cos(angle) * distance}px), 
+                    calc(-50% + ${Math.sin(angle) * distance}px)
+                ) scale(0)`,
+                opacity: 0
+            }
+        ], {
+            duration: 1000,
+            easing: 'cubic-bezier(0.4, 0, 0.2, 1)'
+        }).onfinish = () => particle.remove();
+    }
+}
+
+// Update activatePowerup function with new effects
+function activatePowerup(type, duration) {
+    const indicators = document.querySelector('.powerup-indicator') || createPowerupIndicator();
+    const indicator = document.createElement('div');
+    indicator.className = 'powerup-timer';
+    
+    let timeLeft = duration;
+    activePowerups[type] = true;
+
+    // Add visual effects based on powerup type
+    switch(type) {
+        case 'timeWarp':
+            document.body.style.animation = 'timeWarp 2s infinite';
+            break;
+        case 'goldRush':
+            document.body.style.filter = 'brightness(1.2) saturate(1.5)';
+            break;
+    }
+
+    const updateTimer = () => {
+        if (timeLeft > 0) {
+            timeLeft--;
+            indicator.textContent = `${type}: ${timeLeft}s`;
+            indicator.style.background = `linear-gradient(90deg, 
+                rgba(255,255,255,0.2) ${(timeLeft/duration)*100}%, 
+                rgba(255,255,255,0.1) ${(timeLeft/duration)*100}%
+            )`;
+            setTimeout(updateTimer, 1000);
+        } else {
+            activePowerups[type] = false;
+            indicator.remove();
+            // Reset effects
+            switch(type) {
+                case 'timeWarp':
+                    document.body.style.animation = '';
+                    break;
+                case 'goldRush':
+                    document.body.style.filter = '';
+                    break;
+            }
+        }
+    };
+
+    indicators.appendChild(indicator);
+    updateTimer();
+}
+
+// New functions added
+function createFireParticles() {
+    const fireEffect = document.querySelector('.fire-effect');
+    
+    // Create multiple fire particles
+    for (let i = 0; i < 8; i++) {
+        const particle = document.createElement('div');
+        particle.className = 'fire-particle';
+        
+        // Random position along the circle's circumference
+        const angle = Math.random() * Math.PI * 2;
+        const radius = 100;
+        const x = Math.cos(angle) * radius + radius;
+        const y = Math.sin(angle) * radius + radius;
+        
+        particle.style.left = `${x}px`;
+        particle.style.top = `${y}px`;
+        particle.style.opacity = '0.8';
+        
+        fireEffect.appendChild(particle);
+        
+        // Animate the particle
+        particle.animate([
+            { transform: 'translateY(0) scale(1)', opacity: 0.8 },
+            { transform: 'translateY(-40px) scale(0)', opacity: 0 }
+        ], {
+            duration: 1000 + Math.random() * 1000,
+            easing: 'cubic-bezier(0.4, 0, 0.2, 1)'
+        }).onfinish = () => particle.remove();
+    }
+}
+
+function createBackgroundOrbs() {
+    const colors = ['#ff6b6b', '#ffd93d', '#4CAF50', '#2196F3', '#9C27B0'];
+    
+    for (let i = 0; i < 5; i++) {
+        const orb = document.createElement('div');
+        orb.className = 'background-orb';
+        orb.style.background = colors[i % colors.length];
+        orb.style.left = `${Math.random() * 100}vw`;
+        orb.style.top = `${Math.random() * 100}vh`;
+        
+        document.body.appendChild(orb);
+        
+        // Add random movement
+        orb.animate([
+            { transform: `translate(${Math.random() * 100}vw, ${Math.random() * 100}vh) scale(${1 + Math.random()})` },
+            { transform: `translate(${Math.random() * 100}vw, ${Math.random() * 100}vh) scale(${1 + Math.random()})` },
+            { transform: `translate(${Math.random() * 100}vw, ${Math.random() * 100}vh) scale(${1 + Math.random()})` }
+        ], {
+            duration: 20000 + Math.random() * 10000,
+            iterations: Infinity,
+            direction: 'alternate',
+            easing: 'ease-in-out'
+        });
+    }
+}
+
+function createPowerupIndicator() {
+    const indicator = document.createElement('div');
+    indicator.className = 'powerup-indicator';
+    document.body.appendChild(indicator);
+    return indicator;
+}
+
+const scoreElement = document.querySelector('.score');
+const clickerElement = document.querySelector('.clicker');
+const multiplierElement = document.querySelector('.multiplier');
+const comboTextElement = document.querySelector('.combo-text');
+const streakElement = document.querySelector('.streak-bonus');
+const circleElement = document.querySelector('.circle');
+
+let score = 0;
+let multiplier = 1;
+let multiplierCost = 100;
+let clickStreak = 0;
+let lastClickTime = Date.now();
+let comboCount = 0;
+let streakTimeout;
+let maxStreak = 0;
+let activePowerups = {};
+let autoClickerLevel = 0;
+let autoClickerCost = 500;
+let autoClickerInterval;
+
+let isStreakActive = false;
+
+clickerElement.addEventListener('click', (e) => {
+    // Calculate base points
+    let points = 1;
+    
+    // Apply multiplier
+    points *= multiplier;
+    
+    // Apply powerup bonuses
+    if (activePowerups.doublePoints) points *= 2;
+    if (activePowerups.goldRush) points *= 3;
+    if (activePowerups.scoreFrenzy) points *= Math.random() * 3 + 1;
+    if (activePowerups.chainReaction && clickStreak > 5) points *= (clickStreak * 0.2);
+    if (activePowerups.luckyStrikes && Math.random() < 0.2) points *= 5;
+    
+    // Update score
+    score += points;
+    scoreElement.textContent = Math.floor(score);
+    scoreElement.classList.add('score-bounce');
+    setTimeout(() => scoreElement.classList.remove('score-bounce'), 300);
+
+    // Handle click streak
+    const now = Date.now();
+    if (now - lastClickTime < 2000) {
+        clickStreak++;
+        if (clickStreak > maxStreak) {
+            maxStreak = clickStreak;
+        }
+    } else {
+        clickStreak = 1;
+    }
+    lastClickTime = now;
+    
+    // Update streak display
+    streakElement.textContent = `Click Streak: ${clickStreak}`;
+    
+    // Create floating score popup
+    const popup = document.createElement('div');
+    popup.className = 'points-popup';
+    popup.textContent = `+${points}`;
+    popup.style.left = `${e.clientX}px`;
+    popup.style.top = `${e.clientY}px`;
+    document.body.appendChild(popup);
+    setTimeout(() => popup.remove(), 1400);
+
+    // Create ripple effect
+    const ripple = document.createElement('div');
+    ripple.className = 'ripple';
+    ripple.style.left = `${e.offsetX}px`;
+    ripple.style.top = `${e.offsetY}px`;
+    clickerElement.appendChild(ripple);
+    setTimeout(() => ripple.remove(), 800);
+
+    // Update fire meter
+    const fireMeter = document.querySelector('.fire-meter');
+    const height = Math.min(100, (clickStreak / 20) * 100);
+    fireMeter.style.height = `${height}%`;
+    if (height >= 80) {
+        fireMeter.classList.add('active');
+    } else {
+        fireMeter.classList.remove('active');
+    }
+
+    // Handle corner effects
+    document.querySelectorAll('.corner-effect').forEach(corner => {
+        corner.classList.add('active');
+        setTimeout(() => corner.classList.remove('active'), 800);
+    });
+
+    // Create fire particles on click
+    createFireParticles();
+
+    // Add screen shake on high streaks
+    addScreenShake();
+});
+
+// Add multiplier click handler
+multiplierElement.addEventListener('click', () => {
+    if (score >= multiplierCost) {
+        score -= multiplierCost;
+        scoreElement.textContent = Math.floor(score);
+        multiplier++;
+        multiplierCost = Math.floor(multiplierCost * 1.5);
+        multiplierElement.textContent = `Multiplier: x${multiplier} (Cost: ${multiplierCost})`;
+    } else {
+        multiplierElement.classList.add('shake');
+        setTimeout(() => multiplierElement.classList.remove('shake'), 500);
+    }
+});
+
+// Add auto-clicker upgrade functionality
+document.querySelector('.upgrade-button').addEventListener('click', () => {
+    if (score >= autoClickerCost) {
+        score -= autoClickerCost;
+        scoreElement.textContent = Math.floor(score);
+        autoClickerLevel++;
+        autoClickerCost = Math.floor(autoClickerCost * 1.8);
+        document.querySelector('.upgrade-button').textContent = 
+            `Auto-Clicker Level ${autoClickerLevel} (Cost: ${autoClickerCost})`;
+        
+        // Clear existing interval and set new faster one
+        clearInterval(autoClickerInterval);
+        autoClickerInterval = setInterval(() => {
+            const event = new MouseEvent('click', {
+                clientX: clickerElement.getBoundingClientRect().left + 100,
+                clientY: clickerElement.getBoundingClientRect().top + 100
+            });
+            clickerElement.dispatchEvent(event);
+        }, Math.max(1000 - (autoClickerLevel * 100), 100)); // Gets faster with each level
+        
+        // Visual feedback
+        document.querySelector('.upgrade-button').classList.add('score-bounce');
+        setTimeout(() => document.querySelector('.upgrade-button').classList.remove('score-bounce'), 300);
+    } else {
+        document.querySelector('.upgrade-button').classList.add('shake');
+        setTimeout(() => document.querySelector('.upgrade-button').classList.remove('shake'), 500);
+    }
+});
+
+// Reset streak if no clicks for 2 seconds
+setInterval(() => {
+    if (Date.now() - lastClickTime > 2000) {
+        clickStreak = 0;
+        streakElement.textContent = `Click Streak: ${clickStreak}`;
+    }
+}, 100);
+
+setInterval(createFireParticles, 2000);
+createBackgroundOrbs();
+setInterval(spawnFallingButton, 2000); // Changed interval to 2000 for more frequent powerups
+
+// Add auto clicker functionality
+setInterval(() => {
+    if (activePowerups.autoClicker) {
+        const event = new MouseEvent('click', {
+            clientX: clickerElement.getBoundingClientRect().left + 100,
+            clientY: clickerElement.getBoundingClientRect().top + 100
+        });
+        clickerElement.dispatchEvent(event);
+    }
+}, 200);
+
+// Enhance click effect by adding screen shake on high streaks
+function addScreenShake() {
+    if (clickStreak > 10) {
+        document.body.style.animation = 'screen-shake 0.2s';
+        setTimeout(() => {
+            document.body.style.animation = '';
+        }, 200);
+    }
+}
+
+// Reward sound function
+function playRewardSound() {
+    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+    
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+    
+    oscillator.type = 'sine';
+    oscillator.frequency.setValueAtTime(500, audioContext.currentTime);
+    oscillator.frequency.exponentialRampToValueAtTime(1000, audioContext.currentTime + 0.1);
+    
+    gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+    
+    oscillator.start();
+    oscillator.stop(audioContext.currentTime + 0.3);
+}
+</script>
+</body>
+</html>
