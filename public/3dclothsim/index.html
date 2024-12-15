@@ -1,0 +1,289 @@
+<html><head><base href="." />
+<meta charset="utf-8"/>
+<title>Cloth and Cube Physics</title>
+<style>
+  body {
+    margin: 0;
+    overflow: hidden;
+    background: #87CEEB;
+  }
+  canvas {
+    width: 100vw;
+    height: 100vh;
+  }
+  .controls {
+    position: fixed;
+    top: 10px;
+    left: 10px;
+    background: rgba(255,255,255,0.2);
+    padding: 10px;
+    border-radius: 5px;
+    color: white;
+  }
+  .controls label {
+    display: block;
+    margin-bottom: 5px;
+  }
+</style>
+</head>
+<body>
+<div class="controls">
+  <label>Grid Resolution: <input type="range" id="resolution" min="5" max="50" value="30"></label>
+  <label>Cloth Size: <input type="range" id="clothSize" min="10" max="40" value="20"></label>
+  <label>Stiffness: <input type="range" id="stiffness" min="1" max="100" value="70"></label>
+  <div>Press 'R' to reset</div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x87CEEB);
+
+const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setSize(window.innerWidth, window.innerHeight);
+document.body.appendChild(renderer.domElement);
+
+function createCloud(x, y, z) {
+    const cloudGroup = new THREE.Group();
+    const geometry = new THREE.SphereGeometry(2, 16, 16);
+    const material = new THREE.MeshPhongMaterial({ color: 0xffffff });
+    
+    for(let i = 0; i < 5; i++) {
+        const sphere = new THREE.Mesh(geometry, material);
+        sphere.position.x = i * 1.5;
+        sphere.position.y = Math.sin(i * 0.5) * 0.5;
+        cloudGroup.add(sphere);
+    }
+    
+    cloudGroup.position.set(x, y, z);
+    return cloudGroup;
+}
+
+const clouds = [];
+for(let i = 0; i < 5; i++) {
+    const cloud = createCloud(
+        Math.random() * 40 - 20,
+        20 + Math.random() * 5,
+        Math.random() * 40 - 20
+    );
+    clouds.push(cloud);
+    scene.add(cloud);
+}
+
+const cubeGeometry = new THREE.BoxGeometry(10, 10, 10);
+const cubeMaterial = new THREE.MeshPhongMaterial({ color: 0xff0000 });
+const cube = new THREE.Mesh(cubeGeometry, cubeMaterial);
+cube.position.y = -10;
+scene.add(cube);
+
+let clothWidth = 20;
+let clothHeight = 20;
+let segments = 30;
+let particles = [];
+let constraints = [];
+let stiffness = 0.7;
+
+function initCloth() {
+    particles = [];
+    constraints = [];
+    
+    clothWidth = parseInt(document.getElementById('clothSize').value);
+    clothHeight = clothWidth;
+    segments = parseInt(document.getElementById('resolution').value);
+    
+    for (let y = 0; y <= segments; y++) {
+        for (let x = 0; x <= segments; x++) {
+            const particle = {
+                position: new THREE.Vector3(
+                    (x / segments - 0.5) * clothWidth,
+                    15,
+                    (y / segments - 0.5) * clothHeight
+                ),
+                oldPosition: new THREE.Vector3(
+                    (x / segments - 0.5) * clothWidth,
+                    15,
+                    (y / segments - 0.5) * clothHeight
+                ),
+                velocity: new THREE.Vector3(0, 0, 0),
+                locked: false
+            };
+            particles.push(particle);
+        }
+    }
+
+    for (let y = 0; y <= segments; y++) {
+        for (let x = 0; x <= segments; x++) {
+            const idx = y * (segments + 1) + x;
+            
+            if (x < segments) {
+                constraints.push([idx, idx + 1]);
+            }
+            if (y < segments) {
+                constraints.push([idx, idx + segments + 1]);
+            }
+            if (x < segments && y < segments) {
+                constraints.push([idx, idx + segments + 2]);
+                constraints.push([idx + 1, idx + segments + 1]);
+            }
+        }
+    }
+}
+
+const geometry = new THREE.BufferGeometry();
+const material = new THREE.MeshPhongMaterial({
+    color: 0xFFFF00,
+    side: THREE.DoubleSide,
+    wireframe: false,
+    flatShading: false,
+    shininess: 30
+});
+
+const cloth = new THREE.Mesh(geometry, material);
+scene.add(cloth);
+
+const light = new THREE.DirectionalLight(0xffffff, 1);
+light.position.set(1, 1, 1);
+scene.add(light);
+scene.add(new THREE.AmbientLight(0x404040));
+
+camera.position.set(0, 10, 30);
+camera.lookAt(0, 0, 0);
+
+function checkCubeCollision(particle) {
+    const cubeHalfSize = 6; // Increased from 5 to 6 for bigger collision box
+    const collisionOffset = 0.5; // Added extra buffer space
+    const pos = particle.position;
+    const cube_pos = cube.position;
+    
+    const dx = Math.abs(pos.x - cube_pos.x);
+    const dy = Math.abs(pos.y - cube_pos.y);
+    const dz = Math.abs(pos.z - cube_pos.z);
+    
+    if (dx <= cubeHalfSize + collisionOffset && 
+        dy <= cubeHalfSize + collisionOffset && 
+        dz <= cubeHalfSize + collisionOffset) {
+        
+        const penetrationX = cubeHalfSize + collisionOffset - dx;
+        const penetrationY = cubeHalfSize + collisionOffset - dy;
+        const penetrationZ = cubeHalfSize + collisionOffset - dz;
+        
+        const offset = 0.3; // Increased from 0.2 to 0.3
+        
+        if (penetrationX < penetrationY && penetrationX < penetrationZ) {
+            pos.x = cube_pos.x + (pos.x > cube_pos.x ? 1 : -1) * (cubeHalfSize + offset);
+            particle.velocity.x *= -0.3;
+        } else if (penetrationY < penetrationX && penetrationY < penetrationZ) {
+            pos.y = cube_pos.y + (pos.y > cube_pos.y ? 1 : -1) * (cubeHalfSize + offset);
+            particle.velocity.y *= -0.3;
+        } else {
+            pos.z = cube_pos.z + (pos.z > cube_pos.z ? 1 : -1) * (cubeHalfSize + offset);
+            particle.velocity.z *= -0.3;
+        }
+        
+        particle.oldPosition.copy(pos);
+    }
+
+    if (particle.position.y < -15) {
+        particle.position.y = -15;
+        particle.velocity.y = 0;
+        particle.oldPosition.y = -15;
+    }
+}
+
+function simulate() {
+    const gravity = new THREE.Vector3(0, -0.981, 0);
+    const damping = 0.995;
+
+    particles.forEach(particle => {
+        if (!particle.locked) {
+            const temp = particle.position.clone();
+            particle.velocity = particle.position.clone().sub(particle.oldPosition);
+            particle.velocity.multiplyScalar(damping);
+            
+            const maxVelocity = 0.15;
+            if (particle.velocity.length() > maxVelocity) {
+                particle.velocity.normalize().multiplyScalar(maxVelocity);
+            }
+            
+            particle.position.add(particle.velocity);
+            particle.position.add(gravity.clone().multiplyScalar(0.001));
+            particle.oldPosition.copy(temp);
+        }
+        
+        checkCubeCollision(particle);
+    });
+
+    for (let i = 0; i < 30; i++) {
+        constraints.forEach(([a, b]) => {
+            const particleA = particles[a];
+            const particleB = particles[b];
+            
+            const diff = particleA.position.clone().sub(particleB.position);
+            const dist = diff.length();
+            const restDist = clothWidth / segments;
+            
+            if (dist > 0 && dist !== restDist) {
+                const correction = diff.multiplyScalar((dist - restDist) / dist * stiffness * 0.3);
+                
+                if (!particleA.locked) particleA.position.sub(correction);
+                if (!particleB.locked) particleB.position.add(correction);
+            }
+        });
+    }
+
+    const positions = new Float32Array(particles.length * 3);
+    particles.forEach((particle, i) => {
+        positions[i * 3] = particle.position.x;
+        positions[i * 3 + 1] = particle.position.y;
+        positions[i * 3 + 2] = particle.position.z;
+    });
+
+    const indices = [];
+    for (let y = 0; y < segments; y++) {
+        for (let x = 0; x < segments; x++) {
+            const idx = y * (segments + 1) + x;
+            indices.push(idx, idx + segments + 1, idx + 1);
+            indices.push(idx + 1, idx + segments + 1, idx + segments + 2);
+        }
+    }
+
+    geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    geometry.setIndex(indices);
+    geometry.computeVertexNormals();
+}
+
+function animate() {
+    requestAnimationFrame(animate);
+    simulate();
+    
+    clouds.forEach((cloud, i) => {
+        cloud.position.x += 0.01;
+        if(cloud.position.x > 30) cloud.position.x = -30;
+    });
+    
+    renderer.render(scene, camera);
+}
+
+window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+document.getElementById('resolution').addEventListener('input', initCloth);
+document.getElementById('clothSize').addEventListener('input', initCloth);
+document.getElementById('stiffness').addEventListener('input', (e) => {
+    stiffness = e.target.value / 100;
+});
+
+document.addEventListener('keydown', (e) => {
+    if (e.key.toLowerCase() === 'r') {
+        particles.forEach(p => p.locked = false);
+        initCloth();
+    }
+});
+
+initCloth();
+animate();
+</script>
+</body></html>
