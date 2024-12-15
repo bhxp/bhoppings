@@ -1,0 +1,560 @@
+<html><head><base href="https://aurora.nigga.io/">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aurora Borealis Simulation with Enhanced Controls, Transitions, and Full Screen Mode</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<style>
+body, html {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    font-family: Arial, sans-serif;
+}
+canvas {
+    display: block;
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 1;
+}
+#controls {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: rgba(0,0,0,0.7);
+    color: white;
+    padding: 10px;
+    border-radius: 5px;
+    z-index: 2;
+    max-height: 90vh;
+    overflow-y: auto;
+    transition: transform 0.3s ease-in-out;
+}
+.control {
+    margin-bottom: 10px;
+}
+label {
+    display: inline-block;
+    width: 150px;
+}
+input[type="range"] {
+    width: 150px;
+}
+input[type="color"] {
+    vertical-align: middle;
+}
+#countdown {
+    font-weight: bold;
+    color: #FF7D1A;
+}
+#toggleControls, #fullscreenToggle {
+    position: absolute;
+    top: 10px;
+    z-index: 3;
+    background: rgba(0,0,0,0.7);
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 5px;
+    cursor: pointer;
+}
+#toggleControls {
+    right: 10px;
+}
+#fullscreenToggle {
+    left: 10px;
+}
+</style>
+</head>
+<body>
+<div id="controls">
+    <h3>Aurora Controls</h3>
+    <div class="control">
+        <label for="speed">Speed:</label>
+        <input type="range" id="speed" min="0" max="0.2" step="0.01" value="0.06">
+        <span id="speedValue">0.06</span>
+    </div>
+    <div class="control">
+        <label for="intensity">Intensity:</label>
+        <input type="range" id="intensity" min="0" max="3" step="0.1" value="1.8">
+        <span id="intensityValue">1.8</span>
+    </div>
+    <div class="control">
+        <label for="colorShift">Color Shift:</label>
+        <input type="range" id="colorShift" min="0" max="6.28" step="0.1" value="0">
+        <span id="colorShiftValue">0</span>
+    </div>
+    <div class="control">
+        <label for="baseColor1">Base Color 1:</label>
+        <input type="color" id="baseColor1" value="#FF7D1A">
+    </div>
+    <div class="control">
+        <label for="baseColor2">Base Color 2:</label>
+        <input type="color" id="baseColor2" value="#BFFF00">
+    </div>
+    <div class="control">
+        <label for="baseColor3">Base Color 3:</label>
+        <input type="color" id="baseColor3" value="#1AFF7D">
+    </div>
+    <h3>Background Controls</h3>
+    <div class="control">
+        <label for="starDensity">Star Density:</label>
+        <input type="range" id="starDensity" min="0" max="0.001" step="0.0001" value="0.0005">
+        <span id="starDensityValue">0.0005</span>
+    </div>
+    <div class="control">
+        <label for="bgColor1">Sky Color 1:</label>
+        <input type="color" id="bgColor1" value="#0D1933">
+    </div>
+    <div class="control">
+        <label for="bgColor2">Sky Color 2:</label>
+        <input type="color" id="bgColor2" value="#1A0D33">
+    </div>
+    <h3>Randomizer Controls</h3>
+    <div class="control">
+        <label for="randomizer">Enable Randomizer:</label>
+        <input type="checkbox" id="randomizer">
+    </div>
+    <div class="control">
+        <label for="randomizerTime">Randomizer Interval (s):</label>
+        <input type="range" id="randomizerTime" min="1" max="60" step="1" value="15">
+        <span id="randomizerTimeValue">15</span>
+    </div>
+    <div class="control">
+        <label for="transitionTime">Transition Time (s):</label>
+        <input type="range" id="transitionTime" min="0" max="10" step="0.1" value="5">
+        <span id="transitionTimeValue">5</span>
+    </div>
+    <div class="control">
+        <label for="randomnessRange">Randomness Range:</label>
+        <input type="range" id="randomnessRange" min="0" max="1" step="0.01" value="0.5">
+        <span id="randomnessRangeValue">0.5</span>
+    </div>
+    <div class="control">
+        <label>Next change in:</label>
+        <span id="countdown">--:--</span>
+    </div>
+</div>
+
+<button id="toggleControls">Hide Controls</button>
+<button id="fullscreenToggle">Full Screen</button>
+
+<script id="vertexShader" type="x-shader/x-vertex">
+void main() {
+    gl_Position = vec4(position, 1.0);
+}
+</script>
+
+<script id="fragmentShader" type="x-shader/x-fragment">
+uniform vec2 iResolution;
+uniform float iTime;
+uniform float uSpeed;
+uniform float uIntensity;
+uniform float uColorShift;
+uniform vec3 uBaseColor1;
+uniform vec3 uBaseColor2;
+uniform vec3 uBaseColor3;
+uniform float uStarDensity;
+uniform vec3 uBgColor1;
+uniform vec3 uBgColor2;
+
+mat2 mm2(in float a){float c = cos(a), s = sin(a);return mat2(c,s,-s,c);}
+mat2 m2 = mat2(0.95534, 0.29552, -0.29552, 0.95534);
+float tri(in float x){return clamp(abs(fract(x)-.5),0.01,0.49);}
+vec2 tri2(in vec2 p){return vec2(tri(p.x)+tri(p.y),tri(p.y+tri(p.x)));}
+
+float triNoise2d(in vec2 p, float spd)
+{
+    float z=1.8;
+    float z2=2.5;
+    float rz = 0.;
+    p *= mm2(p.x*0.06);
+    vec2 bp = p;
+    for (float i=0.; i<5.; i++ )
+    {
+        vec2 dg = tri2(bp*1.85)*.75;
+        dg *= mm2(iTime*spd);
+        p -= dg/z2;
+
+        bp *= 1.3;
+        z2 *= .45;
+        z *= .42;
+        p *= 1.21 + (rz-1.0)*.02;
+        
+        rz += tri(p.x+tri(p.y))*z;
+        p*= -m2;
+    }
+    return clamp(1./pow(rz*29., 1.3),0.,.55);
+}
+
+float hash21(in vec2 n){ return fract(sin(dot(n, vec2(12.9898, 4.1414))) * 43758.5453); }
+vec4 aurora(vec3 ro, vec3 rd)
+{
+    vec4 col = vec4(0);
+    vec4 avgCol = vec4(0);
+    
+    for(float i=0.;i<50.;i++)
+    {
+        float of = 0.006*hash21(gl_FragCoord.xy)*smoothstep(0.,15., i);
+        float pt = ((.8+pow(i,1.4)*.002)-ro.y)/(rd.y*2.+0.4);
+        pt -= of;
+        vec3 bpos = ro + pt*rd;
+        vec2 p = bpos.zx;
+        float rzt = triNoise2d(p, uSpeed);
+        vec4 col2 = vec4(0,0,0, rzt);
+        vec3 baseColMix = mix(mix(uBaseColor1, uBaseColor2, sin(iTime*0.1)), uBaseColor3, sin(iTime*0.2));
+        col2.rgb = (sin(1.-baseColMix+i*0.043 + uColorShift)*0.5+0.5)*rzt;
+        avgCol =  mix(avgCol, col2, .5);
+        col += avgCol*exp2(-i*0.065 - 2.5)*smoothstep(0.,5., i);
+    }
+    
+    col *= (clamp(rd.y*15.+.4,0.,1.));
+    
+    return col*uIntensity;
+}
+
+vec3 nmzHash33(vec3 q)
+{
+    uvec3 p = uvec3(ivec3(q));
+    p = p*uvec3(374761393U, 1103515245U, 668265263U) + p.zxy + p.yzx;
+    p = p.yzx*(p.zxy^(p >> 3U));
+    return vec3(p^(p >> 16U))*(1.0/vec3(0xffffffffU));
+}
+
+vec3 stars(in vec3 p)
+{
+    vec3 c = vec3(0.);
+    float res = iResolution.x*1.;
+    
+    for (float i=0.;i<4.;i++)
+    {
+        vec3 q = fract(p*(.15*res))-0.5;
+        vec3 id = floor(p*(.15*res));
+        vec2 rn = nmzHash33(id).xy;
+        float c2 = 1.-smoothstep(0.,.6,length(q));
+        c2 *= step(rn.x, uStarDensity+i*i*0.001);
+        c += c2*(mix(vec3(1.0,0.49,0.1),vec3(0.75,0.9,1.),rn.y)*0.1+0.9);
+        p *= 1.3;
+    }
+    return c*c*.8;
+}
+
+vec3 bg(in vec3 rd)
+{
+    float sd = dot(normalize(vec3(-0.5, -0.6, 0.9)), rd)*0.5+0.5;
+    sd = pow(sd, 5.);
+    vec3 col = mix(uBgColor1, uBgColor2, sd);
+    return col*.63;
+}
+
+void main() {
+    vec2 fragCoord = gl_FragCoord.xy;
+    vec2 q = fragCoord.xy / iResolution.xy;
+    vec2 p = q - 0.5;
+    p.x*=iResolution.x/iResolution.y;
+    
+    vec3 ro = vec3(0,0,-6.7);
+    vec3 rd = normalize(vec3(p,1.3));
+    
+    vec3 col = vec3(0.);
+    vec3 brd = rd;
+    float fade = smoothstep(0.,0.01,abs(brd.y))*0.1+0.9;
+    
+    col = bg(rd)*fade;
+    
+    if (rd.y > 0.) {
+        vec4 aur = smoothstep(0.,1.5,aurora(ro,rd))*fade;
+        col += stars(rd);
+        col = col*(1.-aur.a) + aur.rgb;
+    }
+    else {
+        rd.y = abs(rd.y);
+        col = bg(rd)*fade*0.6;
+        vec4 aur = smoothstep(0.0,2.5,aurora(ro,rd));
+        col += stars(rd)*0.1;
+        col = col*(1.-aur.a) + aur.rgb;
+        vec3 pos = ro + ((0.5-ro.y)/rd.y)*rd;
+        float nz2 = triNoise2d(pos.xz*vec2(.5,.7), uSpeed);
+        col += mix(vec3(0.2,0.25,0.5)*0.08,vec3(0.3,0.3,0.5)*0.7, nz2*0.4);
+    }
+    
+    gl_FragColor = vec4(col, 1.);
+}
+</script>
+
+<script>
+let scene, camera, renderer, material, mesh;
+let randomizerEnabled = false;
+let randomizerInterval = 15000; // 15 seconds
+let randomizerTimer;
+let transitionTime = 5000; // 5 seconds
+let currentSettings = {};
+let targetSettings = {};
+let transitionStartTime = 0;
+let isTransitioning = false;
+let countdownInterval;
+let randomnessRange = 0.5;
+
+function init() {
+    scene = new THREE.Scene();
+    camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+    renderer = new THREE.WebGLRenderer();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.body.appendChild(renderer.domElement);
+
+    const geometry = new THREE.PlaneBufferGeometry(2, 2);
+    
+    material = new THREE.ShaderMaterial({
+        uniforms: {
+            iTime: { value: 0 },
+            iResolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) },
+            uSpeed: { value: 0.06 },
+            uIntensity: { value: 1.8 },
+            uColorShift: { value: 0 },
+            uBaseColor1: { value: new THREE.Color(0xFF7D1A) },
+            uBaseColor2: { value: new THREE.Color(0xBFFF00) },
+            uBaseColor3: { value: new THREE.Color(0x1AFF7D) },
+            uStarDensity: { value: 0.0005 },
+            uBgColor1: { value: new THREE.Color(0x0D1933) },
+            uBgColor2: { value: new THREE.Color(0x1A0D33) }
+        },
+        vertexShader: document.getElementById('vertexShader').textContent,
+        fragmentShader: document.getElementById('fragmentShader').textContent
+    });
+
+    mesh = new THREE.Mesh(geometry, material);
+    scene.add(mesh);
+
+    window.addEventListener('resize', onWindowResize, false);
+
+    setupControls();
+    updateCurrentSettings();
+}
+
+function setupControls() {
+    const controls = [
+        { id: 'speed', uniform: 'uSpeed' },
+        { id: 'intensity', uniform: 'uIntensity' },
+        { id: 'colorShift', uniform: 'uColorShift' },
+        { id: 'starDensity', uniform: 'uStarDensity' }
+    ];
+
+    controls.forEach(control => {
+        const input = document.getElementById(control.id);
+        const valueSpan = document.getElementById(`${control.id}Value`);
+        input.addEventListener('input', (e) => {
+            const value = parseFloat(e.target.value);
+            material.uniforms[control.uniform].value = value;
+            valueSpan.textContent = value.toFixed(4);
+            updateCurrentSettings();
+        });
+    });
+
+    const colorControls = [
+        { id: 'baseColor1', uniform: 'uBaseColor1' },
+        { id: 'baseColor2', uniform: 'uBaseColor2' },
+        { id: 'baseColor3', uniform: 'uBaseColor3' },
+        { id: 'bgColor1', uniform: 'uBgColor1' },
+        { id: 'bgColor2', uniform: 'uBgColor2' }
+    ];
+
+    colorControls.forEach(control => {
+        const input = document.getElementById(control.id);
+        input.addEventListener('input', (e) => {
+            material.uniforms[control.uniform].value.setStyle(e.target.value);
+            updateCurrentSettings();
+        });
+    });
+
+    const randomizerCheckbox = document.getElementById('randomizer');
+    randomizerCheckbox.addEventListener('change', (e) => {
+        randomizerEnabled = e.target.checked;
+        if (randomizerEnabled) {
+            startRandomizer();
+        } else {
+            stopRandomizer();
+        }
+    });
+
+    const randomizerTimeInput = document.getElementById('randomizerTime');
+    const randomizerTimeValueSpan = document.getElementById('randomizerTimeValue');
+    randomizerTimeInput.addEventListener('input', (e) => {
+        randomizerInterval = e.target.value * 1000;
+        randomizerTimeValueSpan.textContent = e.target.value;
+        if (randomizerEnabled) {
+            stopRandomizer();
+            startRandomizer();
+        }
+    });
+
+    const transitionTimeInput = document.getElementById('transitionTime');
+    const transitionTimeValueSpan = document.getElementById('transitionTimeValue');
+    transitionTimeInput.addEventListener('input', (e) => {
+        transitionTime = e.target.value * 1000;
+        transitionTimeValueSpan.textContent = e.target.value;
+    });
+
+    const randomnessRangeInput = document.getElementById('randomnessRange');
+    const randomnessRangeValueSpan = document.getElementById('randomnessRangeValue');
+    randomnessRangeInput.addEventListener('input', (e) => {
+        randomnessRange = parseFloat(e.target.value);
+        randomnessRangeValueSpan.textContent = randomnessRange.toFixed(2);
+    });
+
+    const toggleControlsBtn = document.getElementById('toggleControls');
+    toggleControlsBtn.addEventListener('click', toggleControls);
+
+    const fullscreenToggleBtn = document.getElementById('fullscreenToggle');
+    fullscreenToggleBtn.addEventListener('click', toggleFullscreen);
+}
+
+function onWindowResize() {
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    material.uniforms.iResolution.value.set(window.innerWidth, window.innerHeight);
+}
+
+function startRandomizer() {
+    randomizerTimer = setInterval(randomizeSettings, randomizerInterval);
+    startCountdown();
+}
+
+function stopRandomizer() {
+    clearInterval(randomizerTimer);
+    clearInterval(countdownInterval);
+    document.getElementById('countdown').textContent = '--:--';
+}
+
+function startCountdown() {
+    let remainingTime = randomizerInterval / 1000;
+    updateCountdown(remainingTime);
+
+    countdownInterval = setInterval(() => {
+        remainingTime--;
+        if (remainingTime <= 0) {
+            remainingTime = randomizerInterval / 1000;
+        }
+        updateCountdown(remainingTime);
+    }, 1000);
+}
+
+function updateCountdown(seconds) {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = Math.floor(seconds % 60);
+    document.getElementById('countdown').textContent = 
+        `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
+}
+
+function randomizeSettings() {
+    targetSettings = {
+        uSpeed: lerp(currentSettings.uSpeed, Math.random() * 0.2, randomnessRange),
+        uIntensity: lerp(currentSettings.uIntensity, Math.random() * 3, randomnessRange),
+        uColorShift: lerp(currentSettings.uColorShift, Math.random() * 6.28, randomnessRange),
+        uStarDensity: lerp(currentSettings.uStarDensity, Math.random() * 0.001, randomnessRange),
+        uBaseColor1: lerpColor(currentSettings.uBaseColor1, new THREE.Color().setHSL(Math.random(), 1, 0.5), randomnessRange),
+        uBaseColor2: lerpColor(currentSettings.uBaseColor2, new THREE.Color().setHSL(Math.random(), 1, 0.5), randomnessRange),
+        uBaseColor3: lerpColor(currentSettings.uBaseColor3, new THREE.Color().setHSL(Math.random(), 1, 0.5), randomnessRange),
+        uBgColor1: lerpColor(currentSettings.uBgColor1, new THREE.Color().setHSL(Math.random(), 1, 0.1), randomnessRange),
+        uBgColor2: lerpColor(currentSettings.uBgColor2, new THREE.Color().setHSL(Math.random(), 1, 0.1), randomnessRange)
+    };
+
+    transitionStartTime = Date.now();
+    isTransitioning = true;
+}
+
+function updateCurrentSettings() {
+    currentSettings = {
+        uSpeed: material.uniforms.uSpeed.value,
+        uIntensity: material.uniforms.uIntensity.value,
+        uColorShift: material.uniforms.uColorShift.value,
+        uStarDensity: material.uniforms.uStarDensity.value,
+        uBaseColor1: material.uniforms.uBaseColor1.value.clone(),
+        uBaseColor2: material.uniforms.uBaseColor2.value.clone(),
+        uBaseColor3: material.uniforms.uBaseColor3.value.clone(),
+        uBgColor1: material.uniforms.uBgColor1.value.clone(),
+        uBgColor2: material.uniforms.uBgColor2.value.clone()
+    };
+}
+
+function lerp(start, end, t) {
+    return start * (1 - t) + end * t;
+}
+
+function lerpColor(start, end, t) {
+    return new THREE.Color(
+        lerp(start.r, end.r, t),
+        lerp(start.g, end.g, t),
+        lerp(start.b, end.b, t)
+    );
+}
+
+function updateTransition() {
+    if (!isTransitioning) return;
+
+    const currentTime = Date.now();
+    const t = Math.min((currentTime - transitionStartTime) / transitionTime, 1);
+
+    for (const [key, value] of Object.entries(targetSettings)) {
+        if (value instanceof THREE.Color) {
+            material.uniforms[key].value = lerpColor(currentSettings[key], value, t);
+        } else {
+            material.uniforms[key].value = lerp(currentSettings[key], value, t);
+        }
+    }
+
+    // Update control values
+    document.getElementById('speed').value = material.uniforms.uSpeed.value;
+    document.getElementById('speedValue').textContent = material.uniforms.uSpeed.value.toFixed(4);
+    document.getElementById('intensity').value = material.uniforms.uIntensity.value;
+    document.getElementById('intensityValue').textContent = material.uniforms.uIntensity.value.toFixed(4);
+    document.getElementById('colorShift').value = material.uniforms.uColorShift.value;
+    document.getElementById('colorShiftValue').textContent = material.uniforms.uColorShift.value.toFixed(4);
+    document.getElementById('starDensity').value = material.uniforms.uStarDensity.value;
+    document.getElementById('starDensityValue').textContent = material.uniforms.uStarDensity.value.toFixed(4);
+    document.getElementById('baseColor1').value = '#' + material.uniforms.uBaseColor1.value.getHexString();
+    document.getElementById('baseColor2').value = '#' + material.uniforms.uBaseColor2.value.getHexString();
+    document.getElementById('baseColor3').value = '#' + material.uniforms.uBaseColor3.value.getHexString();
+    document.getElementById('bgColor1').value = '#' + material.uniforms.uBgColor1.value.getHexString();
+    document.getElementById('bgColor2').value = '#' + material.uniforms.uBgColor2.value.getHexString();
+
+    if (t === 1) {
+        isTransitioning = false;
+        updateCurrentSettings();
+    }
+}
+
+function toggleControls() {
+    const controls = document.getElementById('controls');
+    const toggleBtn = document.getElementById('toggleControls');
+    if (controls.style.transform === 'translateX(100%)') {
+        controls.style.transform = 'translateX(0)';
+        toggleBtn.textContent = 'Hide Controls';
+    } else {
+        controls.style.transform = 'translateX(100%)';
+        toggleBtn.textContent = 'Show Controls';
+    }
+}
+
+function toggleFullscreen() {
+    if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen();
+    } else {
+        if (document.exitFullscreen) {
+            document.exitFullscreen();
+        }
+    }
+}
+
+function animate(time) {
+    requestAnimationFrame(animate);
+    material.uniforms.iTime.value = time * 0.001;
+    updateTransition();
+    renderer.render(scene, camera);
+}
+
+init();
+animate(0);
+</script>
+</body>
+</html>
