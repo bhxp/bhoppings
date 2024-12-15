@@ -1,0 +1,1081 @@
+<html><head><base href="https://nigger.ai" /></head><body>
+<title>Infinite 3D Star Explorer with Enhanced Sun Colors, Constellations, and Planet View</title>
+<style>
+  body { margin: 0; overflow: hidden; background-color: #000000; }
+  canvas { width: 100%; height: 100%; display: block; }
+  #instructions, #disclaimer, #settingsPanel, #starInfo, #planetInfo, #planetViewInfo {
+    position: absolute;
+    color: white;
+    font-family: Arial, sans-serif;
+    background-color: rgba(0,0,0,0.5);
+    padding: 10px;
+    border-radius: 5px;
+  }
+  #instructions {
+    top: 10px;
+    left: 10px;
+  }
+  #disclaimer {
+    bottom: 10px;
+    right: 10px;
+  }
+  #settingsButton {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    padding: 10px;
+    background-color: rgba(255,255,255,0.7);
+    color: black;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+  #settingsPanel {
+    top: 50px;
+    right: 10px;
+    display: none;
+  }
+  #crosshair {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 20px;
+    height: 20px;
+    border: 2px solid white;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+  }
+  #starInfo, #planetInfo, #planetViewInfo {
+    bottom: 10px;
+    left: 10px;
+    display: none;
+  }
+  #exitButton, #exitPlanetViewButton {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    padding: 10px;
+    background-color: rgba(255,255,255,0.7);
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    display: none;
+  }
+  body.solar-system-view, body.planet-view {
+    cursor: default;
+  }
+  body:not(.solar-system-view):not(.planet-view) {
+    cursor: none;
+  }
+  #touchControls {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: none;
+  }
+  .touchButton {
+    width: 60px;
+    height: 60px;
+    background-color: rgba(255,255,255,0.3);
+    border: 2px solid white;
+    border-radius: 50%;
+    margin: 0 10px;
+    display: inline-block;
+    font-size: 24px;
+    color: white;
+    text-align: center;
+    line-height: 60px;
+    user-select: none;
+  }
+  #upDownControls {
+    position: absolute;
+    right: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: none;
+  }
+  #upDownControls .touchButton {
+    display: block;
+    margin: 10px 0;
+  }
+  .qualityButton {
+    padding: 5px 10px;
+    margin: 5px;
+    background-color: rgba(255,255,255,0.3);
+    border: 1px solid white;
+    color: white;
+    cursor: pointer;
+    border-radius: 3px;
+  }
+  .qualityButton.active {
+    background-color: rgba(255,255,255,0.7);
+    color: black;
+  }
+</style>
+
+<div id="instructions">Use WASD keys to move, explore the deep space! Center the crosshair on stars to highlight and interact with them. Click to enter star view. Press Backspace to exit star view. In Star View, hover over planets to see their information and click to enter Planet View.</div>
+<div id="crosshair"></div>
+<div id="starInfo"></div>
+<div id="planetInfo"></div>
+<div id="planetViewInfo"></div>
+<canvas id="gameCanvas"></canvas>
+<button id="exitButton">X</button>
+<button id="exitPlanetViewButton">X</button>
+<button id="settingsButton">Settings</button>
+<div id="settingsPanel">
+  <h3>Graphics Quality</h3>
+  <button id="lowQuality" class="qualityButton">Low</button>
+  <button id="mediumQuality" class="qualityButton active">Medium</button>
+  <button id="highQuality" class="qualityButton">High</button>
+  <button id="ultraQuality" class="qualityButton">Ultra</button>
+</div>
+<div id="touchControls">
+  <div class="touchButton" id="moveForward">↑</div>
+  <div class="touchButton" id="moveLeft">←</div>
+  <div class="touchButton" id="moveBackward">↓</div>
+  <div class="touchButton" id="moveRight">→</div>
+</div>
+<div id="upDownControls">
+  <div class="touchButton" id="moveUp">↑</div>
+  <div class="touchButton" id="moveDown">↓</div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+  const renderer = new THREE.WebGLRenderer({canvas: document.getElementById('gameCanvas')});
+  renderer.setSize(window.innerWidth, window.innerHeight);
+
+  camera.position.set(0, 0, 5);
+
+  // Chunk system with realistic stars and star webs
+  let chunkSize = 100;
+  let starsPerChunk = 50;
+  const renderDistance = 2;
+  const chunks = new Map();
+
+  let isInSolarSystemView = false;
+  let isInPlanetView = false;
+  let currentStarSystem = null;
+  let currentPlanet = null;
+  let solarSystemScene, solarSystemCamera;
+  let planetViewScene, planetViewCamera;
+
+  // Outline for star and planet highlighting
+  const outlineMaterial = new THREE.MeshBasicMaterial({
+    color: 0xffffff,
+    side: THREE.BackSide
+  });
+
+  // List of constellations
+  const constellations = [
+    'Orion', 'Ursa Major', 'Cassiopeia', 'Scorpius', 'Cygnus',
+    'Leo', 'Gemini', 'Canis Major', 'Taurus', 'Andromeda',
+    'Perseus', 'Pegasus', 'Aquarius', 'Sagittarius', 'Virgo'
+  ];
+
+  function getRandomStarName() {
+    const prefixes = ['Alpha', 'Beta', 'Gamma', 'Delta', 'Epsilon'];
+    const suffixes = ['Centauri', 'Cygni', 'Draconis', 'Eridani', 'Lyrae'];
+    return `${prefixes[Math.floor(Math.random() * prefixes.length)]} ${suffixes[Math.floor(Math.random() * suffixes.length)]}`;
+  }
+
+  function getRandomConstellation() {
+    return constellations[Math.floor(Math.random() * constellations.length)];
+  }
+
+  function getRealisticStarColor(temperature) {
+    let r, g, b;
+
+    if (temperature < 3500) {
+      r = 1;
+      g = 0.5 + Math.random() * 0.3;
+      b = 0.2 + Math.random() * 0.3;
+    } else if (temperature < 5000) {
+      r = 1;
+      g = 0.7 + Math.random() * 0.2;
+      b = 0.5 + Math.random() * 0.3;
+    } else if (temperature < 6000) {
+      r = 0.9 + Math.random() * 0.1;
+      g = 0.9 + Math.random() * 0.1;
+      b = 0.8 + Math.random() * 0.2;
+    } else if (temperature < 7500) {
+      r = 0.8 + Math.random() * 0.1;
+      g = 0.8 + Math.random() * 0.1;
+      b = 1;
+    } else if (temperature < 10000) {
+      r = 0.7 + Math.random() * 0.1;
+      g = 0.8 + Math.random() * 0.1;
+      b = 1;
+    } else {
+      r = 0.6 + Math.random() * 0.1;
+      g = 0.7 + Math.random() * 0.1;
+      b = 1;
+    }
+
+    return new THREE.Color(r, g, b);
+  }
+
+  function createPlanetarySystem() {
+    const planetCount = Math.floor(Math.random() * 5) + 1;
+    const planets = [];
+
+    for (let i = 0; i < planetCount; i++) {
+      planets.push({
+        name: `Planet ${String.fromCharCode(65 + i)}`,
+        radius: Math.random() * 0.3 + 0.1,
+        distance: (i + 1) * 20 + Math.random() * 10,
+        color: new THREE.Color(Math.random(), Math.random(), Math.random()),
+        speed: 0.001 / (i + 1),
+        atmosphere: Math.random() > 0.5 ? 'Yes' : 'No',
+        surfaceType: ['Rocky', 'Gaseous', 'Ice', 'Lava', 'Ocean'][Math.floor(Math.random() * 5)],
+        temperature: Math.floor(Math.random() * 500 - 200) + '°C',
+        features: generatePlanetFeatures()
+      });
+    }
+
+    return planets;
+  }
+
+  function generatePlanetFeatures() {
+    const features = [];
+    const possibleFeatures = [
+      'Mountain ranges', 'Deep canyons', 'Vast oceans', 'Frozen ice caps',
+      'Active volcanoes', 'Dense forests', 'Sprawling deserts', 'Massive craters',
+      'Floating islands', 'Underground cave systems', 'Geysers', 'Colorful auroras',
+      'Giant storms', 'Crystal formations', 'Ancient ruins', 'Bioluminescent life'
+    ];
+    
+    const featureCount = Math.floor(Math.random() * 4) + 1; // 1 to 4 features
+    for (let i = 0; i < featureCount; i++) {
+      const feature = possibleFeatures[Math.floor(Math.random() * possibleFeatures.length)];
+      if (!features.includes(feature)) {
+        features.push(feature);
+      }
+    }
+    
+    return features;
+  }
+
+  function createChunk(chunkX, chunkY, chunkZ) {
+    const starGroup = new THREE.Group();
+    const starPositions = [];
+    const starData = [];
+
+    for (let i = 0; i < starsPerChunk; i++) {
+      const x = THREE.MathUtils.randFloatSpread(chunkSize) + chunkX * chunkSize;
+      const y = THREE.MathUtils.randFloatSpread(chunkSize) + chunkY * chunkSize;
+      const z = THREE.MathUtils.randFloatSpread(chunkSize) + chunkZ * chunkSize;
+      starPositions.push(new THREE.Vector3(x, y, z));
+
+      const temperature = Math.floor(Math.random() * 25000 + 2000);
+      const color = getRealisticStarColor(temperature);
+
+      // Determine if this star should be a big star (0.1% chance)
+      const isBigStar = Math.random() < 0.001;
+      const starSize = isBigStar ? 0.75 : 0.25;
+
+      const starGeometry = new THREE.SphereGeometry(starSize, 16, 16);
+      const starMaterial = new THREE.MeshBasicMaterial({ color: color });
+      const star = new THREE.Mesh(starGeometry, starMaterial);
+      star.position.set(x, y, z);
+
+      // Add outline mesh
+      const outlineGeometry = new THREE.SphereGeometry(starSize * 1.4, 16, 16);
+      const outlineMesh = new THREE.Mesh(outlineGeometry, outlineMaterial);
+      outlineMesh.visible = false;
+      star.add(outlineMesh);
+
+      starGroup.add(star);
+
+      // Calculate distance from our solar system
+      const distanceFromSolarSystem = Math.sqrt(x*x + y*y + z*z);
+      const distanceInLightYears = (distanceFromSolarSystem * 10).toFixed(2); // Assuming 1 unit = 0.1 light years
+
+      starData.push({
+        name: getRandomStarName(),
+        temperature: temperature + 'K',
+        size: (isBigStar ? Math.random() * 10 + 5 : Math.random() * 5 + 0.1).toFixed(2) + ' solar radii',
+        planets: createPlanetarySystem(),
+        distance: distanceInLightYears + ' light years',
+        constellation: getRandomConstellation(),
+        isBigStar: isBigStar
+      });
+    }
+
+    // Create star webs
+    const webMaterial = new THREE.LineBasicMaterial({ color: 0x444444, transparent: true, opacity: 0.2 });
+    for (let i = 0; i < starPositions.length; i++) {
+      for (let j = i + 1; j < starPositions.length; j++) {
+        if (starPositions[i].distanceTo(starPositions[j]) < chunkSize / 3) {
+          const webGeometry = new THREE.BufferGeometry().setFromPoints([starPositions[i], starPositions[j]]);
+          const webLine = new THREE.Line(webGeometry, webMaterial);
+          starGroup.add(webLine);
+        }
+      }
+    }
+
+    starGroup.userData.starData = starData;
+    scene.add(starGroup);
+    return starGroup;
+  }
+
+  function getChunkKey(x, y, z) {
+    return `${x},${y},${z}`;
+  }
+
+  function updateChunks() {
+    const playerChunkX = Math.floor(camera.position.x / chunkSize);
+    const playerChunkY = Math.floor(camera.position.y / chunkSize);
+    const playerChunkZ = Math.floor(camera.position.z / chunkSize);
+
+    for (let x = -renderDistance; x <= renderDistance; x++) {
+      for (let y = -renderDistance; y <= renderDistance; y++) {
+        for (let z = -renderDistance; z <= renderDistance; z++) {
+          const chunkX = playerChunkX + x;
+          const chunkY = playerChunkY + y;
+          const chunkZ = playerChunkZ + z;
+          const key = getChunkKey(chunkX, chunkY, chunkZ);
+
+          if (!chunks.has(key)) {
+            chunks.set(key, createChunk(chunkX, chunkY, chunkZ));
+          }
+        }
+      }
+    }
+
+    // Remove far chunks
+    for (const [key, chunk] of chunks) {
+      const [x, y, z] = key.split(',').map(Number);
+      if(
+        Math.abs(x - playerChunkX) > renderDistance ||
+        Math.abs(y - playerChunkY) > renderDistance ||
+        Math.abs(z - playerChunkZ) > renderDistance
+      ) {
+        scene.remove(chunk);
+        chunks.delete(key);
+      }
+    }
+  }
+
+  // Raycaster for star and planet selection
+  const raycaster = new THREE.Raycaster();
+  const mouse = new THREE.Vector2();
+
+  function onMouseMove(event) {
+    mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+    mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+    if (isInSolarSystemView) {
+      checkPlanetInteraction();
+    }
+  }
+
+  function checkPlanetInteraction() {
+    raycaster.setFromCamera(mouse, solarSystemCamera);
+    const intersects = raycaster.intersectObjects(solarSystemScene.children, true);
+
+    // Reset all planet outlines
+    solarSystemScene.traverse((object) => {
+      if (object instanceof THREE.Mesh && object.userData.isPlanet) {
+        object.children[0].visible = false;
+      }
+    });
+
+    if (intersects.length > 0) {
+      const intersect = intersects[0];
+      if (intersect.object.userData.isPlanet) {
+        const planetMesh = intersect.object;
+        const outlineMesh = planetMesh.children[0];
+        outlineMesh.visible = true;
+        displayPlanetInfo(planetMesh.userData.planetData);
+      } else {
+        hidePlanetInfo();
+      }
+    } else {
+      hidePlanetInfo();
+    }
+  }
+
+  function checkCenterStarInteraction() {
+    if (!isInSolarSystemView && !isInPlanetView) {
+      raycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
+      const intersects = raycaster.intersectObjects(scene.children, true);
+
+      // Reset all outlines
+      scene.traverse((object) => {
+        if (object instanceof THREE.Mesh && object.parent instanceof THREE.Mesh) {
+          object.visible = false;
+        }
+      });
+
+      if (intersects.length > 0) {
+        const intersect = intersects[0];
+        if (intersect.object instanceof THREE.Mesh && intersect.object.parent instanceof THREE.Group) {
+          const outlineMesh = intersect.object.children[0];
+          if (outlineMesh) {
+            outlineMesh.visible = true;
+          }
+          const starGroup = intersect.object.parent;
+          const index = starGroup.children.indexOf(intersect.object);
+          const starData = starGroup.userData.starData[index];
+          displayStarInfo(starData);
+        }
+      } else {
+        hideStarInfo();
+      }
+    }
+  }
+
+  function onMouseClick() {
+    if (!isInSolarSystemView && !isInPlanetView) {
+      raycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
+      const intersects = raycaster.intersectObjects(scene.children, true);
+
+      if (intersects.length > 0) {
+        const intersect = intersects[0];
+        if (intersect.object instanceof THREE.Mesh && intersect.object.parent instanceof THREE.Group) {
+          const starGroup = intersect.object.parent;
+          const index = starGroup.children.indexOf(intersect.object);
+          const starData = starGroup.userData.starData[index];
+          enterSolarSystemView(starData);
+        }
+      }
+    } else if (isInSolarSystemView) {
+      raycaster.setFromCamera(mouse, solarSystemCamera);
+      const intersects = raycaster.intersectObjects(solarSystemScene.children, true);
+
+      if (intersects.length > 0) {
+        const intersect = intersects[0];
+        if (intersect.object.userData.isPlanet) {
+          const planetData = intersect.object.userData.planetData;
+          enterPlanetView(planetData);
+        }
+      }
+    }
+  }
+
+  function displayStarInfo(starData) {
+    const starInfo = document.getElementById('starInfo');
+    starInfo.innerHTML = `<h3>${starData.name}</h3>
+      <p>Temperature: ${starData.temperature}</p>
+      <p>Size: ${starData.size}</p>
+      <p>Planets: ${starData.planets.length}</p>
+      <p>Distance from Solar System: ${starData.distance}</p>
+      <p>Constellation: ${starData.constellation}</p>
+      ${starData.isBigStar ? '<p><strong>Big Star!</strong></p>' : ''}
+    `;
+    starInfo.style.display = 'block';
+  }
+
+  function hideStarInfo() {
+    const starInfo = document.getElementById('starInfo');
+    starInfo.style.display = 'none';
+  }
+
+  function displayPlanetInfo(planetData) {
+    const planetInfo = document.getElementById('planetInfo');
+    planetInfo.innerHTML = `
+      <h3>${planetData.name}</h3>
+      <p>Radius: ${planetData.radius.toFixed(2)} Earth radii</p>
+      <p>Distance from star: ${planetData.distance.toFixed(2)} AU</p>
+      <p>Atmosphere: ${planetData.atmosphere}</p>
+      <p>Surface type: ${planetData.surfaceType}</p>
+      <p>Temperature: ${planetData.temperature}</p>
+      <p>Click to enter Planet View</p>
+    `;
+    planetInfo.style.display = 'block';
+  }
+
+  function hidePlanetInfo() {
+    const planetInfo = document.getElementById('planetInfo');
+    planetInfo.style.display = 'none';
+  }
+
+  function enterSolarSystemView(starData) {
+    isInSolarSystemView = true;
+    currentStarSystem = starData;
+
+    // Create new scene for solar system view
+    solarSystemScene = new THREE.Scene();
+    solarSystemCamera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    solarSystemCamera.position.set(0, 50, 100);
+    solarSystemCamera.lookAt(0, 0, 0);
+
+    // Create sun
+    const sunSize = starData.isBigStar ? 10 : 5;
+    const sunGeometry = new THREE.SphereGeometry(sunSize, 32, 32);
+    const sunMaterial = new THREE.MeshBasicMaterial({ color: getRealisticStarColor(parseInt(starData.temperature)) });
+    const sun = new THREE.Mesh(sunGeometry, sunMaterial);
+    solarSystemScene.add(sun);
+
+    // Create planets
+    starData.planets.forEach((planet, index) => {
+      const planetGeometry = new THREE.SphereGeometry(planet.radius * 2, 32, 32);
+      const planetMaterial = new THREE.MeshBasicMaterial({ color: planet.color });
+      const planetMesh = new THREE.Mesh(planetGeometry, planetMaterial);
+      
+      planetMesh.userData.isPlanet = true;
+      planetMesh.userData.planetData = planet;
+
+      // Add outline mesh for planet
+      const outlineGeometry = new THREE.SphereGeometry(planet.radius * 2.2, 32, 32);
+      const outlineMesh = new THREE.Mesh(outlineGeometry, outlineMaterial);
+      outlineMesh.visible = false;
+      planetMesh.add(outlineMesh);
+
+      const planetSystem = new THREE.Group();
+      planetSystem.add(planetMesh);
+      
+      // Create orbit line
+      const orbitGeometry = new THREE.RingGeometry(planet.distance, planet.distance + 0.1, 64);
+      const orbitMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide, transparent: true, opacity: 0.2 });
+      const orbitMesh = new THREE.Mesh(orbitGeometry, orbitMaterial);
+      orbitMesh.rotation.x = Math.PI / 2;
+      planetSystem.add(orbitMesh);
+
+      solarSystemScene.add(planetSystem);
+    });
+
+    // Show exit button
+    document.getElementById('exitButton').style.display = 'block';
+
+    // Hide instructions and crosshair
+    document.getElementById('instructions').style.display = 'none';
+    document.getElementById('crosshair').style.display = 'none';
+
+    // Show cursor in solar system view
+    document.body.classList.add('solar-system-view');
+
+    animateSolarSystem();
+  }
+
+  function exitSolarSystemView() {
+    isInSolarSystemView = false;
+    currentStarSystem = null;
+
+    // Clear solar system scene
+    while(solarSystemScene.children.length > 0){ 
+      solarSystemScene.remove(solarSystemScene.children[0]); 
+    }
+
+    // Hide exit button
+    document.getElementById('exitButton').style.display = 'none';
+
+    // Show instructions and crosshair
+    document.getElementById('instructions').style.display = 'block';
+    document.getElementById('crosshair').style.display = 'block';
+
+    // Hide cursor in space view
+    document.body.classList.remove('solar-system-view');
+
+    // Reset planet info
+    hidePlanetInfo();
+
+    // Resume main animation loop
+    animate();
+  }
+
+  function enterPlanetView(planetData) {
+    isInPlanetView = true;
+    currentPlanet = planetData;
+
+    // Create new scene for planet view
+    planetViewScene = new THREE.Scene();
+    planetViewCamera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    planetViewCamera.position.set(0, 10, 20);
+    planetViewCamera.lookAt(0, 0, 0);
+
+    // Create planet
+    const planetGeometry = new THREE.SphereGeometry(10, 64, 64);
+    const planetMaterial = new THREE.MeshPhongMaterial({
+      color: planetData.color,
+      specular: 0x333333,
+      shininess: 5,
+      map: createPlanetTexture(planetData)
+    });
+    const planet = new THREE.Mesh(planetGeometry, planetMaterial);
+    planetViewScene.add(planet);
+
+    // Add atmosphere if the planet has one
+    if (planetData.atmosphere === 'Yes') {
+      const atmosphereGeometry = new THREE.SphereGeometry(10.2, 64, 64);
+      const atmosphereMaterial = new THREE.MeshPhongMaterial({
+        color: 0xffffff,
+        transparent: true,
+        opacity: 0.2
+      });
+      const atmosphere = new THREE.Mesh(atmosphereGeometry, atmosphereMaterial);
+      planetViewScene.add(atmosphere);
+    }
+
+    // Add lighting
+    const ambientLight = new THREE.AmbientLight(0x404040);
+    planetViewScene.add(ambientLight);
+
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
+    directionalLight.position.set(1, 1, 1);
+    planetViewScene.add(directionalLight);
+
+    // Show exit button
+    document.getElementById('exitPlanetViewButton').style.display = 'block';
+
+    // Hide solar system info
+    hidePlanetInfo();
+
+    // Show planet view info
+    displayPlanetViewInfo(planetData);
+
+    // Show cursor in planet view
+    document.body.classList.add('planet-view');
+
+    animatePlanetView();
+  }
+
+  function createPlanetTexture(planetData) {
+    const canvas = document.createElement('canvas');
+    canvas.width = 1024;
+    canvas.height = 512;
+    const ctx = canvas.getContext('2d');
+
+    // Fill background with base color
+    ctx.fillStyle = `rgb(${planetData.color.r * 255}, ${planetData.color.g * 255}, ${planetData.color.b * 255})`;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Add texture based on surface type
+    switch (planetData.surfaceType) {
+      case 'Rocky':
+        addRockyTexture(ctx, canvas.width, canvas.height);
+        break;
+      case 'Gaseous':
+        addGaseousTexture(ctx, canvas.width, canvas.height);
+        break;
+      case 'Ice':
+        addIceTexture(ctx, canvas.width, canvas.height);
+        break;
+      case 'Lava':
+        addLavaTexture(ctx, canvas.width, canvas.height);
+        break;
+      case 'Ocean':
+        addOceanTexture(ctx, canvas.width, canvas.height);
+        break;
+    }
+
+    // Add features
+    planetData.features.forEach(feature => {
+      addFeatureToTexture(ctx, canvas.width, canvas.height, feature);
+    });
+
+    return new THREE.CanvasTexture(canvas);
+  }
+
+  function addRockyTexture(ctx, width, height) {
+    for (let i = 0; i < 5000; i++) {
+      const x = Math.random() * width;
+      const y = Math.random() * height;
+      const radius = Math.random() * 2 + 1;
+      ctx.beginPath();
+      ctx.arc(x, y, radius, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(100, 100, 100, ${Math.random() * 0.5})`;
+      ctx.fill();
+    }
+  }
+
+  function addGaseousTexture(ctx, width, height) {
+    for (let i = 0; i < 10; i++) {
+      const gradient = ctx.createLinearGradient(0, i * height / 10, width, i * height / 10);
+      gradient.addColorStop(0, `rgba(255, 255, 255, ${Math.random() * 0.2})`);
+      gradient.addColorStop(1, `rgba(0, 0, 0, ${Math.random() * 0.2})`);
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, i * height / 10, width, height / 10);
+    }
+  }
+
+  function addIceTexture(ctx, width, height) {
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+    ctx.fillRect(0, 0, width, height);
+    for (let i = 0; i < 1000; i++) {
+      const x = Math.random() * width;
+      const y = Math.random() * height;
+      const radius = Math.random() * 5 + 1;
+      ctx.beginPath();
+      ctx.arc(x, y, radius, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(200, 200, 255, ${Math.random() * 0.5})`;
+      ctx.fill();
+    }
+  }
+
+  function addLavaTexture(ctx, width, height) {
+    for (let i = 0; i < 100; i++) {
+      const x = Math.random() * width;
+      const y = Math.random() * height;
+      const radius = Math.random() * 20 + 5;
+      const gradient = ctx.createRadialGradient(x, y, 0, x, y, radius);
+      gradient.addColorStop(0, 'rgba(255, 0, 0, 0.8)');
+      gradient.addColorStop(1, 'rgba(100, 0, 0, 0)');
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, width, height);
+    }
+  }
+
+  function addOceanTexture(ctx, width, height) {
+    ctx.fillStyle = 'rgba(0, 0, 200, 0.5)';
+    ctx.fillRect(0,0, width, height);
+    for (let i = 0; i < 1000; i++) {
+      const x = Math.random() * width;
+      const y = Math.random() * height;
+      const radius = Math.random() * 3 + 1;
+      ctx.beginPath();
+      ctx.arc(x, y, radius, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(255, 255, 255, ${Math.random() * 0.3})`;
+      ctx.fill();
+    }
+  }
+
+  function addFeatureToTexture(ctx, width, height, feature) {
+    switch (feature) {
+      case 'Mountain ranges':
+        for (let i = 0; i < 5; i++) {
+          const x = Math.random() * width;
+          const y = Math.random() * height;
+          ctx.beginPath();
+          ctx.moveTo(x, y);
+          ctx.lineTo(x + Math.random() * 100 - 50, y + Math.random() * 100 - 50);
+          ctx.lineTo(x + Math.random() * 100 - 50, y + Math.random() * 100 - 50);
+          ctx.closePath();
+          ctx.fillStyle = 'rgba(100, 100, 100, 0.5)';
+          ctx.fill();
+        }
+        break;
+      case 'Deep canyons':
+        for (let i = 0; i < 3; i++) {
+          const x = Math.random() * width;
+          const y = Math.random() * height;
+          ctx.beginPath();
+          ctx.moveTo(x, y);
+          ctx.quadraticCurveTo(x + 100, y + 50, x + 200, y);
+          ctx.strokeStyle = 'rgba(50, 50, 50, 0.7)';
+          ctx.lineWidth = 5;
+          ctx.stroke();
+        }
+        break;
+      case 'Vast oceans':
+        ctx.fillStyle = 'rgba(0, 0, 200, 0.3)';
+        ctx.fillRect(0, 0, width, height / 2);
+        break;
+      case 'Frozen ice caps':
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+        ctx.beginPath();
+        ctx.arc(width / 2, 0, height / 3, 0, Math.PI, true);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(width / 2, height, height / 3, 0, Math.PI, false);
+        ctx.fill();
+        break;
+      // Add more cases for other features
+    }
+  }
+
+  function exitPlanetView() {
+    isInPlanetView = false;
+    currentPlanet = null;
+
+    // Clear planet view scene
+    while(planetViewScene.children.length > 0){ 
+      planetViewScene.remove(planetViewScene.children[0]); 
+    }
+
+    // Hide exit button
+    document.getElementById('exitPlanetViewButton').style.display = 'none';
+
+    // Hide planet view info
+    hidePlanetViewInfo();
+
+    // Show cursor in solar system view
+    document.body.classList.remove('planet-view');
+    document.body.classList.add('solar-system-view');
+
+    // Resume solar system animation loop
+    animateSolarSystem();
+  }
+
+  function displayPlanetViewInfo(planetData) {
+    const planetViewInfo = document.getElementById('planetViewInfo');
+    planetViewInfo.innerHTML = `
+      <h3>${planetData.name}</h3>
+      <p>Surface type: ${planetData.surfaceType}</p>
+      <p>Temperature: ${planetData.temperature}</p>
+      <p>Atmosphere: ${planetData.atmosphere}</p>
+      <p>Features: ${planetData.features.join(', ')}</p>
+    `;
+    planetViewInfo.style.display = 'block';
+  }
+
+  function hidePlanetViewInfo() {
+    const planetViewInfo = document.getElementById('planetViewInfo');
+    planetViewInfo.style.display = 'none';
+  }
+
+  function animateSolarSystem() {
+    if (!isInSolarSystemView) return;
+
+    requestAnimationFrame(animateSolarSystem);
+
+    // Animate planets
+    solarSystemScene.children.forEach((child, index) => {
+      if (child instanceof THREE.Group && child.children[0].userData.isPlanet) {
+        const planet = child.children[0];
+        const planetData = planet.userData.planetData;
+        const angle = Date.now() * planetData.speed;
+        planet.position.x = Math.cos(angle) * planetData.distance;
+        planet.position.z = Math.sin(angle) * planetData.distance;
+      }
+    });
+
+    renderer.render(solarSystemScene, solarSystemCamera);
+  }
+
+  function animatePlanetView() {
+    if (!isInPlanetView) return;
+
+    requestAnimationFrame(animatePlanetView);
+
+    // Rotate the planet
+    planetViewScene.children[0].rotation.y += 0.001;
+
+    renderer.render(planetViewScene, planetViewCamera);
+  }
+
+  window.addEventListener('click', onMouseClick, false);
+  window.addEventListener('mousemove', onMouseMove, false);
+
+  // Movement
+  const moveSpeed = 0.5;
+  const keys = {w: false, a: false, s: false, d: false, q: false, e: false};
+
+  document.addEventListener('keydown', (event) => {
+    const key = event.key.toLowerCase();
+    if (key in keys) keys[key] = true;
+    if (key === 'backspace') {
+      if (isInPlanetView) {
+        exitPlanetView();
+      } else if (isInSolarSystemView) {
+        exitSolarSystemView();
+      }
+    }
+  });
+
+  document.addEventListener('keyup', (event) => {
+    const key = event.key.toLowerCase();
+    if (key in keys) keys[key] = false;
+  });
+
+  // Mouse look
+  let pitch = 0;
+  let yaw = 0;
+  const sensitivity = 0.002;
+
+  document.addEventListener('mousemove', (event) => {
+    if (document.pointerLockElement === document.body && !isInSolarSystemView && !isInPlanetView) {
+      yaw -= event.movementX * sensitivity;
+      pitch -= event.movementY * sensitivity;
+      pitch = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, pitch));
+    }
+  });
+
+  document.addEventListener('click', () => {
+    if (!isInSolarSystemView && !isInPlanetView) {
+      document.body.requestPointerLock();
+    }
+  });
+
+  function animate() {
+    requestAnimationFrame(animate);
+
+    if (!isInSolarSystemView && !isInPlanetView) {
+      // Update camera rotation
+      camera.rotation.order = 'YXZ';
+      camera.rotation.y = yaw;
+      camera.rotation.x = pitch;
+
+      // Move relative to camera direction
+      const forward = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
+      const right = new THREE.Vector3(1, 0, 0).applyQuaternion(camera.quaternion);
+      const up = new THREE.Vector3(0, 1, 0);
+
+      if (keys.w) camera.position.addScaledVector(forward, moveSpeed);
+      if (keys.s) camera.position.addScaledVector(forward, -moveSpeed);
+      if (keys.a) camera.position.addScaledVector(right, -moveSpeed);
+      if (keys.d) camera.position.addScaledVector(right, moveSpeed);
+      if (keys.q) camera.position.addScaledVector(up, moveSpeed);
+      if (keys.e) camera.position.addScaledVector(up, -moveSpeed);
+
+      updateChunks();
+      checkCenterStarInteraction();
+      renderer.render(scene, camera);
+    }
+  }
+
+  animate();
+
+  // Handle window resize
+  window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    if (solarSystemCamera) {
+      solarSystemCamera.aspect = window.innerWidth / window.innerHeight;
+      solarSystemCamera.updateProjectionMatrix();
+    }
+    if (planetViewCamera) {
+      planetViewCamera.aspect = window.innerWidth / window.innerHeight;
+      planetViewCamera.updateProjectionMatrix();
+    }
+  });
+
+  // Button functionality
+  document.getElementById('exitButton').addEventListener('click', exitSolarSystemView);
+  document.getElementById('exitPlanetViewButton').addEventListener('click', exitPlanetView);
+
+  // Settings functionality
+  const settingsButton = document.getElementById('settingsButton');
+  const settingsPanel = document.getElementById('settingsPanel');
+  const qualityButtons = document.querySelectorAll('.qualityButton');
+
+  settingsButton.addEventListener('click', () => {
+    settingsPanel.style.display = settingsPanel.style.display === 'none' ? 'block' : 'none';
+  });
+
+  qualityButtons.forEach(button => {
+    button.addEventListener('click', () => {
+      qualityButtons.forEach(btn => btn.classList.remove('active'));
+      button.classList.add('active');
+      updateGraphicsQuality(button.id);
+    });
+  });
+
+  function updateGraphicsQuality(quality) {
+    switch(quality) {
+      case 'lowQuality':
+        renderer.setPixelRatio(0.5);
+        chunkSize = 50;
+        starsPerChunk = 25;
+        break;
+      case 'mediumQuality':
+        renderer.setPixelRatio(1);
+        chunkSize = 100;
+        starsPerChunk = 50;
+        break;
+      case 'highQuality':
+        renderer.setPixelRatio(window.devicePixelRatio);
+        chunkSize = 150;
+        starsPerChunk = 75;
+        break;
+      case 'ultraQuality':
+        renderer.setPixelRatio(window.devicePixelRatio);
+        chunkSize = 200;
+        starsPerChunk = 100;
+        break;
+    }
+    chunks.clear();
+    scene.children.length = 0;
+    updateChunks();
+  }
+
+  // Check if the user is on a mobile device
+  function isMobile() {
+    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  }
+
+  // Add touch controls for mobile devices
+  if (isMobile()) {
+    document.getElementById('touchControls').style.display = 'block';
+    document.getElementById('upDownControls').style.display = 'block';
+    document.getElementById('instructions').style.display = 'none';
+
+    const touchButtons = {
+      moveForward: document.getElementById('moveForward'),
+      moveLeft: document.getElementById('moveLeft'),
+      moveBackward: document.getElementById('moveBackward'),
+      moveRight: document.getElementById('moveRight'),
+      moveUp: document.getElementById('moveUp'),
+      moveDown: document.getElementById('moveDown')
+    };
+
+    Object.keys(touchButtons).forEach(key => {
+      let intervalId;
+
+      touchButtons[key].addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        const direction = new THREE.Vector3();
+        
+        switch(key) {
+          case 'moveForward':
+            direction.set(0, 0, -1);
+            break;
+          case 'moveBackward':
+            direction.set(0, 0, 1);
+            break;
+          case 'moveLeft':
+            direction.set(-1, 0, 0);
+            break;
+          case 'moveRight':
+            direction.set(1, 0, 0);
+            break;
+          case 'moveUp':
+            direction.set(0, 1, 0);
+            break;
+          case 'moveDown':
+            direction.set(0, -1, 0);
+            break;
+        }
+        
+        direction.applyQuaternion(camera.quaternion);
+        
+        intervalId = setInterval(() => {
+          camera.position.addScaledVector(direction, moveSpeed);
+        }, 16); // ~60 fps
+      });
+
+      touchButtons[key].addEventListener('touchend', (e) => {
+        e.preventDefault();
+        clearInterval(intervalId);
+      });
+    });
+
+    // Add touch-based rotation
+    let lastTouchX = 0;
+    let lastTouchY = 0;
+
+    document.addEventListener('touchmove', (e) => {
+      const touch = e.touches[0];
+      const movementX = touch.clientX - lastTouchX;
+      const movementY = touch.clientY - lastTouchY;
+
+      yaw -= movementX * sensitivity;
+      pitch -= movementY * sensitivity;
+      pitch = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, pitch));
+
+      lastTouchX = touch.clientX;
+      lastTouchY = touch.clientY;
+    });
+
+    document.addEventListener('touchstart', (e) => {
+      const touch = e.touches[0];
+      lastTouchX = touch.clientX;
+      lastTouchY = touch.clientY;
+    });
+
+    // Modify onMouseClick for touch events
+    function onTouchStart(event) {
+      event.preventDefault();
+      onMouseClick();
+    }
+
+    window.addEventListener('touchstart', onTouchStart, false);
+  }
+</script>
+</body></html>
