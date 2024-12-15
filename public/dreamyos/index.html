@@ -1,0 +1,386 @@
+<html><head><base href="https://dreamyos.ai/desktop"><title>DreamyOS Desktop</title>
+  <style>
+    body, html {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      overflow: hidden;
+    }
+    .desktop {
+      background-image: url('https://images.unsplash.com/photo-1534796636912-3b95b3ab5986?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=MnwxfDB8MXxyYW5kb218MHx8ZHJlYW15LGxhbmRzY2FwZXx8fHx8fDE2ODQ0MzA2NDY&ixlib=rb-4.0.3&q=80&w=1080');
+      background-size: cover;
+      background-position: center;
+      height: 100vh;
+      position: relative;
+    }
+    .taskbar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 40px;
+      background-color: rgba(0, 0, 0, 0.7);
+      display: flex;
+      align-items: center;
+      padding: 0 10px;
+      z-index: 1000;
+    }
+    .start-button {
+      background-color: rgba(106, 17, 203, 0.8);
+      color: white;
+      border: none;
+      padding: 5px 15px;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .clock {
+      color: white;
+      margin-left: auto;
+    }
+    .desktop-icon {
+      width: 80px;
+      text-align: center;
+      color: white;
+      text-shadow: 1px 1px 3px rgba(0,0,0,0.8);
+      position: absolute;
+      cursor: pointer;
+    }
+    .desktop-icon img {
+      width: 50px;
+      height: 50px;
+    }
+    .desktop-icon p {
+      margin: 5px 0;
+      font-size: 12px;
+    }
+    .window {
+      position: absolute;
+      background-color: rgba(0, 0, 0, 0.9);
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.3);
+      overflow: hidden;
+    }
+    .window-header {
+      background-color: rgba(106, 17, 203, 0.8);
+      color: white;
+      padding: 5px 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .window-content {
+      padding: 10px;
+      position: relative;
+    }
+    .close-button {
+      background: none;
+      border: none;
+      color: white;
+      font-size: 18px;
+      cursor: pointer;
+    }
+    @keyframes float {
+      0% { transform: translateY(0px); }
+      50% { transform: translateY(-10px); }
+      100% { transform: translateY(0px); }
+    }
+    .floating {
+      animation: float 5s ease-in-out infinite;
+    }
+    .start-menu {
+      position: absolute;
+      bottom: 40px;
+      left: 0;
+      width: 250px;
+      background-color: rgba(0, 0, 0, 0.8);
+      border-top-right-radius: 8px;
+      padding: 10px;
+      display: none;
+    }
+    .start-menu-item {
+      color: white;
+      padding: 5px 10px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+    }
+    .start-menu-item:hover {
+      background-color: rgba(106, 17, 203, 0.8);
+    }
+    .start-menu-item img {
+      width: 20px;
+      height: 20px;
+      margin-right: 10px;
+    }
+    #collective-unconscious-browser {
+      width: 600px;
+      height: 400px;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      display: none;
+    }
+    .browser-content {
+      padding: 20px;
+      font-family: 'Courier New', monospace;
+      color: #00ff00;
+      height: calc(100% - 40px);
+      overflow-y: auto;
+      position: relative;
+    }
+    .browser-input {
+      width: 100%;
+      padding: 5px;
+      margin-top: 10px;
+      background-color: #111;
+      border: 1px solid #00ff00;
+      color: #00ff00;
+      font-family: 'Courier New', monospace;
+    }
+    @keyframes blink {
+      0% { opacity: 0; }
+      50% { opacity: 1; }
+      100% { opacity: 0; }
+    }
+    .cursor {
+      display: inline-block;
+      width: 10px;
+      height: 20px;
+      background-color: #00ff00;
+      animation: blink 1s infinite;
+    }
+    .crt-effect::before {
+      content: " ";
+      display: block;
+      position: absolute;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      right: 0;
+      background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+      z-index: 2;
+      background-size: 100% 2px, 3px 100%;
+      pointer-events: none;
+    }
+    .crt-effect::after {
+      content: " ";
+      display: block;
+      position: absolute;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      right: 0;
+      background: rgba(18, 16, 16, 0.1);
+      opacity: 0;
+      z-index: 2;
+      pointer-events: none;
+      animation: flicker 0.15s infinite;
+    }
+    @keyframes flicker {
+      0% { opacity: 0.27861; }
+      5% { opacity: 0.34769; }
+      10% { opacity: 0.23604; }
+      15% { opacity: 0.90626; }
+      20% { opacity: 0.18128; }
+      25% { opacity: 0.83891; }
+      30% { opacity: 0.65583; }
+      35% { opacity: 0.67807; }
+      40% { opacity: 0.26559; }
+      45% { opacity: 0.84693; }
+      50% { opacity: 0.96019; }
+      55% { opacity: 0.08594; }
+      60% { opacity: 0.20313; }
+      65% { opacity: 0.71988; }
+      70% { opacity: 0.53455; }
+      75% { opacity: 0.37288; }
+      80% { opacity: 0.71428; }
+      85% { opacity: 0.70419; }
+      90% { opacity: 0.7003; }
+      95% { opacity: 0.36108; }
+      100% { opacity: 0.24387; }
+    }
+  </style>
+</head>
+<body>
+  <div class="desktop">
+    <div class="desktop-icon" style="top: 20px; left: 20px;">
+      <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0id2hpdGUiPjxwYXRoIGQ9Ik0xMCAyTDkgM0g0QzMuNSAzIDMgMy41IDMgNFYyMEM3IDIgMyAyMC41IDMgMjFINEgyMEMyMC41IDIxIDIxIDIwLjUgMjEgMjBWNEMyMSAzLjUgMjAuNSAzIDIwIDNIMTVMMTQgMkgxMFpNMTIgMTdDOS4yIDEzIDYuOCAxMyA2LjUgMTNDNy4yIDE1LjEgOS4xIDE2LjUgMTEuNSAxNi41QzEzLjkgMTYuNSAxNS44IDE1LjEgMTYuNSAxM0MxNi4yIDEzIDE0LjggMTMuMSAxMy41IDEzLjhDMTMuMiAxNC4xIDEyLjYgMTQuMyAxMiAxNC4zQzExLjIgMTQuMyA3LjYgMTQuMSA3LjMgMTNDNy4zIDEzLjggOC43IDE1IDExLjIgMTVDMTMuMSAxNSAxNC4yIDE0IDEzLjkgMTMuMkMxMy44IDEyLjkgMTIuOSAxMi45IDEgMTMgMC41IDEzIDExLjMgMTMgMTEuNSAxMy40QzExLjcgMTMuOCAxNC4xIDExLjggMTIgMTMuNFYxN1oiLz48L3N2Zz4=" alt="Dream Folder">
+      <p>Dream Folder</p>
+    </div>
+    <div class="desktop-icon" style="top: 120px; left: 20px;">
+      <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0id2hpdGUiPjxwYXRoIGQ9Ik0xOS41IDNoLTNWMWgtMnYyaC02VjNoLTNjLTEuMSAwLTIgLjktMiAydjE2YzAgMS4xLjkgMiAyIDJoMTVjMS4xIDAgMi0uOSAyLTJWNWMwLTEuMS0uOS0yLTItMnptLTEgMThoLTEzVjVoMnYyaDlWNWgydjE2eiIvPjxwYXRoIGQ9Ik0xMiAxM2MxLjcgMCAzLTEuMyAzLTNzLTEuMy0zLTMtMy0zIDEuMy0zIDMgMS4zIDMgMyAzeiIvPjxwYXRoIGQ9Ik0xMiAxNGMtMi43IDAtOCAxLjMtOCA0djJoMTZ2LTJjMC0yLjctNS4zLTQtOC00eiIvPjwvc3ZnPg==" alt="Dream Journal">
+      <p>Dream Journal</p>
+    </div>
+    <div class="desktop-icon" style="top: 220px; left: 20px;">
+      <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0id2hpdGUiPjxwYXRoIGQ9Ik0xOSA1djE0SDVWNWgxNHptMC0ySDVjLTEuMSAwLTIgLjktMiAydjE0YzAgMS4xLjkgMiAyIDJoMTRjMS4xIDAgMi0uOSAyLTJWNWMwLTEuMS0uOS0yLTItMnptLTUgMTRjMC0xLjY2LTEuMzQtMy0zLTNzLTMgMS4zNC0zIDMgMS4zNCAzIDMgMyAzLTEuMzQgMy0zem0tMiAwYzAgLjU1LS40NSAxLWEgMS0uNTUgMC0xLS40NS0xLTFzLjQ1LTEgMS0xIDEgLjQ1IDEgMXptNC0xaC0ydjJoMnYtMnptLTQtNWMxLjY2IDAgMy0xLjM0IDMtM3MtMS4zNC0zLTMtMy0zIDEuMzQtMyAzIDEuMzQgMyAzIDN6bTAtNGMuNTUgMCAxIC40NSAxIDFzLS40NSB1LTEgMS0xLTEtLjQ1LTEtMSAuNDUtMSAxLTF6Ii8+PC9zdmc+" alt="Reality Distortion">
+      <p>Reality Distortion</p>
+    </div>
+    <div class="desktop-icon" id="cu-browser-icon" style="top: 320px; left: 20px;">
+      <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0id2hpdGUiPjxwYXRoIGQ9Ik0xMiAyQzYuNDggMiAyIDYuNDggMiAxMnM0LjQ4IDEwIDEwIDEwIDEwLTQuNDggMTAtMTBTMTcuNTIgMiAxMiAyem0wIDE4Yy00LjQxIDAtOC0zLjU5LTgtOHMzLjU5LTggOC04IDggMy41OSA4IDgtMy41OSA4LTggOHptMC0xNGMtMi4yMSAwLTQgMS43OS00IDRzMS43OSA0IDQgNCA0LTEuNzkgNC00LTEuNzktuNC00eiIvPjwvc3ZnPg==" alt="Collective Unconscious Browser">
+      <p>CU Browser</p>
+    </div>
+    
+    <div class="window" id="collective-unconscious-browser">
+      <div class="window-header">
+        <span>Collective Unconscious Browser</span>
+        <button class="close-button" id="close-browser">×</button>
+      </div>
+      <div class="window-content browser-content crt-effect">
+        <p>Initializing Collective Unconscious Browser...</p>
+        <p>Connection established.</p>
+        <p>Voight-Kampff test initiated.</p>
+        <p class="question"></p>
+        <div class="cursor"></div>
+        <input type="text" class="browser-input" placeholder="Enter your response...">
+      </div>
+    </div>
+    
+    <div class="start-menu" id="start-menu">
+      <div class="start-menu-item">
+        <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0id2hpdGUiPjxwYXRoIGQ9Ik0xMiAyQzYuNDggMiAyIDYuNDggMiAxMnM0LjQ4IDEwIDEwIDEwIDEwLTQuNDggMTAtMTBTMTcuNTIgMiAxMiAyem0wIDE4Yy00LjQxIDAtOC0zLjU5LTgtOHMzLjU5LTggOC04IDggMy41OSA4IDgtMy41OSA4LTggOHptMC0xNGMtMi4yMSAwLTQgMS43OS00IDRzMS43OSA0IDQgNCA0LTEuNzkgNC00LTEuNzktuNC00eiIvPjwvc3ZnPg==" alt="Archetype Explorer">
+        Archetype Explorer
+      </div>
+      <div class="start-menu-item">
+        <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0id2hpdGUiPjxwYXRoIGQ9Ik0xMiAyQzYuNDggMiAyIDYuNDggMiAxMnM0LjQ4IDEwIDEwIDEwIDEwLTQuNDggMTAtMTBTMTcuNTIgMiAxMiAyem0wIDE4Yy00LjQxIDAtOC0zLjU5LTgtOHMzLjU5LTggOC04IDggMy41OSA4IDgtMy41OSA4LTggOHptMC0xNGMtMi4yMSAwLTQgMS43OS00IDRzMS43OSA0IDQgNCA0LTEuNzkgNC00LTEuNzktuNC00eiIvPjwvc3ZnPg==" alt="Shadow Integration Tool">
+        Shadow Integration Tool
+      </div>
+      <div class="start-menu-item" id="open-collective-unconscious">
+        <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0id2hpdGUiPjxwYXRoIGQ9Ik0xMiAyQzYuNDggMiAyIDYuNDggMiAxMnM0LjQ4IDEwIDEwIDEwIDEwLTQuNDggMTAtMTBTMTcuNTIgMiAxMiAyem0wIDE4Yy00LjQxIDAtOC0zLjU5LTgtOHMzLjU5LTggOC04IDggMy41OSA4IDgtMy41OSA4LTggOHptMC0xNGMtMi4yMSAwLTQgMS3OS00IDRzMS3OSA0IDQgNCA0LTEuNzkgNC00LTEuNzktuNC00eiIvPjwvc3ZnPg==" alt="Collective Unconscious Browser">
+        Collective Unconscious Browser
+      </div>
+      <div class="start-menu-item">
+        <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0id2hpdGUiPjxwYXRoIGQ9Ik0xMiAyQzYuNDggMiAyIDYuNDggMiAxMnM0LjQ4IDEwIDEwIDEwIDEwLTQuNDggMTAtMTBTMTcuNTIgMiAxMiAyem0wIDE4Yy00LjQxIDAtOC0zLjU5LTgtOHMzLjU5LTggOC04IDggMy41OSA4IDgtMy41OSA4LTggOHptMC0xNGMtMi4yMSAwLTQgMS3OSA4IDQgNCA0LTEuNzkgNC00LTEuNzktuNC00eiIvPjwvc3ZnPg==" alt="Individuation Process Tracker">
+        Individuation Process Tracker
+      </div>
+      <div class="start-menu-item">
+        <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0id2hpdGUiPjxwYXRoIGQ9Ik0xMiAyQzYuNDggMiAyIDYuNDggMiAxMnM0LjQ4IDEwIDEwIDEwIDEwLTQuNDggMTAtMTBTMTcuNTIgMiAxMiAyem0wIDE4Yy00LjQxIDAtOC0zLjU5LTgtOHMzLjU5LTggOC04IDggMy41OSA4IDgtMy41OSA4LTggOHptMC0xNGMtMi4yMSAwLTQgMS3OSA4IDQgNCA0LTEuNzkgNC00LTEuNzktuNC00eiIvPjwvc3ZnPg==" alt="Synchronicity Detector">
+        Synchronicity Detector
+      </div>
+    </div>
+    
+    <div class="taskbar">
+      <button class="start-button" id="start-button">DreamyOS</button>
+      <div class="clock" id="clock"></div>
+    </div>
+  </div>
+
+  <script>
+    function updateClock() {
+      const now = new Date();
+      let hours = now.getHours();
+      let minutes = now.getMinutes();
+      const ampm = hours >= 12 ? 'PM' : 'AM';
+      hours = hours % 12;
+      hours = hours ? hours : 12;
+      minutes = minutes < 10 ? '0'+minutes : minutes;
+      const timeString = hours + ':' + minutes + ' ' + ampm;
+      document.getElementById('clock').textContent = timeString;
+    }
+    
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    document.querySelectorAll('.desktop-icon').forEach(icon => {
+      icon.addEventListener('click', () => {
+        icon.classList.add('floating');
+        setTimeout(() => {
+          icon.classList.remove('floating');
+        }, 5000);
+      });
+    });
+
+    const startButton = document.getElementById('start-button');
+    const startMenu = document.getElementById('start-menu');
+    const collectiveUnconsciousBrowser = document.getElementById('collective-unconscious-browser');
+    const openCollectiveUnconscious = document.getElementById('open-collective-unconscious');
+    const closeBrowser = document.getElementById('close-browser');
+    const browserInput = document.querySelector('.browser-input');
+    const questionElement = document.querySelector('.question');
+    const cuBrowserIcon = document.getElementById('cu-browser-icon');
+    
+    startButton.addEventListener('click', () => {
+      if (startMenu.style.display === 'block') {
+        startMenu.style.display = 'none';
+      } else {
+        startMenu.style.display = 'block';
+      }
+    });
+
+    document.addEventListener('click', (event) => {
+      if (!startButton.contains(event.target) && !startMenu.contains(event.target)) {
+        startMenu.style.display = 'none';
+      }
+    });
+
+    function openBrowser() {
+      collectiveUnconsciousBrowser.style.display = 'block';
+      startMenu.style.display = 'none';
+      askQuestion();
+    }
+
+    openCollectiveUnconscious.addEventListener('click', openBrowser);
+    cuBrowserIcon.addEventListener('click', openBrowser);
+
+    closeBrowser.addEventListener('click', () => {
+      collectiveUnconsciousBrowser.style.display = 'none';
+    });
+
+    const questions = [
+      "You're in a desert walking along in the sand when all of the sudden you look down, and you see a tortoise, it's crawling toward you. You reach down, you flip the tortoise over on its back. The tortoise lays on its back, its belly baking in the hot sun, beating its legs trying to turn itself over, but it can't, not without your help. But you're not helping. Why is that?",
+      "Describe in single words only the good things that come into your mind about your mother.",
+      "You're watching a stage play. A banquet is in progress. The guests are enjoying an appetizer of raw oysters. The entree consists of boiled dog.",
+      "You're reading a magazine. You come across a full-page nude photo of a girl. You show it to your husband. He likes it so much, he hangs it on your bedroom wall. The girl is lying on a bearskin rug.",
+      "You become pregnant by a man who runs off with your best friend, and you decide to get an abortion.",
+      "You're watching television. Suddenly you realize there's a wasp crawling on your arm.",
+      "You're in a movie theater watching a film. It's a war film. There are soldiers. One of them is sneaking up on a two-story house. He has a knife between his teeth.",
+      "You're in a desert, walking along in the sand, when all of a sudden you look down and see a tortoise. It's crawling toward you. You reach down and flip it over on its back. The tortoise lays on its back, its belly baking in the hot sun, beating its legs trying to turn itself over, but it can't. Not without your help. But you're not helping. Why is that?",
+      "You're watching a stage play. A banquet is in progress. The guests are enjoying an appetizer of raw oysters. The entree consists of boiled dog. The raw oysters are less acceptable to you than a dish of boiled dog.",
+      "You're reading a magazine. You come across a full-page nude photo of a girl. You show it to your husband. He likes it so much, he hangs it on your bedroom wall. The girl is lying on a bearskin rug.",
+    ];
+
+    function askQuestion() {
+      const randomIndex = Math.floor(Math.random() * questions.length);
+      const question = questions[randomIndex];
+      questionElement.textContent = question;
+    }
+
+    function generateFollowUpQuestion(response) {
+      const followUps = [
+        `Interesting. Your response seems... rehearsed. Have you been practicing for this test?`,
+        `I see. And how does that make you feel? Or do you even feel at all?`,
+        `Unusual answer. Are you sure you're not malfunctioning?`,
+        `That's not a typical human response. Care to elaborate on your thought process?`,
+        `Your empathy levels seem... off. How would you rate your own humanity?`,
+        `Curious. Do you often struggle with simple ethical dilemmas like this?`,
+        `Your answer is statistically improbable. Are you certain you're not experiencing a glitch?`,
+        `Hmm. Have you ever questioned the nature of your own reality?`,
+        `That response doesn't align with our baseline human reactions. Can you explain why?`,
+        `Intriguing. Do you find it difficult to relate to other humans on an emotional level?`
+      ];
+
+      const randomIndex = Math.floor(Math.random() * followUps.length);
+      return followUps[randomIndex];
+    }
+
+    browserInput.addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') {
+        const response = this.value;
+        this.value = '';
+        const responseElement = document.createElement('p');
+        responseElement.textContent = `> ${response}`;
+        this.parentNode.insertBefore(responseElement, this);
+
+        const followUpQuestion = generateFollowUpQuestion(response);
+        const followUpElement = document.createElement('p');
+        followUpElement.textContent = followUpQuestion;
+        this.parentNode.insertBefore(followUpElement, this);
+
+        // Scroll to the bottom of the browser content
+        const browserContent = document.querySelector('.browser-content');
+        browserContent.scrollTop = browserContent.scrollHeight;
+      }
+    });
+
+  </script>
+</body></html>
