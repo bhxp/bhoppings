@@ -1,0 +1,748 @@
+<html><head><base href=".">
+<style>
+  body { margin: 0; overflow: hidden; }
+  #info {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    color: white;
+    font-family: monospace;
+    background: rgba(0,0,0,0.5);
+    padding: 10px;
+    border-radius: 5px;
+  }
+</style>
+<script id="firefly-vertex" type="x-shader/x-vertex">
+varying vec3 vPosition;
+void main() {
+    vPosition = position;
+    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+    gl_PointSize = 3.0;
+}
+</script>
+
+<script id="firefly-fragment" type="x-shader/x-fragment">
+varying vec3 vPosition;
+void main() {
+    vec2 center = gl_PointCoord - 0.5;
+    float dist = length(center);
+    float alpha = 1.0 - smoothstep(0.3, 0.5, dist);
+    gl_FragColor = vec4(1.0, 1.0, 0.6, alpha);
+}
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://unpkg.com/three@0.128.0/examples/js/postprocessing/EffectComposer.js"></script>
+<script src="https://unpkg.com/three@0.128.0/examples/js/postprocessing/RenderPass.js"></script>
+<script src="https://unpkg.com/three@0.128.0/examples/js/postprocessing/ShaderPass.js"></script>
+
+<script id="vhs-vertex" type="x-shader/x-vertex">
+varying vec2 vUv;
+void main() {
+    vUv = uv;
+    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+}
+</script>
+
+<script id="vhs-fragment" type="x-shader/x-fragment">
+uniform float time;
+uniform sampler2D tDiffuse;
+varying vec2 vUv;
+
+float random(vec2 c){
+    return fract(sin(dot(c.xy ,vec2(12.9898,78.233))) * 43758.5453);
+}
+
+void main() {
+    vec2 uv = vUv;
+    
+    // VHS tracking distortion
+    float tracking = time * 0.1;
+    float y = mod(uv.y * 0.5 + tracking, 1.0);
+    float distortion = sin(y * 10.0 + time) * 0.003;
+    uv.x += distortion;
+
+    // Color separation
+    vec4 redChannel = texture2D(tDiffuse, uv + vec2(0.002, 0.0));
+    vec4 greenChannel = texture2D(tDiffuse, uv);
+    vec4 blueChannel = texture2D(tDiffuse, uv - vec2(0.002, 0.0));
+
+    // Scanlines
+    float scanline = sin(uv.y * 800.0) * 0.04;
+    vec4 color = vec4(redChannel.r, greenChannel.g, blueChannel.b, 1.0);
+    color.rgb -= scanline;
+
+    // Static noise
+    float noise = random(uv + time * 0.1) * 0.1;
+    color.rgb += noise;
+
+    // Vertical color bleed
+    float bleed = sin(uv.y * 400.0 + time) * 0.01;
+    color.rgb += vec3(bleed);
+
+    gl_FragColor = color;
+}
+</script>
+</head>
+<body>
+<div></div>
+<script>
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+const renderer = new THREE.WebGLRenderer({ antialias: false });
+renderer.setSize(window.innerWidth, window.innerHeight);
+document.body.appendChild(renderer.domElement);
+
+let composer;
+const vhsPass = new THREE.ShaderPass({
+    uniforms: {
+        tDiffuse: { value: null },
+        time: { value: 0 }
+    },
+    vertexShader: document.getElementById('vhs-vertex').textContent,
+    fragmentShader: document.getElementById('vhs-fragment').textContent
+});
+
+composer = new THREE.EffectComposer(renderer);
+const renderPass = new THREE.RenderPass(scene, camera);
+composer.addPass(renderPass);
+composer.addPass(vhsPass);
+
+// Load textures
+const textureLoader = new THREE.TextureLoader();
+const barkTexture = textureLoader.load('Bark_007_BaseColor.jpg');
+barkTexture.wrapS = THREE.RepeatWrapping;
+barkTexture.wrapT = THREE.RepeatWrapping;
+barkTexture.repeat.set(2, 10);
+
+const grassTexture = textureLoader.load('Grass_005_BaseColor (1).jpg');
+grassTexture.wrapS = THREE.RepeatWrapping;
+grassTexture.wrapT = THREE.RepeatWrapping;
+grassTexture.repeat.set(100, 100);
+
+const leavesTexture = textureLoader.load('Stylized_Leaves_001_basecolor.jpg');
+leavesTexture.wrapS = THREE.RepeatWrapping;
+leavesTexture.wrapT = THREE.RepeatWrapping;
+leavesTexture.repeat.set(2, 2);
+
+// Load additional texture
+const noFilterTexture = textureLoader.load('noFilter.png');
+
+// Add audio loader and setup
+const audioLoader = new THREE.AudioLoader();
+const listener = new THREE.AudioListener();
+camera.add(listener);
+const footstepSound = new THREE.Audio(listener);
+
+// Load footstep sound
+audioLoader.load('505139__mitchanary__foot_grass_4.wav', function(buffer) {
+    footstepSound.setBuffer(buffer);
+    footstepSound.setVolume(0.03);
+    footstepSound.setPlaybackRate(0.8);
+});
+
+// Add ambient forest sound
+const ambientSound = new THREE.Audio(listener);
+
+// Load ambient forest sound
+audioLoader.load('369237__insintesi__stellar-forest.wav', function(buffer) {
+    ambientSound.setBuffer(buffer);
+    ambientSound.setVolume(0.1);
+    ambientSound.setLoop(true);
+    ambientSound.play(); 
+});
+
+// Load breathing sound
+const breathingSound = new THREE.Audio(listener);
+audioLoader.load('fast-breathing-struggle-male-82742.mp3', function(buffer) {
+    breathingSound.setBuffer(buffer);
+    breathingSound.setVolume(0.3); // Changed from 0.6 to 0.3
+    breathingSound.duration = 5; // Only play first 5 seconds
+});
+
+let fadeOutInterval = null;
+const FADE_DURATION = 200; 
+const FADE_STEPS = 20; 
+const BREATH_FADE_DURATION = 500; // 500ms fade duration
+let breathFadeInterval = null;
+
+function fadeOutSound() {
+    if (!footstepSound.isPlaying) return;
+    
+    const startVolume = footstepSound.getVolume();
+    const volumeStep = startVolume / FADE_STEPS;
+    let steps = FADE_STEPS;
+    
+    clearInterval(fadeOutInterval);
+    
+    fadeOutInterval = setInterval(() => {
+        steps--;
+        const newVolume = volumeStep * steps;
+        footstepSound.setVolume(Math.max(0, newVolume));
+        
+        if (steps <= 0) {
+            clearInterval(fadeOutInterval);
+            footstepSound.stop();
+        }
+    }, FADE_DURATION / FADE_STEPS);
+}
+
+function fadeInBreathingSound() {
+    if (!breathingSound.buffer || breathingSound.isPlaying) return;
+    
+    breathingSound.setVolume(0);
+    breathingSound.play();
+    
+    const targetVolume = 0.3; // Target volume for breathing
+    const volumeStep = targetVolume / FADE_STEPS;
+    let steps = 0;
+    
+    clearInterval(breathFadeInterval);
+    
+    breathFadeInterval = setInterval(() => {
+        steps++;
+        const newVolume = volumeStep * steps;
+        breathingSound.setVolume(Math.min(targetVolume, newVolume));
+        
+        if (steps >= FADE_STEPS) {
+            clearInterval(breathFadeInterval);
+        }
+    }, BREATH_FADE_DURATION / FADE_STEPS);
+}
+
+function fadeOutBreathingSound() {
+    if (!breathingSound.isPlaying) return;
+
+    const startVolume = breathingSound.getVolume();
+    const volumeStep = startVolume / FADE_STEPS;
+    let steps = FADE_STEPS;
+
+    clearInterval(breathFadeInterval);
+
+    breathFadeInterval = setInterval(() => {
+        steps--;
+        const newVolume = volumeStep * steps;
+        breathingSound.setVolume(Math.max(0, newVolume));
+
+        if (steps <= 0) {
+            clearInterval(breathFadeInterval);
+            breathingSound.stop();
+        }
+    }, BREATH_FADE_DURATION / FADE_STEPS);
+}
+
+const FOG_DENSITY = 0.025;
+scene.fog = new THREE.FogExp2(0x93bfec, FOG_DENSITY);
+scene.background = new THREE.Color(0x93bfec);
+
+const groundGeometry = new THREE.PlaneGeometry(2000, 2000);
+const groundMaterial = new THREE.MeshPhongMaterial({ 
+    map: grassTexture,
+    bumpMap: grassTexture,
+    bumpScale: 0.2,
+    color: 0x2a4d1a,
+});
+const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+ground.rotation.x = -Math.PI / 2;
+ground.position.y = 0;
+scene.add(ground);
+
+const trunkGeometry = new THREE.CylinderGeometry(2.5, 3.5, 1, 8);
+const trunkMaterial = new THREE.MeshPhongMaterial({ 
+    map: barkTexture,
+    bumpMap: barkTexture,
+    bumpScale: 0.5,
+    color: 0x4d2610
+});
+const branchGeometry = new THREE.CylinderGeometry(0.3, 0.4, 5, 4);
+const branchMaterial = new THREE.MeshPhongMaterial({ color: 0x2a1410 });
+const leavesGeometry = new THREE.ConeGeometry(8, 10, 6);
+
+function createTree(x, z) {
+    const tree = new THREE.Group();
+    
+    const trunkHeight = 30 + Math.random() * 20;
+    const trunk = new THREE.Mesh(trunkGeometry, trunkMaterial);
+    trunk.scale.y = trunkHeight;
+    trunk.position.y = trunkHeight / 2;
+    tree.add(trunk);
+
+    const leafLayers = 4;
+    for (let i = 0; i < leafLayers; i++) {
+        const leavesMaterial = new THREE.MeshPhongMaterial({ 
+            map: leavesTexture,
+            color: 0x072f08,
+            transparent: true,
+            opacity: 0.9
+        });
+        const leaves = new THREE.Mesh(leavesGeometry, leavesMaterial);
+        leaves.position.y = trunkHeight - (i * 3);
+        leaves.rotation.y = Math.random() * Math.PI * 2;
+        tree.add(leaves);
+    }
+
+    for (let i = 0; i < 6; i++) {
+        const branch = new THREE.Mesh(branchGeometry, branchMaterial);
+        const height = trunkHeight * 0.4 + (Math.random() * trunkHeight * 0.5);
+        branch.position.y = height;
+        branch.rotation.z = Math.random() * Math.PI / 3;
+        branch.rotation.y = Math.random() * Math.PI * 2;
+        tree.add(branch);
+    }
+
+    tree.position.set(x, 0, z);
+    tree.userData.radius = 3.5; 
+    return tree;
+}
+
+const trees = new Set();
+const faces = new Set();
+
+const TREE_RENDER_DISTANCE = 150;
+const TREE_SPACING = 20;
+const MIN_TREE_DISTANCE = 15;
+
+const FACE_COUNT = 1; // Changed from 15 to 1
+const FACE_SPAWN_RADIUS = { MIN: 50, MAX: 80 }; // Increased from {MIN: 30, MAX: 50}
+const FACE_FADE_DISTANCE = 40; // Increased fade distance to 40 units
+const FACE_FADE_DURATION = 1000; // Time in ms for fade transition
+const FACE_LIFETIME = 10000; // 10 seconds lifetime
+const FACE_SIZE = 8; // Larger size
+const MIN_FACE_DISTANCE = 10; // Minimum distance from player
+
+function createFace(x, y, z) {
+    const geometry = new THREE.PlaneGeometry(FACE_SIZE, FACE_SIZE);
+    const material = new THREE.MeshBasicMaterial({
+        map: noFilterTexture,
+        transparent: true,
+        opacity: 0.9,
+        side: THREE.DoubleSide
+    });
+    const face = new THREE.Mesh(geometry, material);
+    face.position.set(x, y, z);
+    
+    // Add timing and fade properties
+    face.userData.spawnTime = Date.now();
+    face.userData.isFading = false;
+    face.userData.fadeStartTime = null;
+    
+    // Update function handles facing player, fading, and lifetime
+    face.userData.update = () => {
+        face.lookAt(camera.position);
+        
+        // Check distance to player for proximity fade
+        const dx = face.position.x - camera.position.x;
+        const dz = face.position.z - camera.position.z;
+        const distanceToPlayer = Math.sqrt(dx * dx + dz * dz);
+        
+        // Check lifetime
+        const age = Date.now() - face.userData.spawnTime;
+        
+        // Start fading if too close to player or lifetime exceeded
+        if ((distanceToPlayer < FACE_FADE_DISTANCE || age > FACE_LIFETIME) && !face.userData.isFading) {
+            face.userData.isFading = true;
+            face.userData.fadeStartTime = Date.now();
+        }
+        
+        // Handle fading
+        if (face.userData.isFading) {
+            const fadeTime = Date.now() - face.userData.fadeStartTime;
+            const fadeProgress = Math.min(fadeTime / FACE_FADE_DURATION, 1);
+            face.material.opacity = 0.9 * (1 - fadeProgress);
+            
+            // When fully faded, reposition the face
+            if (fadeProgress >= 1) {
+                repositionFace(face);
+            }
+        }
+    };
+    
+    return face;
+}
+
+// Add this new function to handle face repositioning
+function repositionFace(face) {
+    const angle = Math.random() * Math.PI * 2;
+    const distance = FACE_SPAWN_RADIUS.MIN + Math.random() * (FACE_SPAWN_RADIUS.MAX - FACE_SPAWN_RADIUS.MIN);
+    
+    const newX = camera.position.x + Math.cos(angle) * distance;
+    const newZ = camera.position.z + Math.sin(angle) * distance;
+    const newY = 2 + Math.random() * 6;
+    
+    face.position.set(newX, newY, newZ);
+    face.material.opacity = 0.9;
+    face.userData.spawnTime = Date.now();
+    face.userData.isFading = false;
+    face.userData.fadeStartTime = null;
+}
+
+function getGridPosition(x, z) {
+    return {
+        x: Math.round(x / TREE_SPACING) * TREE_SPACING,
+        z: Math.round(z / TREE_SPACING) * TREE_SPACING
+    };
+}
+
+function isPositionValid(x, z, existingTrees) {
+    for (const tree of existingTrees) {
+        const dx = tree.position.x - x;
+        const dz = tree.position.z - z;
+        if (dx * dx + dz * dz < MIN_TREE_DISTANCE * MIN_TREE_DISTANCE) return false;
+    }
+    return true;
+}
+
+function getDistanceToFog(point) {
+    const dx = point.x - camera.position.x;
+    const dz = point.z - camera.position.z;
+    return Math.sqrt(dx * dx + dz * dz);
+}
+
+function isTreeBehindFog(tree) {
+    const distance = getDistanceToFog(tree.position);
+    return distance > (-Math.log(0.05) / FOG_DENSITY);
+}
+
+function checkPlayerCollision(newX, newZ) {
+    let canMove = true;
+    let adjustedX = newX;
+    let adjustedZ = newZ;
+
+    for (const tree of trees) {
+        const dx = tree.position.x - newX;
+        const dz = tree.position.z - newZ;
+        const distanceSquared = dx * dx + dz * dz;
+        const minDistance = tree.userData.radius + 1; 
+
+        if (distanceSquared < minDistance * minDistance) {
+            const angle = Math.atan2(dz, dx);
+            adjustedX = tree.position.x - (minDistance * Math.cos(angle));
+            adjustedZ = tree.position.z - (minDistance * Math.sin(angle));
+
+            for (const otherTree of trees) {
+                if (otherTree === tree) continue;
+                
+                const otherDx = otherTree.position.x - adjustedX;
+                const otherDz = otherTree.position.z - adjustedZ;
+                const otherDistanceSquared = otherDx * otherDx + otherDz * otherDz;
+                const otherMinDistance = otherTree.userData.radius + 1;
+                
+                if (otherDistanceSquared < otherMinDistance * otherMinDistance) {
+                    return { canMove: false, x: camera.position.x, z: camera.position.z };
+                }
+            }
+
+            return { canMove: true, x: adjustedX, z: adjustedZ };
+        }
+    }
+
+    return { canMove: true, x: newX, z: newZ };
+}
+
+function findSafeSpawnPosition() {
+    const maxAttempts = 100;
+    let attempts = 0;
+    
+    while (attempts < maxAttempts) {
+        const x = Math.random() * 100 - 50; 
+        const z = Math.random() * 100 - 50;
+        
+        let isSafe = true;
+        for (const tree of trees) {
+            const dx = tree.position.x - x;
+            const dz = tree.position.z - z;
+            const distanceSquared = dx * dx + dz * dz;
+            const minDistance = tree.userData.radius + 2; 
+            
+            if (distanceSquared < minDistance * minDistance) {
+                isSafe = false;
+                break;
+            }
+        }
+        
+        if (isSafe) {
+            return { x, z };
+        }
+        
+        attempts++;
+    }
+    
+    return { x: 0, z: 0 };
+}
+
+const safeSpot = findSafeSpawnPosition();
+camera.position.set(safeSpot.x, 4.5, safeSpot.z);
+
+const BASE_MOVE_SPEED = 0.225;
+const SPRINT_MULTIPLIER = 1.4; // Changed from 1.7
+let isSprinting = false;
+
+const moveSpeed = BASE_MOVE_SPEED; 
+
+const FIREFLY_COUNT = 50; 
+const fireflyGeometry = new THREE.BufferGeometry();
+const fireflyPositions = new Float32Array(FIREFLY_COUNT * 3);
+const fireflyVelocities = [];
+
+for (let i = 0; i < FIREFLY_COUNT; i++) {
+    const i3 = i * 3;
+    fireflyPositions[i3] = Math.random() * 200 - 100; 
+    fireflyPositions[i3 + 1] = Math.random() * 10 + 2; 
+    fireflyPositions[i3 + 2] = Math.random() * 200 - 100; 
+    
+    fireflyVelocities.push({
+        x: (Math.random() - 0.5) * 0.05,
+        y: (Math.random() - 0.5) * 0.05,
+        z: (Math.random() - 0.5) * 0.05,
+        phase: Math.random() * Math.PI * 2
+    });
+}
+
+fireflyGeometry.setAttribute('position', new THREE.Float32BufferAttribute(fireflyPositions, 3));
+
+const fireflyMaterial = new THREE.ShaderMaterial({
+    vertexShader: document.getElementById('firefly-vertex').textContent,
+    fragmentShader: document.getElementById('firefly-fragment').textContent,
+    transparent: true,
+    blending: THREE.AdditiveBlending,
+});
+
+const fireflies = new THREE.Points(fireflyGeometry, fireflyMaterial);
+scene.add(fireflies);
+
+function updateTrees() {
+    const playerX = camera.position.x;
+    const playerZ = camera.position.z;
+
+    for (const tree of trees) {
+        const dx = tree.position.x - playerX;
+        const dz = tree.position.z - playerZ;
+        const distSquared = dx * dx + dz * dz;
+        
+        if (distSquared > TREE_RENDER_DISTANCE * TREE_RENDER_DISTANCE || 
+            isTreeBehindFog(tree)) {
+            scene.remove(tree);
+            trees.delete(tree);
+        }
+    }
+
+    const gridSize = Math.ceil(TREE_RENDER_DISTANCE / TREE_SPACING);
+    const playerGridX = Math.round(playerX / TREE_SPACING);
+    const playerGridZ = Math.round(playerZ / TREE_SPACING);
+
+    for (let dx = -gridSize; dx <= gridSize; dx++) {
+        for (let dz = -gridSize; dz <= gridSize; dz++) {
+            const gridX = (playerGridX + dx) * TREE_SPACING;
+            const gridZ = (playerGridZ + dz) * TREE_SPACING;
+            
+            const distSquared = (gridX - playerX) * (gridX - playerX) + 
+                               (gridZ - playerZ) * (gridZ - playerZ);
+
+            const distToSpawn = Math.sqrt(
+                (gridX - safeSpot.x) * (gridX - safeSpot.x) + 
+                (gridZ - safeSpot.z) * (gridZ - safeSpot.z)
+            );
+
+            if (distSquared <= TREE_RENDER_DISTANCE * TREE_RENDER_DISTANCE && 
+                distToSpawn > 5) { 
+                let treeExists = false;
+                for (const tree of trees) {
+                    if (tree.position.x === gridX && tree.position.z === gridZ) {
+                        treeExists = true;
+                        break;
+                    }
+                }
+
+                const wouldBeInFog = getDistanceToFog({x: gridX, z: gridZ}) > (-Math.log(0.05) / FOG_DENSITY);
+                
+                if (!treeExists && !wouldBeInFog && isPositionValid(gridX, gridZ, trees)) {
+                    const tree = createTree(gridX, gridZ);
+                    scene.add(tree);
+                    trees.add(tree);
+                }
+            }
+        }
+    }
+}
+
+function updateFaces() {
+    // Update existing faces
+    for (const face of faces) {
+        const dx = face.position.x - camera.position.x;
+        const dz = face.position.z - camera.position.z;
+        const distSquared = dx * dx + dz * dz;
+        
+        if (distSquared > TREE_RENDER_DISTANCE * TREE_RENDER_DISTANCE) {
+            scene.remove(face);
+            faces.delete(face);
+        } else {
+            face.userData.update();
+        }
+    }
+
+    // Add new faces if needed
+    while (faces.size < FACE_COUNT) {
+        const angle = Math.random() * Math.PI * 2;
+        const distance = FACE_SPAWN_RADIUS.MIN + Math.random() * (FACE_SPAWN_RADIUS.MAX - FACE_SPAWN_RADIUS.MIN);
+        
+        const x = camera.position.x + Math.cos(angle) * distance;
+        const z = camera.position.z + Math.sin(angle) * distance;
+        const y = 2 + Math.random() * 6;
+        
+        // Check if position is valid
+        let tooClose = false;
+        for (const face of faces) {
+            const dx = face.position.x - x;
+            const dz = face.position.z - z;
+            if (dx * dx + dz * dz < MIN_FACE_DISTANCE * MIN_FACE_DISTANCE) {
+                tooClose = true;
+                break;
+            }
+        }
+        
+        if (!tooClose) {
+            const face = createFace(x, y, z);
+            scene.add(face);
+            faces.add(face);
+        }
+    }
+}
+
+const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+scene.add(ambientLight);
+
+const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+directionalLight.position.set(10, 20, 10);
+scene.add(directionalLight);
+
+const keys = {};
+document.addEventListener('keydown', (e) => {
+    keys[e.key.toLowerCase()] = true;
+    if (e.key.toLowerCase() === 'shift') {
+        isSprinting = true;
+        if (Object.values(keys).some(key => key) && ['w','a','s','d'].some(key => keys[key])) {
+            fadeInBreathingSound();
+        }
+    }
+});
+document.addEventListener('keyup', (e) => {
+    keys[e.key.toLowerCase()] = false;
+    if (e.key.toLowerCase() === 'shift') {
+        isSprinting = false;
+        fadeOutBreathingSound();
+    }
+});
+
+let mouseX = 0;
+let mouseY = 0;
+document.addEventListener('mousemove', (e) => {
+    const movementX = e.movementX || 0;
+    const movementY = e.movementY || 0;
+    mouseX -= movementX * 0.002;
+    mouseY = Math.max(-Math.PI/2, Math.min(Math.PI/2, mouseY - movementY * 0.002));
+});
+
+renderer.domElement.addEventListener('click', () => {
+    renderer.domElement.requestPointerLock();
+});
+
+function animate() {
+    requestAnimationFrame(animate);
+    
+    const direction = new THREE.Vector3();
+    if (keys['w']) direction.z -= 1;
+    if (keys['s']) direction.z += 1;
+    if (keys['a']) direction.x -= 1;
+    if (keys['d']) direction.x += 1;
+    
+    if (direction.length() > 0) {
+        direction.normalize();
+        direction.applyAxisAngle(new THREE.Vector3(0, 1, 0), mouseX);
+        
+        const currentMoveSpeed = isSprinting ? BASE_MOVE_SPEED * SPRINT_MULTIPLIER : BASE_MOVE_SPEED;
+        
+        const newX = camera.position.x + direction.x * currentMoveSpeed;
+        const newZ = camera.position.z + direction.z * currentMoveSpeed;
+        
+        const collisionResult = checkPlayerCollision(newX, newZ);
+        
+        if (collisionResult.canMove) {
+            camera.position.x = collisionResult.x;
+            camera.position.z = collisionResult.z;
+            
+            clearInterval(fadeOutInterval);
+            
+            if (footstepSound.buffer && !footstepSound.isPlaying) {
+                footstepSound.setVolume(0.03); 
+                footstepSound.play();
+                footstepSound.setPlaybackRate(isSprinting ? 1.2 : 0.8);
+            }
+
+            // Modify the breathing sound logic
+            if (isSprinting && breathingSound.buffer && !breathingSound.isPlaying) {
+                fadeInBreathingSound();
+            }
+        }
+    } else {
+        camera.position.y = 4.5;
+        
+        if (footstepSound.isPlaying) {
+            fadeOutSound();
+        }
+        
+        // Modify breathing sound stop
+        if (breathingSound.isPlaying) {
+            fadeOutBreathingSound();
+        }
+    }
+    
+    camera.rotation.order = 'YXZ';
+    camera.rotation.x = mouseY;
+    camera.rotation.y = mouseX;
+
+    // Update VHS shader time uniform
+    vhsPass.uniforms.time.value = performance.now() * 0.001;
+
+    // Update fireflies
+    const positions = fireflies.geometry.attributes.position.array;
+    const time = Date.now() * 0.001;
+
+    for (let i = 0; i < FIREFLY_COUNT; i++) {
+        const i3 = i * 3;
+        const velocity = fireflyVelocities[i];
+        
+        // Update position
+        positions[i3] += velocity.x;
+        positions[i3 + 1] += Math.sin(time + velocity.phase) * 0.02 + velocity.y;
+        positions[i3 + 2] += velocity.z;
+        
+        // Wrap around relative to player position
+        const distX = positions[i3] - camera.position.x;
+        const distZ = positions[i3 + 2] - camera.position.z;
+        
+        if (distX > 100) positions[i3] = camera.position.x - 100;
+        if (distX < -100) positions[i3] = camera.position.x + 100;
+        if (positions[i3 + 1] > 15) positions[i3 + 1] = 2;
+        if (positions[i3 + 1] < 2) positions[i3 + 1] = 15;
+        if (distZ > 100) positions[i3 + 2] = camera.position.z - 100;
+        if (distZ < -100) positions[i3 + 2] = camera.position.z + 100;
+    }
+
+    fireflies.geometry.attributes.position.needsUpdate = true;
+
+    updateTrees();
+    updateFaces(); // Add this line before composer.render
+    
+    composer.render();
+}
+
+window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    composer.setSize(window.innerWidth, window.innerHeight); // Add this line
+});
+
+animate();
+</script>
+
+</body></html>
