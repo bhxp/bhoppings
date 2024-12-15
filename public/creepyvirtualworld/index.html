@@ -1,0 +1,883 @@
+<html><head><base href="https://creepynature3d.com/">
+<title>Creepy Virtual World 1</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/PointerLockControls.js"></script>
+<style>
+  body { margin: 0; overflow: hidden; }
+  canvas { width: 100%; height: 100% }
+  #blocker {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.5);
+  }
+  #instructions {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    font-size: 14px;
+    cursor: pointer;
+    color: #ffffff;
+  }
+  #mobileControls {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: none;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+  }
+  .mobileButton {
+    width: 60px;
+    height: 60px;
+    background-color: rgba(255, 255, 255, 0.3);
+    border: 2px solid white;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 24px;
+    color: white;
+    user-select: none;
+  }
+  #jumpButton {
+    width: 100px;
+    border-radius: 30px;
+  }
+  #musicToggle {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background-color: rgba(255, 255, 255, 0.3);
+    border: 2px solid white;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 20px;
+    color: white;
+    cursor: pointer;
+  }
+  #flashlightToggle {
+    position: fixed;
+    top: 70px;
+    right: 20px;
+    background-color: rgba(255, 255, 255, 0.3);
+    border: 2px solid white;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 20px;
+    color: white;
+    cursor: pointer;
+  }
+  #cover {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: url('https://images.unsplash.com/photo-1513624954087-ca7109c0f710?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1920&q=80');
+    background-size: cover;
+    background-position: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    color: #fff;
+    text-align: center;
+    z-index: 1000;
+  }
+  #cover h1 {
+    font-size: 48px;
+    margin-bottom: 20px;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+  }
+  #startButton {
+    font-size: 24px;
+    padding: 10px 20px;
+    background-color: rgba(255, 255, 255, 0.2);
+    border: 2px solid white;
+    color: white;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+  #startButton:hover {
+    background-color: rgba(255, 255, 255, 0.4);
+  }
+</style>
+</head>
+<body>
+<div id="cover">
+  <h1>Creepy Virtual World 1</h1>
+  <button id="startButton">Enter if you dare</button>
+</div>
+
+<div id="blocker">
+  <div id="instructions">
+    <p style="font-size:36px">
+      Click to enter the eerie forest
+    </p>
+    <p>
+      Move: WASD / Arrow buttons<br/>
+      Look: MOUSE / Drag on screen<br/>
+      Jump: SPACE / Jump button<br/>
+      Toggle Music: M / Music button<br/>
+      Toggle Flashlight: F / Flashlight button<br/>
+      Toggle Wireframe: ~ (tilde)<br/>
+      Toggle Noclip: L
+    </p>
+  </div>
+</div>
+
+<div id="mobileControls">
+  <div class="mobileButton" id="leftButton">←</div>
+  <div class="mobileButton" id="forwardButton">↑</div>
+  <div class="mobileButton" id="rightButton">→</div>
+  <div class="mobileButton" id="backwardButton">↓</div>
+  <div class="mobileButton" id="jumpButton">JUMP</div>
+</div>
+
+<div id="musicToggle">♪</div>
+<div id="flashlightToggle">🔦</div>
+
+<audio id="backgroundMusic" loop>
+  <source src="https://freesound.org/data/previews/415/415209_7220731-lq.mp3" type="audio/mpeg">
+  Your browser does not support the audio element.
+</audio>
+
+<script>
+let camera, scene, renderer, controls;
+let moveForward = false;
+let moveBackward = false;
+let moveLeft = false;
+let moveRight = false;
+let canJump = false;
+
+let prevTime = performance.now();
+const velocity = new THREE.Vector3();
+const direction = new THREE.Vector3();
+
+let birds = [];
+let trees = [];
+let houses = [];
+
+let backgroundMusic;
+let isMusicPlaying = false;
+
+let flashlight;
+let isFlashlightOn = false;
+
+let denseFogParticles; // Added global variable
+
+let isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+// New Variables for wireframe and noclip
+let isWireframe = false;
+let isNoclip = false;
+
+// Start button event listener
+document.getElementById('startButton').addEventListener('click', function() {
+  document.getElementById('cover').style.display = 'none';
+  init();
+  animate();
+});
+
+function createBigCreepyTree() {
+  const tree = new THREE.Group();
+
+  // Trunk
+  const trunkGeometry = new THREE.CylinderGeometry(3, 5, 80, 12);
+  const trunkMaterial = new THREE.MeshPhongMaterial({ 
+    color: 0x4a3728,
+    roughness: 1,
+    metalness: 0,
+    flatShading: true
+  });
+  const trunk = new THREE.Mesh(trunkGeometry, trunkMaterial);
+  trunk.position.y = 40;
+  tree.add(trunk);
+
+  // Branches
+  const branchMaterial = new THREE.MeshPhongMaterial({ 
+    color: 0x3a2a1a,
+    roughness: 1,
+    metalness: 0,
+    flatShading: true
+  });
+
+  for (let i = 0; i < 8; i++) {
+    const branchGeometry = new THREE.CylinderGeometry(1, 2, 30 + Math.random() * 20, 6);
+    const branch = new THREE.Mesh(branchGeometry, branchMaterial);
+    branch.position.y = 40 + Math.random() * 30;
+    branch.rotation.x = Math.random() * Math.PI / 2;
+    branch.rotation.z = Math.random() * Math.PI * 2;
+    tree.add(branch);
+  }
+
+  // Leaves
+  const leavesGeometry = new THREE.SphereGeometry(20, 10, 10);
+  const leavesMaterial = new THREE.MeshPhongMaterial({ 
+    color: 0x1a3a1a,
+    roughness: 1,
+    metalness: 0,
+    flatShading: true
+  });
+
+  for (let i = 0; i < 6; i++) {
+    const leaves = new THREE.Mesh(leavesGeometry, leavesMaterial);
+    leaves.position.y = 70 + Math.random() * 20;
+    leaves.position.x = (Math.random() - 0.5) * 20;
+    leaves.position.z = (Math.random() - 0.5) * 20;
+    leaves.scale.set(1 + Math.random() * 0.5, 1 + Math.random() * 0.5, 1 + Math.random() * 0.5);
+    tree.add(leaves);
+  }
+
+  // Add some "face-like" features to make it eerie
+  const eyeGeometry = new THREE.SphereGeometry(1, 8, 8);
+  const eyeMaterial = new THREE.MeshPhongMaterial({ color: 0x111111 });
+  
+  const leftEye = new THREE.Mesh(eyeGeometry, eyeMaterial);
+  leftEye.position.set(-2, 50, 4);
+  tree.add(leftEye);
+
+  const rightEye = new THREE.Mesh(eyeGeometry, eyeMaterial);
+  rightEye.position.set(2, 50, 4);
+  tree.add(rightEye);
+
+  const mouthGeometry = new THREE.BoxGeometry(4, 1, 1);
+  const mouthMaterial = new THREE.MeshPhongMaterial({ color: 0x3a1a0a });
+  const mouth = new THREE.Mesh(mouthGeometry, mouthMaterial);
+  mouth.position.set(0, 45, 4);
+  tree.add(mouth);
+
+  return tree;
+}
+
+function createOldHouse() {
+  const house = new THREE.Group();
+
+  // Main structure
+  const wallsGeometry = new THREE.BoxGeometry(30, 25, 20);
+  const wallsMaterial = new THREE.MeshPhongMaterial({ color: 0x8B4513 });
+  const walls = new THREE.Mesh(wallsGeometry, wallsMaterial);
+  walls.position.y = 12.5;
+  house.add(walls);
+
+  // Roof
+  const roofGeometry = new THREE.ConeGeometry(25, 15, 4);
+  const roofMaterial = new THREE.MeshPhongMaterial({ color: 0x4A4A4A });
+  const roof = new THREE.Mesh(roofGeometry, roofMaterial);
+  roof.position.y = 32.5;
+  roof.rotation.y = Math.PI / 4;
+  house.add(roof);
+
+  // Add interior rooms
+  const roomGeometry = new THREE.BoxGeometry(28, 23, 18);
+  const roomMaterial = new THREE.MeshPhongMaterial({ color: 0xD2B48C, side: THREE.BackSide });
+  const room = new THREE.Mesh(roomGeometry, roomMaterial);
+  room.position.y = 11.5;
+  house.add(room);
+
+  // Add furniture (simplified)
+  const furnitureGeometry = new THREE.BoxGeometry(5, 5, 5);
+  const furnitureMaterial = new THREE.MeshPhongMaterial({ color: 0x8B4513 });
+  const furniture1 = new THREE.Mesh(furnitureGeometry, furnitureMaterial);
+  furniture1.position.set(-10, 2.5, 0);
+  house.add(furniture1);
+
+  const furniture2 = new THREE.Mesh(furnitureGeometry, furnitureMaterial);
+  furniture2.position.set(10, 2.5, 0);
+  house.add(furniture2);
+
+  // Door
+  const doorGeometry = new THREE.PlaneGeometry(5, 8);
+  const doorMaterial = new THREE.MeshPhongMaterial({ color: 0x4A4A4A });
+  const door = new THREE.Mesh(doorGeometry, doorMaterial);
+  door.position.set(0, 4, 10.1);
+  house.add(door);
+
+  // Windows
+  const windowGeometry = new THREE.PlaneGeometry(4, 4);
+  const windowMaterial = new THREE.MeshPhongMaterial({ color: 0x87CEFA });
+
+  const window1 = new THREE.Mesh(windowGeometry, windowMaterial);
+  window1.position.set(-7, 15, 10.1);
+  house.add(window1);
+
+  const window2 = new THREE.Mesh(windowGeometry, windowMaterial);
+  window2.position.set(7, 15, 10.1);
+  house.add(window2);
+
+  // Chimney
+  const chimneyGeometry = new THREE.BoxGeometry(3, 10, 3);
+  const chimneyMaterial = new THREE.MeshPhongMaterial({ color: 0x8B4513 });
+  const chimney = new THREE.Mesh(chimneyGeometry, chimneyMaterial);
+  chimney.position.set(10, 35, 5);
+  house.add(chimney);
+
+  return house;
+}
+
+function createChapel() {
+  const chapel = new THREE.Group();
+
+  // Main structure
+  const wallsGeometry = new THREE.BoxGeometry(40, 30, 60);
+  const wallsMaterial = new THREE.MeshPhongMaterial({ color: 0xD3D3D3 });
+  const walls = new THREE.Mesh(wallsGeometry, wallsMaterial);
+  walls.position.y = 15;
+  chapel.add(walls);
+
+  // Roof
+  const roofGeometry = new THREE.ConeGeometry(30, 20, 4);
+  const roofMaterial = new THREE.MeshPhongMaterial({ color: 0x8B4513 });
+  const roof = new THREE.Mesh(roofGeometry, roofMaterial);
+  roof.position.y = 40;
+  roof.rotation.y = Math.PI / 4;
+  chapel.add(roof);
+
+  // Steeple
+  const steepleGeometry = new THREE.ConeGeometry(5, 20, 4);
+  const steeple = new THREE.Mesh(steepleGeometry, roofMaterial);
+  steeple.position.set(0, 60, -25);
+  chapel.add(steeple);
+
+  // Door
+  const doorGeometry = new THREE.PlaneGeometry(8, 15);
+  const doorMaterial = new THREE.MeshPhongMaterial({ color: 0x8B4513 });
+  const door = new THREE.Mesh(doorGeometry, doorMaterial);
+  door.position.set(0, 7.5, 30.1);
+  chapel.add(door);
+
+  // Windows
+  const windowGeometry = new THREE.PlaneGeometry(5, 10);
+  const windowMaterial = new THREE.MeshPhongMaterial({ color: 0xADD8E6, opacity: 0.7, transparent: true });
+  
+  for (let i = -1; i <= 1; i += 2) {
+    for (let j = -1; j <= 1; j += 2) {
+      const window = new THREE.Mesh(windowGeometry, windowMaterial);
+      window.position.set(i * 15, 15, j * 25);
+      window.rotation.y = (j === 1) ? 0 : Math.PI;
+      chapel.add(window);
+    }
+  }
+
+  // Interior
+  const interiorGeometry = new THREE.BoxGeometry(38, 28, 58);
+  const interiorMaterial = new THREE.MeshPhongMaterial({ color: 0xFFFAFA, side: THREE.BackSide });
+  const interior = new THREE.Mesh(interiorGeometry, interiorMaterial);
+  interior.position.y = 14;
+  chapel.add(interior);
+
+  // Simplified altar
+  const altarGeometry = new THREE.BoxGeometry(10, 5, 3);
+  const altarMaterial = new THREE.MeshPhongMaterial({ color: 0xD2B48C });
+  const altar = new THREE.Mesh(altarGeometry, altarMaterial);
+  altar.position.set(0, 2.5, -25);
+  chapel.add(altar);
+
+  return chapel;
+}
+
+function init() {
+  camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 1, 1000);
+  camera.position.y = 10;
+
+  scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x330000);
+  scene.fog = new THREE.Fog(0x330000, 0, 300);
+
+  const ambientLight = new THREE.AmbientLight(0x444444, 0.5);
+  scene.add(ambientLight);
+
+  const moonLight = new THREE.DirectionalLight(0x8888aa, 0.7);
+  moonLight.position.set(1, 1, 0).normalize();
+  scene.add(moonLight);
+
+  controls = new THREE.PointerLockControls(camera, document.body);
+
+  const blocker = document.getElementById('blocker');
+  const instructions = document.getElementById('instructions');
+
+  instructions.addEventListener('click', function () {
+    controls.lock();
+  });
+
+  controls.addEventListener('lock', function () {
+    instructions.style.display = 'none';
+    blocker.style.display = 'none';
+    if (!isMusicPlaying) {
+      playBackgroundMusic();
+    }
+    if (isMobile) {
+      document.getElementById('mobileControls').style.display = 'flex';
+    }
+  });
+
+  controls.addEventListener('unlock', function () {
+    blocker.style.display = 'block';
+    instructions.style.display = '';
+    document.getElementById('mobileControls').style.display = 'none';
+  });
+
+  scene.add(controls.getObject());
+
+  // Enhance flashlight
+  flashlight = new THREE.SpotLight(0xffffff, 2, 150, Math.PI / 6, 0.5, 1);
+  flashlight.position.set(0, 10, 0);
+  flashlight.target.position.set(0, 0, -1);
+  camera.add(flashlight);
+  camera.add(flashlight.target);
+  flashlight.visible = false;
+
+  const onKeyDown = function (event) {
+    switch (event.code) {
+      case 'ArrowUp':
+      case 'KeyW':
+        moveForward = true;
+        break;
+      case 'ArrowLeft':
+      case 'KeyA':
+        moveLeft = true;
+        break;
+      case 'ArrowDown':
+      case 'KeyS':
+        moveBackward = true;
+        break;
+      case 'ArrowRight':
+      case 'KeyD':
+        moveRight = true;
+        break;
+      case 'Space':
+        if (canJump === true) velocity.y += 350;
+        canJump = false;
+        break;
+      case 'KeyM':
+        toggleBackgroundMusic();
+        break;
+      case 'KeyF':
+        toggleFlashlight();
+        break;
+      case 'Backquote': // Toggle wireframe
+        toggleWireframe();
+        break;
+      case 'KeyL': // Toggle noclip
+        toggleNoclip();
+        break;
+    }
+  };
+
+  const onKeyUp = function (event) {
+    switch (event.code) {
+      case 'ArrowUp':
+      case 'KeyW':
+        moveForward = false;
+        break;
+      case 'ArrowLeft':
+      case 'KeyA':
+        moveLeft = false;
+        break;
+      case 'ArrowDown':
+      case 'KeyS':
+        moveBackward = false;
+        break;
+      case 'ArrowRight':
+      case 'KeyD':
+        moveRight = false;
+        break;
+    }
+  };
+
+  document.addEventListener('keydown', onKeyDown);
+  document.addEventListener('keyup', onKeyUp);
+
+  // Mobile controls
+  if (isMobile) {
+    const forwardButton = document.getElementById('forwardButton');
+    const backwardButton = document.getElementById('backwardButton');
+    const leftButton = document.getElementById('leftButton');
+    const rightButton = document.getElementById('rightButton');
+    const jumpButton = document.getElementById('jumpButton');
+
+    forwardButton.addEventListener('touchstart', () => moveForward = true);
+    forwardButton.addEventListener('touchend', () => moveForward = false);
+    backwardButton.addEventListener('touchstart', () => moveBackward = true);
+    backwardButton.addEventListener('touchend', () => moveBackward = false);
+    leftButton.addEventListener('touchstart', () => moveLeft = true);
+    leftButton.addEventListener('touchend', () => moveLeft = false);
+    rightButton.addEventListener('touchstart', () => moveRight = true);
+    rightButton.addEventListener('touchend', () => moveRight = false);
+    jumpButton.addEventListener('touchstart', () => {
+      if (canJump === true) velocity.y += 350;
+      canJump = false;
+    });
+
+    // Add flashlight toggle to mobile controls
+    const flashlightButton = document.getElementById('flashlightToggle');
+    flashlightButton.addEventListener('touchstart', toggleFlashlight);
+  }
+
+  // Music toggle button
+  const musicToggle = document.getElementById('musicToggle');
+  musicToggle.addEventListener('click', toggleBackgroundMusic);
+
+  // Ground
+  const groundGeometry = new THREE.PlaneGeometry(2000, 2000, 100, 100);
+  groundGeometry.rotateX(-Math.PI / 2);
+  const groundMaterial = new THREE.MeshLambertMaterial({ color: 0x1a1a0a });
+  const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+  scene.add(ground);
+
+  // Lake
+  const lakeGeometry = new THREE.CircleGeometry(100, 32);
+  const lakeMaterial = new THREE.MeshLambertMaterial({ color: 0x0a1a33 });
+  const lake = new THREE.Mesh(lakeGeometry, lakeMaterial);
+  lake.rotation.x = -Math.PI / 2;
+  lake.position.set(0, 0.1, 0);
+  scene.add(lake);
+
+  // Creepy Trees
+  for (let i = 0; i < 100; i++) {
+    const tree = createBigCreepyTree();
+    tree.position.x = Math.random() * 1000 - 500;
+    tree.position.z = Math.random() * 1000 - 500;
+    tree.rotation.y = Math.random() * Math.PI * 2;
+    if (Math.sqrt(tree.position.x * tree.position.x + tree.position.z * tree.position.z) < 120) {
+      i--;
+      continue;
+    }
+    trees.push(tree);
+    scene.add(tree);
+  }
+
+  // Old Houses
+  for (let i = 0; i < 20; i++) {
+    const house = createOldHouse();
+    house.position.x = Math.random() * 800 - 400;
+    house.position.z = Math.random() * 800 - 400;
+    house.rotation.y = Math.random() * Math.PI * 2;
+    if (Math.sqrt(house.position.x * house.position.x + house.position.z * house.position.z) < 150) {
+      i--;
+      continue;
+    }
+    houses.push(house);
+    scene.add(house);
+  }
+
+  // Chapel
+  const chapel = createChapel();
+  chapel.position.set(0, 0, -200); // Adjust position as needed
+  scene.add(chapel);
+
+  // Rocks
+  const rockGeometry = new THREE.DodecahedronGeometry(3);
+  const rockMaterial = new THREE.MeshLambertMaterial({ color: 0x3a3a3a });
+  for (let i = 0; i < 200; i++) {
+    const rock = new THREE.Mesh(rockGeometry, rockMaterial);
+    rock.position.x = Math.random() * 1000 - 500;
+    rock.position.z = Math.random() * 1000 - 500;
+    if (Math.sqrt(rock.position.x * rock.position.x + rock.position.z * rock.position.z) < 100) {
+      i--;
+      continue;
+    }
+    rock.rotation.y = Math.random() * Math.PI;
+    rock.updateMatrix();
+    rock.matrixAutoUpdate = false;
+    scene.add(rock);
+  }
+
+  // Birds (bats for eerie atmosphere)
+  const batGeometry = new THREE.ConeGeometry(1, 2, 4);
+  const batMaterial = new THREE.MeshLambertMaterial({ color: 0x111111 });
+  for (let i = 0; i < 30; i++) {
+    const bat = new THREE.Mesh(batGeometry, batMaterial);
+    bat.position.set(
+      Math.random() * 1000 - 500,
+      Math.random() * 50 + 50,
+      Math.random() * 1000 - 500
+    );
+    bat.rotation.x = Math.PI / 2;
+    birds.push(bat);
+    scene.add(bat);
+  }
+
+  // Fog particles
+  const fogGeometry = new THREE.BufferGeometry();
+  const fogPositions = new Float32Array(2000 * 3);
+  const fogSizes = new Float32Array(2000);
+
+  for (let i = 0; i < 2000 * 3; i += 3) {
+    fogPositions[i] = Math.random() * 1000 - 500;
+    fogPositions[i + 1] = Math.random() * 50;
+    fogPositions[i + 2] = Math.random() * 1000 - 500;
+    fogSizes[i / 3] = Math.random() * 5 + 1;
+  }
+
+  fogGeometry.setAttribute('position', new THREE.BufferAttribute(fogPositions, 3));
+  fogGeometry.setAttribute('size', new THREE.BufferAttribute(fogSizes, 1));
+
+  const fogTexture = new THREE.TextureLoader().load('https://threejs.org/examples/textures/sprites/disc.png');
+  const fogMaterial = new THREE.PointsMaterial({
+    size: 5,
+    sizeAttenuation: true,
+    map: fogTexture,
+    alphaTest: 0.5,
+    transparent: true,
+    opacity: 0.1,
+    color: 0xff0000  // Change to red
+  });
+
+  const fogParticles = new THREE.Points(fogGeometry, fogMaterial);
+  scene.add(fogParticles);
+
+  // New denser red fog particle system
+  const denseFogGeometry = new THREE.BufferGeometry();
+  const denseFogPositions = new Float32Array(5000 * 3);
+  const denseFogSizes = new Float32Array(5000);
+
+  for (let i = 0; i < 5000 * 3; i += 3) {
+    denseFogPositions[i] = Math.random() * 1000 - 500;
+    denseFogPositions[i + 1] = Math.random() * 50;
+    denseFogPositions[i + 2] = Math.random() * 1000 - 500;
+    denseFogSizes[i / 3] = Math.random() * 10 + 5;
+  }
+
+  denseFogGeometry.setAttribute('position', new THREE.BufferAttribute(denseFogPositions, 3));
+  denseFogGeometry.setAttribute('size', new THREE.BufferAttribute(denseFogSizes, 1));
+
+  const denseFogMaterial = new THREE.PointsMaterial({
+    size: 10,
+    sizeAttenuation: true,
+    map: fogTexture,
+    alphaTest: 0.5,
+    transparent: true,
+    opacity: 0.05,
+    color: 0xff0000
+  });
+
+  denseFogParticles = new THREE.Points(denseFogGeometry, denseFogMaterial); // Initialized denseFogParticles
+  scene.add(denseFogParticles); // Added to scene
+
+  renderer = new THREE.WebGLRenderer({ antialias: true });
+  renderer.setPixelRatio(window.devicePixelRatio);
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  document.body.appendChild(renderer.domElement);
+
+  window.addEventListener('resize', onWindowResize);
+
+  // Initialize background music
+  backgroundMusic = document.getElementById('backgroundMusic');
+  if (backgroundMusic) {
+    backgroundMusic.volume = 0.5; // Set initial volume
+  } else {
+    console.error('Background music element not found');
+  }
+
+  // Mobile touch controls for camera rotation
+  if (isMobile) {
+    let touchStartX, touchStartY;
+    document.addEventListener('touchstart', (e) => {
+      touchStartX = e.touches[0].pageX;
+      touchStartY = e.touches[0].pageY;
+    });
+    document.addEventListener('touchmove', (e) => {
+      if (controls.isLocked) {
+        const touchEndX = e.touches[0].pageX;
+        const touchEndY = e.touches[0].pageY;
+        const dx = touchEndX - touchStartX;
+        const dy = touchEndY - touchStartY;
+        camera.rotation.y -= dx * 0.02;
+        camera.rotation.x -= dy * 0.02;
+        camera.rotation.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, camera.rotation.x));
+        touchStartX = touchEndX;
+        touchStartY = touchEndY;
+      }
+    });
+  }
+}
+
+function animate() {
+  requestAnimationFrame(animate);
+
+  const time = performance.now();
+
+  if (controls.isLocked === true) {
+    const delta = (time - prevTime) / 1000;
+
+    velocity.x -= velocity.x * 10.0 * delta;
+    velocity.z -= velocity.z * 10.0 * delta;
+
+    if (!isNoclip) {
+      velocity.y -= 9.8 * 100.0 * delta; // 100.0 = mass
+    } else {
+      velocity.y = 0; // No gravity in noclip mode
+    }
+
+    direction.z = Number(moveForward) - Number(moveBackward);
+    direction.x = Number(moveRight) - Number(moveLeft);
+    direction.normalize(); // this ensures consistent movements in all directions
+
+    if (moveForward || moveBackward) velocity.z -= direction.z * 400.0 * delta;
+    if (moveLeft || moveRight) velocity.x -= direction.x * 400.0 * delta;
+
+    if (isNoclip) {
+      // In noclip mode, allow vertical movement
+      if (canJump) velocity.y += 400.0 * delta; // Move up
+      if (moveBackward) velocity.y -= 400.0 * delta; // Move down
+    }
+
+    controls.moveRight(-velocity.x * delta);
+    controls.moveForward(-velocity.z * delta);
+
+    controls.getObject().position.y += (velocity.y * delta);
+
+    if (!isNoclip && controls.getObject().position.y < 10) {
+      velocity.y = 0;
+      controls.getObject().position.y = 10;
+      canJump = true;
+    }
+  }
+
+  // Update flashlight position and direction
+  if (isFlashlightOn) {
+    flashlight.position.copy(camera.position);
+    flashlight.target.position.set(
+      camera.position.x + Math.sin(camera.rotation.y) * Math.cos(camera.rotation.x),
+      camera.position.y + Math.sin(-camera.rotation.x),
+      camera.position.z + Math.cos(camera.rotation.y) * Math.cos(camera.rotation.x)
+    );
+  }
+
+  // Animate bats
+  birds.forEach(bat => {
+    bat.position.x += Math.sin(time * 0.001 + bat.position.y) * 0.5;
+    bat.position.z += Math.cos(time * 0.001 + bat.position.x) * 0.5;
+    bat.position.y += Math.sin(time * 0.002 + bat.position.z) * 0.1;
+    bat.rotation.y = Math.sin(time * 0.003 + bat.position.x) * Math.PI;
+  });
+
+  // Animate creepy trees
+  trees.forEach(tree => {
+    // Make the trees sway slightly
+    tree.rotation.z = Math.sin(time * 0.0003 + tree.position.x) * 0.01;
+    tree.rotation.x = Math.sin(time * 0.0003 + tree.position.z) * 0.01;
+
+    // Make the "eyes" of the trees follow the player
+    const leftEye = tree.children[tree.children.length - 3];
+    const rightEye = tree.children[tree.children.length - 2];
+    const mouth = tree.children[tree.children.length - 1];
+
+    const playerPosition = controls.getObject().position;
+    const treePosition = tree.position;
+
+    const angle = Math.atan2(playerPosition.z - treePosition.z, playerPosition.x - treePosition.x);
+
+    leftEye.position.x = -2 + Math.cos(angle) * 0.5;
+    leftEye.position.z = 4 + Math.sin(angle) * 0.5;
+
+    rightEye.position.x = 2 + Math.cos(angle) * 0.5;
+    rightEye.position.z = 4 + Math.sin(angle) * 0.5;
+
+    // Make the "mouth" of the trees open and close slowly
+    mouth.scale.y = 1 + Math.sin(time * 0.0005) * 0.5;
+  });
+
+  // Animate houses
+  houses.forEach(house => {
+    // Make the houses slightly sway
+    house.rotation.y = Math.sin(time * 0.0001 + house.position.x) * 0.01;
+    
+    // Make the windows flicker
+    const window1 = house.children[3];
+    const window2 = house.children[4];
+    
+    window1.material.color.setRGB(
+      0.5 + Math.random() * 0.1,
+      0.5 + Math.random() * 0.1,
+      0.7 + Math.random() * 0.1
+    );
+    
+    window2.material.color.setRGB(
+      0.5 + Math.random() * 0.1,
+      0.5 + Math.random() * 0.1,
+      0.7 + Math.random() * 0.1
+    );
+  });
+
+  // Animate dense fog
+  const positions = denseFogParticles.geometry.attributes.position.array;
+  for (let i = 0; i < positions.length; i += 3) {
+    positions[i] += Math.sin(time * 0.0002 + i) * 0.1;
+    positions[i + 1] += Math.cos(time * 0.0002 + i) * 0.1;
+    positions[i + 2] += Math.sin(time * 0.0002 + i + 1000) * 0.1;
+  }
+  denseFogParticles.geometry.attributes.position.needsUpdate = true;
+
+  prevTime = time;
+
+  renderer.render(scene, camera);
+}
+
+function onWindowResize() {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+}
+
+function playBackgroundMusic() {
+  if (backgroundMusic) {
+    backgroundMusic.play().catch(e => console.error("Error playing audio:", e));
+    isMusicPlaying = true;
+    document.getElementById('musicToggle').textContent = '♪';
+  }
+}
+
+function toggleBackgroundMusic() {
+  if (backgroundMusic) {
+    if (isMusicPlaying) {
+      backgroundMusic.pause();
+      isMusicPlaying = false;
+      document.getElementById('musicToggle').textContent = '♪̸';
+    } else {
+      backgroundMusic.play().catch(e => console.error("Error playing audio:", e));
+      isMusicPlaying = true;
+      document.getElementById('musicToggle').textContent = '♪';
+    }
+  }
+}
+
+function toggleFlashlight() {
+  isFlashlightOn = !isFlashlightOn;
+  flashlight.visible = isFlashlightOn;
+  document.getElementById('flashlightToggle').style.backgroundColor = isFlashlightOn ? 'rgba(255, 255, 0, 0.5)' : 'rgba(255, 255, 255, 0.3)';
+}
+
+function toggleWireframe() {
+  isWireframe = !isWireframe;
+  scene.traverse(function(obj) {
+    if (obj.isMesh) {
+      obj.material.wireframe = isWireframe;
+    }
+  });
+}
+
+function toggleNoclip() {
+  isNoclip = !isNoclip;
+  if (isNoclip) {
+    controls.getObject().position.y += 10; // Lift the camera up a bit when enabling noclip
+  }
+}
+</script>
+</body></html>
