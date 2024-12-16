@@ -294,7 +294,8 @@ body {
     --box-width: 200px;
   }
   #home-button {
-    bottom: auto !important
+    bottom: auto !important;
+    top: 36px !important;
   }
 
   #container {

@@ -310,3 +310,13 @@ html, body {
     padding: 12px;
     box-sizing: border-box;
 }
+
+@media (orientation: portrait) {
+    #navbar {
+      overflow-x: scroll;
+      overflow-y: hidden;
+    }
+    #navbar::-webkit-scrollbar {
+      display: none; /* Hides scrollbar in WebKit browsers */
+    }
+}
