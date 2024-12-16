@@ -319,4 +319,28 @@ html, body {
     #navbar::-webkit-scrollbar {
       display: none; /* Hides scrollbar in WebKit browsers */
     }
+    body::after {
+        box-shadow: 0px 0px 15px 10px rgba(255, 255, 255, 0.3), /* Top white shadow */
+        0px 0px 48px 0px rgba(0, 0, 0, 1);
+        background-color: rgba(255, 255, 255, 0.3);
+        width: 0px;
+        height: 48px;
+        content: "";
+        position: absolute;
+        right: 18px;
+        top: 24px;
+        border-radius: 9999px;
+    }
+    #navbar .navbar-item:last-of-type.navbar-item-top {
+        display: none;
+    }
+
+    #navbar .gradient-text {
+        display: none;
+    }
+    #waveCanvas {
+        height: 150%;
+        width: 150%;
+        transform: translate(-15%, -15%);
+    }
 }
