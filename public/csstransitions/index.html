@@ -1,0 +1,1718 @@
+<html><head><base href="https://transitions.buttfart.com">
+<meta charset="UTF-8">
+<title>CSS Page Transition Library</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap');
+
+:root {
+  --primary: #2196f3;
+  --dark: #1976d2;
+  --light: #bbdefb;
+  --bg: #f5f5f5;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  line-height: 1.6;
+  background: var(--bg);
+  color: #333;
+}
+
+.header {
+  background: var(--primary);
+  color: white;
+  padding: 2rem;
+  text-align: center;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.transition-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 2rem;
+}
+
+.transition-card {
+  background: white;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  transition: transform 0.3s;
+}
+
+.transition-card:hover {
+  transform: translateY(-5px);
+}
+
+.preview-area {
+  height: 300px;
+  position: relative;
+  overflow: hidden;
+  background: white;
+  border: 1px solid #eee;
+}
+
+.demo-content {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  font-family: 'Inter', sans-serif;
+}
+
+.demo-page {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  background: white;
+}
+
+.demo-header {
+  background: var(--primary);
+  color: white;
+  padding: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.demo-nav {
+  background: white;
+  padding: 0.5rem;
+  border-bottom: 1px solid #eee;
+}
+
+.demo-nav a {
+  color: var(--dark);
+  text-decoration: none;
+  margin-right: 1rem;
+  font-size: 0.8rem;
+}
+
+.demo-main {
+  padding: 1rem;
+}
+
+.demo-main h2 {
+  font-size: 1.2rem;
+  margin-bottom: 0.5rem;
+}
+
+.demo-main p {
+  font-size: 0.8rem;
+  color: #666;
+  line-height: 1.4;
+}
+
+.demo-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.demo-card {
+  background: var(--light);
+  padding: 0.5rem;
+  border-radius: 4px;
+  font-size: 0.8rem;
+}
+
+.code-area {
+  padding: 1rem;
+}
+
+.copy-btn {
+  background: var(--primary);
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  width: 100%;
+  margin-top: 1rem;
+}
+
+.copy-btn:hover {
+  background: var(--dark);
+}
+
+pre {
+  background: #f8f9fa;
+  padding: 1rem;
+  border-radius: 4px;
+  overflow-x: auto;
+}
+
+/* Transition Styles */
+
+/* 1. Fade */
+.fade-transition {
+  opacity: 0;
+  transition: opacity 0.5s ease;
+}
+
+.fade-transition.active {
+  opacity: 1;
+}
+
+/* 2. Slide Right */
+.slide-right {
+  transform: translateX(-100%);
+  transition: transform 0.5s ease;
+}
+
+.slide-right.active {
+  transform: translateX(0);
+}
+
+/* 3. Slide Up */
+.slide-up {
+  transform: translateY(100%);
+  transition: transform 0.5s ease;
+}
+
+.slide-up.active {
+  transform: translateY(0);
+}
+
+/* 4. Scale */
+.scale {
+  transform: scale(0);
+  transition: transform 0.5s ease;
+}
+
+.scale.active {
+  transform: scale(1);
+}
+
+/* 5. Rotate */
+.rotate {
+  transform: rotate(180deg);
+  transition: transform 0.5s ease;
+}
+
+.rotate.active {
+  transform: rotate(0);
+}
+
+/* 6. Flip X */
+.flip-x {
+  transform: perspective(600px) rotateX(90deg);
+  transition: transform 0.5s ease;
+}
+
+.flip-x.active {
+  transform: perspective(600px) rotateX(0deg);
+}
+
+/* 7. Flip Y */
+.flip-y {
+  transform: perspective(600px) rotateY(90deg);
+  transition: transform 0.5s ease;
+}
+
+.flip-y.active {
+  transform: perspective(600px) rotateY(0deg);
+}
+
+/* 8. Zoom Fade */
+.zoom-fade {
+  opacity: 0;
+  transform: scale(1.2);
+  transition: all 0.5s ease;
+}
+
+.zoom-fade.active {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* 9. Slide Rotate */
+.slide-rotate {
+  transform: translateX(-100%) rotate(-90deg);
+  transition: all 0.5s ease;
+}
+
+.slide-rotate.active {
+  transform: translateX(0) rotate(0);
+}
+
+/* 10. Bounce */
+.bounce {
+  transform: scale(0);
+  transition: transform 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+.bounce.active {
+  transform: scale(1);
+}
+
+/* 11. Cube Rotate */
+.cube-rotate {
+  transform-style: preserve-3d;
+  transform: perspective(1000px) rotateY(90deg);
+  transition: transform 0.6s ease;
+}
+
+.cube-rotate.active {
+  transform: perspective(1000px) rotateY(0deg);
+}
+
+/* 12. Door */
+.door {
+  transform-origin: left;
+  transform: perspective(1000px) rotateY(90deg);
+  transition: transform 0.5s ease;
+}
+
+.door.active {
+  transform: perspective(1000px) rotateY(0deg);
+}
+
+/* 13. Wave */
+.wave {
+  opacity: 0;
+  transform: translateY(-100%) scaleY(0.3);
+  transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.wave.active {
+  opacity: 1;
+  transform: translateY(0) scaleY(1);
+}
+
+/* 14. Spiral */
+.spiral {
+  transform: rotate(720deg) scale(0);
+  transition: all 0.7s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.spiral.active {
+  transform: rotate(0) scale(1);
+}
+
+/* 15. Fold Up */
+.fold-up {
+  transform-origin: top;
+  transform: perspective(1000px) rotateX(-90deg);
+  transition: transform 0.6s ease;
+}
+
+.fold-up.active {
+  transform: perspective(1000px) rotateX(0deg);
+}
+
+/* 16. Elastic */
+.elastic {
+  transform: scaleX(0);
+  transition: transform 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+.elastic.active {
+  transform: scaleX(1);
+}
+
+/* 17. Tilt */
+.tilt {
+  transform: perspective(1000px) rotate3d(1, 0, 0, 90deg);
+  transition: transform 0.6s ease;
+}
+
+.tilt.active {
+  transform: perspective(1000px) rotate3d(1, 0, 0, 0deg);
+}
+
+/* 18. Slide and Scale */
+.slide-scale {
+  transform: translateX(-100%) scale(0.5);
+  opacity: 0;
+  transition: all 0.5s ease;
+}
+
+.slide-scale.active {
+  transform: translateX(0) scale(1);
+  opacity: 1;
+}
+
+/* 19. Corner */
+.corner {
+  transform: translate(-100%, 100%);
+  transition: transform 0.5s ease;
+}
+
+.corner.active {
+  transform: translate(0, 0);
+}
+
+/* 20. Origami */
+.origami {
+  transform-style: preserve-3d;
+  transform: perspective(1000px) rotateX(-90deg) rotateY(-90deg);
+  transition: transform 0.7s ease;
+}
+
+.origami.active {
+  transform: perspective(1000px) rotateX(0) rotateY(0);
+}
+
+/* 21. Reveal */
+.reveal {
+  clip-path: inset(0 100% 0 0);
+  transition: clip-path 0.6s ease;
+}
+
+.reveal.active {
+  clip-path: inset(0 0 0 0);
+}
+
+/* 22. Diagonal Slide */
+.diagonal-slide {
+  transform: translate(-100%, 100%);
+  opacity: 0;
+  transition: all 0.5s ease;
+}
+
+.diagonal-slide.active {
+  transform: translate(0, 0);
+  opacity: 1;
+}
+
+/* 23. Circle Reveal */
+.circle-reveal {
+  clip-path: circle(0% at center);
+  transition: clip-path 0.6s ease;
+}
+
+.circle-reveal.active {
+  clip-path: circle(100% at center);
+}
+
+/* 24. Multi-Flip */
+.multi-flip {
+  transform: perspective(1000px) rotateX(180deg) rotateY(180deg);
+  transition: transform 0.8s ease;
+}
+
+.multi-flip.active {
+  transform: perspective(1000px) rotateX(0) rotateY(0);
+}
+
+/* 25. Shutter */
+.shutter {
+  clip-path: inset(0 50% 0 50%);
+  transition: clip-path 0.6s ease;
+}
+
+.shutter.active {
+  clip-path: inset(0 0 0 0);
+}
+
+/* 26. Squeeze */
+.squeeze {
+  transform: scaleX(0) scaleY(2);
+  transition: transform 0.6s ease;
+}
+
+.squeeze.active {
+  transform: scale(1);
+}
+
+/* 27. Windmill */
+.windmill {
+  transform-origin: top left;
+  transform: rotate(-180deg) scale(0);
+  transition: transform 0.7s ease;
+}
+
+.windmill.active {
+  transform: rotate(0) scale(1);
+}
+
+/* 28. Swing */
+.swing {
+  transform-origin: top;
+  transform: perspective(1000px) rotateX(-100deg);
+  transition: transform 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+.swing.active {
+  transform: perspective(1000px) rotateX(0);
+}
+
+/* 29. Diamond */
+.diamond {
+  clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+  transform: scale(0);
+  transition: transform 0.6s ease;
+}
+
+.diamond.active {
+  transform: scale(1);
+}
+
+/* 30. Split */
+.split {
+  clip-path: polygon(0 0, 50% 0, 50% 100%, 0 100%);
+  transition: clip-path 0.6s ease;
+}
+
+.split.active {
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+}
+
+/* 31. Venetian Blind */
+.venetian-blind {
+  clip-path: polygon(0 0, 0 0, 0 100%, 0 100%);
+  transition: clip-path 0.8s steps(10, end);
+}
+
+.venetian-blind.active {
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+}
+
+/* 32. Matrix */
+.matrix {
+  transform: perspective(1000px) scale(0.1) translateZ(-500px);
+  opacity: 0;
+  transition: all 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.matrix.active {
+  transform: perspective(1000px) scale(1) translateZ(0);
+  opacity: 1;
+}
+
+/* 33. Ripple */
+.ripple {
+  clip-path: circle(0% at center);
+  animation: rippleFrame 1s cubic-bezier(0.4, 0, 0.2, 1) forwards !important;
+}
+
+@keyframes rippleFrame {
+  0% { clip-path: circle(0% at center); }
+  100% { clip-path: circle(150% at center); }
+}
+
+/* 34. Glitch */
+.glitch {
+  clip-path: inset(0 0 0 0);
+  animation: glitchFrame 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards !important;
+}
+
+@keyframes glitchFrame {
+  0% { clip-path: inset(50% 0 50% 0); }
+  10% { clip-path: inset(20% 0 80% 0); }
+  20% { clip-path: inset(80% 0 20% 0); }
+  30% { clip-path: inset(40% 0 60% 0); }
+  40% { clip-path: inset(60% 0 40% 0); }
+  50% { clip-path: inset(25% 0 75% 0); }
+  60% { clip-path: inset(75% 0 25% 0); }
+  70% { clip-path: inset(35% 0 65% 0); }
+  80% { clip-path: inset(65% 0 35% 0); }
+  90% { clip-path: inset(15% 0 85% 0); }
+  100% { clip-path: inset(0 0 0 0); }
+}
+
+/* 35. Kaleidoscope */
+.kaleidoscope {
+  transform: rotate(180deg) scale(0);
+  filter: hue-rotate(90deg);
+  transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.kaleidoscope.active {
+  transform: rotate(0) scale(1);
+  filter: hue-rotate(0);
+}
+
+/* 36. Earthquake */
+.earthquake {
+  animation: earthquakeFrame 0.6s cubic-bezier(.36,.07,.19,.97) both !important;
+  transform-origin: center;
+}
+
+@keyframes earthquakeFrame {
+  0%, 100% { transform: translateX(0) rotate(0); }
+  15% { transform: translateX(-20px) rotate(-2deg); }
+  30% { transform: translateX(20px) rotate(2deg); }
+  45% { transform: translateX(-15px) rotate(-1deg); }
+  60% { transform: translateX(15px) rotate(1deg); }
+  75% { transform: translateX(-10px) rotate(-0.5deg); }
+  90% { transform: translateX(10px) rotate(0.5deg); }
+}
+
+/* 37. Paint Drip */
+.paint-drip {
+  clip-path: polygon(0 0, 100% 0, 100% 0, 0 0);
+  animation: paintDripFrame 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards !important;
+}
+
+@keyframes paintDripFrame {
+  0% { clip-path: polygon(0 0, 100% 0, 100% 0, 0 0); }
+  100% { clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%); }
+}
+
+/* 38. Pixel */
+.pixel {
+  transform: scale(1);
+  filter: blur(0);
+  transition: all 0.4s ease-out;
+}
+
+.pixel:not(.pixel-active) {
+  transform: scale(0.1);
+  filter: blur(20px);
+}
+
+.pixel.pixel-active {
+  transform: scale(1);
+  filter: blur(0);
+}
+
+/* 39. Tornado */
+.tornado {
+  transform-origin: center;
+  transform: rotate(1080deg) scale(0);
+  transition: all 1s cubic-bezier(0.86, 0, 0.07, 1);
+}
+
+.tornado.active {
+  transform: rotate(0) scale(1);
+}
+
+/* 40. Shockwave */
+.shockwave {
+  transform: scale(2);
+  filter: blur(50px) brightness(200%);
+  transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.shockwave.active {
+  transform: scale(1);
+  filter: blur(0) brightness(100%);
+}
+
+/* 41. Spiral Tunnel */
+.spiral-tunnel {
+  transform-origin: center;
+  transform: scale(0) rotate(720deg) translateZ(-1000px);
+  perspective: 1000px;
+  transition: all 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.spiral-tunnel.active {
+  transform: scale(1) rotate(0) translateZ(0);
+}
+
+/* 42. Liquid */
+.liquid {
+  clip-path: ellipse(0% 0% at 50% 50%);
+  transition: clip-path 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.liquid.active {
+  clip-path: ellipse(150% 150% at 50% 50%);
+}
+
+/* 43. Prism */
+.prism {
+  transform: perspective(1000px) rotateX(90deg) rotateY(90deg) rotateZ(90deg);
+  filter: hue-rotate(90deg) saturate(200%);
+  transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.prism.active {
+  transform: perspective(1000px) rotateX(0) rotateY(0) rotateZ(0);
+  filter: hue-rotate(0) saturate(100%);
+}
+
+/* 44. Smoke */
+.smoke {
+  opacity: 0;
+  filter: blur(20px);
+  transform: translateY(-50px) scale(1.2);
+  transition: all 0.6s ease-out;
+}
+
+.smoke.active {
+  opacity: 1;
+  filter: blur(0);
+  transform: translateY(0) scale(1);
+}
+
+/* 45. Mirror Break */
+.mirror-break {
+  clip-path: polygon(50% 50%, 50% 50%, 50% 50%, 50% 50%);
+  transition: clip-path 0.6s cubic-bezier(.36,.07,.19,.97);
+}
+
+.mirror-break.active {
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+}
+
+/* 46. Time Portal */
+.time-portal {
+  transform: perspective(1000px) scale(0) rotateY(540deg);
+  filter: saturate(200%) brightness(150%);
+  transition: all 1s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+.time-portal.active {
+  transform: perspective(1000px) scale(1) rotateY(0);
+  filter: saturate(100%) brightness(100%);
+}
+
+/* 47. Energy Pulse */
+.energy-pulse {
+  transform: scale(0.5);
+  filter: brightness(200%) contrast(200%);
+  box-shadow: 0 0 0 rgba(255,255,255,0);
+  transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.energy-pulse.active {
+  transform: scale(1);
+  filter: brightness(100%) contrast(100%);
+  box-shadow: 0 0 50px rgba(255,255,255,0.5);
+}
+
+/* 48. Digital Glitch */
+@keyframes digitalGlitch {
+  0% { clip-path: inset(40% 0 61% 0); }
+  20% { clip-path: inset(92% 0 1% 0); }
+  40% { clip-path: inset(43% 0 1% 0); }
+  60% { clip-path: inset(25% 0 58% 0); }
+  80% { clip-path: inset(54% 0 7% 0); }
+  100% { clip-path: inset(58% 0 43% 0); }
+}
+
+.digital-glitch {
+  animation: digitalGlitch 0.4s steps(2, end) infinite;
+}
+
+/* 49. Neon Trace */
+.neon-trace {
+  clip-path: polygon(0 0, 0 0, 0 100%, 0 100%);
+  transition: clip-path 0.6s steps(20, end);
+  filter: brightness(200%) saturate(200%);
+}
+
+.neon-trace.active {
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+  filter: brightness(100%) saturate(100%);
+}
+
+/* 50. Quantum Leap */
+.quantum-leap {
+  transform: scale(2) rotate(45deg);
+  filter: blur(50px) hue-rotate(90deg);
+  opacity: 0;
+  transition: all 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+.quantum-leap.active {
+  transform: scale(1) rotate(0);
+  filter: blur(0) hue-rotate(0);
+  opacity: 1;
+}
+
+</style>
+</head>
+<body>
+
+<header class="header">
+  <h1>CSS Page Transition Library</h1>
+  <p>A collection of smooth page transitions for your web projects</p>
+</header>
+
+<div class="container">
+  <div class="transition-grid">
+    <!-- Fade -->
+    <div class="transition-card">
+      <div class="preview-area">
+        <div class="demo-content fade-transition">
+          <!-- Demo Page 1 -->
+          <div class="demo-page">
+            <div class="demo-header">My Website</div>
+            <div class="demo-nav">
+              <a href="https://example.com/home">Home</a>
+              <a href="https://example.com/about">About</a>
+              <a href="https://example.com/contact">Contact</a>
+            </div>
+            <div class="demo-main">
+              <h2>Welcome to Homepage</h2>
+              <p>This is an example of how the transition will look when navigating between pages.</p>
+              <div class="demo-grid">
+                <div class="demo-card">Featured Item 1</div>
+                <div class="demo-card">Featured Item 2</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="code-area">
+        <h3>Fade Transition</h3>
+        <pre><code>.fade-transition {
+  opacity: 0;
+  transition: opacity 0.5s ease;
+}
+
+.fade-transition.active {
+  opacity: 1;
+}</code></pre>
+        <button class="copy-btn" data-transition="fade">Copy Code</button>
+      </div>
+    </div>
+
+    <!-- Slide Right -->
+    <div class="transition-card">
+      <div class="preview-area">
+        <div class="demo-content slide-right">
+          <!-- Demo Page 2 -->
+          <div class="demo-page">
+            <div class="demo-header">My Website</div>
+            <div class="demo-nav">
+              <a href="https://example.com/home">Home</a>
+              <a href="https://example.com/about">About</a>
+              <a href="https://example.com/contact">Contact</a>
+            </div>
+            <div class="demo-main">
+              <h2>About Us</h2>
+              <p>See how smooth the transition is when moving between different sections of your website.</p>
+              <div class="demo-grid">
+                <div class="demo-card">Our Story</div>
+                <div class="demo-card">Our Team</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="code-area">
+        <h3>Slide Right</h3>
+        <pre><code>.slide-right {
+  transform: translateX(-100%);
+  transition: transform 0.5s ease;
+}
+
+.slide-right.active {
+  transform: translateX(0);
+}</code></pre>
+        <button class="copy-btn" data-transition="slide-right">Copy Code</button>
+      </div>
+    </div>
+
+    <!-- Venetian Blind -->
+    <div class="transition-card">
+      <div class="preview-area">
+        <div class="demo-content venetian-blind">
+          <!-- Demo Page 3 -->
+          <div class="demo-page">
+            <div class="demo-header">My Website</div>
+            <div class="demo-nav">
+              <a href="https://example.com/home">Home</a>
+              <a href="https://example.com/about">About</a>
+              <a href="https://example.com/contact">Contact</a>
+            </div>
+            <div class="demo-main">
+              <h2>Welcome to Venetian Blind Transition</h2>
+              <p>This transition simulates a venetian blind effect when navigating.</p>
+              <div class="demo-grid">
+                <div class="demo-card">Featured Item 1</div>
+                <div class="demo-card">Featured Item 2</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="code-area">
+        <h3>Venetian Blind</h3>
+        <pre><code>.venetian-blind {
+  clip-path: polygon(0 0, 0 0, 0 100%, 0 100%);
+  transition: clip-path 0.8s steps(10, end);
+}
+
+.venetian-blind.active {
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+}</code></pre>
+        <button class="copy-btn" data-transition="venetian-blind">Copy Code</button>
+      </div>
+    </div>
+
+    <!-- Matrix -->
+    <div class="transition-card">
+      <div class="preview-area">
+        <div class="demo-content matrix">
+          <!-- Demo Page 4 -->
+          <div class="demo-page">
+            <div class="demo-header">My Website</div>
+            <div class="demo-nav">
+              <a href="https://example.com/home">Home</a>
+              <a href="https://example.com/about">About</a>
+              <a href="https://example.com/contact">Contact</a>
+            </div>
+            <div class="demo-main">
+              <h2>Welcome to Matrix Transition</h2>
+              <p>This transition gives a matrix-like effect when navigating.</p>
+              <div class="demo-grid">
+                <div class="demo-card">Featured Item 1</div>
+                <div class="demo-card">Featured Item 2</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="code-area">
+        <h3>Matrix</h3>
+        <pre><code>.matrix {
+  transform: perspective(1000px) scale(0.1) translateZ(-500px);
+  opacity: 0;
+  transition: all 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.matrix.active {
+  transform: perspective(1000px) scale(1) translateZ(0);
+  opacity: 1;
+}</code></pre>
+        <button class="copy-btn" data-transition="matrix">Copy Code</button>
+      </div>
+    </div>
+
+    <!-- Ripple -->
+    <div class="transition-card">
+      <div class="preview-area">
+        <div class="demo-content ripple">
+          <!-- Demo Page 5 -->
+          <div class="demo-page">
+            <div class="demo-header">My Website</div>
+            <div class="demo-nav">
+              <a href="https://example.com/home">Home</a>
+              <a href="https://example.com/about">About</a>
+              <a href="https://example.com/contact">Contact</a>
+            </div>
+            <div class="demo-main">
+              <h2>Welcome to Ripple Transition</h2>
+              <p>This transition simulates a ripple effect.</p>
+              <div class="demo-grid">
+                <div class="demo-card">Featured Item 1</div>
+                <div class="demo-card">Featured Item 2</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="code-area">
+        <h3>Ripple</h3>
+        <pre><code>.ripple {
+  clip-path: circle(0% at 50% 50%);
+  animation: rippleFrame 1s ease forwards;
+}
+
+@keyframes rippleFrame {
+  0% { clip-path: circle(0% at 50% 50%); }
+  50% { clip-path: circle(50% at 50% 50%); }
+  100% { clip-path: circle(150% at 50% 50%); }
+}</code></pre>
+        <button class="copy-btn" data-transition="ripple">Copy Code</button>
+      </div>
+    </div>
+
+    <!-- Glitch -->
+    <div class="transition-card">
+      <div class="preview-area">
+        <div class="demo-content glitch">
+          <!-- Demo Page 6 -->
+          <div class="demo-page">
+            <div class="demo-header">My Website</div>
+            <div class="demo-nav">
+              <a href="https://example.com/home">Home</a>
+              <a href="https://example.com/about">About</a>
+              <a href="https://example.com/contact">Contact</a>
+            </div>
+            <div class="demo-main">
+              <h2>Welcome to Glitch Transition</h2>
+              <p>This transition simulates a glitch effect.</p>
+              <div class="demo-grid">
+                <div class="demo-card">Featured Item 1</div>
+                <div class="demo-card">Featured Item 2</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="code-area">
+        <h3>Glitch</h3>
+        <pre><code>.glitch {
+  clip-path: inset(50% 0 50% 0);
+  animation: glitchFrame 0.6s steps(4, end) forwards;
+}
+
+@keyframes glitchFrame {
+  0% { clip-path: inset(50% 0 50% 0); }
+  10% { clip-path: inset(20% 0 80% 0); }
+  20% { clip-path: inset(80% 0 20% 0); }
+  30% { clip-path: inset(0% 0 100% 0); }
+  40% { clip-path: inset(100% 0 0% 0); }
+  50% { clip-path: inset(25% 0 75% 0); }
+  60% { clip-path: inset(75% 0 25% 0); }
+  100% { clip-path: inset(0 0 0 0); }
+}</code></pre>
+        <button class="copy-btn" data-transition="glitch">Copy Code</button>
+      </div>
+    </div>
+
+    <!-- Kaleidoscope -->
+    <div class="transition-card">
+      <div class="preview-area">
+        <div class="demo-content kaleidoscope">
+          <!-- Demo Page 7 -->
+          <div class="demo-page">
+            <div class="demo-header">My Website</div>
+            <div class="demo-nav">
+              <a href="https://example.com/home">Home</a>
+              <a href="https://example.com/about">About</a>
+              <a href="https://example.com/contact">Contact</a>
+            </div>
+            <div class="demo-main">
+              <h2>Welcome to Kaleidoscope Transition</h2>
+              <p>This transition gives a kaleidoscope-like effect.</p>
+              <div class="demo-grid">
+                <div class="demo-card">Featured Item 1</div>
+                <div class="demo-card">Featured Item 2</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="code-area">
+        <h3>Kaleidoscope</h3>
+        <pre><code>.kaleidoscope {
+  transform: rotate(180deg) scale(0);
+  filter: hue-rotate(90deg);
+  transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.kaleidoscope.active {
+  transform: rotate(0) scale(1);
+  filter: hue-rotate(0);
+}</code></pre>
+        <button class="copy-btn" data-transition="kaleidoscope">Copy Code</button>
+      </div>
+    </div>
+
+    <!-- Earthquake -->
+    <div class="transition-card">
+      <div class="preview-area">
+        <div class="demo-content earthquake">
+          <!-- Demo Page 8 -->
+          <div class="demo-page">
+            <div class="demo-header">My Website</div>
+            <div class="demo-nav">
+              <a href="https://example.com/home">Home</a>
+              <a href="https://example.com/about">About</a>
+              <a href="https://example.com/contact">Contact</a>
+            </div>
+            <div class="demo-main">
+              <h2>Welcome to Earthquake Transition</h2>
+              <p>This transition simulates an earthquake effect.</p>
+              <div class="demo-grid">
+                <div class="demo-card">Featured Item 1</div>
+                <div class="demo-card">Featured Item 2</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="code-area">
+        <h3>Earthquake</h3>
+        <pre><code>.earthquake {
+  animation: earthquakeFrame 0.6s cubic-bezier(.36,.07,.19,.97) both !important;
+  transform-origin: center;
+}
+
+@keyframes earthquakeFrame {
+  0%, 100% { transform: translateX(0) rotate(0); }
+  15% { transform: translateX(-20px) rotate(-2deg); }
+  30% { transform: translateX(20px) rotate(2deg); }
+  45% { transform: translateX(-15px) rotate(-1deg); }
+  60% { transform: translateX(15px) rotate(1deg); }
+  75% { transform: translateX(-10px) rotate(-0.5deg); }
+  90% { transform: translateX(10px) rotate(0.5deg); }
+}</code></pre>
+        <button class="copy-btn" data-transition="earthquake">Copy Code</button>
+      </div>
+    </div>
+
+    <!-- Paint Drip -->
+    <div class="transition-card">
+      <div class="preview-area">
+        <div class="demo-content paint-drip">
+          <!-- Demo Page 9 -->
+          <div class="demo-page">
+            <div class="demo-header">My Website</div>
+            <div class="demo-nav">
+              <a href="https://example.com/home">Home</a>
+              <a href="https://example.com/about">About</a>
+              <a href="https://example.com/contact">Contact</a>
+            </div>
+            <div class="demo-main">
+              <h2>Welcome to Paint Drip Transition</h2>
+              <p>This transition simulates a paint drip effect.</p>
+              <div class="demo-grid">
+                <div class="demo-card">Featured Item 1</div>
+                <div class="demo-card">Featured Item 2</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="code-area">
+        <h3>Paint Drip</h3>
+        <pre><code>.paint-drip {
+  clip-path: polygon(0 0, 100% 0, 100% 0, 0 0);
+  animation: paintDripFrame 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards !important;
+}
+
+@keyframes paintDripFrame {
+  0% { clip-path: polygon(0 0, 100% 0, 100% 0, 0 0); }
+  100% { clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%); }
+}</code></pre>
+        <button class="copy-btn" data-transition="paint-drip">Copy Code</button>
+      </div>
+    </div>
+
+    <!-- Pixel -->
+    <div class="transition-card">
+      <div class="preview-area">
+        <div class="demo-content pixel">
+          <!-- Demo Page 10 -->
+          <div class="demo-page">
+            <div class="demo-header">My Website</div>
+            <div class="demo-nav">
+              <a href="https://example.com/home">Home</a>
+              <a href="https://example.com/about">About</a>
+              <a href="https://example.com/contact">Contact</a>
+            </div>
+            <div class="demo-main">
+              <h2>Welcome to Pixel Transition</h2>
+              <p>This transition simulates a pixelated effect.</p>
+              <div class="demo-grid">
+                <div class="demo-card">Featured Item 1</div>
+                <div class="demo-card">Featured Item 2</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="code-area">
+        <h3>Pixel</h3>
+        <pre><code>.pixel {
+  transform: scale(1);
+  filter: blur(0);
+  transition: all 0.4s ease-out;
+}
+
+.pixel:not(.pixel-active) {
+  transform: scale(0.1);
+  filter: blur(20px);
+}
+
+.pixel.pixel-active {
+  transform: scale(1);
+  filter: blur(0);
+}</code></pre>
+        <button class="copy-btn" data-transition="pixel">Copy Code</button>
+      </div>
+    </div>
+
+    <!-- Tornado -->
+    <div class="transition-card">
+      <div class="preview-area">
+        <div class="demo-content tornado">
+          <!-- Demo Page 11 -->
+          <div class="demo-page">
+            <div class="demo-header">My Website</div>
+            <div class="demo-nav">
+              <a href="https://example.com/home">Home</a>
+              <a href="https://example.com/about">About</a>
+              <a href="https://example.com/contact">Contact</a>
+            </div>
+            <div class="demo-main">
+              <h2>Welcome to Tornado Transition</h2>
+              <p>This transition simulates a tornado effect.</p>
+              <div class="demo-grid">
+                <div class="demo-card">Featured Item 1</div>
+                <div class="demo-card">Featured Item 2</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="code-area">
+        <h3>Tornado</h3>
+        <pre><code>.tornado {
+  transform-origin: center;
+  transform: rotate(1080deg) scale(0);
+  transition: all 1s cubic-bezier(0.86, 0, 0.07, 1);
+}
+
+.tornado.active {
+  transform: rotate(0) scale(1);
+}</code></pre>
+        <button class="copy-btn" data-transition="tornado">Copy Code</button>
+      </div>
+    </div>
+
+    <!-- Shockwave -->
+    <div class="transition-card">
+      <div class="preview-area">
+        <div class="demo-content shockwave">
+          <!-- Demo Page 12 -->
+          <div class="demo-page">
+            <div class="demo-header">My Website</div>
+            <div class="demo-nav">
+              <a href="https://example.com/home">Home</a>
+              <a href="https://example.com/about">About</a>
+              <a href="https://example.com/contact">Contact</a>
+            </div>
+            <div class="demo-main">
+              <h2>Welcome to Shockwave Transition</h2>
+              <p>This transition simulates a shockwave effect.</p>
+              <div class="demo-grid">
+                <div class="demo-card">Featured Item 1</div>
+                <div class="demo-card">Featured Item 2</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="code-area">
+        <h3>Shockwave</h3>
+        <pre><code>.shockwave {
+  transform: scale(2);
+  filter: blur(50px) brightness(200%);
+  transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.shockwave.active {
+  transform: scale(1);
+  filter: blur(0) brightness(100%);
+}</code></pre>
+        <button class="copy-btn" data-transition="shockwave">Copy Code</button>
+      </div>
+    </div>
+
+    <!-- Spiral Tunnel -->
+    <div class="transition-card">
+      <div class="preview-area">
+        <div class="demo-content spiral-tunnel">
+          <!-- Demo Page 13 -->
+          <div class="demo-page">
+            <div class="demo-header">My Website</div>
+            <div class="demo-nav">
+              <a href="https://example.com/home">Home</a>
+              <a href="https://example.com/about">About</a>
+              <a href="https://example.com/contact">Contact</a>
+            </div>
+            <div class="demo-main">
+              <h2>Welcome to Spiral Tunnel Transition</h2>
+              <p>This transition creates a spiral tunnel effect when navigating.</p>
+              <div class="demo-grid">
+                <div class="demo-card">Featured Item 1</div>
+                <div class="demo-card">Featured Item 2</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="code-area">
+        <h3>Spiral Tunnel</h3>
+        <pre><code>.spiral-tunnel {
+  transform-origin: center;
+  transform: scale(0) rotate(720deg) translateZ(-1000px);
+  perspective: 1000px;
+  transition: all 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.spiral-tunnel.active {
+  transform: scale(1) rotate(0) translateZ(0);
+}</code></pre>
+        <button class="copy-btn" data-transition="spiral-tunnel">Copy Code</button>
+      </div>
+    </div>
+
+    <!-- Liquid -->
+    <div class="transition-card">
+      <div class="preview-area">
+        <div class="demo-content liquid">
+          <!-- Demo Page 14 -->
+          <div class="demo-page">
+            <div class="demo-header">My Website</div>
+            <div class="demo-nav">
+              <a href="https://example.com/home">Home</a>
+              <a href="https://example.com/about">About</a>
+              <a href="https://example.com/contact">Contact</a>
+            </div>
+            <div class="demo-main">
+              <h2>Welcome to Liquid Transition</h2>
+              <p>This transition simulates a liquid effect when navigating.</p>
+              <div class="demo-grid">
+                <div class="demo-card">Featured Item 1</div>
+                <div class="demo-card">Featured Item 2</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="code-area">
+        <h3>Liquid</h3>
+        <pre><code>.liquid {
+  clip-path: ellipse(0% 0% at 50% 50%);
+  transition: clip-path 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.liquid.active {
+  clip-path: ellipse(150% 150% at 50% 50%);
+}</code></pre>
+        <button class="copy-btn" data-transition="liquid">Copy Code</button>
+      </div>
+    </div>
+
+    <!-- Prism -->
+    <div class="transition-card">
+      <div class="preview-area">
+        <div class="demo-content prism">
+          <!-- Demo Page 15 -->
+          <div class="demo-page">
+            <div class="demo-header">My Website</div>
+            <div class="demo-nav">
+              <a href="https://example.com/home">Home</a>
+              <a href="https://example.com/about">About</a>
+              <a href="https://example.com/contact">Contact</a>
+            </div>
+            <div class="demo-main">
+              <h2>Welcome to Prism Transition</h2>
+              <p>This transition creates a prism effect.</p>
+              <div class="demo-grid">
+                <div class="demo-card">Featured Item 1</div>
+                <div class="demo-card">Featured Item 2</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="code-area">
+        <h3>Prism</h3>
+        <pre><code>.prism {
+  transform: perspective(1000px) rotateX(90deg) rotateY(90deg) rotateZ(90deg);
+  filter: hue-rotate(90deg) saturate(200%);
+  transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.prism.active {
+  transform: perspective(1000px) rotateX(0) rotateY(0) rotateZ(0);
+  filter: hue-rotate(0) saturate(100%);
+}</code></pre>
+        <button class="copy-btn" data-transition="prism">Copy Code</button>
+      </div>
+    </div>
+
+    <!-- Smoke -->
+    <div class="transition-card">
+      <div class="preview-area">
+        <div class="demo-content smoke">
+          <!-- Demo Page 16 -->
+          <div class="demo-page">
+            <div class="demo-header">My Website</div>
+            <div class="demo-nav">
+              <a href="https://example.com/home">Home</a>
+              <a href="https://example.com/about">About</a>
+              <a href="https://example.com/contact">Contact</a>
+            </div>
+            <div class="demo-main">
+              <h2>Welcome to Smoke Transition</h2>
+              <p>This transition simulates a smoke effect.</p>
+              <div class="demo-grid">
+                <div class="demo-card">Featured Item 1</div>
+                <div class="demo-card">Featured Item 2</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="code-area">
+        <h3>Smoke</h3>
+        <pre><code>.smoke {
+  opacity: 0;
+  filter: blur(20px);
+  transform: translateY(-50px) scale(1.2);
+  transition: all 0.6s ease-out;
+}
+
+.smoke.active {
+  opacity: 1;
+  filter: blur(0);
+  transform: translateY(0) scale(1);
+}</code></pre>
+        <button class="copy-btn" data-transition="smoke">Copy Code</button>
+      </div>
+    </div>
+
+    <!-- Mirror Break -->
+    <div class="transition-card">
+      <div class="preview-area">
+        <div class="demo-content mirror-break">
+          <!-- Demo Page 17 -->
+          <div class="demo-page">
+            <div class="demo-header">My Website</div>
+            <div class="demo-nav">
+              <a href="https://example.com/home">Home</a>
+              <a href="https://example.com/about">About</a>
+              <a href="https://example.com/contact">Contact</a>
+            </div>
+            <div class="demo-main">
+              <h2>Welcome to Mirror Break Transition</h2>
+              <p>This transition simulates a mirror break effect.</p>
+              <div class="demo-grid">
+                <div class="demo-card">Featured Item 1</div>
+                <div class="demo-card">Featured Item 2</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="code-area">
+        <h3>Mirror Break</h3>
+        <pre><code>.mirror-break {
+  clip-path: polygon(50% 50%, 50% 50%, 50% 50%, 50% 50%);
+  transition: clip-path 0.6s cubic-bezier(.36,.07,.19,.97);
+}
+
+.mirror-break.active {
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+}</code></pre>
+        <button class="copy-btn" data-transition="mirror-break">Copy Code</button>
+      </div>
+    </div>
+
+    <!-- Time Portal -->
+    <div class="transition-card">
+      <div class="preview-area">
+        <div class="demo-content time-portal">
+          <!-- Demo Page 18 -->
+          <div class="demo-page">
+            <div class="demo-header">My Website</div>
+            <div class="demo-nav">
+              <a href="https://example.com/home">Home</a>
+              <a href="https://example.com/about">About</a>
+              <a href="https://example.com/contact">Contact</a>
+            </div>
+            <div class="demo-main">
+              <h2>Welcome to Time Portal Transition</h2>
+              <p>This transition simulates a time portal effect.</p>
+              <div class="demo-grid">
+                <div class="demo-card">Featured Item 1</div>
+                <div class="demo-card">Featured Item 2</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="code-area">
+        <h3>Time Portal</h3>
+        <pre><code>.time-portal {
+  transform: perspective(1000px) scale(0) rotateY(540deg);
+  filter: saturate(200%) brightness(150%);
+  transition: all 1s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+.time-portal.active {
+  transform: perspective(1000px) scale(1) rotateY(0);
+  filter: saturate(100%) brightness(100%);
+}</code></pre>
+        <button class="copy-btn" data-transition="time-portal">Copy Code</button>
+      </div>
+    </div>
+
+    <!-- Energy Pulse -->
+    <div class="transition-card">
+      <div class="preview-area">
+        <div class="demo-content energy-pulse">
+          <!-- Demo Page 19 -->
+          <div class="demo-page">
+            <div class="demo-header">My Website</div>
+            <div class="demo-nav">
+              <a href="https://example.com/home">Home</a>
+              <a href="https://example.com/about">About</a>
+              <a href="https://example.com/contact">Contact</a>
+            </div>
+            <div class="demo-main">
+              <h2>Welcome to Energy Pulse Transition</h2>
+              <p>This transition simulates an energy pulse effect.</p>
+              <div class="demo-grid">
+                <div class="demo-card">Featured Item 1</div>
+                <div class="demo-card">Featured Item 2</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="code-area">
+        <h3>Energy Pulse</h3>
+        <pre><code>.energy-pulse {
+  transform: scale(0.5);
+  filter: brightness(200%) contrast(200%);
+  box-shadow: 0 0 0 rgba(255,255,255,0);
+  transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.energy-pulse.active {
+  transform: scale(1);
+  filter: brightness(100%) contrast(100%);
+  box-shadow: 0 0 50px rgba(255,255,255,0.5);
+}</code></pre>
+        <button class="copy-btn" data-transition="energy-pulse">Copy Code</button>
+      </div>
+    </div>
+
+    <!-- Digital Glitch -->
+    <div class="transition-card">
+      <div class="preview-area">
+        <div class="demo-content digital-glitch">
+          <!-- Demo Page 20 -->
+          <div class="demo-page">
+            <div class="demo-header">My Website</div>
+            <div class="demo-nav">
+              <a href="https://example.com/home">Home</a>
+              <a href="https://example.com/about">About</a>
+              <a href="https://example.com/contact">Contact</a>
+            </div>
+            <div class="demo-main">
+              <h2>Welcome to Digital Glitch Transition</h2>
+              <p>This transition simulates a digital glitch effect.</p>
+              <div class="demo-grid">
+                <div class="demo-card">Featured Item 1</div>
+                <div class="demo-card">Featured Item 2</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="code-area">
+        <h3>Digital Glitch</h3>
+        <pre><code>.digital-glitch {
+  animation: digitalGlitch 0.4s steps(2, end) infinite;
+}
+
+@keyframes digitalGlitch {
+  0% { clip-path: inset(40% 0 61% 0); }
+  20% { clip-path: inset(92% 0 1% 0); }
+  40% { clip-path: inset(43% 0 1% 0); }
+  60% { clip-path: inset(25% 0 58% 0); }
+  80% { clip-path: inset(54% 0 7% 0); }
+  100% { clip-path: inset(58% 0 43% 0); }
+}</code></pre>
+        <button class="copy-btn" data-transition="digital-glitch">Copy Code</button>
+      </div>
+    </div>
+
+    <!-- Neon Trace -->
+    <div class="transition-card">
+      <div class="preview-area">
+        <div class="demo-content neon-trace">
+          <!-- Demo Page 21 -->
+          <div class="demo-page">
+            <div class="demo-header">My Website</div>
+            <div class="demo-nav">
+              <a href="https://example.com/home">Home</a>
+              <a href="https://example.com/about">About</a>
+              <a href="https://example.com/contact">Contact</a>
+            </div>
+            <div class="demo-main">
+              <h2>Welcome to Neon Trace Transition</h2>
+              <p>This transition simulates a neon trace effect.</p>
+              <div class="demo-grid">
+                <div class="demo-card">Featured Item 1</div>
+                <div class="demo-card">Featured Item 2</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="code-area">
+        <h3>Neon Trace</h3>
+        <pre><code>.neon-trace {
+  clip-path: polygon(0 0, 0 0, 0 100%, 0 100%);
+  transition: clip-path 0.6s steps(20, end);
+  filter: brightness(200%) saturate(200%);
+}
+
+.neon-trace.active {
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+  filter: brightness(100%) saturate(100%);
+}</code></pre>
+        <button class="copy-btn" data-transition="neon-trace">Copy Code</button>
+      </div>
+    </div>
+
+    <!-- Quantum Leap -->
+    <div class="transition-card">
+      <div class="preview-area">
+        <div class="demo-content quantum-leap">
+          <!-- Demo Page 22 -->
+          <div class="demo-page">
+            <div class="demo-header">My Website</div>
+            <div class="demo-nav">
+              <a href="https://example.com/home">Home</a>
+              <a href="https://example.com/about">About</a>
+              <a href="https://example.com/contact">Contact</a>
+            </div>
+            <div class="demo-main">
+              <h2>Welcome to Quantum Leap Transition</h2>
+              <p>This transition simulates a quantum leap effect.</p>
+              <div class="demo-grid">
+                <div class="demo-card">Featured Item 1</div>
+                <div class="demo-card">Featured Item 2</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="code-area">
+        <h3>Quantum Leap</h3>
+        <pre><code>.quantum-leap {
+  transform: scale(2) rotate(45deg);
+  filter: blur(50px) hue-rotate(90deg);
+  opacity: 0;
+  transition: all 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+.quantum-leap.active {
+  transform: scale(1) rotate(0);
+  filter: blur(0) hue-rotate(0);
+  opacity: 1;
+}</code></pre>
+        <button class="copy-btn" data-transition="quantum-leap">Copy Code</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// Preview functionality
+document.querySelectorAll('.preview-area').forEach(preview => {
+  preview.addEventListener('mouseenter', () => {
+    const demo = preview.querySelector('.demo-content');
+    demo.style.animation = 'none'; // Reset animation
+    demo.offsetHeight; // Trigger reflow
+    demo.style.animation = null;
+    demo.classList.remove('active');
+    
+    // Remove and re-add the animation classes
+    const classList = demo.classList;
+    if (classList.contains('ripple')) {
+      classList.remove('ripple');
+      setTimeout(() => classList.add('ripple'), 10);
+    }
+    if (classList.contains('glitch')) {
+      classList.remove('glitch');
+      setTimeout(() => classList.add('glitch'), 10);
+    }
+    if (classList.contains('earthquake')) {
+      classList.remove('earthquake');
+      setTimeout(() => classList.add('earthquake'), 10);
+    }
+    if (classList.contains('paint-drip')) {
+      classList.remove('paint-drip');
+      setTimeout(() => classList.add('paint-drip'), 10);
+    }
+    if (classList.contains('pixel')) {
+      classList.remove('pixel-active');
+      setTimeout(() => classList.add('pixel-active'), 10);
+    }
+    
+    // New transitions
+    if (classList.contains('spiral-tunnel')) {
+      classList.remove('spiral-tunnel');
+      setTimeout(() => classList.add('spiral-tunnel'), 10);
+    }
+    if (classList.contains('liquid')) {
+      classList.remove('liquid');
+      setTimeout(() => classList.add('liquid'), 10);
+    }
+    if (classList.contains('prism')) {
+      classList.remove('prism');
+      setTimeout(() => classList.add('prism'), 10);
+    }
+    if (classList.contains('smoke')) {
+      classList.remove('smoke');
+      setTimeout(() => classList.add('smoke'), 10);
+    }
+    if (classList.contains('mirror-break')) {
+      classList.remove('mirror-break');
+      setTimeout(() => classList.add('mirror-break'), 10);
+    }
+    if (classList.contains('time-portal')) {
+      classList.remove('time-portal');
+      setTimeout(() => classList.add('time-portal'), 10);
+    }
+    if (classList.contains('energy-pulse')) {
+      classList.remove('energy-pulse');
+      setTimeout(() => classList.add('energy-pulse'), 10);
+    }
+    if (classList.contains('digital-glitch')) {
+      classList.remove('digital-glitch');
+      setTimeout(() => classList.add('digital-glitch'), 10);
+    }
+    if (classList.contains('neon-trace')) {
+      classList.remove('neon-trace');
+      setTimeout(() => classList.add('neon-trace'), 10);
+    }
+    if (classList.contains('quantum-leap')) {
+      classList.remove('quantum-leap');
+      setTimeout(() => classList.add('quantum-leap'), 10);
+    }
+
+    setTimeout(() => demo.classList.add('active'), 50);
+  });
+  
+  preview.addEventListener('mouseleave', () => {
+    const demo = preview.querySelector('.demo-content');
+    demo.classList.remove('active', 'pixel-active');
+  });
+});
+
+// Copy functionality
+document.querySelectorAll('.copy-btn').forEach(button => {
+  button.addEventListener('click', () => {
+    const code = button.previousElementSibling.textContent;
+    navigator.clipboard.writeText(code).then(() => {
+      const originalText = button.textContent;
+      button.textContent = 'Copied!';
+      setTimeout(() => {
+        button.textContent = originalText;
+      }, 2000);
+    });
+  });
+});
+
+// Initialize all demos
+document.querySelectorAll('.demo-content').forEach(demo => {
+  demo.classList.add('active');
+});
+</script>
+
+</body>
+</html>
