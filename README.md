@@ -3,15 +3,15 @@
 
 
 
-A super cool amazing website that is made without any flaws 100%
+A website with my projects, tools, games, and all of the above.
 
 
 
 
 ## Authors
 
-- [@bhxp](https://www.github.com/bhxp) - i am better!
-- [@ChezLinkZ](https://www.github.com/ChezLinkZ) - "developer" (retard)
+- [@bhxp](https://www.github.com/bhxp) - Project Manager | Designer 
+- [@ChezLinkZ](https://www.github.com/ChezLinkZ) - someone? maybe?
 
 
 ## Features
@@ -38,7 +38,7 @@ A: yes
 
 #### Q: Is the website very professionally made without mistakes?
 
-A: yes trust 🙏
+A: yes
 
 ## Visiting
 
@@ -49,8 +49,8 @@ done!
     
 ## Roadmap
 
-- idk
-- idk
+- numero 1
+- numero 2
 
 
 ## Used By
