@@ -41,62 +41,12 @@ devMenu.innerHTML = `
     <button style="float: right; background-color: transparent; border: none; cursor: pointer; color: #fff;" onclick="toggleDevMenu()">✖</button>
   </div>
   <hr style="margin: 0; border-color: #333;">
-  <div id="debugInfo" style="padding: 10px;">
-    <!-- Debug information will be displayed here -->
-  </div>
-  <hr style="margin: 0; border-color: #333;">
-  <div style="padding: 10px;">
-    <h3 style="margin-top: 0;">Modify Data</h3>
-    <button style="${buttonStyles}" onclick="modifyData()">Modify Data</button>
-    <h3>Insert Custom Data</h3>
-    <button style="${buttonStyles}" onclick="insertCustomData()">Insert Custom Data</button>
-  </div>
-  <hr style="margin: 0; border-color: #333;">
-  <div style="padding: 10px;">
-    <h3>Network</h3>
-    <button style="${buttonStyles}" onclick="clearNetwork()">Clear Network</button>
-    <div id="xhrRequests" style="margin-top: 10px; font-size: 14px;">
-      No XHR requests yet.
-    </div>
-  </div>
-  <hr style="margin: 0; border-color: #333;">
-  <div style="padding: 10px;">
-    <h3>Console</h3>
-    <button style="${buttonStyles}" onclick="clearConsole()">Clear Console</button>
-    <div id="consoleOutput" style="margin-top: 10px; font-size: 14px;">
-      <!-- Console output will be displayed here -->
-    </div>
-  </div>
-  <hr style="margin: 0; border-color: #333;">
-  <div style="padding: 10px;">
-    <h3>DOM Inspection</h3>
-    <button style="${buttonStyles}" onclick="inspectDOM()">Inspect DOM</button>
-    <div id="domInspector" style="margin-top: 10px; font-size: 14px;">
-      <!-- DOM inspection results will be displayed here -->
-    </div>
-  </div>
-  <hr style="margin: 0; border-color: #333;">
-  <div style="padding: 10px;">
-    <h3>Performance</h3>
-    <button style="${buttonStyles}" onclick="trackPerformance()">Track Performance</button>
-    <div id="performanceOutput" style="margin-top: 10px; font-size: 14px;">
-      <!-- Performance metrics will be displayed here -->
-    </div>
-  </div>
-  <hr style="margin: 0; border-color: #333;">
-  <div style="padding: 10px;">
-    <h3>Errors</h3>
-    <button style="${buttonStyles}" onclick="simulateError()">Simulate Error</button>
-    <div id="errorLog" style="margin-top: 10px; font-size: 14px;">
-      <!-- Error log will be displayed here -->
-    </div>
-  </div>
-  <hr style="margin: 0; border-color: #333;">
   <div style="padding: 10px;">
     <h3>Fun Features</h3>
-    <button style="${buttonStyles}" onclick="danceParty()">Dance Party!</button>
-    <button style="${buttonStyles}" onclick="crazyColors()">Crazy Colors!</button>
-    <button style="${buttonStyles}" onclick="hideRandomElements()">Hide Random Elements</button>
+    <button style="${buttonStyles}" onclick="discoMode()">Disco Mode!</button>
+    <button style="${buttonStyles}" onclick="spinText()">Spin Text!</button>
+    <button style="${buttonStyles}" onclick="makeEverythingBouncy()">Make Everything Bouncy!</button>
+    <button style="${buttonStyles}" onclick="messWithImages()">Mess with Images!</button>
   </div>
 `;
 
@@ -113,83 +63,8 @@ document.addEventListener('keydown', function(event) {
   }
 });
 
-// Display debug information
-function displayDebugInfo(info) {
-  const debugInfo = document.getElementById('debugInfo');
-  debugInfo.innerHTML = `<pre>${info}</pre>`;
-}
-
-// Modify data example function
-function modifyData() {
-  console.log('Modify Data button clicked');
-  // Example: Modify a sample variable
-  const newData = { example: 'New Data' };
-  displayDebugInfo(`Modified data: ${JSON.stringify(newData)}`);
-}
-
-// Insert custom data example function
-function insertCustomData() {
-  console.log('Insert Custom Data button clicked');
-  // Example: Insert a new object
-  const customData = { name: 'Custom Object', value: 123 };
-  displayDebugInfo(`Inserted custom data: ${JSON.stringify(customData)}`);
-}
-
-// Clear network requests function
-function clearNetwork() {
-  const xhrRequests = document.getElementById('xhrRequests');
-  xhrRequests.innerHTML = 'No XHR requests yet.';
-}
-
-// Intercept XHR requests to display in the developer menu
-function trackXHRRequests() {
-  const open = XMLHttpRequest.prototype.open;
-  XMLHttpRequest.prototype.open = function(method, url) {
-    this.addEventListener('load', function() {
-      const xhrRequests = document.getElementById('xhrRequests');
-      xhrRequests.innerHTML += `<div>${method} ${url}, Status: ${this.status}</div>`;
-    });
-    open.apply(this, arguments);
-  };
-}
-
-// Clear console output function
-function clearConsole() {
-  const consoleOutput = document.getElementById('consoleOutput');
-  consoleOutput.innerHTML = '';
-}
-
-// Redirect console.log output to the developer menu
-function trackConsoleOutput() {
-  console.log = function(message) {
-    const consoleOutput = document.getElementById('consoleOutput');
-    consoleOutput.innerHTML += `<div>${message}</div>`;
-  };
-}
-
-// Inspect DOM function
-function inspectDOM() {
-  const domInspector = document.getElementById('domInspector');
-  domInspector.innerHTML = '<pre>' + document.documentElement.outerHTML + '</pre>';
-}
-
-// Track performance function
-function trackPerformance() {
-  const performanceOutput = document.getElementById('performanceOutput');
-  const timing = window.performance.timing;
-  const loadTime = timing.loadEventEnd - timing.navigationStart;
-  performanceOutput.innerHTML = `Page Load Time: ${loadTime} ms`;
-}
-
-// Simulate error function
-function simulateError() {
-  console.error('This is a simulated error message.');
-  const errorLog = document.getElementById('errorLog');
-  errorLog.innerHTML += '<div style="color: red;">Simulated error logged.</div>';
-}
-
 // Fun features
-function danceParty() {
+function discoMode() {
   const body = document.body;
   const colors = ['#ff00ff', '#00ffff', '#ffff00', '#ff0000', '#00ff00', '#0000ff'];
   let interval = setInterval(function() {
@@ -202,33 +77,47 @@ function danceParty() {
   }, 5000);
 }
 
-function crazyColors() {
+function spinText() {
   const elements = document.querySelectorAll('*');
-  const colors = ['#ff00ff', '#00ffff', '#ffff00', '#ff0000', '#00ff00', '#0000ff'];
   elements.forEach(function(el) {
-    const randomColor = colors[Math.floor(Math.random() * colors.length)];
-    el.style.backgroundColor = randomColor;
+    el.style.transition = 'transform 0.5s ease-in-out';
+    el.style.transform = 'rotate(360deg)';
   });
   setTimeout(function() {
     elements.forEach(function(el) {
-      el.style.backgroundColor = 'transparent';
+      el.style.transition = '';
+      el.style.transform = '';
+    });
+  }, 2000);
+}
+
+function makeEverythingBouncy() {
+  const elements = document.querySelectorAll('*');
+  elements.forEach(function(el) {
+    el.style.transition = 'transform 0.2s ease-in-out';
+    el.style.transform = 'scale(1.1)';
+  });
+  setTimeout(function() {
+    elements.forEach(function(el) {
+      el.style.transition = '';
+      el.style.transform = '';
     });
   }, 3000);
 }
 
-function hideRandomElements() {
-  const elements = document.querySelectorAll('*');
-  const randomIndex = Math.floor(Math.random() * elements.length);
-  const randomElement = elements[randomIndex];
-  randomElement.style.display = 'none';
+function messWithImages() {
+  const images = document.querySelectorAll('img');
+  images.forEach(function(img) {
+    img.style.transition = 'transform 0.5s ease-in-out';
+    img.style.transform = 'rotate(180deg) scale(1.2)';
+  });
   setTimeout(function() {
-    randomElement.style.display = '';
+    images.forEach(function(img) {
+      img.style.transition = '';
+      img.style.transform = '';
+    });
   }, 2000);
 }
 
 // Append the developer menu to the body of the page
 document.body.appendChild(devMenu);
-
-// Initialize features
-trackXHRRequests();
-trackConsoleOutput();
