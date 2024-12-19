@@ -14,8 +14,8 @@ const menuStyles = `
   font-family: Arial, sans-serif;
   z-index: 9999;
   overflow-y: auto;
-  cursor: default; /* Ensure cursor is always visible */
   display: none; /* Hidden by default */
+  cursor: default !important; /* Ensure default cursor */
 `;
 
 // Styles for buttons
@@ -91,11 +91,19 @@ devMenu.innerHTML = `
       <!-- Error log will be displayed here -->
     </div>
   </div>
+  <hr style="margin: 0; border-color: #333;">
+  <div style="padding: 10px;">
+    <h3>Fun Features</h3>
+    <button style="${buttonStyles}" onclick="danceParty()">Dance Party!</button>
+    <button style="${buttonStyles}" onclick="crazyColors()">Crazy Colors!</button>
+    <button style="${buttonStyles}" onclick="hideRandomElements()">Hide Random Elements</button>
+  </div>
 `;
 
 // Toggle visibility of the developer menu
 function toggleDevMenu() {
   devMenu.style.display = devMenu.style.display === 'none' ? 'block' : 'none';
+  document.body.style.cursor = devMenu.style.display === 'none' ? 'auto' : 'default'; // Adjust body cursor based on menu visibility
 }
 
 // Handle F8 key press to toggle the menu
@@ -178,6 +186,44 @@ function simulateError() {
   console.error('This is a simulated error message.');
   const errorLog = document.getElementById('errorLog');
   errorLog.innerHTML += '<div style="color: red;">Simulated error logged.</div>';
+}
+
+// Fun features
+function danceParty() {
+  const body = document.body;
+  const colors = ['#ff00ff', '#00ffff', '#ffff00', '#ff0000', '#00ff00', '#0000ff'];
+  let interval = setInterval(function() {
+    const randomColor = colors[Math.floor(Math.random() * colors.length)];
+    body.style.backgroundColor = randomColor;
+  }, 500);
+  setTimeout(function() {
+    clearInterval(interval);
+    body.style.backgroundColor = '#000';
+  }, 5000);
+}
+
+function crazyColors() {
+  const elements = document.querySelectorAll('*');
+  const colors = ['#ff00ff', '#00ffff', '#ffff00', '#ff0000', '#00ff00', '#0000ff'];
+  elements.forEach(function(el) {
+    const randomColor = colors[Math.floor(Math.random() * colors.length)];
+    el.style.backgroundColor = randomColor;
+  });
+  setTimeout(function() {
+    elements.forEach(function(el) {
+      el.style.backgroundColor = 'transparent';
+    });
+  }, 3000);
+}
+
+function hideRandomElements() {
+  const elements = document.querySelectorAll('*');
+  const randomIndex = Math.floor(Math.random() * elements.length);
+  const randomElement = elements[randomIndex];
+  randomElement.style.display = 'none';
+  setTimeout(function() {
+    randomElement.style.display = '';
+  }, 2000);
 }
 
 // Append the developer menu to the body of the page
