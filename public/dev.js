@@ -7,12 +7,15 @@ const menuStyles = `
   right: 20px;
   width: 350px;
   height: 80%;
-  background-color: #fff;
-  border: 1px solid #ccc;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  background-color: #000;
+  color: #fff;
+  border: 1px solid #333;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
   font-family: Arial, sans-serif;
   z-index: 9999;
   overflow-y: auto;
+  cursor: default; /* Ensure cursor is always visible */
+  display: none; /* Hidden by default */
 `;
 
 // Styles for buttons
@@ -35,33 +38,57 @@ devMenu.style.cssText = menuStyles;
 devMenu.innerHTML = `
   <div style="padding: 10px;">
     <h2 style="margin: 0; font-size: 20px;">Developer Menu</h2>
-    <button style="float: right; background-color: transparent; border: none; cursor: pointer;" onclick="toggleDevMenu()">✖</button>
+    <button style="float: right; background-color: transparent; border: none; cursor: pointer; color: #fff;" onclick="toggleDevMenu()">✖</button>
   </div>
-  <hr style="margin: 0;">
+  <hr style="margin: 0; border-color: #333;">
   <div id="debugInfo" style="padding: 10px;">
     <!-- Debug information will be displayed here -->
   </div>
-  <hr style="margin: 0;">
+  <hr style="margin: 0; border-color: #333;">
   <div style="padding: 10px;">
     <h3 style="margin-top: 0;">Modify Data</h3>
     <button style="${buttonStyles}" onclick="modifyData()">Modify Data</button>
     <h3>Insert Custom Data</h3>
     <button style="${buttonStyles}" onclick="insertCustomData()">Insert Custom Data</button>
   </div>
-  <hr style="margin: 0;">
+  <hr style="margin: 0; border-color: #333;">
   <div style="padding: 10px;">
     <h3>Network</h3>
     <button style="${buttonStyles}" onclick="clearNetwork()">Clear Network</button>
-    <div id="xhrRequests" style="margin-top: 10px; font-size: 14px; color: #333;">
+    <div id="xhrRequests" style="margin-top: 10px; font-size: 14px;">
       No XHR requests yet.
     </div>
   </div>
-  <hr style="margin: 0;">
+  <hr style="margin: 0; border-color: #333;">
   <div style="padding: 10px;">
     <h3>Console</h3>
     <button style="${buttonStyles}" onclick="clearConsole()">Clear Console</button>
-    <div id="consoleOutput" style="margin-top: 10px; font-size: 14px; color: #333;">
+    <div id="consoleOutput" style="margin-top: 10px; font-size: 14px;">
       <!-- Console output will be displayed here -->
+    </div>
+  </div>
+  <hr style="margin: 0; border-color: #333;">
+  <div style="padding: 10px;">
+    <h3>DOM Inspection</h3>
+    <button style="${buttonStyles}" onclick="inspectDOM()">Inspect DOM</button>
+    <div id="domInspector" style="margin-top: 10px; font-size: 14px;">
+      <!-- DOM inspection results will be displayed here -->
+    </div>
+  </div>
+  <hr style="margin: 0; border-color: #333;">
+  <div style="padding: 10px;">
+    <h3>Performance</h3>
+    <button style="${buttonStyles}" onclick="trackPerformance()">Track Performance</button>
+    <div id="performanceOutput" style="margin-top: 10px; font-size: 14px;">
+      <!-- Performance metrics will be displayed here -->
+    </div>
+  </div>
+  <hr style="margin: 0; border-color: #333;">
+  <div style="padding: 10px;">
+    <h3>Errors</h3>
+    <button style="${buttonStyles}" onclick="simulateError()">Simulate Error</button>
+    <div id="errorLog" style="margin-top: 10px; font-size: 14px;">
+      <!-- Error log will be displayed here -->
     </div>
   </div>
 `;
@@ -130,6 +157,27 @@ function trackConsoleOutput() {
     const consoleOutput = document.getElementById('consoleOutput');
     consoleOutput.innerHTML += `<div>${message}</div>`;
   };
+}
+
+// Inspect DOM function
+function inspectDOM() {
+  const domInspector = document.getElementById('domInspector');
+  domInspector.innerHTML = '<pre>' + document.documentElement.outerHTML + '</pre>';
+}
+
+// Track performance function
+function trackPerformance() {
+  const performanceOutput = document.getElementById('performanceOutput');
+  const timing = window.performance.timing;
+  const loadTime = timing.loadEventEnd - timing.navigationStart;
+  performanceOutput.innerHTML = `Page Load Time: ${loadTime} ms`;
+}
+
+// Simulate error function
+function simulateError() {
+  console.error('This is a simulated error message.');
+  const errorLog = document.getElementById('errorLog');
+  errorLog.innerHTML += '<div style="color: red;">Simulated error logged.</div>';
 }
 
 // Append the developer menu to the body of the page
