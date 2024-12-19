@@ -1,77 +1,98 @@
 // devmenu.js
 
-// Create a div element for the developer menu
+// Styles for the developer menu
+const menuStyles = `
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  width: 350px;
+  height: 80%;
+  background-color: #fff;
+  border: 1px solid #ccc;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  font-family: Arial, sans-serif;
+  z-index: 9999;
+  overflow-y: auto;
+`;
+
+// Styles for buttons
+const buttonStyles = `
+  display: block;
+  width: 100%;
+  padding: 10px 15px;
+  margin-top: 10px;
+  background-color: #007bff;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+`;
+
+// Create the developer menu container
 const devMenu = document.createElement('div');
-devMenu.style.position = 'fixed';
-devMenu.style.top = '10px';
-devMenu.style.right = '10px';
-devMenu.style.width = '300px';
-devMenu.style.height = '80%';
-devMenu.style.backgroundColor = '#f0f0f0';
-devMenu.style.border = '1px solid #ccc';
-devMenu.style.padding = '10px';
-devMenu.style.zIndex = '9999';
-devMenu.style.display = 'none'; // Initially hidden
+devMenu.style.cssText = menuStyles;
 devMenu.innerHTML = `
-  <h2>Developer Menu</h2>
-  <button onclick="toggleDevMenu()">Close</button>
-  <hr>
-  <div id="debugInfo">
+  <div style="padding: 10px;">
+    <h2 style="margin: 0; font-size: 20px;">Developer Menu</h2>
+    <button style="float: right; background-color: transparent; border: none; cursor: pointer;" onclick="toggleDevMenu()">✖</button>
+  </div>
+  <hr style="margin: 0;">
+  <div id="debugInfo" style="padding: 10px;">
     <!-- Debug information will be displayed here -->
   </div>
-  <hr>
-  <h3>Modify Data</h3>
-  <button onclick="modifyData()">Modify Data</button>
-  <h3>Insert Custom Data</h3>
-  <button onclick="insertCustomData()">Insert Custom Data</button>
-  <hr>
-  <h3>Network</h3>
-  <button onclick="clearNetwork()">Clear Network</button>
-  <h4>XHR Requests</h4>
-  <div id="xhrRequests">
-    <!-- XHR request information will be displayed here -->
+  <hr style="margin: 0;">
+  <div style="padding: 10px;">
+    <h3 style="margin-top: 0;">Modify Data</h3>
+    <button style="${buttonStyles}" onclick="modifyData()">Modify Data</button>
+    <h3>Insert Custom Data</h3>
+    <button style="${buttonStyles}" onclick="insertCustomData()">Insert Custom Data</button>
   </div>
-  <hr>
-  <h3>Console</h3>
-  <button onclick="clearConsole()">Clear Console</button>
-  <div id="consoleOutput">
-    <!-- Console output will be displayed here -->
+  <hr style="margin: 0;">
+  <div style="padding: 10px;">
+    <h3>Network</h3>
+    <button style="${buttonStyles}" onclick="clearNetwork()">Clear Network</button>
+    <div id="xhrRequests" style="margin-top: 10px; font-size: 14px; color: #333;">
+      No XHR requests yet.
+    </div>
+  </div>
+  <hr style="margin: 0;">
+  <div style="padding: 10px;">
+    <h3>Console</h3>
+    <button style="${buttonStyles}" onclick="clearConsole()">Clear Console</button>
+    <div id="consoleOutput" style="margin-top: 10px; font-size: 14px; color: #333;">
+      <!-- Console output will be displayed here -->
+    </div>
   </div>
 `;
 
-// Function to toggle visibility of the developer menu
+// Toggle visibility of the developer menu
 function toggleDevMenu() {
-  if (devMenu.style.display === 'none') {
-    devMenu.style.display = 'block';
-    refreshNetworkRequests();
-    refreshConsoleOutput();
-  } else {
-    devMenu.style.display = 'none';
-  }
+  devMenu.style.display = devMenu.style.display === 'none' ? 'block' : 'none';
 }
 
-// Function to handle F8 key press to toggle the menu
+// Handle F8 key press to toggle the menu
 document.addEventListener('keydown', function(event) {
   if (event.key === 'F8') {
     toggleDevMenu();
   }
 });
 
-// Function to display debug information
+// Display debug information
 function displayDebugInfo(info) {
   const debugInfo = document.getElementById('debugInfo');
   debugInfo.innerHTML = `<pre>${info}</pre>`;
 }
 
-// Example function to modify data (replace with actual functionality)
+// Modify data example function
 function modifyData() {
   console.log('Modify Data button clicked');
   // Example: Modify a sample variable
-  sampleData = 'Modified Data';
-  displayDebugInfo(`Modified data: ${sampleData}`);
+  const newData = { example: 'New Data' };
+  displayDebugInfo(`Modified data: ${JSON.stringify(newData)}`);
 }
 
-// Example function to insert custom data (replace with actual functionality)
+// Insert custom data example function
 function insertCustomData() {
   console.log('Insert Custom Data button clicked');
   // Example: Insert a new object
@@ -79,39 +100,41 @@ function insertCustomData() {
   displayDebugInfo(`Inserted custom data: ${JSON.stringify(customData)}`);
 }
 
-// Function to clear network requests
+// Clear network requests function
 function clearNetwork() {
   const xhrRequests = document.getElementById('xhrRequests');
-  xhrRequests.innerHTML = '';
+  xhrRequests.innerHTML = 'No XHR requests yet.';
 }
 
-// Function to refresh network requests
-function refreshNetworkRequests() {
-  const xhrRequests = document.getElementById('xhrRequests');
-  xhrRequests.innerHTML = 'No XHR requests yet.';
-  // Example: Track XHR requests
+// Intercept XHR requests to display in the developer menu
+function trackXHRRequests() {
   const open = XMLHttpRequest.prototype.open;
-  XMLHttpRequest.prototype.open = function() {
+  XMLHttpRequest.prototype.open = function(method, url) {
     this.addEventListener('load', function() {
-      xhrRequests.innerHTML += `<div>URL: ${this.responseURL}, Status: ${this.status}</div>`;
+      const xhrRequests = document.getElementById('xhrRequests');
+      xhrRequests.innerHTML += `<div>${method} ${url}, Status: ${this.status}</div>`;
     });
     open.apply(this, arguments);
   };
 }
 
-// Function to clear console output
+// Clear console output function
 function clearConsole() {
   const consoleOutput = document.getElementById('consoleOutput');
   consoleOutput.innerHTML = '';
 }
 
-// Function to refresh console output
-function refreshConsoleOutput() {
-  const consoleOutput = document.getElementById('consoleOutput');
+// Redirect console.log output to the developer menu
+function trackConsoleOutput() {
   console.log = function(message) {
+    const consoleOutput = document.getElementById('consoleOutput');
     consoleOutput.innerHTML += `<div>${message}</div>`;
   };
 }
 
 // Append the developer menu to the body of the page
 document.body.appendChild(devMenu);
+
+// Initialize features
+trackXHRRequests();
+trackConsoleOutput();
