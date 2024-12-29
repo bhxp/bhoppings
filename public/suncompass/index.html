@@ -1,0 +1,212 @@
+<html><head><base href="." /><title>Sun Compass</title><meta name="viewport" content="width=device-width, initial-scale=1.0"><style>
+:root {
+    --primary: #2a2a2a;
+    --accent: #ffd700;
+    --text: #ffffff;
+}
+
+body {
+    margin: 0;
+    padding: 20px;
+    background: var(--primary);
+    color: var(--text);
+    font-family: 'Arial', sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    overflow: hidden;
+}
+
+.compass-container {
+    position: relative;
+    width: 300px;
+    height: 300px;
+    margin: 20px auto;
+}
+
+.compass {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    border: 3px solid var(--accent);
+    position: relative;
+    transition: transform 0.3s ease;
+}
+
+.sun-indicator {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 20px;
+    height: 20px;
+    background: var(--accent);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    box-shadow: 0 0 20px var(--accent);
+    animation: pulse 2s infinite;
+}
+
+.direction-label {
+    position: absolute;
+    top: -40px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 1.2em;
+    text-align: center;
+}
+
+.compass-marker {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 2px;
+    height: 20px;
+    background: var(--accent);
+}
+
+.permission-button {
+    padding: 12px 24px;
+    background: var(--accent);
+    color: var(--primary);
+    border: none;
+    border-radius: 5px;
+    font-size: 1.1em;
+    cursor: pointer;
+    margin: 10px;
+    display: none;
+}
+
+@keyframes pulse {
+    0% { box-shadow: 0 0 20px var(--accent); }
+    50% { box-shadow: 0 0 40px var(--accent); }
+    100% { box-shadow: 0 0 20px var(--accent); }
+}
+
+.error-message {
+    color: #ff6b6b;
+    text-align: center;
+    margin: 20px;
+    display: none;
+}
+
+@media (max-width: 400px) {
+    .compass-container {
+        width: 250px;
+        height: 250px;
+    }
+}
+</style></head><body>
+    <div class="direction-label">Sun Direction</div>
+    <div class="compass-container">
+        <div class="compass">
+            <div class="compass-marker"></div>
+            <div class="sun-indicator"></div>
+        </div>
+    </div>
+    <button class="permission-button">Enable Compass & Location</button>
+    <div class="error-message">Please enable device orientation and location access.</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const compass = document.querySelector('.compass');
+    const sunIndicator = document.querySelector('.sun-indicator');
+    const errorMessage = document.querySelector('.error-message');
+    const permissionButton = document.querySelector('.permission-button');
+    let deviceOrientation = 0;
+
+    // Function to request permissions
+    async function requestPermissions() {
+        try {
+            // Request location permission
+            await new Promise((resolve, reject) => {
+                navigator.geolocation.getCurrentPosition(resolve, reject);
+            });
+
+            // Request device orientation permission if needed (iOS)
+            if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+                const permission = await DeviceOrientationEvent.requestPermission();
+                if (permission !== 'granted') {
+                    throw new Error('Device orientation permission denied');
+                }
+            }
+
+            permissionButton.style.display = 'none';
+            errorMessage.style.display = 'none';
+            initializeCompass();
+        } catch (error) {
+            errorMessage.style.display = 'block';
+            permissionButton.style.display = 'block';
+        }
+    }
+
+    // Function to calculate sun position
+    async function calculateSunPosition() {
+        try {
+            const position = await new Promise((resolve, reject) => {
+                navigator.geolocation.getCurrentPosition(resolve, reject);
+            });
+            
+            const { latitude, longitude } = position.coords;
+            const date = new Date();
+            
+            // Simple solar position calculation (approximate)
+            const hourAngle = (date.getUTCHours() + date.getUTCMinutes() / 60 - 12) * 15;
+            const declination = 23.45 * Math.sin(2 * Math.PI * (date.getUTCDate() + 284) / 365);
+            
+            // Calculate azimuth (approximate)
+            const azimuth = Math.atan2(
+                Math.sin(hourAngle * Math.PI / 180),
+                Math.cos(hourAngle * Math.PI / 180) * Math.sin(latitude * Math.PI / 180) -
+                Math.tan(declination * Math.PI / 180) * Math.cos(latitude * Math.PI / 180)
+            ) * 180 / Math.PI;
+
+            return (azimuth + 360) % 360;
+        } catch (error) {
+            errorMessage.style.display = 'block';
+            permissionButton.style.display = 'block';
+            return null;
+        }
+    }
+
+    // Initialize compass functionality
+    function initializeCompass() {
+        if (window.DeviceOrientationEvent) {
+            window.addEventListener('deviceorientationabsolute', async function(event) {
+                if (event.alpha !== null) {
+                    deviceOrientation = event.alpha;
+                    const sunPosition = await calculateSunPosition();
+                    
+                    if (sunPosition !== null) {
+                        // Update compass rotation
+                        compass.style.transform = `rotate(${-deviceOrientation}deg)`;
+                        
+                        // Calculate and update sun indicator position
+                        const radius = 125; // Half of compass size - adjust as needed
+                        const angle = (sunPosition - deviceOrientation) * Math.PI / 180;
+                        const x = radius * Math.sin(angle);
+                        const y = -radius * Math.cos(angle);
+                        
+                        sunIndicator.style.transform = `translate(${x}px, ${y}px)`;
+                    }
+                }
+            });
+        } else {
+            errorMessage.style.display = 'block';
+            permissionButton.style.display = 'block';
+        }
+    }
+
+    // Show permission button initially
+    permissionButton.style.display = 'block';
+
+    // Add click handler to permission button
+    permissionButton.addEventListener('click', requestPermissions);
+
+    // Initial permissions check
+    requestPermissions();
+});
+</script>
+</body></html>
