@@ -1,0 +1,74 @@
+@font-face {
+    src: url("./minecraft_font.ttf");
+    font-family: "Minecraft";
+    font-style: normal;
+    font-weight: normal;
+  }
+  
+  
+  html,
+  body {
+    height: 100vh;
+    width: 100vw;
+    overflow: hidden;
+  }
+  
+  #background {
+    position: absolute;
+    left: 50vw;
+    top: 50vh;
+    transform: translate(-50%, -50%);
+    width: 110vw;
+    height: 110vh;
+    background-image: url("./background.png");
+    background-size: cover;
+  }
+  
+  #menu-buttons {
+    height: fit-content;
+    width: 20vw;
+    position: absolute;
+    left: 20vw;
+    bottom: 16vh;
+    transform: translateY(-50%);
+  }
+  
+  #menu-buttons button {
+    background: none;
+    background-image: url("./button.png");
+    background-size: cover;
+    width: 100%;
+    aspect-ratio: 1 / 0.275;
+    border: none !important;
+    transition: all 0.2s ease-in-out;
+    font-family: "Minecraft", sans-serif !important;
+    font-size: 48px;
+    cursor: pointer;
+  }
+  
+  #menu-buttons button:hover {
+    filter: brightness(110%);
+    transform: scale(102%);
+  }
+  
+  #title:hover {
+    filter: brightness(110%);
+    transform: scale(102%);
+  }
+  
+  #menu-buttons button img {
+    height: 40%;
+  }
+  
+  #title {
+    position: absolute;
+    left: 12vw;
+    top: 10vw;
+    height: calc(20vw - 48px);
+    transition: all 0.2s ease-in-out;
+  }
+  
+  * {
+    user-select: none;
+    -webkit-user-drag: none;
+  }
