@@ -1,104 +1,1656 @@
-<html><head><base href="." /><title>Super Monkey Roll 3D</title><script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/cannon.js/0.6.2/cannon.min.js"></script><style>
-body { margin: 0; overflow: hidden; }
-canvas { width: 100%; height: 100%; }
-#info {
-    position: absolute;
-    top: 10px;
+<html><head><base href=".">
+<title>Super Monkey Roll 3D</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cannon.js/0.6.2/cannon.min.js"></script>
+<style>
+html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
     width: 100%;
-    text-align: center;
-    color: white;
-    font-family: Arial;
-    font-size: 18px;
-    text-shadow: 1px 1px 1px black;
+    overflow: hidden;
+}
+
+body { 
+    overflow: hidden; 
+    background: #000; 
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+canvas { 
+    width: 100%; 
+    height: 100%; 
+    cursor: crosshair; 
+}
+
+.ui-element {
+    position: absolute;
+    font-family: 'Arial', sans-serif;
+    color: #fff;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
     z-index: 100;
 }
+
 #fallText {
-    position: absolute;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    color: red;
-    font-family: Arial;
+    color: #ff3333;
     font-size: 48px;
     font-weight: bold;
-    text-shadow: 2px 2px 4px black;
+    text-shadow: 0 0 10px rgba(255,0,0,0.5);
     display: none;
-    z-index: 100;
+    animation: pulse 1s infinite;
 }
+
 #startText {
-    position: absolute;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    color: yellow;
-    font-family: Arial;
+    color: #ffeb3b;
     font-size: 72px;
     font-weight: bold;
-    text-shadow: 2px 2px 4px black;
-    z-index: 100;
+    animation: fadeIn 0.5s ease-out;
 }
+
+.stat-container {
+    left: 20px;
+    background: rgba(0,0,0,0.8);
+    border-radius: 10px;
+    padding: 15px;
+    border: 2px solid rgba(255,255,255,0.1);
+    box-shadow: 0 0 20px rgba(0,0,0,0.5);
+}
+
 #score {
-    position: absolute;
-    top: 50px;
-    width: 100%;
-    text-align: center;
-    color: yellow;
-    font-family: Arial;
-    font-size: 24px;
-    text-shadow: 1px 1px 1px black;
-    z-index: 100;
+    top: 20px;
+    color: #ffd700;
+    font-size: 20px;
 }
+
+#level {
+    top: 80px;
+    color: #4caf50;
+    font-size: 20px;
+}
+
+#jumpCooldown {
+    top: 140px;
+    width: 200px;
+}
+
+.cooldown-bar {
+    width: 100%;
+    height: 10px;
+    background: rgba(255,255,255,0.2);
+    border-radius: 5px;
+    margin-top: 5px;
+}
+
+.cooldown-progress {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(to right, #00ffff, #2196f3);
+    border-radius: 5px;
+    transition: width 0.1s linear;
+}
+
 #winText {
-    position: absolute;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    color: gold;
-    font-family: Arial;
+    color: #ffd700;
     font-size: 72px;
     font-weight: bold;
-    text-shadow: 2px 2px 4px black;
     display: none;
-    z-index: 100;
+    animation: scaleIn 0.5s ease-out;
 }
-</style></head><body>
-<div id="info">Super Monkey Roll 3D<br>Use WASD to move the monkey ball!</div>
-<div id="fallText">FALL OUT!</div>
-<div id="startText">READY?</div>
-<div id="score">Bananas: 0</div>
-<div id="winText">GOAL!</div>
+
+#console {
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    width: 300px;
+    height: 200px;
+    background: rgba(0,0,0,0.9);
+    border: 2px solid #00ff00;
+    border-radius: 5px;
+    color: #00ff00;
+    font-family: 'Courier New', monospace;
+    padding: 10px;
+    display: none;
+    z-index: 1000;
+    overflow-y: auto;
+}
+
+#consoleInput {
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    width: 290px;
+    background: rgba(0,0,0,0.95);
+    border: 1px solid #00ff00;
+    border-radius: 3px;
+    color: #00ff00;
+    font-family: 'Courier New', monospace;
+    padding: 5px;
+    display: none;
+    z-index: 1001;
+    -webkit-user-select: text;
+    -moz-user-select: text;
+    -ms-user-select: text;
+    user-select: text;
+}
+
+.settings-menu {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 600px;
+    background: rgba(0, 0, 0, 0.9);
+    border: 2px solid #00ff00;
+    border-radius: 10px;
+    padding: 20px;
+    color: white;
+    font-family: Arial, sans-serif;
+    display: none;
+    z-index: 1000;
+}
+
+.settings-header {
+    text-align: center;
+    font-size: 24px;
+    margin-bottom: 20px;
+    color: #00ff00;
+    border-bottom: 1px solid #00ff00;
+    padding-bottom: 10px;
+}
+
+.settings-section {
+    margin-bottom: 20px;
+}
+
+.settings-section h3 {
+    color: #00ff00;
+    margin-bottom: 10px;
+}
+
+.setting-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 10px 0;
+    padding: 5px;
+    border-radius: 5px;
+}
+
+.setting-item:hover {
+    background: rgba(0, 255, 0, 0.1);
+}
+
+.slider-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 200px;
+}
+
+.slider {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 5px;
+    border-radius: 5px;
+    background: #333;
+    outline: none;
+}
+
+.slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
+    background: #00ff00;
+    cursor: pointer;
+}
+
+.close-button {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: none;
+    border: none;
+    color: #00ff00;
+    font-size: 20px;
+    cursor: pointer;
+}
+
+.close-button:hover {
+    color: #fff;
+}
+
+.pause-menu {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 400px;
+    background: rgba(0, 0, 0, 0.95);
+    border: 2px solid #00ff00;
+    border-radius: 10px;
+    padding: 20px;
+    color: white;
+    font-family: Arial, sans-serif;
+    display: none;
+    z-index: 1000;
+    text-align: center;
+}
+
+.pause-menu-button {
+    width: 80%;
+    margin: 10px auto;
+    padding: 15px;
+    background: rgba(0, 255, 0, 0.1);
+    border: 1px solid #00ff00;
+    border-radius: 5px;
+    color: #00ff00;
+    font-size: 18px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.pause-menu-button:hover {
+    background: rgba(0, 255, 0, 0.2);
+    transform: scale(1.05);
+}
+
+.pause-menu-title {
+    font-size: 24px;
+    color: #00ff00;
+    margin-bottom: 20px;
+    border-bottom: 1px solid #00ff00;
+    padding-bottom: 10px;
+}
+
+.skin-selector {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 600px;
+    background: rgba(0, 0, 0, 0.9);
+    border: 2px solid #00ff00;
+    border-radius: 10px;
+    padding: 20px;
+    color: white;
+    font-family: Arial, sans-serif;
+    display: none;
+    z-index: 1000;
+}
+
+.skin-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    margin-top: 15px;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.skin-item {
+    background: rgba(0, 255, 0, 0.1);
+    border: 1px solid #00ff00;
+    border-radius: 5px;
+    padding: 10px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.skin-item:hover {
+    background: rgba(0, 255, 0, 0.2);
+    transform: scale(1.05);
+}
+
+.skin-item.selected {
+    background: rgba(0, 255, 0, 0.3);
+    border: 2px solid #00ff00;
+}
+
+.skin-preview {
+    width: 100px;
+    height: 100px;
+    margin: 0 auto 10px;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#magnetUI {
+    top: 200px;
+    left: 20px;
+    padding: 10px;
+    color: #00ffff;
+    font-size: 20px;
+    display: none;
+}
+
+#slowFieldUI {
+    top: 260px;
+    left: 20px;
+    padding: 10px;
+    color: #9c27b0;
+    font-size: 20px;
+    display: none;
+}
+
+.slow-field-effect {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: rgba(156, 39, 176, 0.2);
+    border: 2px solid #9c27b0;
+    pointer-events: none;
+    transform: translate(-50%, -50%);
+    animation: slowFieldPulse 2s infinite;
+}
+
+.slow-field-zone {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: rgba(156, 39, 176, 0.2);
+  border: 2px solid #9c27b0;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+  animation: slowFieldPulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { transform: translate(-50%, -50%) scale(1); }
+    50% { transform: translate(-50%, -50%) scale(1.1); }
+    100% { transform: translate(-50%, -50%) scale(1); }
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+    to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+
+@keyframes scaleIn {
+    from { transform: translate(-50%, -50%) scale(0); }
+    to { transform: translate(-50%, -50%) scale(1); }
+}
+
+@keyframes slowFieldPulse {
+    0% { transform: translate(-50%, -50%) scale(1); opacity: 0.6; }
+    50% { transform: translate(-50%, -50%) scale(15); opacity: 0.2; }
+    100% { transform: translate(-50%, -50%) scale(1); opacity: 0.6; }
+}
+
+.graphics-editor {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 800px;
+    max-height: 90vh;
+    background: rgba(0, 0, 0, 0.95);
+    border: 2px solid #00ff00;
+    border-radius: 10px;
+    padding: 20px;
+    color: white;
+    font-family: Arial, sans-serif;
+    display: none;
+    z-index: 1000;
+    overflow-y: auto;
+}
+
+#settingsOutput {
+    width: 100%;
+    height: 100px;
+    background: rgba(0, 0, 0, 0.8);
+    color: #00ff00;
+    font-family: monospace;
+    padding: 10px;
+    margin-top: 10px;
+    border: 1px solid #00ff00;
+    resize: none;
+    -webkit-user-select: text;
+    -moz-user-select: text;  
+    -ms-user-select: text;
+    user-select: text;
+}
+
+input[type="color"] {
+    width: 50px;
+    height: 25px;
+    border: none;
+    border-radius: 3px;
+    background: none;
+    cursor: pointer;
+}
+
+.start-menu {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(45deg, #1a1a1a, #000000);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 2000;
+}
+
+.start-menu-title {
+    font-size: 72px;
+    color: #00ff00;
+    text-shadow: 0 0 20px rgba(0,255,0,0.5);
+    margin-bottom: 50px;
+    font-family: 'Arial', sans-serif;
+    animation: glow 2s infinite alternate;
+}
+
+.start-menu-button {
+    padding: 20px 60px;
+    font-size: 24px;
+    color: #fff;
+    background: rgba(0,255,0,0.2);
+    border: 2px solid #00ff00;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-family: 'Arial', sans-serif;
+}
+
+.start-menu-button:hover {
+    background: rgba(0,255,0,0.4);
+    transform: scale(1.1);
+}
+
+@keyframes glow {
+    from {
+        text-shadow: 0 0 20px rgba(0,255,0,0.5);
+    }
+    to {
+        text-shadow: 0 0 30px rgba(0,255,0,0.8),
+                     0 0 40px rgba(0,255,0,0.3);
+    }
+}
+
+.level-editor {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: #1a1a1a;
+  z-index: 2000;
+}
+
+.editor-toolbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  padding: 10px;
+  background: rgba(0,0,0,0.8);
+  display: flex;
+  gap: 10px;
+  z-index: 2001;
+}
+
+#editorGrid {
+  margin-top: 60px;
+  display: grid;
+  grid-template-columns: repeat(12, 50px);
+  gap: 2px;
+  padding: 20px;
+}
+
+.editor-cell {
+  width: 50px;
+  height: 50px;
+  background: rgba(255,255,255,0.1);
+  border: 1px solid #333;
+  cursor: pointer;
+}
+
+.editor-cell.platform {
+  background: #2E8B57;
+}
+
+.editor-cell.banana {
+  background: #FFD700;
+}
+
+.editor-cell.door {
+  background: #4CAF50;
+}
+
+.editor-cell.movingPlatform {
+  background: #9c27b0;
+}
+
+.editor-cell.enemy {
+  background: #FF0000;
+}
+
+.editor-cell.launchPad {
+  background: #00ffff;
+}
+
+.editor-cell.magnet {
+  background: #00ffff;
+}
+
+.editor-cell.slowField {
+  background: #9c27b0;
+}
+
+.editor-toolbar select,
+.editor-toolbar button {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  background: #333;
+  color: #fff;
+  cursor: pointer;
+}
+
+.editor-toolbar button:hover {
+  background: #444;
+}
+
+.eraser-active {
+  cursor: not-allowed;
+}
+
+.editor-cell.platform.has-item {
+  position: relative;
+}
+
+.editor-cell.platform.has-item::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255,255,255,0.3);
+  pointer-events: none;
+}
+
+.spawn-point {
+  background: rgba(0, 255, 0, 0.3);
+  border: 2px solid #00ff00;
+}
+
+.editor-cell.floor2 {
+  opacity: 0.7;
+}
+
+#backToEditor {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  padding: 10px 20px;
+  background: rgba(0,0,0,0.8);
+  color: #00ff00;
+  border: 1px solid #00ff00;
+  border-radius: 5px;
+  cursor: pointer;
+  z-index: 1000;
+}
+
+#backToEditor:hover {
+  background: rgba(0,255,0,0.2);
+}
+
+.editor-floor-indicator {
+  position: fixed;
+  top: 70px;
+  left: 20px;
+  padding: 10px;
+  background: rgba(0,0,0,0.8);
+  color: #00ff00;
+  border: 1px solid #00ff00;
+  border-radius: 5px;
+}
+</style>
+</head>
+<body>
+<div class="start-menu">
+    <h1 class="start-menu-title">Super Monkey Roll 3D</h1>
+    <button class="start-menu-button">Play Game</button>
+    <button class="start-menu-button" id="levelEditorButton">Level Creator</button>
+    <button class="start-menu-button" id="startOptionsButton">Options</button>
+</div>
+<div id="fallText" class="ui-element">FALL OUT!</div>
+<div id="startText" class="ui-element">READY?</div>
+<div id="score" class="ui-element stat-container">Bananas: 0</div>
+<div id="level" class="ui-element stat-container">Level: 1</div>
+<div id="jumpCooldown" class="ui-element stat-container">
+    Jump Ready!
+    <div class="cooldown-bar">
+        <div class="cooldown-progress"></div>
+    </div>
+</div>
+<div id="magnetUI" class="ui-element stat-container">Magnets Available: 0 (Press M)</div>
+<div id="slowFieldUI" class="ui-element stat-container">Slow Fields Available: 0 (Press F)</div>
+<div id="winText" class="ui-element">GOAL!</div>
+<div id="console"></div>
+<input type="text" id="consoleInput" placeholder="Enter command...">
+<div class="pause-menu">
+    <div class="pause-menu-title">PAUSED</div>
+    <button class="pause-menu-button" id="resumeButton">Resume Game</button>
+    <button class="pause-menu-button" id="settingsButton">Settings</button>
+    <button class="pause-menu-button" id="skinsButton">Character Skins</button>
+    <button class="pause-menu-button" id="quitButton">Quit to Menu</button>
+    <button class="pause-menu-button" id="saveButton">Save Progress</button>
+    <button class="pause-menu-button" id="loadButton">Load Progress</button>
+    <input type="file" id="loadInput" style="display: none" accept=".json">
+</div>
+<div class="settings-menu">
+    <button class="close-button">×</button>
+    <div class="settings-header">Settings</div>
+    
+    <div class="settings-section">
+        <h3>Audio</h3>
+        <div class="setting-item">
+            <span>Master Volume</span>
+            <div class="slider-container">
+                <input type="range" min="0" max="100" value="100" class="slider" id="masterVolume">
+                <span id="masterVolumeValue">100%</span>
+            </div>
+        </div>
+        <div class="setting-item">
+            <span>Sound Effects</span>
+            <div class="slider-container">
+                <input type="range" min="0" max="100" value="100" class="slider" id="sfxVolume">
+                <span id="sfxVolumeValue">100%</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="settings-section">
+        <h3>Graphics</h3>
+        <div class="setting-item">
+            <span>Shadow Quality</span>
+            <select id="shadowQuality">
+                <option value="low">Low</option>
+                <option value="medium" selected>Medium</option>
+                <option value="high">High</option>
+            </select>
+        </div>
+        <div class="setting-item">
+            <span>Antialiasing</span>
+            <select id="antialiasing">
+                <option value="none">None</option>
+                <option value="fxaa" selected>FXAA</option>
+                <option value="msaa">MSAA</option>
+            </select>
+        </div>
+        <div class="setting-item">
+            <span>Motion Blur</span>
+            <div class="slider-container">
+                <input type="range" min="0" max="100" value="0" class="slider" id="motionBlurStrength">
+                <span id="motionBlurStrengthValue">0%</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="settings-section">
+        <h3>Controls</h3>
+        <div class="setting-item">
+            <span>Mouse Sensitivity</span>
+            <div class="slider-container">
+                <input type="range" min="1" max="100" value="50" class="slider" id="sensitivity">
+                <span id="sensitivityValue">50%</span>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="skin-selector">
+    <button class="close-button">×</button>
+    <div class="settings-header">Character Skins</div>
+    
+    <div class="settings-section">
+        <h3>Monkey Skins</h3>
+        <div class="skin-grid">
+            <div class="skin-item selected" data-skin="default">
+                <div class="skin-preview monkey-default"></div>
+                <span>Default Monkey</span>
+            </div>
+            <div class="skin-item" data-skin="blue">
+                <div class="skin-preview monkey-blue"></div>
+                <span>Blue Monkey</span>
+            </div>
+            <div class="skin-item" data-skin="ninja">
+                <div class="skin-preview monkey-ninja"></div>
+                <span>Ninja Monkey</span>
+            </div>
+            <div class="skin-item" data-skin="gold">
+                <div class="skin-preview monkey-gold"></div>
+                <span>Golden Monkey</span>
+            </div>
+            <div class="skin-item" data-skin="rainbow">
+                <div class="skin-preview monkey-rainbow"></div>
+                <span>Rainbow Monkey</span>
+            </div>
+            <div class="skin-item" data-skin="robot">
+                <div class="skin-preview monkey-robot"></div>
+                <span>Robot Monkey</span>
+            </div>
+            <div class="skin-item" data-skin="ebgeb">
+                <div class="skin-preview monkey-ebgeb"></div>
+                <span>Ebgeb Monkey</span>
+            </div>
+            <div class="skin-item" data-skin="damyan">
+                <div class="skin-preview monkey-damyan"></div>
+                <span>Damyan Monkey</span>
+            </div>
+            <div class="skin-item" data-skin="kellen">
+                <div class="skin-preview monkey-kellen"></div>
+                <span>Kellen Monkey</span>
+            </div>
+            <div class="skin-item" data-skin="reid">
+                <div class="skin-preview monkey-reid"></div>
+                <span>Reid Monkey</span>
+            </div>
+            <div class="skin-item" data-skin="tacomonkey">
+                <div class="skin-preview monkey-tacomonkey"></div>
+                <span>Taco Monkey</span>
+            </div>
+            <div class="skin-item" data-skin="meowmeowman">
+                <div class="skin-preview monkey-meowmeowman"></div>
+                <span>Meow Meow Man</span>
+            </div>
+            <div class="skin-item" data-skin="horken">
+                <div class="skin-preview monkey-horken"></div>
+                <span>Horken</span>
+            </div>
+            <div class="skin-item" data-skin="ballbird">
+                <div class="skin-preview monkey-ballbird"></div>
+                <span>Ball Bird</span>
+            </div>
+            <div class="skin-item" data-skin="blueball">
+                <div class="skin-preview monkey-blueball"></div>
+                <span>Blue Ball Bird</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="settings-section">
+        <h3>Banana Skins</h3>
+        <div class="skin-grid">
+            <div class="skin-item selected" data-skin="default">
+                <div class="skin-preview banana-default"></div>
+                <span>Default Banana</span>
+            </div>
+            <div class="skin-item" data-skin="taco">
+                <div class="skin-preview banana-taco"></div>
+                <span>Taco</span>
+            </div>
+            <div class="skin-item" data-skin="star">
+                <div class="skin-preview banana-star"></div>
+                <span>Star</span>
+            </div>
+            <div class="skin-item" data-skin="diamond">
+                <div class="skin-preview banana-diamond"></div>
+                <span>Diamond</span>
+            </div>
+            <div class="skin-item" data-skin="donut">
+                <div class="skin-preview banana-donut"></div>
+                <span>Donut</span>
+            </div>
+            <div class="skin-item" data-skin="coin">
+                <div class="skin-preview banana-coin"></div>
+                <span>Coin</span>
+            </div>
+        </div>
+    </div>
+</div>
+<div id="graphicsEditor" class="graphics-editor">
+    <button class="close-button">×</button>
+    <div class="settings-header">Graphics Editor</div>
+    
+    <div class="settings-section">
+        <h3>Ambient Lighting</h3>
+        <div class="setting-item">
+            <span>Intensity</span>
+            <div class="slider-container">
+                <input type="range" min="0" max="100" value="25" class="slider" id="ambientIntensity">
+                <span id="ambientIntensityValue">25%</span>
+            </div>
+        </div>
+        <div class="setting-item">
+            <span>Color</span>
+            <input type="color" id="ambientColor" value="#404040">
+        </div>
+    </div>
+
+    <div class="settings-section">
+        <h3>Directional Light</h3>
+        <div class="setting-item">
+            <span>Intensity</span>
+            <div class="slider-container">
+                <input type="range" min="0" max="100" value="100" class="slider" id="directionalIntensity">
+                <span id="directionalIntensityValue">100%</span>
+            </div>
+        </div>
+        <div class="setting-item">
+            <span>Color</span>
+            <input type="color" id="directionalColor" value="#ffffff">
+        </div>
+        <div class="setting-item">
+            <span>Position X</span>
+            <div class="slider-container">
+                <input type="range" min="-50" max="50" value="10" class="slider" id="lightPosX">
+                <span id="lightPosXValue">10</span>
+            </div>
+        </div>
+        <div class="setting-item">
+            <span>Position Y</span>
+            <div class="slider-container">
+                <input type="range" min="-50" max="50" value="20" class="slider" id="lightPosY">
+                <span id="lightPosYValue">20</span>
+            </div>
+        </div>
+        <div class="setting-item">
+            <span>Position Z</span>
+            <div class="slider-container">
+                <input type="range" min="-50" max="50" value="10" class="slider" id="lightPosZ">
+                <span id="lightPosZValue">10</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="settings-section">
+        <h3>Post Processing</h3>
+        <div class="setting-item">
+            <span>Bloom</span>
+            <div class="slider-container">
+                <input type="range" min="0" max="100" value="0" class="slider" id="bloomIntensity">
+                <span id="bloomIntensityValue">0%</span>
+            </div>
+        </div>
+        <div class="setting-item">
+            <span>Color Tint</span>
+            <input type="color" id="colorTint" value="#ffffff">
+        </div>
+        <div class="setting-item">
+            <span>Tint Intensity</span>
+            <div class="slider-container">
+                <input type="range" min="0" max="100" value="0" class="slider" id="tintIntensity">
+                <span id="tintIntensityValue">0%</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="settings-section">
+        <h3>Environment</h3>
+        <div class="setting-item">
+            <span>Fog</span>
+            <input type="checkbox" id="fogEnabled">
+        </div>
+        <div class="setting-item">
+            <span>Fog Color</span>
+            <input type="color" id="fogColor" value="#000000">
+        </div>
+        <div class="setting-item">
+            <span>Fog Density</span>
+            <div class="slider-container">
+                <input type="range" min="0" max="100" value="10" class="slider" id="fogDensity">
+                <span id="fogDensityValue">10%</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="settings-section">
+        <h3>Color Adjustments</h3>
+        <div class="setting-item">
+            <span>Exposure</span>
+            <div class="slider-container">
+                <input type="range" min="0" max="200" value="100" class="slider" id="exposure">
+                <span id="exposureValue">100%</span>
+            </div>
+        </div>
+        <div class="setting-item">
+            <span>Contrast</span>
+            <div class="slider-container">
+                <input type="range" min="0" max="200" value="100" class="slider" id="contrast">
+                <span id="contrastValue">100%</span>
+            </div>
+        </div>
+        <div class="setting-item">
+            <span>Saturation</span>
+            <div class="slider-container">
+                <input type="range" min="0" max="200" value="100" class="slider" id="saturation">
+                <span id="saturationValue">100%</span>
+            </div>
+        </div>
+        <div class="setting-item">
+            <span>Gamma</span>
+            <div class="slider-container">
+                <input type="range" min="10" max="40" value="22" class="slider" id="gamma">
+                <span id="gammaValue">2.2</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="settings-section">
+        <h3>Material Properties</h3>
+        <div class="setting-item">
+            <span>Ground Reflectivity</span>
+            <div class="slider-container">
+                <input type="range" min="0" max="100" value="50" class="slider" id="groundReflectivity">
+                <span id="groundReflectivityValue">50%</span>
+            </div>
+        </div>
+        <div class="setting-item">
+            <span>Metalness</span>
+            <div class="slider-container">
+                <input type="range" min="0" max="100" value="50" class="slider" id="metalness">
+                <span id="metalnessValue">50%</span>
+            </div>
+        </div>
+        <div class="setting-item">
+            <span>Roughness</span>
+            <div class="slider-container">
+                <input type="range" min="0" max="100" value="50" class="slider" id="roughness">
+                <span id="roughnessValue">50%</span>
+            </div>
+        </div>
+        <div class="setting-item">
+            <span>Emissive Intensity</span>
+            <div class="slider-container">
+                <input type="range" min="0" max="200" value="100" class="slider" id="emissiveIntensity">
+                <span id="emissiveIntensityValue">100%</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="settings-section">
+        <h3>Advanced Effects</h3>
+        <div class="setting-item">
+            <span>Shadow Softness</span>
+            <div class="slider-container">
+                <input type="range" min="0" max="100" value="50" class="slider" id="shadowSoftness">
+                <span id="shadowSoftnessValue">50%</span>
+            </div>
+        </div>
+        <div class="setting-item">
+            <span>Ambient Occlusion</span>
+            <div class="slider-container">
+                <input type="range" min="0" max="100" value="50" class="slider" id="aoIntensity">
+                <span id="aoIntensityValue">50%</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="settings-section">
+        <h3>Current Settings</h3>
+        <textarea id="settingsOutput" readonly></textarea>
+        <button id="copySettings">Copy Settings</button>
+    </div>
+</div>
+<div class="level-editor" style="display: none">
+  <div class="editor-toolbar">
+    <select id="placementType">
+      <option value="platform">Platform</option>
+      <option value="banana">Banana</option>
+      <option value="door">Door</option>
+      <option value="movingPlatform">Moving Platform</option>
+      <option value="enemy">Enemy</option>
+      <option value="launchPad">Launch Pad</option>
+      <option value="magnet">Magnet</option>
+      <option value="slowField">Slow Field</option>
+      <option value="spawn">Spawn</option>
+    </select>
+    <button id="testLevel">Test Level</button>
+    <button id="saveLevel">Save Level</button>
+    <button id="loadLevel">Load Level</button>
+    <button id="clearLevel">Clear Level</button>
+    <button id="exitEditor">Exit to Menu</button>
+    <button id="eraseButton">Erase</button>
+    <button id="backToEditor">Back to Editor</button>
+    <select id="mapSize">
+      <option value="8">8x8</option>
+      <option value="12">12x12</option>
+      <option value="16">16x16</option>
+      <option value="20">20x20</option>
+    </select>
+    <button id="floorToggle">Toggle Second Floor</button>
+    <button id="spawnButton">Place Spawn</button>
+  </div>
+  <div id="editorGrid"></div>
+  <input type="file" id="loadLevelInput" accept=".json" style="display:none">
+</div>
 <script>
-let collectSound, fallSound;
+let collectSound, fallSound, jumpSound, doorSound;
 let totalBananas = 0;
 let doorLocked = true;
+let canJump = true;
+let jumpCooldown = 5000;
+let lastJumpTime = 0;
+let lastTime = performance.now();
+const fixedTimeStep = 1 / 60;
+let accumulator = 0;
+const levelElement = document.getElementById('level');
+const jumpCooldownElement = document.getElementById('jumpCooldown');
+const cooldownProgress = document.querySelector('.cooldown-progress');
+let consoleVisible = false;
+const consoleElement = document.getElementById('console');
+const consoleInput = document.getElementById('consoleInput');
+let isFlying = false;
+let jumpHeight = 10;
+const defaultJumpHeight = 10;
+const defaultMoveForce = 15;
+let moveForce = defaultMoveForce;
+let currentMoveForce = defaultMoveForce;
+const launchPads = [];
+let noDelay = false;
+let gameInitialized = false;
 
-// Add this function to initialize audio after user interaction
+const scoreElement = document.getElementById('score'); 
+
+let bananaGeometry = new THREE.TorusGeometry(0.15, 0.05, 16, 16, Math.PI);
+const bananaMaterial = new THREE.MeshPhongMaterial({
+    color: 0xFFFF00
+});
+const bananas = [];
+let bananaCount = 0;
+
+let bullets = [];
+let enemies = [];
+const BULLET_SPEED = 0.5;
+const ENEMY_SPEED = 0.02; 
+const ENEMY_SPAWN_CHANCE = 0.01;
+const BULLET_DAMAGE = 1;
+const ENEMY_HEALTH = 1; 
+
+const bulletGeometry = new THREE.SphereGeometry(0.2, 8, 8);
+const bulletMaterial = new THREE.MeshPhongMaterial({
+    color: 0xFFD700,
+    emissive: 0xFFD700,
+    emissiveIntensity: 0.5
+});
+
+const enemyGeometry = new THREE.BoxGeometry(0.8, 0.8, 0.8);
+const enemyMaterial = new THREE.MeshPhongMaterial({
+    color: 0xFF0000,
+    emissive: 0xFF0000,
+    emissiveIntensity: 0.3
+});
+
+const winTextElement = document.getElementById('winText');
+
+let hasMagnet = false;
+let activeMagnet = null;
+let magnetRange = 10;
+let magnetSpeed = 0.1;
+let magnetSpawnRate = 0.005; 
+let magnetCount = 0;
+
+let slowFieldCount = 0;
+let activeSlowField = null;
+let isTimeSlowed = false;
+const slowFieldSpawnRate = 0.003; 
+const slowFieldDuration = 5000;
+const slowTimeScale = 0.5;
+
+const magnetGeometry = new THREE.ConeGeometry(0.2, 0.4, 32);
+const magnetMaterial = new THREE.MeshPhongMaterial({
+    color: 0x00ffff,
+    emissive: 0x006666,
+    emissiveIntensity: 0.5
+});
+
+const slowFieldGeometry = new THREE.OctahedronGeometry(0.2, 0);
+const slowFieldMaterial = new THREE.MeshPhongMaterial({
+    color: 0x9c27b0,
+    emissive: 0x6a0080,
+    emissiveIntensity: 0.5
+});
+
+const SLOW_FIELD_RADIUS = 10;
+const TIME_SCALE_NORMAL = 1;
+const TIME_SCALE_SLOW = 0.5;
+
+let movingPlatforms = [];
+const PLATFORM_SPEED = 0.02;
+const PLATFORM_RANGE = 4;
+
+function createBanana(x, z) {
+    const isBossLevel = currentLevel >= 10 && currentLevel % 5 === 0;
+    
+    const isElevated = secondFloorTiles.some(tile => 
+        Math.abs(tile.position.x - x * 2) < 0.1 && 
+        Math.abs(tile.position.z - z * 2) < 0.1
+    );
+    
+    let y;
+    if (isElevated && isBossLevel) {
+        y = 5; 
+    } else {
+        y = -1; 
+    }
+    
+    let banana;
+    
+    if (bananaGeometry instanceof THREE.Group) {
+        const groupClone = bananaGeometry.clone();
+        banana = new THREE.Group();
+        banana.add(groupClone);
+    } else {
+        banana = new THREE.Mesh(bananaGeometry, bananaMaterial);
+    }
+    
+    banana.position.set(x * 2, y, z * 2);
+    
+    if (!(bananaGeometry instanceof THREE.Group)) {
+        banana.rotation.x = Math.PI / 2;
+    }
+    
+    scene.add(banana);
+    bananas.push({
+        mesh: banana,
+        collected: false
+    });
+    totalBananas++;
+}
+
+function createMovingPlatform(x, z) {
+    const platformGeometry = new THREE.BoxGeometry(2, 1, 2);
+    const platformMaterial = new THREE.MeshPhongMaterial({
+        color: 0x9c27b0,
+        emissive: 0x6a0080,
+        emissiveIntensity: 0.2
+    });
+
+    const platform = new THREE.Mesh(platformGeometry, platformMaterial);
+    const startPos = new THREE.Vector3(x * 2, -2, z * 2);
+    platform.position.copy(startPos);
+    scene.add(platform);
+
+    const platformShape = new CANNON.Box(new CANNON.Vec3(1, 0.5, 1));
+    const platformBody = new CANNON.Body({
+        mass: 0,
+        shape: platformShape,
+        position: new CANNON.Vec3(x * 2, -2, z * 2)
+    });
+    world.addBody(platformBody);
+
+    movingPlatforms.push({
+        mesh: platform,
+        body: platformBody,
+        startPos: startPos.clone(),
+        phase: Math.random() * Math.PI * 2 
+    });
+
+    if (Math.random() < 0.5) {
+        const banana = new THREE.Mesh(bananaGeometry, bananaMaterial);
+        banana.position.copy(startPos);
+        banana.position.y += 1; 
+        banana.rotation.x = Math.PI / 2;
+        scene.add(banana);
+        bananas.push({
+            mesh: banana,
+            collected: false,
+            platform: platform 
+        });
+        totalBananas++;
+    }
+}
+
 function initAudio() {
     collectSound = new Audio('/00155 (0x02FE).wav');
     collectSound.volume = 0.3;
     fallSound = new Audio('/00056 (0x0209).wav');
+    jumpSound = new Audio('https://d1hwc73pt3t7we.cloudfront.net/v0gatr%2Ffile%2Fbb920c90b3133fa00a4de88740158e5c_df960f422cb397246f43dcaaeb7f54a9.mp3');
+    doorSound = new Audio('https://d85gxhygowj8d.cloudfront.net/i7zdtr%2Ffile%2F42641b7a9701c7a9162e2498f89e32a0_31169e1eac45467b21773198b9965bb0.wav');
 }
 
-// Initialize Three.js
+function initConsole() {
+    document.addEventListener('keydown', e => {
+        if (e.key === 'F8') {
+            e.preventDefault();
+            consoleVisible = !consoleVisible;
+            consoleElement.style.display = consoleVisible ? 'block' : 'none';
+            consoleInput.style.display = consoleVisible ? 'block' : 'none';
+            if (consoleVisible) {
+                consoleInput.focus();
+                appendToConsole('Console activated. Type "help" or "?" for commands.');
+            }
+        }
+    });
+    consoleInput.addEventListener('keydown', e => {
+        if (e.key === 'Enter') {
+            const command = consoleInput.value.trim().toLowerCase();
+            processCommand(command);
+            consoleInput.value = '';
+        }
+    });
+}
+
+function appendToConsole(message) {
+    const line = document.createElement('div');
+    line.textContent = `> ${message}`;
+    consoleElement.appendChild(line);
+    consoleElement.scrollTop = consoleElement.scrollHeight;
+}
+
+function processCommand(command) {
+    appendToConsole(command);
+    if (command === 'help' || command === '?') {
+        appendToConsole('Available commands:');
+        appendToConsole('setlevel # - Sets current level (example: setlevel 5)');
+        appendToConsole('doorunlock - Unlocks the goal gate');
+        appendToConsole(`jumpheight # - Sets jump height (default: ${defaultJumpHeight})`);
+        appendToConsole('fly - Toggles fly mode (no gravity)');
+        appendToConsole(`speed # - Sets movement speed (default: ${defaultMoveForce})`);
+        appendToConsole('nodelay - Toggles jump delay');
+        appendToConsole('save - Saves current game progress');
+        appendToConsole(`magnetspawnrate # - Sets magnet spawn rate (default: 0.5%)`);
+        appendToConsole('givemagnet - Gives player a magnet item');
+        appendToConsole('giveslowfield - Gives player a slow field item');
+        appendToConsole('help or ? - Shows this help message.');
+        return;
+    }
+    if (command.startsWith('setlevel ')) {
+        const level = parseInt(command.split(' ')[1]);
+        if (!isNaN(level) && level > 0) {
+            currentLevel = level;
+            transitioning = true;
+            resetLevel();
+            appendToConsole(`Level set to ${level}`);
+        } else {
+            appendToConsole('Invalid level number');
+        }
+        return;
+    }
+    if (command === 'doorunlock') {
+        doorLocked = false;
+        doorLight.material = greenLightMaterial;
+        goalGate.material.emissiveIntensity = 0.5;
+        appendToConsole('Door unlocked');
+        return;
+    }
+    if (command.startsWith('jumpheight ')) {
+        const height = parseFloat(command.split(' ')[1]);
+        if (!isNaN(height) && height >= 0) {
+            jumpHeight = height;
+            appendToConsole(`Jump height set to ${height}`);
+        } else {
+            appendToConsole('Invalid jump height');
+        }
+        return;
+    }
+    if (command === 'fly') {
+        isFlying = !isFlying;
+        if (isFlying) {
+            world.gravity.set(0, 0, 0);
+            appendToConsole('Fly mode enabled');
+        } else {
+            world.gravity.set(0, -9.82, 0);
+            appendToConsole('Fly mode disabled');
+        }
+        return;
+    }
+    if (command.startsWith('speed ')) {
+        const speed = parseFloat(command.split(' ')[1]);
+        if (!isNaN(speed) && speed >= 0) {
+            currentMoveForce = speed;
+            appendToConsole(`Movement speed set to ${speed}`);
+        } else {
+            appendToConsole('Invalid speed value');
+        }
+        return;
+    }
+    if (command === 'nodelay') {
+        noDelay = !noDelay;
+        appendToConsole(`Jump delay ${noDelay ? 'disabled' : 'enabled'}`);
+        return;
+    }
+    if (command === 'save') {
+        saveProgress();
+        appendToConsole('Game progress saved!');
+        return;
+    }
+    if (command.startsWith('magnetspawnrate ')) {
+        const rate = parseFloat(command.split(' ')[1]);
+        if (!isNaN(rate) && rate >= 0 && rate <= 100) {
+            magnetSpawnRate = rate / 100;
+            appendToConsole(`Magnet spawn rate set to ${rate}%`);
+        } else {
+            appendToConsole('Invalid rate. Please enter a number between 0 and 100');
+        }
+        return;
+    }
+    if (command === 'givemagnet') {
+        magnetCount++;
+        document.getElementById('magnetUI').textContent = `Magnets Available: ${magnetCount} (Press M)`;
+        document.getElementById('magnetUI').style.display = 'block';
+        appendToConsole('Magnet item given to player');
+        return;
+    }
+    if (command === 'giveslowfield') {
+        slowFieldCount++;
+        document.getElementById('slowFieldUI').textContent = `Slow Fields Available: ${slowFieldCount} (Press F)`;
+        document.getElementById('slowFieldUI').style.display = 'block';
+        appendToConsole('Slow field item given to player');
+        return;
+    }
+    appendToConsole('Unknown command. Type "help" or "?" for available commands.');
+}
+
+function resetLevel() {
+    ballBody.position.set(2, 0, 0);
+    ballBody.velocity.setZero();
+    ballBody.angularVelocity.setZero();
+    bananaCount = 0;
+    totalBananas = 0;
+    doorLocked = true;
+
+    bananas.forEach(banana => {
+        scene.remove(banana.mesh);
+    });
+    bananas.length = 0;
+
+    const tilesToRemove = scene.children.filter(child => 
+        child.isMesh && child !== ball && child !== goalGate
+    );
+    tilesToRemove.forEach(tile => scene.remove(tile));
+
+    while(world.bodies.length > 1) {
+        world.removeBody(world.bodies[1]); 
+    }
+
+    secondFloorTiles.length = 0;
+    launchPads.length = 0;
+
+    movingPlatforms.forEach(platform => {
+        scene.remove(platform.mesh);
+        world.removeBody(platform.body);
+    });
+    movingPlatforms = [];
+
+    const newCourseLayout = generateNewLevel(currentLevel);
+    for (let z = 0; z < newCourseLayout.length; z++) {
+        for (let x = 0; x < newCourseLayout[z].length; x++) {
+            createTile(x - 2, z - 2, newCourseLayout[z][x]);
+        }
+    }
+
+    if (scoreElement) {
+        scoreElement.textContent = `Bananas: 0/${totalBananas}`;
+    }
+    transitioning = false;
+    if (activeMagnet) {
+        scene.remove(activeMagnet);
+        activeMagnet = null;
+    }
+}
+
+function generateNewLevel(level) {
+    const size = Math.min(Math.max(5, 3 + level - 1), 12);
+    
+    const holeChance = Math.min(0.15 + level * 0.01, 0.35);
+    
+    const layout = [];
+    
+    for (let z = 0; z < size; z++) {
+        const row = [];
+        for (let x = 0; x < size; x++) {
+            row.push(1);
+        }
+        layout[z] = row;
+    }
+
+    for (let z = 0; z < 2; z++) {
+        for (let x = 1; x < 4; x++) {
+            if (z < layout.length && x < layout[z].length) {
+                layout[z][x] = 1;
+            }
+        }
+    }
+
+    layout[0][2] = 1;
+
+    layout[size-1][size-1] = 1;
+    if (size > 1) layout[size-2][size-1] = 1;
+    if (size > 1) layout[size-1][size-2] = 1;
+
+    for (let z = 2; z < size; z++) {
+        for (let x = 0; x < size; x++) {
+            if ((z < 2 && x >= 1 && x <= 3) || 
+                (z === size-1 && x === size-1)) { 
+                continue;
+            }
+            if (Math.random() < holeChance) {
+                layout[z][x] = 0;
+            }
+        }
+    }
+
+    const path = findPathToGoal(layout, {x: 2, z: 0}, {x: size-1, z: size-1});
+    if (path) {
+        path.forEach(pos => {
+            layout[pos.z][pos.x] = 1;
+        });
+    }
+
+    if (level >= 10 && level % 5 === 0) {
+        const platformSize = Math.floor(size / 3);
+        const platformX = Math.floor(size / 2) - Math.floor(platformSize / 2);
+        const platformZ = Math.floor(size / 2) - Math.floor(platformSize / 2);
+
+        if (platformZ-1 >= 0 && platformX >= 0) {
+            layout[platformZ-1][platformX] = 2;
+        }
+
+        for (let z = 0; z < platformSize; z++) {
+            for (let x = 0; x < platformSize; x++) {
+                const actualX = platformX + x;
+                const actualZ = platformZ + z;
+                if (actualZ < size && actualX < size) {
+                    layout[actualZ][actualX] = 3;
+                }
+            }
+        }
+    }
+
+    if (level > 5) {
+        const maxPlatforms = Math.min(Math.floor((level - 5) / 2) + 1, 3);
+        let platformsAdded = 0;
+        
+        for (let attempts = 0; attempts < 20 && platformsAdded < maxPlatforms; attempts++) {
+            const z = Math.floor(Math.random() * (size - 4)) + 2;
+            const x = Math.floor(Math.random() * (size - 2)) + 1;
+            
+            if (layout[z][x] === 0 && 
+                layout[z+1] && layout[z-1] && 
+                layout[z+1][x] === 0 && layout[z-1][x] === 0) { 
+                
+                layout[z][x] = 4; 
+                platformsAdded++;
+            }
+        }
+    }
+
+    return layout;
+}
+
+function findPathToGoal(layout, start, goal) {
+    const queue = [[start]];
+    const visited = new Set();
+    const size = layout.length;
+
+    while (queue.length > 0) {
+        const path = queue.shift();
+        const current = path[path.length - 1];
+        
+        if (current.x === goal.x && current.z === goal.z) {
+            return path;
+        }
+
+        const directions = [
+            {x: 0, z: 1}, {x: 1, z: 0},
+            {x: 0, z: -1}, {x: -1, z: 0}
+        ];
+
+        for (const dir of directions) {
+            const next = {
+                x: current.x + dir.x,
+                z: current.z + dir.z
+            };
+
+            const key = `${next.x},${next.z}`;
+            if (next.x >= 0 && next.x < size &&
+                next.z >= 0 && next.z < size &&
+                !visited.has(key)) {
+                
+                visited.add(key);
+                const newPath = [...path, next];
+                queue.push(newPath);
+            }
+        }
+    }
+    return null;
+}
+
+function createTile(x, z, type) {
+    if (type === 2) {
+        const padGeometry = new THREE.BoxGeometry(2, 0.2, 2);
+        const padMaterial = new THREE.MeshPhongMaterial({
+            color: 0x00ffff,
+            emissive: 0x00ffff, 
+            emissiveIntensity: 0.5
+        });
+        const pad = new THREE.Mesh(padGeometry, padMaterial);
+        pad.position.set(x * 2, -1.9, z * 2);
+        scene.add(pad);
+
+        const padShape = new CANNON.Box(new CANNON.Vec3(1, 0.1, 1));
+        const padBody = new CANNON.Body({
+            mass: 0,
+            shape: padShape,
+            position: new CANNON.Vec3(x * 2, -1.9, z * 2)
+        });
+        world.addBody(padBody);
+        launchPads.push(pad);
+    } else if (type === 3) {
+        const platformHeight = (currentLevel >= 10 && currentLevel % 5 === 0) ? 6 : 3;
+        
+        const tileGeometry = new THREE.BoxGeometry(2, 1, 2);
+        const tileMaterial = new THREE.MeshPhongMaterial({
+            color: (x + z) % 2 === 0 ? 0x4CAF50 : 0x388E3C
+        });
+        const tile = new THREE.Mesh(tileGeometry, tileMaterial);
+        tile.position.set(x * 2, platformHeight - 1, z * 2); 
+        scene.add(tile);
+        
+        secondFloorTiles.push(tile);
+        
+        const tileShape = new CANNON.Box(new CANNON.Vec3(1, 0.5, 1));
+        const tileBody = new CANNON.Body({
+            mass: 0,
+            shape: tileShape,
+            position: new CANNON.Vec3(x * 2, platformHeight - 1, z * 2)
+        });
+        world.addBody(tileBody);
+
+        if (Math.random() < Math.min(0.8 + currentLevel * 0.05, 0.95)) {
+            const banana = new THREE.Mesh(bananaGeometry, bananaMaterial);
+            banana.position.set(x * 2, platformHeight, z * 2); 
+            banana.rotation.x = Math.PI / 2;
+            scene.add(banana);
+            bananas.push({
+                mesh: banana,
+                collected: false
+            });
+            totalBananas++;
+        }
+
+    } else if (type === 4) {
+        createMovingPlatform(x, z);
+    } else if (type !== 0) {
+        const tileGeometry = new THREE.BoxGeometry(2, 1, 2);
+        const tileMaterial = new THREE.MeshPhongMaterial({
+            color: (x + z) % 2 === 0 ? 0x2E8B57 : 0x228B22
+        });
+        const tile = new THREE.Mesh(tileGeometry, tileMaterial);
+        tile.position.set(x * 2, -2, z * 2);
+        scene.add(tile);
+        
+        if (Math.random() < Math.min(0.3 + currentLevel * 0.05, 0.9)) {
+            createBanana(x, z);
+        }
+        
+        const tileShape = new CANNON.Box(new CANNON.Vec3(1, 0.5, 1));
+        const tileBody = new CANNON.Body({
+            mass: 0,
+            shape: tileShape,
+            position: new CANNON.Vec3(x * 2, -2, z * 2)
+        });
+        world.addBody(tileBody);
+    }
+    if (type !== 0 && Math.random() < magnetSpawnRate) { 
+        const magnet = new THREE.Mesh(magnetGeometry, magnetMaterial);
+        magnet.position.set(x * 2, -1, z * 2);
+        magnet.rotation.x = -Math.PI / 2; 
+        scene.add(magnet);
+        const magnetBody = new CANNON.Body({
+            mass: 0,
+            isMagnet: true,
+            collisionResponse: false
+        });
+        world.addBody(magnetBody);
+    }
+    if (type !== 0 && Math.random() < slowFieldSpawnRate) {
+        const slowField = new THREE.Mesh(slowFieldGeometry, slowFieldMaterial);
+        slowField.position.set(x * 2, -1, z * 2);
+        slowField.rotation.x = Math.PI / 4;
+        scene.add(slowField);
+        const slowFieldBody = new CANNON.Body({
+            mass: 0,
+            isSlowField: true,
+            collisionResponse: false
+        });
+        world.addBody(slowFieldBody);
+    }
+    if (type !== 0 && currentLevel > 5 && Math.random() < ENEMY_SPAWN_CHANCE) {
+        const enemy = new THREE.Mesh(enemyGeometry, enemyMaterial);
+        enemy.position.set(x * 2, 0, z * 2);
+        enemy.health = ENEMY_HEALTH;
+        scene.add(enemy);
+        enemies.push(enemy);
+    }
+}
+
 const scene = new THREE.Scene();
-
-// Add background texture
 const loader = new THREE.TextureLoader();
-const texture = loader.load('https://i.imgur.com/Fv2yjdw.png');
+const texture = loader.load('https://i.imgur.com/JsbnPYa.png');
 texture.mapping = THREE.EquirectangularReflectionMapping;
+texture.isSkyBox = true;  
 scene.background = texture;
-
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
 const renderer = new THREE.WebGLRenderer();
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
-
-// Initialize Cannon.js physics
 const world = new CANNON.World();
 world.gravity.set(0, -9.82, 0);
 world.broadphase = new CANNON.NaiveBroadphase();
-
-// Create transparent ball
 const ballRadius = 0.5;
 const ballGeometry = new THREE.SphereGeometry(ballRadius, 32, 32);
 const ballMaterial = new THREE.MeshPhongMaterial({
@@ -109,61 +1661,56 @@ const ballMaterial = new THREE.MeshPhongMaterial({
     shininess: 30
 });
 const ball = new THREE.Mesh(ballGeometry, ballMaterial);
-
-// Create monkey
 const monkeyGeometry = new THREE.BoxGeometry(0.3, 0.3, 0.3);
-const monkeyMaterial = new THREE.MeshPhongMaterial({ color: 0x8B4513 });
+const monkeyMaterial = new THREE.MeshPhongMaterial({
+    color: 0x8B4513
+});
 const monkey = new THREE.Mesh(monkeyGeometry, monkeyMaterial);
 ball.add(monkey);
-
-// Create monkey features
 const headGeometry = new THREE.SphereGeometry(0.15, 16, 16);
-const headMaterial = new THREE.MeshPhongMaterial({ color: 0x8B4513 });
+const headMaterial = new THREE.MeshPhongMaterial({
+    color: 0x8B4513
+});
 const head = new THREE.Mesh(headGeometry, headMaterial);
 head.position.y = 0.1;
 monkey.add(head);
-
-// Eyes
 const eyeGeometry = new THREE.SphereGeometry(0.03, 8, 8);
-const eyeMaterial = new THREE.MeshPhongMaterial({ color: 0x000000 });
+const eyeMaterial = new THREE.MeshPhongMaterial({
+    color: 0x000000
+});
 const leftEye = new THREE.Mesh(eyeGeometry, eyeMaterial);
 const rightEye = new THREE.Mesh(eyeGeometry, eyeMaterial);
 leftEye.position.set(-0.06, 0.15, 0.1);
 rightEye.position.set(0.06, 0.15, 0.1);
 monkey.add(leftEye);
 monkey.add(rightEye);
-
-// Ears
 const earGeometry = new THREE.SphereGeometry(0.06, 8, 8);
-const earMaterial = new THREE.MeshPhongMaterial({ color: 0x8B4513 });
+const earMaterial = new THREE.MeshPhongMaterial({
+    color: 0x8B4513
+});
 const leftEar = new THREE.Mesh(earGeometry, earMaterial);
 const rightEar = new THREE.Mesh(earGeometry, earMaterial);
 leftEar.position.set(-0.15, 0.2, 0);
 rightEar.position.set(0.15, 0.2, 0);
 monkey.add(leftEar);
 monkey.add(rightEar);
-
 scene.add(ball);
-
-// Create goal gate
 const goalGateGeometry = new THREE.BoxGeometry(2, 3, 0.5);
-const goalGateMaterial = new THREE.MeshPhongMaterial({ 
+const goalGateMaterial = new THREE.MeshPhongMaterial({
     color: 0xFFD700,
     emissive: 0x444400,
     emissiveIntensity: 0
 });
 const goalGate = new THREE.Mesh(goalGateGeometry, goalGateMaterial);
-goalGate.position.set(4, -0.5, 4); // Changed position to bring it closer
+goalGate.position.set(4, -0.5, 4);
 scene.add(goalGate);
-
-// Add door indicator lights
 const doorLightGeometry = new THREE.SphereGeometry(0.2, 16, 16);
-const redLightMaterial = new THREE.MeshPhongMaterial({ 
+const redLightMaterial = new THREE.MeshPhongMaterial({
     color: 0xff0000,
     emissive: 0xff0000,
     emissiveIntensity: 0.5
 });
-const greenLightMaterial = new THREE.MeshPhongMaterial({ 
+const greenLightMaterial = new THREE.MeshPhongMaterial({
     color: 0x00ff00,
     emissive: 0x00ff00,
     emissiveIntensity: 0.5
@@ -171,8 +1718,6 @@ const greenLightMaterial = new THREE.MeshPhongMaterial({
 const doorLight = new THREE.Mesh(doorLightGeometry, redLightMaterial);
 doorLight.position.set(0, 1.8, 0);
 goalGate.add(doorLight);
-
-// Create physics body for ball
 const ballShape = new CANNON.Sphere(ballRadius);
 const ballBody = new CANNON.Body({
     mass: 1,
@@ -182,118 +1727,280 @@ const ballBody = new CANNON.Body({
     angularDamping: 0.3
 });
 world.addBody(ballBody);
-
-// Create banana geometry and material
-const bananaGeometry = new THREE.TorusGeometry(0.15, 0.05, 16, 16, Math.PI);
-const bananaMaterial = new THREE.MeshPhongMaterial({ color: 0xFFFF00 });
-
-// Array to store bananas
-const bananas = [];
-let bananaCount = 0;
-const scoreElement = document.getElementById('score');
-const winTextElement = document.getElementById('winText');
-
-// Level tracking
 let currentLevel = 1;
 let transitioning = false;
+const secondFloorTiles = [];
+let slowFieldCenter;
 
-// Function to create a banana
-function createBanana(x, z) {
-    const banana = new THREE.Mesh(bananaGeometry, bananaMaterial);
-    banana.position.set(x * 2, -1, z * 2);
-    banana.rotation.x = Math.PI / 2;
-    scene.add(banana);
-    bananas.push({
-        mesh: banana,
-        collected: false
+let graphicsSettings = {
+    ambientIntensity: 25,
+    ambientColor: '#404040',
+    directionalIntensity: 100,
+    directionalColor: '#ffffff',
+    lightPosX: 10,
+    lightPosY: 20,
+    lightPosZ: 10,
+    bloomIntensity: 0,
+    colorTint: '#ffffff',
+    tintIntensity: 0,
+    fogEnabled: false,
+    fogColor: '#000000',
+    fogDensity: 0.1,
+    exposure: 1.0,
+    contrast: 1.0,
+    saturation: 1.0,
+    gamma: 2.2,
+    groundReflectivity: 0.5,
+    metalness: 0.5,
+    roughness: 0.5,
+    emissiveIntensity: 1.0,
+    shadowSoftness: 0.5,
+    aoIntensity: 0.5,
+    motionBlurStrength: 0,
+};
+
+function updateGraphics() {
+    ambientLight.intensity = graphicsSettings.ambientIntensity / 100;
+    ambientLight.color.setStyle(graphicsSettings.ambientColor);
+    
+    light.intensity = graphicsSettings.directionalIntensity / 100;
+    light.color.setStyle(graphicsSettings.directionalColor);
+    light.position.set(
+        graphicsSettings.lightPosX,
+        graphicsSettings.lightPosY,
+        graphicsSettings.lightPosZ
+    );
+    
+    renderer.toneMappingExposure = graphicsSettings.exposure / 100;
+    renderer.toneMappingType = THREE.LinearToneMapping;
+    
+    scene.traverse(obj => {
+        if (obj.isMesh && !obj.isSkyBox && obj.material) {
+            if (!obj.originalMaterial) {
+                obj.originalMaterial = obj.material.clone();
+            }
+
+            const newMaterial = obj.originalMaterial.clone();
+            
+            const contrast = graphicsSettings.contrast / 100;
+            newMaterial.color.multiplyScalar(contrast);
+            
+            const saturation = graphicsSettings.saturation / 100;
+            const color = newMaterial.color;
+            const hsl = {};
+            color.getHSL(hsl);
+            color.setHSL(hsl.h, hsl.s * saturation, hsl.l);
+            
+            newMaterial.metalness = graphicsSettings.metalness / 100;
+            newMaterial.roughness = graphicsSettings.roughness / 100;
+            newMaterial.emissiveIntensity = graphicsSettings.emissiveIntensity / 100;
+
+            if (graphicsSettings.fogEnabled) {
+                newMaterial.fog = true;
+                scene.fog = new THREE.Fog(
+                    graphicsSettings.fogColor,
+                    1,
+                    100 * (1 - graphicsSettings.fogDensity / 100)
+                );
+            } else {
+                newMaterial.fog = false;
+                scene.fog = null;
+            }
+
+            obj.material = newMaterial;
+        }
     });
-    totalBananas++;
-}
 
-// Create tile function with modified colors
-function createTile(x, z, isHole) {
-    if (!isHole) {
-        const tileGeometry = new THREE.BoxGeometry(2, 1, 2);
-        const tileMaterial = new THREE.MeshPhongMaterial({ 
-            color: ((x + z) % 2 === 0) ? 0x2E8B57 : 0x228B22 // Sea Green and Forest Green
-        });
-        const tile = new THREE.Mesh(tileGeometry, tileMaterial);
-        tile.position.set(x * 2, -2, z * 2);
-        scene.add(tile);
+    renderer.outputEncoding = THREE.sRGBEncoding;
+    renderer.gammaFactor = graphicsSettings.gamma / 10;
+    renderer.gammaOutput = true;
 
-        // Add banana with 50% chance if it's a tile
-        if (Math.random() < 0.5) {
-            createBanana(x, z);
+    scene.traverse(obj => {
+        if (obj.isMesh && obj.position.y < -1 && !obj.isSkyBox) {
+            obj.material.reflectivity = graphicsSettings.groundReflectivity / 100;
         }
+    });
 
-        // Physics for tile
-        const tileShape = new CANNON.Box(new CANNON.Vec3(1, 0.5, 1));
-        const tileBody = new CANNON.Body({
-            mass: 0,
-            shape: tileShape,
-            position: new CANNON.Vec3(x * 2, -2, z * 2)
-        });
-        world.addBody(tileBody);
-    }
-}
-
-// Generate new level layouts
-function generateNewLevel(level) {
-    const size = Math.min(5 + Math.floor(level / 2), 8); // Increase size with level
-    const layout = [];
-    
-    for (let z = 0; z < size; z++) {
-        const row = [];
-        for (let x = 0; x < size; x++) {
-            const holeChance = Math.min(0.2 + (level * 0.05), 0.4);
-            row.push(Math.random() > holeChance ? 1 : 0);
+    scene.traverse(obj => {
+        if (obj.isMesh && obj.material) {
+            obj.material.aoMapIntensity = graphicsSettings.aoIntensity / 100;
         }
-        layout[z] = row;
+    });
+
+    if (graphicsSettings.bloomIntensity > 0) {
+        scene.traverse(obj => {
+            if (obj.isMesh && !obj.isSkyBox) {
+                obj.material.emissiveIntensity = graphicsSettings.bloomIntensity / 100;
+            }
+        });
+    }
+
+    if (graphicsSettings.motionBlurStrength > 0) {
+        const strength = graphicsSettings.motionBlurStrength / 100;
+        scene.traverse(obj => {
+            if (obj.isMesh && !obj.isSkyBox) {
+                obj.material.roughness *= (1 - strength * 0.5);
+                obj.material.metalness *= (1 + strength * 0.3);
+                
+                if (!obj.material.userData.originalTransparent) {
+                    obj.material.userData.originalTransparent = obj.material.transparent;
+                }
+                if (!obj.material.userData.originalOpacity) {
+                    obj.material.userData.originalOpacity = obj.material.opacity || 1;
+                }
+                
+                obj.material.transparent = true;
+                obj.material.opacity = obj.material.userData.originalOpacity * (1 - strength * 0.3);
+            }
+        });
+    } else {
+        scene.traverse(obj => {
+            if (obj.isMesh && !obj.isSkyBox) {
+                if (obj.material.userData.originalTransparent !== undefined) {
+                    obj.material.transparent = obj.material.userData.originalTransparent;
+                }
+                if (obj.material.userData.originalOpacity !== undefined) {
+                    obj.material.opacity = obj.material.userData.originalOpacity;
+                }
+            }
+        });
     }
     
-    layout[0][0] = 1; // Start area
-    layout[size - 1][size - 1] = 1; // End area
-    
-    return layout;
+    light.shadow.radius = graphicsSettings.shadowSoftness / 100;
+
+    renderer.setPixelRatio(window.devicePixelRatio);
+    renderer.setSize(window.innerWidth, window.innerHeight);
 }
 
-// Create course layout (1 for tile, 0 for hole)
+document.querySelectorAll('.graphics-editor input').forEach(input => {
+    input.addEventListener('input', () => {
+        const id = input.id;
+        let value;
+        
+        if (input.type === 'range') {
+            value = parseFloat(input.value);
+            document.getElementById(id + 'Value').textContent = 
+                id.includes('Pos') ? value : value + '%';
+        } else if (input.type === 'color') {
+            value = input.value;
+        } else if (input.type === 'checkbox') {
+            value = input.checked;
+        }
+        
+        graphicsSettings[id] = value;
+        updateGraphics();
+        updateSettingsOutput();
+    });
+});
+
+function updateSettingsOutput() {
+    const textarea = document.querySelector('#settingsOutput');
+    textarea.value = JSON.stringify(graphicsSettings, null, 2);
+}
+
 const courseLayout = generateNewLevel(currentLevel);
-
-// Generate initial course
 for (let z = 0; z < courseLayout.length; z++) {
     for (let x = 0; x < courseLayout[z].length; x++) {
-        createTile(x - 2, z - 2, courseLayout[z][x] === 0);
+        createTile(x - 2, z - 2, courseLayout[z][x]);
     }
 }
-
-// Add lighting
 const ambientLight = new THREE.AmbientLight(0x404040);
 scene.add(ambientLight);
 const light = new THREE.DirectionalLight(0xffffff, 1);
 light.position.set(10, 20, 10);
 scene.add(light);
-
-// Position camera
 camera.position.set(0, 10, 10);
 camera.lookAt(0, 0, 0);
-
-// Game state
 let gameStarted = false;
 let gameWon = false;
 const startTextElement = document.getElementById('startText');
-
-// Movement controls
-const moveForce = 15;
-const keys = { w: false, a: false, s: false, d: false };
-document.addEventListener('keydown', (e) => {
+const keys = {
+    w: false,
+    a: false,
+    s: false,
+    d: false,
+    shift: false 
+};
+document.addEventListener('keydown', e => {
     if (gameStarted && !gameWon) {
         keys[e.key] = true;
+        if (e.key === 'Shift') {
+            keys.shift = true;
+        }
+        if (e.code === 'Space') {
+            if (isFlying) {
+                ballBody.position.y += 0.5;
+                ballBody.velocity.setZero();
+            } else {
+                const currentTime = Date.now();
+                if (canJump && (noDelay || currentTime - lastJumpTime >= jumpCooldown)) {
+                    const isOnLaunchPad = launchPads.some(pad => ball.position.distanceTo(pad.position) < 1.5);
+                    const jumpForce = isOnLaunchPad ? jumpHeight * 2 : jumpHeight;
+                    ballBody.velocity.y = jumpForce;
+                    lastJumpTime = currentTime;
+                    canJump = false;
+                    jumpCooldownElement.textContent = 'Jump Cooling Down...';
+                    if (jumpSound) playSound(jumpSound);
+                    setTimeout(() => {
+                        canJump = true;
+                        jumpCooldownElement.textContent = 'Jump Ready!';
+                    }, noDelay ? 0 : jumpCooldown);
+                }
+            }
+        }
+    }
+    if (e.key === 'f' && slowFieldCount > 0 && !isTimeSlowed) {
+        const slowFieldZone = document.createElement('div');
+        slowFieldZone.className = 'slow-field-zone';
+        slowFieldZone.style.left = `${window.innerWidth/2}px`;
+        slowFieldZone.style.top = `${window.innerHeight/2}px`;
+        document.body.appendChild(slowFieldZone);
+        
+        isTimeSlowed = true;
+        slowFieldCount--;
+        
+        if (slowFieldCount === 0) {
+            document.getElementById('slowFieldUI').style.display = 'none';
+        } else {
+            document.getElementById('slowFieldUI').textContent = `Slow Fields Available: ${slowFieldCount} (Press F)`;
+        }
+        
+        slowFieldCenter = new THREE.Vector3().copy(ball.position);
+        
+        const normalTimeStep = world.fixedTimeStep;
+        world.fixedTimeStep *= TIME_SCALE_SLOW;
+        
+        setTimeout(() => {
+            document.body.removeChild(slowFieldZone);
+            isTimeSlowed = false;
+            world.fixedTimeStep = normalTimeStep;
+        }, slowFieldDuration);
+    }
+    if (e.key === 'm' && magnetCount > 0 && !activeMagnet) {
+        const direction = new THREE.Vector3();
+        camera.getWorldDirection(direction);
+        direction.y = 0;
+        direction.normalize();
+        
+        activeMagnet = new THREE.Mesh(magnetGeometry, magnetMaterial.clone());
+        activeMagnet.position.copy(ball.position);
+        activeMagnet.direction = direction;
+        scene.add(activeMagnet);
+        
+        magnetCount--;
+        if (magnetCount === 0) {
+            document.getElementById('magnetUI').style.display = 'none';
+        } else {
+            document.getElementById('magnetUI').textContent = `Magnets Available: ${magnetCount} (Press M)`;
+        }
     }
 });
-document.addEventListener('keyup', (e) => keys[e.key] = false);
-
-// Fall out text handling
+document.addEventListener('keyup', e => {
+    keys[e.key] = false;
+    if (e.key === 'Shift') {
+        keys.shift = false;
+    }
+});
 let fallTextVisible = false;
 const fallTextElement = document.getElementById('fallText');
 const resetBall = () => {
@@ -305,12 +2012,14 @@ const resetBall = () => {
         fallTextVisible = false;
     }, 2000);
 };
-
-// Start game sequence
 const startGame = () => {
-    // Initialize audio on first user interaction
-    initAudio();
+    if (!gameInitialized) {
+        initAudio();
+        initConsole();
+        gameInitialized = true;
+    }
     
+    document.querySelector('.start-menu').style.display = 'none';
     startTextElement.textContent = 'READY?';
     setTimeout(() => {
         startTextElement.textContent = 'GO!';
@@ -319,9 +2028,15 @@ const startGame = () => {
             gameStarted = true;
         }, 1000);
     }, 1000);
+    
+    document.querySelectorAll('.ui-element').forEach(el => {
+        el.style.opacity = '0';
+        setTimeout(() => {
+            el.style.opacity = '1';
+            el.style.transition = 'opacity 0.5s ease-out';
+        }, 100);
+    });
 };
-
-// Function to play sound with error handling
 function playSound(sound) {
     if (sound) {
         sound.play().catch(error => {
@@ -329,155 +2044,598 @@ function playSound(sound) {
         });
     }
 }
-
-// Check banana collection
 function checkBananaCollection() {
     bananas.forEach(banana => {
         if (!banana.collected) {
             const distance = ball.position.distanceTo(banana.mesh.position);
             if (distance < 1) {
                 banana.collected = true;
-                banana.mesh.visible = false;
+                if (banana.mesh.children.length > 0) {
+                    banana.mesh.children[0].visible = false;
+                } else {
+                    banana.mesh.visible = false;
+                }
                 bananaCount++;
-                scoreElement.textContent = `Bananas: ${bananaCount}/${totalBananas}`;
+                if (scoreElement) {
+                    scoreElement.textContent = `Bananas: ${bananaCount}/${totalBananas}`;
+                }
                 if (collectSound) {
                     collectSound.currentTime = 0;
                     playSound(collectSound);
                 }
-                
-                // Check if all bananas are collected
                 if (bananaCount === totalBananas) {
                     doorLocked = false;
                     doorLight.material = greenLightMaterial;
-                    // Add unlock effect
                     goalGate.material.emissiveIntensity = 0.5;
-                    const unlockFlash = () => {
-                        goalGate.scale.x = 1.1;
-                        goalGate.scale.y = 1.1;
-                        goalGate.scale.z = 1.1;
-                        setTimeout(() => {
-                            goalGate.scale.set(1, 1, 1);
-                        }, 200);
-                    };
-                    unlockFlash();
+                }
+            }
+        }
+    });
+    
+    scene.children.forEach(child => {
+        if (child.isMesh && child.geometry.type === 'ConeGeometry' && 
+            child.material === magnetMaterial) {
+            const distance = ball.position.distanceTo(child.position);
+            
+            if (distance < 1.5) {
+                magnetCount++;
+                document.getElementById('magnetUI').textContent = `Magnets Available: ${magnetCount} (Press M)`;
+                document.getElementById('magnetUI').style.display = 'block';
+                scene.remove(child);
+                
+                world.bodies.forEach(body => {
+                    if (body.isMagnet) {
+                        world.removeBody(body);
+                    }
+                });
+                
+                if (collectSound) {
+                    collectSound.currentTime = 0;
+                    playSound(collectSound);
+                }
+            }
+        }
+    });
+    
+    scene.children.forEach(child => {
+        if (child.isMesh && child.geometry.type === 'OctahedronGeometry' && 
+            child.material === slowFieldMaterial) {
+            const distance = ball.position.distanceTo(child.position);
+            
+            if (distance < 1.5) {
+                slowFieldCount++;
+                document.getElementById('slowFieldUI').textContent = `Slow Fields Available: ${slowFieldCount} (Press F)`;
+                document.getElementById('slowFieldUI').style.display = 'block';
+                scene.remove(child);
+                
+                world.bodies.forEach(body => {
+                    if (body.isSlowField) {
+                        world.removeBody(body);
+                    }
+                });
+                
+                if (collectSound) {
+                    collectSound.currentTime = 0;
+                    playSound(collectSound);
                 }
             }
         }
     });
 }
-
-// Modify the checkGoal function to check if door is unlocked
 function checkGoal() {
+    const levelSize = Math.min(3 + currentLevel - 1, 12);
+    goalGate.position.set((levelSize - 2) * 2, -0.5, (levelSize - 2) * 2);
     const distanceToGoal = ball.position.distanceTo(goalGate.position);
     if (distanceToGoal < 2 && !gameWon && !transitioning) {
         if (!doorLocked) {
             transitioning = true;
-            winTextElement.style.display = 'block';
-            winTextElement.textContent = `LEVEL ${currentLevel} COMPLETE!`;
+            if (winTextElement) {
+                winTextElement.style.display = 'block';
+                winTextElement.textContent = `LEVEL ${currentLevel} COMPLETE!`;
+            }
+            if (doorSound) {
+                playSound(doorSound);
+            }
             if (collectSound) {
                 playSound(collectSound);
             }
-            
-            // Start ascension animation
             const ascensionAnimation = () => {
                 ballBody.position.y += 0.1;
                 ballBody.velocity.setZero();
                 ballBody.angularVelocity.setZero();
-                
                 if (ballBody.position.y < 10) {
                     requestAnimationFrame(ascensionAnimation);
                 } else {
-                    // Start next level
                     currentLevel++;
                     setTimeout(() => {
-                        // Reset position and counters
                         ballBody.position.set(2, 0, 0);
                         bananaCount = 0;
                         totalBananas = 0;
                         doorLocked = true;
-                        
-                        // Clear existing bananas
                         bananas.forEach(banana => {
                             scene.remove(banana.mesh);
                         });
                         bananas.length = 0;
-                        
-                        // Generate new course layout for next level
                         const newCourseLayout = generateNewLevel(currentLevel);
-                        
-                        // Remove old course tiles
-                        const tilesToRemove = scene.children.filter(
-                            child => child.isMesh && child !== ball && child !== goalGate
+                        const tilesToRemove = scene.children.filter(child => 
+                            child.isMesh && child !== ball && child !== goalGate
                         );
                         tilesToRemove.forEach(tile => scene.remove(tile));
-                        
-                        // Remove old physics bodies
                         while(world.bodies.length > 1) {
-                            world.removeBody(world.bodies[1]);
+                            world.removeBody(world.bodies[1]); 
                         }
-                        
-                        // Generate new course
                         for (let z = 0; z < newCourseLayout.length; z++) {
                             for (let x = 0; x < newCourseLayout[z].length; x++) {
-                                createTile(x - 2, z - 2, newCourseLayout[z][x] === 0);
+                                createTile(x-2, z-2, newCourseLayout[z][x]);
                             }
                         }
-                        
-                        // Reset door state
                         doorLight.material = redLightMaterial;
                         goalGate.material.emissiveIntensity = 0;
                         scoreElement.textContent = `Bananas: 0/${totalBananas}`;
-                        
                         winTextElement.style.display = 'none';
                         transitioning = false;
                     }, 1000);
                 }
             };
-            
             ascensionAnimation();
         } else {
-            // Show "Collect all bananas!" message
-            winTextElement.style.display = 'block';
-            winTextElement.textContent = `Collect all bananas!`;
-            setTimeout(() => {
-                winTextElement.style.display = 'none';
-            }, 1500);
+            if (winTextElement) {
+                winTextElement.style.display = 'block'; 
+                winTextElement.textContent = `Collect all bananas!`;
+                setTimeout(() => {
+                    winTextElement.style.display = 'none';
+                }, 1500);
+            }
         }
+    } else if (currentLevel === 'custom' && distanceToGoal < 2 && !gameWon && !transitioning) {
+        if (!doorLocked) {
+            transitioning = true;
+            if (winTextElement) {
+                winTextElement.style.display = 'block';
+                winTextElement.textContent = 'LEVEL COMPLETE!';
+            }
+            
+            setTimeout(() => {
+                document.querySelector('.level-editor').style.display = 'block';
+                isEditing = true;
+                transitioning = false;
+                winTextElement.style.display = 'none';
+            }, 2000);
+        }
+        return;
     }
 }
+let isPaused = false;
+const pauseMenu = document.querySelector('.pause-menu');
+const settingsMenu = document.querySelector('.settings-menu');
+const resumeButton = document.getElementById('resumeButton');
+const settingsButton = document.getElementById('settingsButton');
+const skinsButton = document.getElementById('skinsButton');
+const quitButton = document.getElementById('quitButton');
+const saveButton = document.getElementById('saveButton');
+const loadButton = document.getElementById('loadButton');
+const loadInput = document.getElementById('loadInput');
 
-// Modify the animate function to handle the goal gate position for new levels
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && gameStarted) {
+        if (settingsMenu.style.display === 'block' || document.querySelector('.skin-selector').style.display === 'block') {
+            settingsMenu.style.display = 'none';
+            document.querySelector('.skin-selector').style.display = 'none';
+            pauseMenu.style.display = 'block';
+        } else {
+            isPaused = !isPaused;
+            pauseMenu.style.display = isPaused ? 'block' : 'none';
+        }
+    }
+});
+
+resumeButton.addEventListener('click', () => {
+    isPaused = false;
+    pauseMenu.style.display = 'none';
+});
+
+settingsButton.addEventListener('click', () => {
+    pauseMenu.style.display = 'none';
+    settingsMenu.style.display = 'block';
+    loadSettings();
+});
+
+skinsButton.addEventListener('click', () => {
+    pauseMenu.style.display = 'none';
+    document.querySelector('.skin-selector').style.display = 'block';
+});
+
+quitButton.addEventListener('click', () => {
+    location.reload();
+});
+
+saveButton.addEventListener('click', saveProgress);
+
+loadButton.addEventListener('click', () => {
+    loadInput.click();
+});
+
+loadInput.addEventListener('change', (e) => {
+    if (e.target.files.length > 0) {
+        loadProgress(e.target.files[0]);
+    }
+});
+
+function loadSettings() {
+    const settings = JSON.parse(localStorage.getItem('gameSettings')) || {
+        masterVolume: 100,
+        sfxVolume: 100,
+        shadowQuality: 'medium',
+        antialiasing: 'fxaa',
+        sensitivity: 50,
+        motionBlurStrength: 0,
+    };
+
+    document.getElementById('masterVolume').value = settings.masterVolume;
+    document.getElementById('masterVolumeValue').textContent = settings.masterVolume + '%';
+    document.getElementById('sfxVolume').value = settings.sfxVolume;
+    document.getElementById('sfxVolumeValue').textContent = settings.sfxVolume + '%';
+    document.getElementById('shadowQuality').value = settings.shadowQuality;
+    document.getElementById('antialiasing').value = settings.antialiasing;
+    document.getElementById('sensitivity').value = settings.sensitivity;
+    document.getElementById('sensitivityValue').textContent = settings.sensitivity + '%';
+    document.getElementById('motionBlurStrength').value = settings.motionBlurStrength;
+    document.getElementById('motionBlurStrengthValue').textContent = settings.motionBlurStrength + '%';
+
+    applySettings(settings);
+}
+
+function saveSettings() {
+    const settings = {
+        masterVolume: parseInt(document.getElementById('masterVolume').value),
+        sfxVolume: parseInt(document.getElementById('sfxVolume').value),
+        shadowQuality: document.getElementById('shadowQuality').value,
+        antialiasing: document.getElementById('antialiasing').value,
+        sensitivity: parseInt(document.getElementById('sensitivity').value),
+        motionBlurStrength: parseInt(document.getElementById('motionBlurStrength').value),
+    };
+
+    localStorage.setItem('gameSettings', JSON.stringify(settings));
+    applySettings(settings);
+}
+
+function applySettings(settings) {
+    if (collectSound) collectSound.volume = (settings.masterVolume * settings.sfxVolume) / 10000;
+    if (fallSound) fallSound.volume = (settings.masterVolume * settings.sfxVolume) / 10000;
+    if (jumpSound) jumpSound.volume = (settings.masterVolume * settings.sfxVolume) / 10000;
+    if (doorSound) doorSound.volume = (settings.masterVolume * settings.sfxVolume) / 10000;
+
+    renderer.shadowMap.enabled = settings.shadowQuality !== 'low';
+    renderer.shadowMap.type = settings.shadowQuality === 'high' ? 
+            THREE.PCFSoftShadowMap : THREE.PCFShadowMap;
+
+    if (settings.antialiasing !== 'none') {
+        renderer.antialias = true;
+    }
+
+    moveForce = defaultMoveForce * (settings.sensitivity / 50);
+    graphicsSettings.motionBlurStrength = settings.motionBlurStrength;
+}
+
+document.querySelectorAll('.settings-menu input, .settings-menu select').forEach(element => {
+    element.addEventListener('change', () => {
+        if (element.type === 'range') {
+            document.getElementById(element.id + 'Value').textContent = element.value + '%';
+        }
+        
+        saveSettings();
+    });
+});
+
+document.querySelectorAll('.skin-item').forEach(item => {
+    item.addEventListener('click', () => {
+        item.parentElement.querySelectorAll('.skin-item').forEach(i => i.classList.remove('selected'));
+        item.classList.add('selected');
+        
+        const skinType = item.parentElement.previousElementSibling.textContent.toLowerCase().includes('monkey') ? 'monkey' : 'banana';
+        const skinName = item.dataset.skin;
+        
+        if (skinType === 'monkey') {
+            switch(skinName) {
+                case 'blue':
+                    monkeyMaterial.color.setHex(0x4444ff);
+                    break;
+                case 'ninja':
+                    monkeyMaterial.color.setHex(0x222222);
+                    break;
+                case 'gold':
+                    monkeyMaterial.color.setHex(0xFFD700);
+                    monkeyMaterial.metalness = 1.0;
+                    monkeyMaterial.roughness = 0.3;
+                    break;
+                case 'rainbow':
+                    monkeyMaterial.color.setHex(0xff0000);
+                    const hueShift = () => {
+                        const hue = (Date.now() % 6000) / 6000;
+                        monkeyMaterial.color.setHSL(hue, 1, 0.5);
+                        requestAnimationFrame(hueShift);
+                    };
+                    hueShift();
+                    break;
+                case 'robot':
+                    monkeyMaterial.color.setHex(0x888888);
+                    monkeyMaterial.metalness = 0.8;
+                    monkeyMaterial.roughness = 0.2;
+                    break;
+                case 'ebgeb':
+                    const ebgebTexture = new THREE.TextureLoader().load('https://i.imgur.com/LqHK78n.png');
+                    monkeyMaterial.map = ebgebTexture;
+                    monkeyMaterial.needsUpdate = true;
+                    monkeyMaterial.color.setHex(0xffffff); // Reset color to white to show texture properly
+                    monkeyMaterial.metalness = 0;
+                    monkeyMaterial.roughness = 0.5;
+                    break;
+                case 'damyan':
+                    monkeyMaterial.map = null;
+                    monkeyMaterial.color.setHex(0x000000);
+                    monkeyMaterial.metalness = 0;
+                    monkeyMaterial.roughness = 0.7;
+                    break;
+                case 'kellen':
+                    const kellenTexture = new THREE.TextureLoader().load('https://i.imgur.com/U4dBttp.png');
+                    monkeyMaterial.map = kellenTexture;
+                    monkeyMaterial.needsUpdate = true;
+                    monkeyMaterial.color.setHex(0xffffff);
+                    monkeyMaterial.metalness = 0;
+                    monkeyMaterial.roughness = 0.5;
+                    break;
+                case 'reid':
+                    monkeyMaterial.map = null;
+                    monkeyMaterial.color.setHex(0xffffff);
+                    monkeyMaterial.metalness = 0;
+                    monkeyMaterial.roughness = 0.7;
+                    break;
+                case 'tacomonkey':
+                    const tacoMonkeyTexture = new THREE.TextureLoader().load('https://i.imgur.com/R6agWvU.png');
+                    monkeyMaterial.map = tacoMonkeyTexture;
+                    monkeyMaterial.needsUpdate = true;
+                    monkeyMaterial.color.setHex(0xffffff);
+                    monkeyMaterial.metalness = 0;
+                    monkeyMaterial.roughness = 0.5;
+                    break;
+                case 'meowmeowman':
+                    const meowTexture = new THREE.TextureLoader().load('https://i.imgur.com/SSK5n1t.png');
+                    monkeyMaterial.map = meowTexture;
+                    monkeyMaterial.needsUpdate = true;
+                    monkeyMaterial.color.setHex(0xffffff);
+                    monkeyMaterial.metalness = 0;
+                    monkeyMaterial.roughness = 0.5;
+                    break;
+                case 'horken':
+                    const horkenTexture = new THREE.TextureLoader().load('https://i.imgur.com/85VlOhX.png');
+                    monkeyMaterial.map = horkenTexture;
+                    monkeyMaterial.needsUpdate = true;
+                    monkeyMaterial.color.setHex(0xffffff);
+                    monkeyMaterial.metalness = 0;
+                    monkeyMaterial.roughness = 0.5;
+                    break;
+                case 'ballbird':
+                    const birdTexture = new THREE.TextureLoader().load('https://i.imgur.com/Y7Q2Ufm.png');
+                    // Create bird-shaped geometry
+                    const birdGeometry = new THREE.SphereGeometry(0.3, 32, 32);
+                    const birdHead = new THREE.SphereGeometry(0.15, 16, 16);
+                    const birdWing = new THREE.ConeGeometry(0.2, 0.4, 32);
+                    
+                    monkey.geometry = birdGeometry;
+                    monkey.material.map = birdTexture;
+                    monkey.material.needsUpdate = true;
+                    monkey.material.color.setHex(0xffffff);
+                    
+                    // Add wings
+                    const leftWing = new THREE.Mesh(birdWing, monkey.material);
+                    const rightWing = new THREE.Mesh(birdWing, monkey.material);
+                    leftWing.position.set(-0.3, 0, 0);
+                    rightWing.position.set(0.3, 0, 0);
+                    leftWing.rotation.z = Math.PI / 4;
+                    rightWing.rotation.z = -Math.PI / 4;
+                    monkey.add(leftWing);
+                    monkey.add(rightWing);
+                    break;
+                case 'blueball':
+                    const blueTexture = new THREE.TextureLoader().load('https://i.imgur.com/MDYp8j1.png');
+                    // Use same bird geometry as above
+                    monkey.geometry = birdGeometry;
+                    monkey.material.map = blueTexture;
+                    monkey.material.needsUpdate = true;
+                    monkey.material.color.setHex(0xffffff);
+                    
+                    // Add wings with blue texture
+                    const blueLeftWing = new THREE.Mesh(birdWing, monkey.material);
+                    const blueRightWing = new THREE.Mesh(birdWing, monkey.material);
+                    blueLeftWing.position.set(-0.3, 0, 0);
+                    blueRightWing.position.set(0.3, 0, 0);
+                    blueLeftWing.rotation.z = Math.PI / 4;
+                    blueRightWing.rotation.z = -Math.PI / 4;
+                    monkey.add(blueLeftWing);
+                    monkey.add(blueRightWing);
+                    break;
+                default:
+                    monkeyMaterial.map = null;
+                    monkeyMaterial.color.setHex(0x8B4513);
+                    monkeyMaterial.metalness = 0;
+                    monkeyMaterial.roughness = 0.7;
+            }
+        } else {
+            switch(skinName) {
+                case 'taco':
+                    bananaGeometry = new THREE.TorusGeometry(0.15, 0.05, 16, 32);
+                    bananaMaterial.color.setHex(0xff69b4);
+                    break;
+                case 'star':
+                    bananaGeometry = new THREE.TorusGeometry(0.15, 0.05, 16, 5);
+                    bananaMaterial.color.setHex(0xFFFF00);
+                    break;
+                case 'diamond':
+                    bananaGeometry = new THREE.OctahedronGeometry(0.2, 0);
+                    bananaMaterial.color.setHex(0x00ffff);
+                    bananaMaterial.metalness = 0.9;
+                    bananaMaterial.roughness = 0.1;
+                    break;
+                case 'donut':
+                    bananaGeometry = new THREE.TorusGeometry(0.15, 0.05, 16, 32);
+                    bananaMaterial.color.setHex(0xff69b4);
+                    break;
+                case 'coin':
+                    bananaGeometry = new THREE.CylinderGeometry(0.15, 0.15, 0.02, 32);
+                    bananaMaterial.color.setHex(0xffd700);
+                    bananaMaterial.metalness = 1.0;
+                    bananaMaterial.roughness = 0.3;
+                    break;
+                default:
+                    bananaGeometry = new THREE.TorusGeometry(0.15, 0.05, 16, 16, Math.PI);
+                    bananaMaterial.color.setHex(0xFFFF00);
+                    bananaMaterial.metalness = 0;
+                    bananaMaterial.roughness = 0.7;
+            }
+        }
+    });
+});
+
+function saveProgress() {
+    const gameState = {
+        currentLevel: currentLevel,
+        score: bananaCount,
+        totalBananas: totalBananas,
+        doorLocked: doorLocked,
+        magnetCount: magnetCount,
+        slowFieldCount: slowFieldCount,
+        settings: JSON.parse(localStorage.getItem('gameSettings') || '{}'),
+        selectedSkins: {
+            monkey: document.querySelector('.skin-grid:first-child .selected')?.dataset.skin || 'default',
+            banana: document.querySelector('.skin-grid:last-child .selected')?.dataset.skin || 'default'
+        }
+    };
+
+    const blob = new Blob([JSON.stringify(gameState, null, 2)], {type: 'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `super-monkey-roll-save-${currentLevel}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+}
+
+function loadProgress(file) {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            const gameState = JSON.parse(e.target.result);
+            
+            currentLevel = gameState.currentLevel || 1;
+            bananaCount = gameState.score || 0;
+            totalBananas = gameState.totalBananas || 0;
+            doorLocked = gameState.doorLocked || true;
+            magnetCount = gameState.magnetCount || 0;
+            slowFieldCount = gameState.slowFieldCount || 0;
+            document.getElementById('magnetUI').textContent = `Magnets Available: ${magnetCount} (Press M)`;
+            document.getElementById('magnetUI').style.display = magnetCount > 0 ? 'block' : 'none';
+            document.getElementById('slowFieldUI').textContent = `Slow Fields Available: ${slowFieldCount} (Press F)`;
+            document.getElementById('slowFieldUI').style.display = slowFieldCount > 0 ? 'block' : 'none';
+            
+            if (gameState.settings) {
+                localStorage.setItem('gameSettings', JSON.stringify(gameState.settings));
+                loadSettings();
+            }
+
+            document.querySelectorAll('.skin-grid').forEach((grid, index) => {
+                const skinType = index === 0 ? 'monkey' : 'banana';
+                const skinName = gameState.selectedSkins[skinType];
+                const skinItem = grid.querySelector(`[data-skin="${skinName}"]`);
+                if (skinItem) {
+                    grid.querySelectorAll('.skin-item').forEach(item => item.classList.remove('selected'));
+                    skinItem.classList.add('selected');
+                    skinItem.click(); 
+                }
+            });
+
+            resetLevel();
+            
+            scoreElement.textContent = `Bananas: ${bananaCount}/${totalBananas}`;
+            levelElement.textContent = `Level: ${currentLevel}`;
+            
+            pauseMenu.style.display = 'none';
+
+            appendToConsole('Game state loaded successfully!');
+        } catch (error) {
+            console.error('Error loading save file:', error);
+            appendToConsole('Error loading save file!');
+        }
+    };
+    reader.readAsText(file);
+}
+
+document.addEventListener('keydown', e => {
+    if (e.key === '`') {
+        graphicsEditor.style.display = graphicsEditor.style.display === 'none' ? 'block' : 'none';
+        if (graphicsEditor.style.display === 'block') {
+            updateSettingsOutput();
+        }
+    }
+});
+
+document.querySelector('#copySettings').addEventListener('click', () => {
+    const textarea = document.querySelector('#settingsOutput');
+    textarea.select();
+    document.execCommand('copy');
+});
+
+renderer.outputEncoding = THREE.sRGBEncoding;
+renderer.toneMapping = THREE.LinearToneMapping;
+renderer.toneMappingExposure = 1;
+
 function animate() {
     requestAnimationFrame(animate);
     
-    world.step(1/60);
+    if (isPaused) {
+        renderer.render(scene, camera);
+        return;
+    }
     
+    const currentTime = performance.now();
+    const deltaTime = (currentTime - lastTime) / 1000;
+    lastTime = currentTime;
+    accumulator += deltaTime;
+    while (accumulator >= fixedTimeStep) {
+        world.step(fixedTimeStep);
+        accumulator -= fixedTimeStep;
+    }
     if (gameStarted && !transitioning) {
         const force = new CANNON.Vec3();
-        if (keys.w) force.z -= moveForce;
-        if (keys.s) force.z += moveForce;
-        if (keys.a) force.x -= moveForce;
-        if (keys.d) force.x += moveForce;
+        const sprintMultiplier = keys.shift ? 1.8 : 1; 
+        
+        if (keys.w) force.z -= currentMoveForce * sprintMultiplier;
+        if (keys.s) force.z += currentMoveForce * sprintMultiplier;
+        if (keys.a) force.x -= currentMoveForce * sprintMultiplier;
+        if (keys.d) force.x += currentMoveForce * sprintMultiplier;
+        
+        force.scale(fixedTimeStep);
         ballBody.applyForce(force, ballBody.position);
-        
-        // Update goal gate position based on current level size
-        const levelSize = Math.min(5 + Math.floor(currentLevel / 2), 8);
-        goalGate.position.set((levelSize - 3) * 2, -0.5, (levelSize - 3) * 2);
-        
-        // Rotate bananas
+        if (isFlying) {
+            ballBody.velocity.y = 0;
+        }
+        const levelSize = Math.min(3 + currentLevel - 1, 12);
+        goalGate.position.set((levelSize - 2) * 2, -0.5, (levelSize - 2) * 2);
         bananas.forEach(banana => {
             if (!banana.collected) {
-                banana.mesh.rotation.y += 0.02;
+                if (banana.mesh.children.length > 0) {
+                    banana.mesh.children[0].rotation.y += 0.02 * (deltaTime / fixedTimeStep);
+                } else {
+                    banana.mesh.rotation.y += 0.02 * (deltaTime / fixedTimeStep);
+                }
             }
         });
-        
         checkBananaCollection();
         checkGoal();
     }
-    
     ball.position.copy(ballBody.position);
     ball.quaternion.copy(ballBody.quaternion);
-    
     if (ballBody.position.y < -10 && !fallTextVisible && !transitioning) {
         fallTextElement.style.display = 'block';
         fallTextVisible = true;
@@ -487,26 +2645,421 @@ function animate() {
         }
         resetBall();
     }
-    
     camera.position.x = ballBody.position.x;
     camera.position.y = ballBody.position.y + 5;
     camera.position.z = ballBody.position.z + 10;
     camera.lookAt(ball.position);
+    goalGate.rotation.y += 0.01 * (deltaTime / fixedTimeStep);
+    if (activeMagnet) {
+        activeMagnet.position.x += activeMagnet.direction.x * magnetSpeed;
+        activeMagnet.position.z += activeMagnet.direction.z * magnetSpeed;
+        
+        bananas.forEach(banana => {
+            if (!banana.collected) {
+                const dist = activeMagnet.position.distanceTo(banana.mesh.position);
+                if (dist < magnetRange) {
+                    const dir = new THREE.Vector3()
+                        .subVectors(activeMagnet.position, banana.mesh.position)
+                        .normalize();
+                    banana.mesh.position.add(dir.multiplyScalar(0.2));
+                    
+                    if (dist < 1) {
+                        banana.collected = true;
+                        if (banana.mesh.children.length > 0) {
+                            banana.mesh.children[0].visible = false;
+                        } else {
+                            banana.mesh.visible = false;
+                        }
+                        bananaCount++;
+                        if (scoreElement) {
+                            scoreElement.textContent = `Bananas: ${bananaCount}/${totalBananas}`;
+                        }
+                        if (collectSound) {
+                            collectSound.currentTime = 0;
+                            playSound(collectSound);
+                        }
+                        if (bananaCount === totalBananas) {
+                            doorLocked = false;
+                            doorLight.material = greenLightMaterial;
+                            goalGate.material.emissiveIntensity = 0.5;
+                        }
+                    }
+                }
+            }
+        });
+
+        if (activeMagnet.position.distanceTo(ball.position) > 30) {
+            scene.remove(activeMagnet);
+            activeMagnet = null;
+        }
+    }
+    if (isTimeSlowed) {
+        const distanceToField = ball.position.distanceTo(slowFieldCenter);
+        
+        if (distanceToField <= SLOW_FIELD_RADIUS) {
+            currentMoveForce = defaultMoveForce * TIME_SCALE_SLOW;
+        } else {
+            currentMoveForce = defaultMoveForce;
+        }
+        
+        bananas.forEach(banana => {
+            if (!banana.collected) {
+                if (banana.mesh.position.distanceTo(slowFieldCenter) <= SLOW_FIELD_RADIUS) {
+                    if (banana.mesh.children.length > 0) {
+                        banana.mesh.children[0].rotation.y += 0.02 * TIME_SCALE_SLOW * (deltaTime / fixedTimeStep);
+                    } else {
+                        banana.mesh.rotation.y += 0.02 * TIME_SCALE_SLOW * (deltaTime / fixedTimeStep);
+                    }
+                } else {
+                    if (banana.mesh.children.length > 0) {
+                        banana.mesh.children[0].rotation.y += 0.02 * (deltaTime / fixedTimeStep);
+                    } else {
+                        banana.mesh.rotation.y += 0.02 * (deltaTime / fixedTimeStep);
+                    }
+                }
+            }
+        });
+        
+        goalGate.rotation.y += 0.01 * TIME_SCALE_SLOW * (deltaTime / fixedTimeStep);
+    } else {
+        currentMoveForce = defaultMoveForce;
+    }
     
-    goalGate.rotation.y += 0.01;
-    
+    movingPlatforms.forEach(platform => {
+        const time = performance.now() * 0.001;
+        
+        const offset = Math.sin(time + platform.phase) * PLATFORM_RANGE;
+        const newPos = platform.startPos.clone();
+        newPos.x += offset;
+
+        platform.mesh.position.copy(newPos);
+        platform.body.position.copy(platform.mesh.position);
+
+        bananas.forEach(banana => {
+            if (!banana.collected && banana.platform === platform.mesh) {
+                if (banana.mesh.children.length > 0) {
+                    banana.mesh.position.copy(newPos).setY(newPos.y + 1); 
+                } else {
+                    banana.mesh.position.copy(newPos).setY(newPos.y + 1); 
+                }
+            }
+        });
+    });
+
+    updateBulletsAndEnemies();
+
     renderer.render(scene, camera);
+    levelElement.textContent = `Level: ${currentLevel}`;
+    if (!canJump) {
+        const remainingCooldown = Math.max(0, Math.ceil((jumpCooldown - (Date.now() - lastJumpTime)) / 1000));
+        jumpCooldownElement.textContent = `Jump Cooldown: ${remainingCooldown}s`;
+        const progress = (Date.now() - lastJumpTime) / jumpCooldown * 100;
+        cooldownProgress.style.width = `${100 - progress}%`;
+    } else {
+        cooldownProgress.style.width = '100%';
+    }
+    secondFloorTiles.forEach(tile => {});
+    if (graphicsSettings.motionBlurStrength > 0) {
+        const strength = graphicsSettings.motionBlurStrength / 100;
+        const velocityMagnitude = new THREE.Vector3()
+            .copy(ballBody.velocity)
+            .length();
+        const blurAmount = Math.min(velocityMagnitude * strength * 0.1, 1);
+        
+        renderer.domElement.style.filter = `blur(${blurAmount}px)`;
+    } else {
+        renderer.domElement.style.filter = 'none';
+    }
 }
 
-// Handle window resize
+function updateBulletsAndEnemies() {
+    for (let i = bullets.length - 1; i >= 0; i--) {
+        const bullet = bullets[i];
+        bullet.position.add(bullet.direction.clone().multiplyScalar(BULLET_SPEED));
+        
+        if (bullet.position.distanceTo(ball.position) > 50) {
+            scene.remove(bullet);
+            bullets.splice(i, 1);
+            continue;
+        }
+        
+        for (let j = enemies.length - 1; j >= 0; j--) {
+            const enemy = enemies[j];
+            if (bullet.position.distanceTo(enemy.position) < 1) {
+                enemy.health -= BULLET_DAMAGE;
+                scene.remove(bullet);
+                bullets.splice(i, 1);
+                
+                if (enemy.health <= 0) {
+                    scene.remove(enemy);
+                    enemies.splice(j, 1);
+                    if (collectSound) {
+                        collectSound.currentTime = 0;
+                        collectSound.volume = 0.5;
+                        playSound(collectSound);
+                    }
+                }
+                break;
+            }
+        }
+    }
+    
+    enemies.forEach(enemy => {
+        const direction = new THREE.Vector3()
+            .subVectors(ball.position, enemy.position)
+            .normalize();
+        
+        enemy.position.add(direction.multiplyScalar(ENEMY_SPEED));
+        enemy.rotation.y += 0.05;
+        
+        if (enemy.position.distanceTo(ball.position) < 1) {
+            if (fallSound) {
+                fallSound.currentTime = 0;
+                playSound(fallSound);
+            }
+            fallTextElement.style.display = 'block';
+            fallTextVisible = true;
+            resetBall();
+        }
+    });
+}
+
+renderer.domElement.addEventListener('click', (event) => {
+    if (!gameStarted || isPaused || transitioning) return;
+
+    const mouse = new THREE.Vector2(
+        (event.clientX / window.innerWidth) * 2 - 1,
+        -(event.clientY / window.innerHeight) * 2 + 1
+    );
+
+    const raycaster = new THREE.Raycaster();
+    raycaster.setFromCamera(mouse, camera);
+
+    const bullet = new THREE.Mesh(bulletGeometry, bulletMaterial);
+    bullet.position.copy(ball.position);
+    bullet.position.y += 0.5; 
+    const direction = raycaster.ray.direction.normalize();
+    bullet.direction = direction.clone(); 
+        
+    scene.add(bullet);
+    bullets.push(bullet);
+    
+    if (collectSound) {
+        collectSound.currentTime = 0;
+        collectSound.volume = 0.2;
+        playSound(collectSound);
+    }
+});
+
 window.addEventListener('resize', () => {
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
     renderer.setSize(window.innerWidth, window.innerHeight);
 });
 
-// Start the game sequence after a short delay
-setTimeout(startGame, 500);
+document.querySelector('.start-menu-button').addEventListener('click', () => {
+    startGame();
+});
+
+document.getElementById('levelEditorButton').addEventListener('click', () => {
+  document.querySelector('.start-menu').style.display = 'none';
+  document.querySelector('.level-editor').style.display = 'block';
+  isEditing = true;
+  initLevelEditor();
+});
+
+document.getElementById('testLevel').addEventListener('click', () => {
+  loadCustomLevel(editorGrid);
+});
+
+document.getElementById('saveLevel').addEventListener('click', () => {
+  const levelData = {
+    grid: editorGrid,
+    name: 'Custom Level'
+  };
+  
+  const blob = new Blob([JSON.stringify(levelData)], {type: 'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'custom-level.json';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+});
+
+document.getElementById('loadLevel').addEventListener('click', () => {
+  document.getElementById('loadLevelInput').click();
+});
+
+document.getElementById('loadLevelInput').addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const levelData = JSON.parse(e.target.result);
+    editorGrid = levelData.grid;
+    initLevelEditor();
+    
+    editorGrid.forEach((row, z) => {
+      row.forEach((cell, x) => {
+        const elem = document.querySelector(`[data-x="${x}"][data-z="${z}"]`);
+        elem.className = 'editor-cell';
+        if(cell === 1) elem.classList.add('platform');
+        if(cell === 'd') elem.classList.add('door');
+        if(cell === 4) elem.classList.add('movingPlatform');
+        if(cell === 2) elem.classList.add('launchPad');
+        if(cell === 'b') elem.classList.add('banana');
+        if(cell === 'e') elem.classList.add('enemy');
+        if(cell === 'm') elem.classList.add('magnet');
+        if(cell === 's') elem.classList.add('slowField');
+      });
+    });
+  };
+  reader.readAsText(file);
+});
+
+document.getElementById('clearLevel').addEventListener('click', () => {
+  initLevelEditor();
+});
+
+document.getElementById('exitEditor').addEventListener('click', () => {
+  document.querySelector('.level-editor').style.display = 'none';
+  document.querySelector('.start-menu').style.display = 'flex';
+  isEditing = false;
+});
+
+document.getElementById('eraseButton').addEventListener('click', (e) => {
+  e.target.classList.toggle('active');
+  document.getElementById('editorGrid').classList.toggle('eraser-active');
+});
+
+document.getElementById('backToEditor').addEventListener('click', () => {
+  document.querySelector('.level-editor').style.display = 'block';
+  isEditing = true;
+  
+  ballBody.position.set(2, 0, 0);
+  ballBody.velocity.setZero();
+  ballBody.angularVelocity.setZero();
+  
+  gameStarted = false; 
+  
+  document.querySelectorAll('.ui-element').forEach(el => {
+    el.style.display = 'none';
+  });
+});
+
+function handleCellClick(e) {
+  const x = parseInt(e.target.dataset.x);
+  const z = parseInt(e.target.dataset.z);
+  
+  if(x === editorGrid.spawnX && z === editorGrid.spawnZ) return; 
+  
+  const type = document.getElementById('placementType').value;
+  
+  if (document.getElementById('eraseButton').classList.contains('active')) {
+    e.target.className = 'editor-cell';
+    editorGrid[z][x] = 0;
+    return;
+  }
+  
+  e.target.className = 'editor-cell';
+  
+  switch(type) {
+    case 'platform':
+      editorGrid[z][x] = 1;
+      e.target.classList.add('platform');
+      break;
+    case 'door':
+      editorGrid[z][x] = 'd';
+      e.target.classList.add('door');
+      document.querySelectorAll('.door').forEach(door => {
+        if(door !== e.target) {
+          door.classList.remove('door');
+          const doorZ = parseInt(door.dataset.z);
+          const doorX = parseInt(door.dataset.x);
+          editorGrid[doorZ][doorX] = 0;
+        }
+      });
+      break;
+    case 'banana':
+      editorGrid[z][x] = 'b';
+      e.target.classList.add('banana');
+      break;
+    case 'movingPlatform':
+      editorGrid[z][x] = 4;
+      e.target.classList.add('movingPlatform');
+      break;
+    case 'enemy':
+      editorGrid[z][x] = 'e';
+      e.target.classList.add('enemy');
+      break;
+    case 'launchPad':
+      editorGrid[z][x] = 2;
+      e.target.classList.add('launchPad');
+      break;
+    case 'magnet':
+      editorGrid[z][x] = 'm';
+      e.target.classList.add('magnet');
+      break;
+    case 'slowField':
+      editorGrid[z][x] = 's';
+      e.target.classList.add('slowField');
+      break;
+    case 'spawn':
+      editorGrid.spawnX = x;
+      editorGrid.spawnZ = z;
+      e.target.classList.add('spawn-point');
+      break;
+  }
+}
+
+function initLevelEditor() {
+  editorGrid = [];
+  for (let z = 0; z < 12; z++) {
+    editorGrid[z] = [];
+    for (let x = 0; x < 12; x++) {
+      editorGrid[z][x] = 0;
+    }
+  }
+  editorGrid.spawnX = 2;
+  editorGrid.spawnZ = 2;
+  
+  const gridElement = document.getElementById('editorGrid');
+  gridElement.innerHTML = '';
+  
+  for (let z = 0; z < 12; z++) {
+    for (let x = 0; x < 12; x++) {
+      const cell = document.createElement('div');
+      cell.className = 'editor-cell';
+      cell.dataset.x = x;
+      cell.dataset.z = z;
+      cell.addEventListener('click', handleCellClick);
+      gridElement.appendChild(cell);
+    }
+  }
+  
+  const spawnCell = gridElement.querySelector('[data-x="2"][data-z="2"]');
+  spawnCell.classList.add('spawn-point');
+}
+
+function loadCustomLevel(grid) {
+  currentLevel = 'custom';
+  isEditing = false;
+  
+  resetLevel();
+  
+  for (let z = 0; z < grid.length; z++) {
+    for (let x = 0; x < grid[z].length; x++) {
+      createTile(x - 6, z - 6, grid[z][x]);
+    }
+  }
+  
+  document.querySelector('.level-editor').style.display = 'none';
+  gameStarted = true;
+}
 
 animate();
-</script></body></html>
+</script> 
+</body>
+</html>
