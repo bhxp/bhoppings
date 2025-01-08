@@ -1,0 +1,2791 @@
+<html><head><base href="." <title>Robby
+<style>
+:root {
+  --robot-primary: linear-gradient(145deg, #e0e5ec, #d0d5dc);
+  --robot-secondary: linear-gradient(145deg, #b0b5bc, #a0a5ac);
+  --robot-accent: linear-gradient(145deg, #8090a0, #708090);
+  --shadow-color: rgba(0, 0, 0, 0.2);
+  
+  /* Color theme variables */
+  --robot-blue: linear-gradient(145deg, #4a90e2, #357abd);
+  --robot-blue-secondary: linear-gradient(145deg, #3a80d2, #2569ad);
+  --robot-blue-accent: linear-gradient(145deg, #2a70c2, #15599d);
+  
+  --robot-red: linear-gradient(145deg, #e24a4a, #bd3535);
+  --robot-red-secondary: linear-gradient(145deg, #d23a3a, #ad2525);
+  --robot-red-accent: linear-gradient(145deg, #c22a2a, #9d1515);
+  
+  --robot-yellow: linear-gradient(145deg, #e2c44a, #bd9e35);
+  --robot-yellow-secondary: linear-gradient(145deg, #d2b43a, #ad8e25);
+  --robot-yellow-accent: linear-gradient(145deg, #c2a42a, #9d7e15);
+  
+  --robot-green: linear-gradient(145deg, #4ae24a, #35bd35);
+  --robot-green-secondary: linear-gradient(145deg, #3ad23a, #25ad25);
+  --robot-green-accent: linear-gradient(145deg, #2ac22a, #159d15);
+  
+  --robot-white-primary: linear-gradient(145deg, #e0e5ec, #d0d5dc);
+  --robot-white-secondary: linear-gradient(145deg, #b0b5bc, #a0a5ac);
+  --robot-white-accent: linear-gradient(145deg, #8090a0, #708090);
+  
+  /* Eye color variables */
+  --eye-blue: linear-gradient(145deg, #4a90e2, #357abd);
+  --eye-black: linear-gradient(145deg, #2c3e50, #1a2634);
+  --angry-face: linear-gradient(145deg, #4a90e2, #357abd);
+  
+  /* Light theme variables */
+  --light-bg: linear-gradient(135deg, #87CEEB, #B0E2FF);
+  --light-robot-primary: linear-gradient(145deg, #ffffff, #e6e9f0);
+  --light-robot-secondary: linear-gradient(145deg, #e6e9f0, #d6d9e0);
+  --light-robot-accent: linear-gradient(145deg, #d6d9e0, #c6c9d0);
+  --light-shadow-color: rgba(0, 0, 0, 0.1);
+  --light-button-shadow: 
+    3px 3px 10px rgba(0, 0, 0, 0.1),
+    -3px -3px 10px rgba(255, 255, 255, 0.8);
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #1a1a2e, #16162b);
+  font-family: Arial, sans-serif;
+}
+
+body.light-mode {
+  background: var(--light-bg);
+}
+
+body.sunny-weather {
+  background: linear-gradient(135deg, #87CEEB, #B0E2FF) !important;
+}
+
+.robot-container {
+  position: relative;
+  width: 300px;
+  height: 300px;
+  cursor: pointer;
+  perspective: 1000px;
+  margin: 100px auto; 
+  position: relative;
+  z-index: 1;
+}
+
+.robot {
+  transform-style: preserve-3d;
+  transition: transform 0.3s;
+}
+
+.head {
+  width: 120px;
+  height: 100px;
+  background: var(--robot-primary);
+  border-radius: 30px;
+  position: relative;
+  margin: 0 auto;
+  transform-style: preserve-3d;
+  animation: float 3s ease-in-out infinite;
+  box-shadow: 
+    inset -8px -8px 12px var(--shadow-color),
+    inset 8px 8px 12px rgba(255, 255, 255, 0.4),
+    5px 5px 15px var(--shadow-color);
+}
+
+.head img {
+  cursor: move;
+  touch-action: none;
+  user-select: none;
+  transition: transform 0.3s;
+  width: 100%;    
+  height: 100%;   
+  object-fit: contain;  
+}
+
+.head img.scaling {
+  transform-origin: center;
+}
+
+.scale-handle {
+  width: 20px;
+  height: 20px;
+  background: white;
+  border: 2px solid #4a90e2;
+  border-radius: 50%;
+  position: absolute;
+  bottom: -10px;
+  right: -10px;
+  cursor: se-resize;
+  z-index: 1001;
+  display: none;
+}
+
+.head img:hover .scale-handle {
+  display: block;
+}
+
+body.light-mode .robot .head,
+body.light-mode .robot .body {
+  box-shadow: 
+    inset -8px -8px 12px var(--light-shadow-color),
+    inset 8px 8px 12px rgba(255, 255, 255, 0.8),
+    5px 5px 15px var(--light-shadow-color);
+}
+
+.eyes {
+  display: flex;
+  justify-content: space-around;
+  padding-top: 30px;
+  perspective: 100px;
+}
+
+.eye {
+  width: 25px;
+  height: 25px;
+  background: var(--eye-blue);
+  border-radius: 50%;
+  position: relative;
+  transition: all 0.3s;
+  box-shadow: 
+    inset -2px -2px 4px var(--shadow-color),
+    inset 2px 2px 4px rgba(255, 255, 255, 0.4),
+    2px 2px 8px var(--shadow-color);
+  transform: translate(0, 0); 
+}
+
+.eye::after {
+  content: '';
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  background: rgba(255, 255, 255, 1);
+  border-radius: 50%;
+  top: 3px;
+  left: 3px;
+  filter: blur(0.5px);
+  box-shadow: 0 0 8px rgba(255, 255, 255, 1);
+}
+
+.eye.closed {
+  height: 5px;
+  background: var(--robot-secondary);
+  transform: none !important;
+}
+
+.eye.closed::after {
+  display: none;
+}
+
+.mouth {
+  width: 40px;
+  height: 20px;
+  background: linear-gradient(145deg, #405060, #304050);
+  border-radius: 0 0 20px 20px;
+  margin: 10px auto;
+  transition: all 0.3s;
+  box-shadow: 
+    inset -2px -2px 4px var(--shadow-color),
+    2px 2px 8px var(--shadow-color);
+}
+
+.screw {
+  position: absolute;
+  width: 8px;
+  height: 15px;
+  background: linear-gradient(145deg, #c0c0c0, #a0a0a0);
+  border-radius: 50% 50% 20% 20%;
+  left: 50%;
+  bottom: -5px;
+  transform-origin: center;
+  opacity: 0;
+  display: none;
+  box-shadow: 
+    inset -1px -1px 2px var(--shadow-color),
+    inset 1px 1px 2px rgba(255, 255, 255, 0.4),
+    2px 2px 4px var(--shadow-color);
+}
+
+.screw::before {
+  content: '';
+  position: absolute;
+  width: 80%;
+  height: 2px;
+  background: #808080;
+  top: 3px;
+  left: 10%;
+  box-shadow: 0 1px 1px rgba(255, 255, 255, 0.4);
+}
+
+.body {
+  width: 140px;
+  height: 100px;
+  background: var(--robot-primary);
+  border-radius: 20px;
+  margin: -10px auto;
+  position: relative;
+  box-shadow: 
+    inset -8px -8px 12px var(--shadow-color),
+    inset 8px 8px 12px rgba(255, 255, 255, 0.4),
+    5px 5px 15px var(--shadow-color);
+  transform: translateZ(-10px);
+}
+
+body.light-mode .robot .arm,
+body.light-mode .robot .leg {
+  box-shadow: 
+    inset -4px -4px 8px var(--light-shadow-color),
+    inset 4px 4px 8px rgba(255, 255, 255, 0.8),
+    3px 3px 10px var(--light-shadow-color);
+}
+
+.arm {
+  width: 30px;
+  height: 80px;
+  background: var(--robot-secondary);
+  position: absolute;
+  border-radius: 15px;
+  transition: all 0.3s;
+  box-shadow: 
+    inset -4px -4px 8px var(--shadow-color),
+    inset 4px 4px 8px rgba(255, 255, 255, 0.4),
+    3px 3px 10px var(--shadow-color);
+  transform-origin: top center;
+  transition: transform 0.5s ease;
+}
+
+.arm-left {
+  left: -20px;
+  transform-origin: top center;
+}
+
+.arm-right {
+  right: -20px;
+  transform-origin: top center;
+}
+
+.emotion-menu {
+  margin-top: 0;
+  display: flex;
+  gap: 15px;
+  perspective: 1000px;
+}
+
+.emotion-btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 25px;
+  background: linear-gradient(145deg, #4a90e2, #357abd);
+  color: white;
+  cursor: pointer;
+  transition: all 0.3s;
+  box-shadow: 
+    3px 3px 10px var(--shadow-color),
+    -3px -3px 10px rgba(255, 255, 255, 0.1);
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+  font-weight: bold;
+}
+
+body.light-mode .emotion-btn,
+body.light-mode .play-btn,
+body.light-mode .settings-btn,
+body.light-mode .feed-btn,
+body.light-mode .sleep-btn,
+body.light-mode .voice-btn,
+body.light-mode .meditate-btn,
+body.light-mode .dance-btn,
+body.light-mode .care-btn,
+body.light-mode .hug-btn,
+body.light-mode .gratitude-btn {
+  box-shadow: var(--light-button-shadow);
+}
+
+.emotion-btn[data-emotion="shy"] {
+  background: linear-gradient(145deg, #7fb3ec, #5f93cc);
+}
+
+.emotion-btn[data-emotion="shy"]:hover {
+  background: linear-gradient(145deg, #5f93cc, #3f73ac);
+}
+
+.emotion-btn:hover {
+  background: linear-gradient(145deg, #357abd, #2868a0);
+  transform: scale(1.05) translateZ(10px);
+  box-shadow: 
+    5px 5px 15px var(--shadow-color),
+    -5px -5px 15px rgba(255, 255, 255, 0.1);
+}
+
+.butterfly {
+  position: fixed;
+  width: 30px;
+  height: 30px;
+  pointer-events: none;
+  z-index: 1000;
+  transform-origin: center;
+  transition: transform 0.1s;
+  display: none;
+}
+
+.butterfly-wing {
+  position: absolute;
+  width: 15px;
+  height: 20px;
+  background: linear-gradient(135deg, #ff9aa2, #ffd2d7);
+  border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+  animation: flutter 0.2s ease-in-out infinite alternate;
+}
+
+.butterfly-wing:first-child {
+  left: 0;
+  transform-origin: right center;
+}
+
+.butterfly-wing:last-child {
+  right: 0;
+  transform-origin: left center;
+}
+
+@keyframes flutter {
+  0% { transform: rotate(-30deg); }
+  100% { transform: rotate(30deg); }
+}
+
+.play-btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 25px;
+  background: linear-gradient(145deg, #4a90e2, #357abd);
+  color: white;
+  cursor: pointer;
+  margin-top: 0;
+  transition: all 0.3s;
+  box-shadow: 
+    3px 3px 10px var(--shadow-color),
+    -3px -3px 10px rgba(255, 255, 255, 0.1);
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.play-btn:hover {
+  background: linear-gradient(145deg, #357abd, #2868a0);
+  transform: scale(1.05);
+}
+
+.play-btn.active {
+  background: linear-gradient(145deg, #2868a0, #1b4168);
+  transform: scale(0.95);
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px) rotateX(0deg); }
+  50% { transform: translateY(-10px) rotateX(5deg); }
+}
+
+.speech-bubble {
+  position: absolute;
+  top: -60px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: linear-gradient(145deg, #ffffff, #f0f0f0);
+  padding: 15px;
+  border-radius: 20px;
+  opacity: 0;
+  transition: opacity 0.3s;
+  pointer-events: none;
+  box-shadow: 
+    3px 3px 10px var(--shadow-color),
+    -3px -3px 10px rgba(255, 255, 255, 0.1);
+}
+
+.speech-bubble::after {
+  content: '';
+  position: absolute;
+  bottom: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 10px 10px 0;
+  border-style: solid;
+  border-color: #f0f0f0 transparent transparent;
+}
+
+.legs {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  margin-top: -10px;
+  position: relative;
+  z-index: -1;
+}
+
+.leg {
+  width: 30px;
+  height: 80px;
+  background: var(--robot-secondary);
+  border-radius: 15px;
+  position: relative;
+  transition: all 0.3s;
+  transform-origin: top center;
+  animation: waddle 2s ease-in-out infinite alternate;
+  box-shadow: 
+    inset -4px -4px 8px var(--shadow-color),
+    inset 4px 4px 8px rgba(255, 255, 255, 0.4),
+    3px 3px 10px var(--shadow-color);
+  transition: transform 0.5s ease;
+}
+
+.foot {
+  width: 40px;
+  height: 20px;
+  background: var(--robot-accent);
+  border-radius: 20px;
+  position: absolute;
+  bottom: -10px;
+  left: -5px;
+  box-shadow: 
+    inset -2px -2px 4px var(--shadow-color),
+    2px 2px 8px var(--shadow-color);
+}
+
+.leg-left {
+  animation-delay: -1s;
+}
+
+@keyframes waddle {
+  0% { transform: rotate(-5deg); }
+  100% { transform: rotate(5deg); }
+}
+
+.settings-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 20px;
+  gap: 15px;
+}
+
+.settings-btn {
+  position: fixed;
+  top: 80px;  
+  right: 20px;
+  padding: 12px 24px;
+  border: none;
+  border-radius: 25px;
+  background: linear-gradient(145deg, #6c7989, #5c6979);
+  color: white;
+  cursor: pointer;
+  transition: all 0.3s;
+  box-shadow: 
+    3px 3px 10px var(--shadow-color),
+    -3px -3px 10px rgba(255, 255, 255, 0.1);
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+  font-weight: bold;
+  margin-top: 0;
+  z-index: 1000;
+}
+
+.settings-btn:hover {
+  background: linear-gradient(145deg, #5c6979, #4c5969);
+  transform: scale(1.05);
+}
+
+.color-menu, .eye-color-menu {
+  position: fixed;
+  top: 130px;
+  right: 20px;
+  background: rgba(26, 26, 46, 0.9);
+  padding: 10px;
+  border-radius: 15px;
+  flex-direction: column;
+  z-index: 1000;
+  display: none;
+  gap: 10px;
+}
+
+.color-menu {
+  position: fixed;
+  top: 130px;
+  right: 20px;
+  background: rgba(26, 26, 46, 0.9);
+  padding: 10px;
+  border-radius: 15px;
+  flex-direction: column;
+  z-index: 1000;
+  display: none;
+  gap: 10px;
+}
+
+.color-menu.visible {
+  display: flex;
+}
+
+.color-btn {
+  width: 30px;
+  height: 30px;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.3s;
+  box-shadow: 
+    3px 3px 10px var(--shadow-color),
+    -3px -3px 10px rgba(255, 255, 255, 0.1);
+  transform-style: preserve-3d;
+}
+
+.color-btn:hover {
+  transform: scale(1.1) translateZ(10px);
+  box-shadow: 
+    5px 5px 15px var(--shadow-color),
+    -5px -5px 15px rgba(255, 255, 255, 0.1);
+}
+
+.color-btn.reset { 
+  background: var(--robot-white-primary);
+  border: 2px solid #ccc;
+}
+
+.color-btn.blue { 
+  background: var(--robot-blue); 
+}
+
+.color-btn.red { 
+  background: var(--robot-red);
+}
+
+.color-btn.green { 
+  background: var(--robot-green);
+}
+
+.color-btn.yellow { 
+  background: var(--robot-yellow);
+}
+
+.eye-color-btn {
+  padding: 6px 12px;
+  border: none;
+  border-radius: 15px;
+  cursor: pointer;
+  transition: all 0.3s; 
+  box-shadow: 3px 3px 10px var(--shadow-color),
+    -3px -3px 10px rgba(255, 255, 255, 0.1);
+  color: white;
+  font-size: 12px;
+  margin-top: 10px;
+  width: 100%;
+}
+
+.eye-color-btn.blue {
+  background: var(--eye-blue);
+}
+
+.eye-color-btn.black {
+  background: var(--eye-black);
+}
+
+.eye-color-btn:hover {
+  transform: scale(1.05);
+}
+
+.eye-color-btn.active {
+  transform: scale(0.95);
+  box-shadow: 1px 1px 5px var(--shadow-color),
+    -1px -1px 5px rgba(255, 255, 255, 0.1);
+}
+
+.feed-btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 25px;
+  background: linear-gradient(145deg, #d4a76a, #b88d57);
+  color: white;
+  cursor: pointer;
+  margin: 10px 0;  
+  transition: all 0.3s;
+  box-shadow: 
+    3px 3px 10px var(--shadow-color),
+    -3px -3px 10px rgba(255, 255, 255, 0.1);
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+  font-weight: bold;
+  font-size: 14px;
+}
+
+.feed-btn:hover {
+  background: linear-gradient(145deg, #b88d57, #9c7444);
+  transform: scale(1.05);
+}
+
+.feed-btn.active {
+  background: linear-gradient(145deg, #9c7444, #7f5c31);
+  transform: scale(0.95);
+}
+
+@keyframes nom {
+  0%, 100% { transform: scaleY(1); }
+  50% { transform: scaleY(1.5); }
+}
+
+.sleep-btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 25px;
+  background: linear-gradient(145deg, #9b7be6, #7b5bc6);
+  color: white;
+  cursor: pointer;
+  margin-top: 0;
+  transition: all 0.3s;
+  box-shadow: 
+    3px 3px 10px var(--shadow-color),
+    -3px -3px 10px rgba(255, 255, 255, 0.1);
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+  font-weight: bold;
+  font-size: 14px;
+}
+
+.sleep-btn:hover {
+  background: linear-gradient(145deg, #7b5bc6, #5b3ba6);
+  transform: scale(1.05);
+}
+
+.sleep-btn.active {
+  background: linear-gradient(145deg, #5b3ba6, #3b1b86);
+  transform: scale(0.95);
+}
+
+.dream-bubbles {
+  position: absolute;
+  top: 0;
+  right: -100px;
+  pointer-events: none;
+}
+
+.dream-bubble {
+  width: 100px;
+  height: 100px;
+  position: absolute;
+  opacity: 0;
+  transform: scale(0);
+}
+
+@keyframes float-dream {
+  0% { 
+    transform: translate(0, 0) scale(0);
+    opacity: 0; 
+  }
+  20% { 
+    opacity: 1;
+    transform: translate(-20px, -20px) scale(1);
+  }
+  80% { 
+    opacity: 1;
+    transform: translate(-60px, -60px) scale(1);
+  }
+  100% { 
+    transform: translate(-80px, -80px) scale(0);
+    opacity: 0; 
+  }
+}
+
+.robot.sleeping .head {
+  animation: sleep-float 4s ease-in-out infinite;
+}
+
+@keyframes sleep-float {
+  0%, 100% { transform: translateY(0px) rotate(5deg); }
+  50% { transform: translateY(-5px) rotate(5deg); }
+}
+
+.robot.sleeping .mouth {
+  height: 10px !important;
+  width: 20px !important;
+  border-radius: 50% !important;
+}
+
+.cookie {
+  position: fixed;
+  width: 30px;
+  height: 30px;
+  pointer-events: none;
+  z-index: 1000;
+  transform-origin: center;
+  transition: all 0.5s ease;
+  display: none;
+}
+
+.cookie svg {
+  width: 100%;
+  height: 100%;
+}
+
+.voice-btn {
+  padding: 12px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(145deg, #8e44ad, #6c3483);
+  color: white;
+  cursor: pointer;
+  margin-top: 0;
+  transition: all 0.3s;
+  box-shadow: 
+    3px 3px 10px var(--shadow-color),
+    -3px -3px 10px rgba(255, 255, 255, 0.1);
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+  font-weight: bold;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.voice-btn:hover {
+  background: linear-gradient(145deg, #6c3483, #4a2361);
+  transform: scale(1.05);
+}
+
+.voice-btn.active {
+  background: linear-gradient(145deg, #4a2361, #2a1341);
+  transform: scale(0.95);
+}
+
+.meditate-btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 25px;
+  background: linear-gradient(145deg, #9c27b0, #8e44ad);
+  color: white;
+  cursor: pointer;
+  margin-top: 0;
+  transition: all 0.3s;
+  box-shadow: 
+    3px 3px 10px var(--shadow-color),
+    -3px -3px 10px rgba(255, 255, 255, 0.1);
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+  font-weight: bold;
+  font-size: 14px;
+}
+
+.meditate-btn:hover {
+  background: linear-gradient(145deg, #8e44ad, #7d3c98);
+  transform: scale(1.05);
+}
+
+.meditate-btn.active {
+  background: linear-gradient(145deg, #7d3c98, #6c3483);
+  transform: scale(0.95);
+}
+
+.robot.meditating .arm-left {
+  transform: rotate(-20deg) translate(0, 0) !important;
+  transform-origin: top center;
+}
+
+.robot.meditating .arm-right {
+  transform: rotate(20deg) translate(0, 0) !important; 
+  transform-origin: top center;
+}
+
+.robot.meditating .leg-left {
+  transform: rotate(-15deg) translate(0, 0) !important;
+  animation: none !important;
+}
+
+.robot.meditating .leg-right {
+  transform: rotate(15deg) translate(0, 0) !important;
+  animation: none !important;
+}
+
+.robot.meditating .body {
+  transform: translateY(15px) translateZ(-10px);
+}
+
+.robot.meditating .head {
+  transform: translateY(5px) rotate(5deg);
+}
+
+.robot.meditating .eye {
+  transform: scale(0.8) translateY(2px);
+}
+
+.robot.meditating .eye.closed {
+  height: 5px;
+  background: var(--robot-secondary);
+  transform: none !important;
+}
+
+.robot.meditating .eye.closed::after {
+  display: none;
+}
+
+.dance-btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 25px;
+  background: linear-gradient(145deg, #ff69b4, #d84d9f);
+  color: white;
+  cursor: pointer;
+  margin-top: 0;
+  transition: all 0.3s;
+  box-shadow: 
+    3px 3px 10px var(--shadow-color),
+    -3px -3px 10px rgba(255, 255, 255, 0.1);
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+  font-weight: bold;
+  font-size: 14px;
+}
+
+.dance-btn:hover {
+  background: linear-gradient(145deg, #d84d9f, #b83d8f);
+  transform: scale(1.05);
+}
+
+.dance-btn.active {
+  background: linear-gradient(145deg, #b83d8f, #982d7f);
+  transform: scale(0.95);
+}
+
+.robot.dancing .head {
+  animation: balletHead 3s ease-in-out infinite;
+}
+
+.robot.dancing .arm-left {
+  animation: balletArmLeft 3s ease-in-out infinite;
+  transform-origin: top center;
+}
+
+.robot.dancing .arm-right {
+  animation: balletArmRight 3s ease-in-out infinite;
+  transform-origin: top center;
+}
+
+.robot.dancing .leg-left {
+  animation: balletLegLeft 3s ease-in-out infinite;
+  transform-origin: top center;
+}
+
+.robot.dancing .leg-right {
+  animation: balletLegRight 3s ease-in-out infinite;
+  transform-origin: top center;
+}
+
+@keyframes balletHead {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(-15deg); }
+  75% { transform: rotate(15deg); }
+}
+
+@keyframes balletArmLeft {
+  0%, 100% { transform: rotate(45deg); }  
+  50% { transform: rotate(135deg); }     
+}
+
+@keyframes balletArmRight {
+  0%, 100% { transform: rotate(-45deg); } 
+  50% { transform: rotate(-135deg); }     
+}
+
+@keyframes balletLegLeft {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(90deg); }     
+}
+
+@keyframes balletLegRight {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(45deg); }     
+  75% { transform: rotate(-45deg); }     
+}
+
+.tear {
+  position: absolute;
+  width: 8px;
+  height: 12px;
+  background: linear-gradient(145deg, #7ad7f0, #5ab7d0);
+  border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+  left: 35px;
+  top: 45px;
+  opacity: 0;
+  box-shadow: 
+    inset -1px -1px 2px var(--shadow-color),
+    inset 1px 1px 2px rgba(255, 255, 255, 0.4),
+    2px 2px 4px var(--shadow-color);
+}
+
+.tear.active {
+  animation: tearDrop 2s ease-in-out infinite;
+}
+
+@keyframes tearDrop {
+  0% {
+    transform: translateY(0) scale(0);
+    opacity: 0;
+  }
+  20% {
+    opacity: 1;
+  }
+  80% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(50px) scale(0.5);
+    opacity: 0;
+  }
+}
+
+@keyframes screwFall {
+  0% {
+    transform: translateY(0) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(50px) rotate(360deg);
+    opacity: 0;
+  }
+}
+
+.weather-menu {
+  position: fixed;
+  top: 60px;
+  left: 20px;  
+  z-index: 1000;
+}
+
+.weather-btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 25px;
+  background: linear-gradient(145deg, #4a90e2, #357abd);
+  color: white;
+  cursor: pointer;
+  transition: all 0.3s;
+  box-shadow: 3px 3px 10px var(--shadow-color),
+    -3px -3px 10px rgba(255, 255, 255, 0.1);
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+  font-weight: bold;
+}
+
+.weather-panel {
+  display: none;
+  background: rgba(26, 26, 46, 0.9);
+  padding: 15px;
+  border-radius: 15px;
+  margin-top: 10px;
+  gap: 10px;
+  flex-direction: column;
+  margin-left: 0; 
+}
+
+.weather-panel.visible {
+  display: flex;
+}
+
+.weather-option {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 15px;
+  background: linear-gradient(145deg, #357abd, #2868a0);
+  color: white;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.weather-option:hover {
+  transform: scale(1.05);
+}
+
+.weather-option[data-weather="sunny"] {
+  display: none;
+}
+
+body.light-mode .weather-option[data-weather="sunny"] {
+  display: block;
+}
+
+.weather-effect {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.cloud {
+  position: absolute;
+  width: 100px;
+  height: 40px;
+  background: linear-gradient(to bottom, #f1f1f1 5%, #e0e0e0);
+  border-radius: 20px;
+  opacity: 0;
+  animation: cloud-float 20s linear infinite;
+  position: relative;
+}
+
+.cloud::before,
+.cloud::after {
+  content: '';
+  position: absolute;
+  background: linear-gradient(to bottom, #f1f1f1 5%, #e0e0e0);
+  border-radius: 50%;
+}
+
+.cloud::before {
+  width: 50px;
+  height: 50px;
+  top: -20px;
+  left: 15px;
+}
+
+.cloud::after {
+  width: 70px;
+  height: 70px;
+  top: -30px;
+  right: 15px;
+}
+
+@keyframes cloud-float {
+  0% { 
+    transform: translateX(-150px) translateY(calc(sin(var(--cloud-offset)) * 30px)); 
+    opacity: 0; 
+  }
+  10% { 
+    opacity: 0.8; 
+  }
+  90% { 
+    opacity: 0.8; 
+  }
+  100% { 
+    transform: translateX(calc(100vw + 150px)) translateY(calc(sin(var(--cloud-offset)) * 30px)); 
+    opacity: 0; 
+  }
+}
+
+.rain-drop {
+  position: absolute;
+  width: 2px;
+  height: 20px;
+  background: linear-gradient(transparent, #4a90e2);
+  animation: rain-fall linear infinite;
+}
+
+.snow-flake {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  background: white;
+  border-radius: 50%;
+  animation: snow-fall linear infinite;
+}
+
+.leaf {
+  position: absolute;
+  width: 15px;
+  height: 15px;
+  background: #8b4513;
+  clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+  animation: leaf-blow linear infinite;
+}
+
+.sun {
+  position: absolute;
+  top: 40px;
+  right: 40px;
+  width: 80px;
+  height: 80px;
+  background: #ffd700;
+  border-radius: 50%;
+  box-shadow: 0 0 50px #ffd700;
+  opacity: 0;
+  animation: sun-pulse 4s ease-in-out infinite;
+}
+
+@keyframes rain-fall {
+  0% { transform: translateY(-100vh); opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { transform: translateY(100vh); opacity: 0; }
+}
+
+@keyframes snow-fall {
+  0% { transform: translateY(-100vh) rotate(0deg); opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { transform: translateY(100vh) rotate(360deg); opacity: 0; }
+}
+
+@keyframes leaf-blow {
+  0% { transform: translateX(-100px) translateY(0) rotate(0deg); opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { transform: translateX(calc(100vw + 100px)) translateY(100px) rotate(720deg); opacity: 0; }
+}
+
+.bird {
+  position: absolute;
+  width: 40px;
+  height: 30px;
+  pointer-events: none;
+  z-index: 1;
+  animation: bird-fly linear infinite;
+}
+
+.bird svg {
+  width: 100%;
+  height: 100%;
+  fill: #4a4a4a;
+}
+
+.bird-wing {
+  transform-origin: center;
+  animation: wing-flap 0.5s ease-in-out infinite alternate;
+}
+
+@keyframes wing-flap {
+  0% { transform: rotate(-20deg); }
+  100% { transform: rotate(20deg); }
+}
+
+@keyframes bird-fly {
+  0% {
+    transform: translateX(-100%) translateY(0);
+  }
+  50% {
+    transform: translateX(300vw) translateY(calc(sin(var(--bird-offset, 0deg)) * 50px));
+  }
+  100% {
+    transform: translateX(600vw) translateY(0);
+  }
+}
+
+.stars-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 0;
+  display: none;
+}
+
+.star {
+  position: absolute;
+  width: 2px;
+  height: 2px;
+  background: #fff;
+  border-radius: 50%;
+}
+
+.star.twinkle {
+  animation: twinkle-star 1.5s infinite alternate;
+}
+
+@keyframes twinkle-star {
+  0% { opacity: 0.2; transform: scale(0.8); }
+  100% { opacity: 1; transform: scale(1.2); }
+}
+
+body:not(.light-mode) .stars-container {
+  display: block;
+}
+
+.care-btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 25px;
+  background: linear-gradient(145deg, #C0C0C0, #A0A0A0);
+  color: white;
+  cursor: pointer;
+  margin-top: 0;
+  transition: all 0.3s;
+  box-shadow: 
+    3px 3px 10px var(--shadow-color),
+    -3px -3px 10px rgba(255, 255, 255, 0.1);
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+  font-weight: bold;
+  font-size: 14px;
+}
+
+.care-btn:hover {
+  background: linear-gradient(145deg, #A0A0A0, #808080);
+  transform: scale(1.05);
+}
+
+.care-btn.active {
+  background: linear-gradient(145deg, #808080, #606060);
+  transform: scale(0.95);
+}
+
+.magic-star {
+  position: absolute;
+  width: 40px;
+  height: 40px;
+  pointer-events: none;
+  z-index: 1000;
+  opacity: 0;
+  display: none;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.magic-star svg {
+  width: 100%;
+  height: 100%;
+  filter: drop-shadow(0 0 15px rgba(255,215,0,0.8)) 
+          drop-shadow(0 0 8px rgba(255,255,255,0.9));
+}
+
+.magic-star path {
+  fill: gold;
+  stroke: white;
+  stroke-width: 2;
+  filter: brightness(1.2);
+}
+
+.virtual-hug {
+  position: fixed;
+  width: 200px;
+  height: 200px;
+  pointer-events: none;
+  z-index: 1000;
+  opacity: 0;
+  transition: all 0.5s ease;
+}
+
+@keyframes hugAnimation {
+  0% { 
+    transform: translate(-50%, -50%) scale(0.1);
+    opacity: 0;
+  }
+  50% { 
+    transform: translate(-50%, -50%) scale(1.2);
+    opacity: 1;
+  }
+  100% { 
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 0;
+  }
+}
+
+.hug-btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 25px;
+  background: linear-gradient(145deg, #ff69b4, #ff1493);
+  color: white;
+  cursor: pointer;
+  margin-top: 0;
+  transition: all 0.3s;
+  box-shadow: 
+    3px 3px 10px var(--shadow-color),
+    -3px -3px 10px rgba(255, 255, 255, 0.1);
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+  font-weight: bold;
+  font-size: 14px;
+}
+
+.hug-btn:hover {
+  background: linear-gradient(145deg, #ff1493, #ff0080);
+  transform: scale(1.05);
+}
+
+.hug-btn.active {
+  background: linear-gradient(145deg, #ff0080, #dc143c);
+  transform: scale(0.95);
+}
+
+.gratitude-btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 25px;
+  background: linear-gradient(145deg, #9b59b6, #8e44ad);
+  color: white;
+  cursor: pointer;
+  transition: all 0.3s;
+  box-shadow: 
+    3px 3px 10px var(--shadow-color),
+    -3px -3px 10px rgba(255, 255, 255, 0.1);
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+  font-weight: bold;
+  font-size: 14px;
+  margin: 0;
+}
+
+.gratitude-btn:hover {
+  background: linear-gradient(145deg, #8e44ad, #7d3c98);
+  transform: scale(1.05);
+}
+
+.gratitude-btn.active {
+  background: linear-gradient(145deg, #7d3c98, #6c3483);
+  transform: scale(0.95);
+}
+
+.robot.shivering .head {
+  animation: shiver 0.2s linear infinite;
+}
+
+.robot.shivering .arm {
+  animation: shiver 0.2s linear infinite;
+}
+
+.robot.shivering .leg {
+  animation: shiver 0.15s linear infinite;
+}
+
+@keyframes shiver {
+  0%, 100% { transform: rotate(-1deg) translate(-1px, 0); }
+  25% { transform: rotate(0deg) translate(1px, -1px); }
+  50% { transform: rotate(1deg) translate(1px, 0); }
+  75% { transform: rotate(0deg) translate(-1px, -1px); }
+}
+
+.robot.sleeping .body {
+  background: linear-gradient(145deg, #1a237e, #0d47a1) !important;
+  position: relative;
+}
+
+.robot.sleeping .body::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: radial-gradient(circle at center, #ffd700 2px, transparent 2px);
+  background-size: 20px 20px;
+  border-radius: 20px;
+  opacity: 0.6;
+  animation: twinkle-pajama 2s infinite;
+}
+
+.robot.sleeping .arm {
+  background: linear-gradient(145deg, #1a237e, #0d47a1) !important;
+}
+
+.robot.sleeping .leg {
+  background: linear-gradient(145deg, #1a237e, #0d47a1) !important;
+}
+
+@keyframes twinkle-pajama {
+  0% { opacity: 0.4; }
+  50% { opacity: 0.8; }
+  100% { opacity: 0.4; }
+}
+
+.theme-toggle {
+  position: fixed;
+  left: 20px;
+  top: 20px; 
+  padding: 8px 16px;
+  border: none;
+  border-radius: 25px;
+  background: linear-gradient(145deg, #4a90e2, #357abd);
+  color: white;
+  cursor: pointer;
+  transition: all 0.3s;
+  box-shadow: 
+    3px 3px 10px var(--shadow-color),
+    -3px -3px 10px rgba(255, 255, 255, 0.1);
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+  font-weight: bold;
+  z-index: 1000;
+}
+
+.theme-toggle:hover {
+  background: linear-gradient(145deg, #357abd, #2868a0);
+  transform: scale(1.05);
+}
+
+.movable-object {
+  cursor: move;
+  touch-action: none;
+  user-select: none;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.movable-object.active {
+  opacity: 0.8;
+}
+
+.movable-object .scale-handle {
+  width: 20px;
+  height: 20px;
+  background: white;
+  border: 2px solid #4a90e2;
+  border-radius: 50%;
+  position: absolute;
+  bottom: -10px;
+  right: -10px;
+  cursor: se-resize;
+  z-index: 1001;
+}
+
+.page-title {
+  color: white; /* Reset to default white color */
+  text-align: center;
+  font-size: 2em;
+  margin-top: 20px;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.music-btn {
+  padding: 12px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(145deg, #9b59b6, #8e44ad);
+  color: white;
+  cursor: pointer;
+  margin-top: 0;
+  transition: all 0.3s;
+  box-shadow: 
+    3px 3px 10px var(--shadow-color),
+    -3px -3px 10px rgba(255, 255, 255, 0.1);
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+  font-weight: bold;
+  font-size: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.music-btn:hover {
+  background: linear-gradient(145deg, #8e44ad, #7d3c98);
+  transform: scale(1.05);
+}
+
+.music-btn.active {
+  background: linear-gradient(145deg, #7d3c98, #6c3483);
+  transform: scale(0.95);
+}
+
+.musical-note {
+  position: absolute;
+  font-size: 24px;
+  color: #fff;
+  opacity: 0;
+  pointer-events: none;
+  animation: float-note 2s ease-out forwards;
+}
+
+@keyframes float-note {
+  0% {
+    transform: translateY(0) rotate(0deg);
+    opacity: 0;
+  }
+  20% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-100px) rotate(360deg);
+    opacity: 0;
+  }
+}
+
+.robot.listening .head {
+  animation: music-bob 2s ease-in-out infinite;
+}
+
+@keyframes music-bob {
+  0%, 100% { transform: rotate(-5deg); }
+  50% { transform: rotate(5deg); }
+}
+</style>
+</head><body>
+<button class="theme-toggle">Light Mode</button>
+<h1 class="page-title">Robby</h1>
+<div class="weather-menu">
+  <button class="weather-btn">Climate</button>
+  <div class="weather-panel">
+    <button class="weather-option" data-weather="rain">Rain</button>
+    <button class="weather-option" data-weather="snow">Snow</button>
+    <button class="weather-option" data-weather="wind">Windy</button>
+    <button class="weather-option" data-weather="sunny">Sunny</button>
+    <button class="weather-option" data-weather="cloudy">Cloudy</button>
+  </div>
+</div>
+<div class="weather-effect"></div>
+<div class="top-right-controls">
+  <button class="settings-btn">Color Settings</button>
+  <button class="voice-btn">On</button>
+  <button class="music-btn">&#x266b;</button>
+  <button class="meditate-btn">Meditate</button>
+  <button class="dance-btn">Dance</button>
+  <button class="care-btn">Star</button>
+  <button class="hug-btn">Hug</button>
+</div>
+<div class="robot-container">
+  <div class="meditation-aura"></div>
+  <div class="robot">
+    <div class="speech-bubble"></div>
+    <div class="head">
+      <div class="eyes">
+        <div class="eye"></div>
+        <div class="eye"></div>
+      </div>
+      <div class="tear"></div>
+      <div class="mouth">
+        <div class="screw"></div>
+      </div>
+    </div>
+    <div class="body">
+      <div class="arm arm-left"></div>
+      <div class="arm arm-right"></div>
+    </div>
+    <div class="legs">
+      <div class="leg leg-left">
+        <div class="foot"></div>
+      </div>
+      <div class="leg leg-right">
+        <div class="foot"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="settings-container">
+  <button class="play-btn">Play with Butterfly</button>
+  <div class="cookie-buttons">
+    <button class="sleep-btn">Sleep Mode</button>
+    <button class="feed-btn">Feed Cookie</button>
+    <button class="gratitude-btn">Gratitude</button>
+  </div>
+  <div class="emotion-menu">
+    <button class="emotion-btn" data-emotion="happy">Happy</button>
+    <button class="emotion-btn" data-emotion="sad">Sad</button>
+    <button class="emotion-btn" data-emotion="laugh">Laugh</button>
+    <button class="emotion-btn" data-emotion="love">Love</button>
+    <button class="emotion-btn" data-emotion="scared">Scared</button>
+    <button class="emotion-btn" data-emotion="angry">Angry</button>
+    <button class="emotion-btn" data-emotion="shy">Shy</button>
+  </div>
+</div>
+
+<div class="color-menu">
+  <button class="color-btn reset" data-color="reset"></button>
+  <button class="color-btn blue" data-color="blue"></button>
+  <button class="color-btn red" data-color="red"></button>
+  <button class="color-btn green" data-color="green"></button>
+  <button class="color-btn yellow" data-color="yellow"></button>
+  <button class="eye-color-btn blue" data-eye-color="blue">Blue Eyes</button>
+  <button class="eye-color-btn black" data-eye-color="black">Black Eyes</button>
+</div>
+
+<div class="cookie">
+  <svg viewBox="0 0 100 100">
+    <circle cx="50" cy="50" r="45" fill="#d4a76a"/>
+    <circle cx="30" cy="35" r="8" fill="#8b5e3c"/>
+    <circle cx="60" cy="40" r="8" fill="#8b5e3c"/>
+    <circle cx="45" cy="65" r="8" fill="#8b5e3c"/>
+    <circle cx="70" cy="60" r="8" fill="#8b5e3c"/>
+    <circle cx="25" cy="55" r="8" fill="#8b5e3c"/>
+  </svg>
+</div>
+
+<div class="butterfly">
+  <div class="butterfly-wing"></div>
+  <div class="butterfly-wing"></div>
+</div>
+
+<div class="dream-bubbles">
+  <svg class="dream-bubble" viewBox="0 0 100 100" style="display: none;">
+    <circle class="bubble" cx="50" cy="50" r="20" fill="rgba(255,255,255,0.8)"/>
+    <circle class="mini-bubble" cx="75" cy="35" r="10" fill="rgba(255,255,255,0.6)"/>
+    <circle class="mini-bubble" cx="85" cy="25" r="5" fill="rgba(255,255,255,0.4)"/>
+  </svg>
+</div>
+
+<div class="magic-star">
+  <svg viewBox="0 0 100 100">
+    <path d="M50,0 L63,38 L100,38 L69,61 L81,100 L50,76 L19,100 L31,61 L0,38 L37,38 Z" fill="gold" stroke="white" stroke-width="2">
+      <animate attributeName="opacity" values="1;0.7;1" dur="1.5s" repeatCount="indefinite"/>
+      <animate attributeName="filter" values="drop-shadow(0 0 8px rgba(255,255,255,0.8));drop-shadow(0 0 12px rgba(255,255,255,0.9));drop-shadow(0 0 8px rgba(255,255,255,0.8))" dur="1.5s" repeatCount="indefinite"/>
+    </path>
+  </svg>
+</div>
+
+<div class="virtual-hug">
+  <svg viewBox="0 0 100 100">
+    <path d="M50,20 C20,20 0,40 0,60 C0,80 20,90 50,90 C80,90 100,80 100,60 C100,40 80,20 50,20" fill="none" stroke="#ff69b4" stroke-width="4">
+      <animate attributeName="d" values="M50,20 C20,20 0,40 0,60 C0,80 20,90 50,90 C80,90 100,80 100,60 C100,40 80,20 50,20;
+                      M50,30 C30,30 10,45 10,60 C0,75 20,80 50,80 C70,80 90,75 90,60 C90,45 70,30 50,30;
+                      M50,20 C20,20 0,40 0,60 C0,80 20,90 50,90 C80,90 100,80 100,60 C100,40 80,20 50,20" dur="2s" repeatCount="1"/>
+    </path>
+  </svg>
+</div>
+
+<script>const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+function createRobotSound(frequency, duration, type = 'sine') {
+  const oscillator = audioContext.createOscillator();
+  const gainNode = audioContext.createGain();
+  oscillator.type = type;
+  oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
+  gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+  gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + duration);
+  oscillator.connect(gainNode);
+  gainNode.connect(audioContext.destination);
+  oscillator.start();
+  oscillator.stop(audioContext.currentTime + duration);
+}
+function playEmotionSound(emotion) {
+  switch (emotion) {
+    case 'happy':
+      createRobotSound(440, 0.2, 'sine');
+      setTimeout(() => createRobotSound(550, 0.2, 'sine'), 200);
+      break;
+    case 'sad':
+      for (let i = 0; i < 3; i++) {
+        setTimeout(() => {
+          createRobotSound(330 - i * 10, 0.3, 'sine');
+          setTimeout(() => {
+            createRobotSound(280 - i * 10, 0.2, 'sine');
+          }, 200);
+        }, i * 600);
+      }
+      break;
+    case 'laugh':
+      const playChildLaugh = () => {
+        createRobotSound(880, 0.1, 'sine');
+        setTimeout(() => createRobotSound(990, 0.1, 'sine'), 100);
+        setTimeout(() => createRobotSound(880, 0.1, 'sine'), 200);
+        setTimeout(() => {
+          createRobotSound(660, 0.15, 'sine');
+          setTimeout(() => createRobotSound(770, 0.15, 'sine'), 100);
+        }, 400);
+        setTimeout(() => {
+          createRobotSound(880, 0.08, 'sine');
+          setTimeout(() => createRobotSound(990, 0.08, 'sine'), 100);
+          setTimeout(() => createRobotSound(1100, 0.08, 'sine'), 200);
+        }, 800);
+      };
+      playChildLaugh();
+      setTimeout(playChildLaugh, 1200);
+      break;
+    case 'love':
+      createRobotSound(440, 0.15, 'sine');
+      setTimeout(() => {
+        createRobotSound(660, 0.3, 'sine');
+        setTimeout(() => {
+          createRobotSound(880, 0.2, 'sine');
+        }, 300);
+      }, 150);
+      break;
+    case 'playful':
+      createRobotSound(523.25, 0.1, 'sine');
+      setTimeout(() => createRobotSound(587.33, 0.1, 'sine'), 150);
+      setTimeout(() => createRobotSound(659.25, 0.1, 'sine'), 300);
+      break;
+    case 'eating':
+      for (let i = 0; i < 3; i++) {
+        setTimeout(() => {
+          createRobotSound(330 + Math.random() * 110, 0.15, 'square');
+        }, i * 300);
+      }
+      break;
+  }
+}
+const robot = document.querySelector('.robot');
+const eyes = document.querySelectorAll('.eye');
+const mouth = document.querySelector('.mouth');
+const arms = document.querySelectorAll('.arm');
+const speechBubble = document.querySelector('.speech-bubble');
+let isPlaying = false;
+const butterfly = document.querySelector('.butterfly');
+function updateButterflyPosition(e) {
+  if (!isPlaying) return;
+  const mouseX = e.clientX;
+  const mouseY = e.clientY;
+  butterfly.style.left = `${mouseX - 15}px`;
+  butterfly.style.top = `${mouseY - 15}px`;
+  const robotRect = robot.getBoundingClientRect();
+  const robotCenterX = robotRect.left + robotRect.width / 2;
+  const robotCenterY = robotRect.top + robotRect.height / 2;
+  const dx = mouseX - robotCenterX;
+  const dy = mouseY - robotCenterY;
+  const distance = Math.sqrt(dx * dx + dy * dy);
+  const angle = Math.atan2(dy, dx);
+  const eyeMovementRange = 3;
+  const eyeX = Math.cos(angle) * eyeMovementRange;
+  const eyeY = Math.sin(angle) * eyeMovementRange;
+  eyes.forEach(eye => {
+    if (!eye.classList.contains('closed')) {
+      eye.style.transform = `translate(${eyeX}px, ${eyeY}px)`;
+    }
+  });
+  const faceProximity = 100;
+  const isFaceClose = distance < faceProximity;
+  eyes.forEach(eye => {
+    eye.classList.toggle('closed', isFaceClose);
+    if (isFaceClose) {
+      eye.style.transform = '';
+    }
+  });
+  arms.forEach((arm, i) => {
+    if (isFaceClose) {
+      arm.style.transform = i === 0 ? 'rotate(-45deg)' : 'rotate(45deg)';
+    } else {
+      arm.style.transform = 'rotate(0deg)';
+    }
+  });
+  if (isFaceClose) {
+    speak('*happy sigh*');
+    if (!robot.dataset.playingSweetSound) {
+      robot.dataset.playingSweetSound = 'true';
+      createRobotSound(660, 0.3, 'sine');
+      setTimeout(() => {
+        robot.dataset.playingSweetSound = '';
+      }, 300);
+    }
+  }
+}
+document.addEventListener('mousemove', updateButterflyPosition);
+const emotions = {
+  happy: {
+    expression: () => {
+      mouth.style.height = '20px';
+      mouth.style.width = '40px';
+      mouth.style.borderRadius = '0 0 20px 20px';
+      arms.forEach(arm => arm.style.transform = 'rotate(0deg)');
+      document.querySelectorAll('.leg').forEach(leg => {
+        leg.style.animation = 'waddle 0.5s ease-in-out infinite alternate';
+      });
+      speak('Whirr... So happy!');
+      playEmotionSound('happy');
+    }
+  },
+  sad: {
+    expression: () => {
+      mouth.style.height = '10px';
+      mouth.style.width = '40px';
+      mouth.style.borderRadius = '20px 20px 0 0';
+      arms.forEach(arm => arm.style.transform = 'rotate(20deg)');
+      document.querySelectorAll('.leg').forEach(leg => {
+        leg.style.animation = 'none';
+        leg.style.transform = 'rotate(0deg)';
+      });
+      const tear = document.querySelector('.tear');
+      tear.classList.add('active');
+      if (robot.dataset.tearTimeout) {
+        clearTimeout(robot.dataset.tearTimeout);
+      }
+      robot.dataset.tearTimeout = setTimeout(() => {
+        tear.classList.remove('active');
+      }, 6000);
+      for (let i = 0; i < 3; i++) {
+        setTimeout(() => {
+          createRobotSound(330 - i * 10, 0.3, 'sine');
+          setTimeout(() => {
+            createRobotSound(280 - i * 10, 0.2, 'sine');
+          }, 200);
+        }, i * 600);
+      }
+    }
+  },
+  laugh: {
+    expression: () => {
+      mouth.style.height = '25px';
+      mouth.style.width = '40px';
+      mouth.style.borderRadius = '0 0 30px 30px';
+      arms.forEach((arm, i) => {
+        arm.style.transform = i === 0 ? 'rotate(-30deg)' : 'rotate(30deg)';
+      });
+      document.querySelectorAll('.leg').forEach(leg => {
+        leg.style.animation = 'waddle 0.3s ease-in-out infinite alternate';
+      });
+      const playChildLaugh = () => {
+        createRobotSound(880, 0.1, 'sine');
+        setTimeout(() => createRobotSound(990, 0.1, 'sine'), 100);
+        setTimeout(() => createRobotSound(880, 0.1, 'sine'), 200);
+        setTimeout(() => {
+          createRobotSound(660, 0.15, 'sine');
+          setTimeout(() => createRobotSound(770, 0.15, 'sine'), 100);
+        }, 400);
+        setTimeout(() => {
+          createRobotSound(880, 0.08, 'sine');
+          setTimeout(() => createRobotSound(990, 0.08, 'sine'), 100);
+          setTimeout(() => createRobotSound(1100, 0.08, 'sine'), 200);
+        }, 800);
+      };
+      playChildLaugh();
+      setTimeout(playChildLaugh, 1200);
+      mouth.style.animation = 'nom 0.3s ease-in-out 4';
+      setTimeout(() => {
+        mouth.style.animation = '';
+      }, 1200);
+      speak('*Giggle* Hee hee hee!');
+    }
+  },
+  love: {
+    expression: () => {
+      mouth.style.height = '15px';
+      mouth.style.width = '40px';
+      mouth.style.borderRadius = '0 0 15px 15px';
+      arms.forEach((arm, i) => {
+        arm.style.transform = i === 0 ? 'rotate(-45deg)' : 'rotate(45deg)';
+      });
+      document.querySelectorAll('.leg').forEach(leg => {
+        leg.style.animation = 'waddle 1s ease-in-out infinite alternate';
+      });
+      speak('Beep-boop... Love activated!');
+      playEmotionSound('love');
+    }
+  },
+  scared: {
+    expression: () => {
+      mouth.style.height = '5px';
+      mouth.style.width = '40px';
+      mouth.style.borderRadius = '50%';
+      eyes.forEach(eye => {
+        eye.style.height = '35px';
+        eye.style.width = '35px';
+        eye.style.transform = 'translateY(-5px)';
+      });
+      arms.forEach((arm, i) => {
+        if (i === 0) {
+          arm.style.transform = 'rotate(-45deg) translateY(40px) translateX(30px)';
+        } else {
+          arm.style.transform = 'rotate(45deg) translateY(40px) translateX(-30px)';
+        }
+      });
+      document.querySelectorAll('.leg').forEach(leg => {
+        leg.style.animation = 'waddle 0.2s ease-in-out infinite alternate';
+      });
+      speak('Eek! *nervous beep*');
+      createRobotSound(880, 0.1, 'sine');
+      setTimeout(() => createRobotSound(440, 0.2, 'sine'), 100);
+      setTimeout(() => {
+        eyes.forEach(eye => {
+          eye.style.height = '25px';
+          eye.style.width = '25px';
+          eye.style.transform = '';
+        });
+      }, 2000);
+    }
+  },
+  angry: {
+    expression: () => {
+      mouth.style.height = '20px';
+      mouth.style.width = '40px';
+      mouth.style.borderRadius = '20px 20px 0 0';
+      mouth.style.transform = 'scaleY(0.5)';
+      const head = document.querySelector('.head');
+      head.style.background = 'var(--angry-face)';
+      arms.forEach((arm, i) => {
+        if (i === 0) {
+          arm.style.transform = 'rotate(-60deg) translateY(20px)';
+        } else {
+          arm.style.transform = 'rotate(60deg) translateY(20px)';
+        }
+      });
+      eyes.forEach(eye => {
+        eye.style.transform = 'scaleY(0.5) rotate(-10deg)';
+        eye.style.background = 'var(--robot-red)';
+      });
+      createRobotSound(200, 0.3, 'sawtooth');
+      setTimeout(() => createRobotSound(150, 0.4, 'sawtooth'), 300);
+      setTimeout(() => createRobotSound(100, 0.5, 'sawtooth'), 600);
+      setTimeout(() => {
+        mouth.style.transform = '';
+        head.style.background = '';
+        eyes.forEach(eye => {
+          eye.style.transform = '';
+          eye.style.background = '';
+        });
+      }, 2000);
+    }
+  },
+  shy: {
+    expression: () => {
+      mouth.style.height = '15px';
+      mouth.style.width = '30px';
+      mouth.style.borderRadius = '10px';
+      const head = document.querySelector('.head');
+      head.style.background = 'linear-gradient(145deg, #e0e5ec, #ffd0d0)';
+      eyes.forEach(eye => {
+        eye.style.transform = 'scale(0.8) translateY(2px)';
+      });
+      arms.forEach((arm, i) => {
+        if (i === 0) {
+          arm.style.transform = 'rotate(-10deg) translateY(5px)';
+        } else {
+          arm.style.transform = 'rotate(30deg) translateY(-10px)';
+        }
+      });
+      const screw = document.querySelector('.screw');
+      screw.style.display = 'block';
+      screw.style.opacity = '1';
+      screw.style.animation = 'screwFall 1s ease-in-out forwards';
+      createRobotSound(330, 0.2, 'sine');
+      setTimeout(() => createRobotSound(440, 0.1, 'sine'), 200);
+      speak('Oh no... *nervous beep* I lost a screw!');
+      setTimeout(() => {
+        head.style.background = '';
+        eyes.forEach(eye => {
+          eye.style.transform = '';
+        });
+        arms.forEach(arm => {
+          arm.style.transform = '';
+        });
+        screw.style.display = 'none';
+        screw.style.animation = '';
+      }, 3000);
+    }
+  }
+};
+Object.keys(emotions).forEach(emotion => {
+  const originalExpression = emotions[emotion].expression;
+  emotions[emotion].expression = () => {
+    originalExpression();
+  };
+});
+function speakWithVoice(text) {
+  if (!voiceEnabled) return;
+  if ('speechSynthesis' in window) {
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.pitch = 1.5;
+    utterance.rate = 1.1;
+    utterance.volume = 0.9;
+    if (text.includes('love you')) {
+      utterance.pitch = 1.7;
+      utterance.rate = 1.0;
+      utterance.volume = 0.95;
+    } else if (text.toLowerCase().includes('crunch') || text.toLowerCase().includes('yummy') || text.toLowerCase().includes('delicious')) {
+      utterance.pitch = 1.6;
+      utterance.rate = 1.2;
+      utterance.volume = 0.9;
+    } else if (text.toLowerCase().includes('happy') || text.toLowerCase().includes('yay') || text.toLowerCase().includes('funny') || text.toLowerCase().includes('play')) {
+      utterance.pitch = 1.8;
+      utterance.rate = 1.3;
+      utterance.volume = 0.95;
+    } else if (text.toLowerCase().includes('zzz') || text.toLowerCase().includes('yawn')) {
+      utterance.pitch = 1.3;
+      utterance.rate = 0.8;
+      utterance.volume = 0.8;
+    }
+    const voices = window.speechSynthesis.getVoices();
+    const preferredVoices = voices.filter(voice => voice.lang.includes('en') && (voice.name.includes('Google US English Female') || voice.name.includes('Microsoft Zira') || voice.name.includes('Female')));
+    if (preferredVoices.length > 0) {
+      utterance.voice = preferredVoices[0];
+      utterance.lang = 'en-US';
+    }
+    let originalPitch = utterance.pitch;
+    utterance.onboundary = function (event) {
+      if (event.name === 'word') {
+        utterance.pitch = originalPitch + (Math.random() * 0.4 - 0.2);
+      }
+    };
+    window.speechSynthesis.speak(utterance);
+  }
+}
+function speak(text) {
+  speechBubble.textContent = text;
+  speechBubble.style.opacity = '1';
+  speakWithVoice(text);
+  setTimeout(() => {
+    speechBubble.style.opacity = '0';
+  }, 2000);
+}
+document.querySelectorAll('.emotion-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const emotion = btn.dataset.emotion;
+    if (emotions[emotion]) {
+      emotions[emotion].expression();
+    }
+  });
+});
+robot.addEventListener('mouseover', () => {
+  robot.style.transform = 'scale(1.05) rotate(5deg) translateZ(20px)';
+  createRobotSound(520, 0.1, 'sine');
+});
+robot.addEventListener('mouseout', () => {
+  robot.style.transform = 'scale(1) rotate(0deg) translateZ(0)';
+  createRobotSound(440, 0.1, 'sine');
+});
+const colorButtons = document.querySelectorAll('.color-btn');
+const root = document.documentElement;
+const colorThemes = {
+  reset: {
+    primary: 'var(--robot-white-primary)',
+    secondary: 'var(--robot-white-secondary)',
+    accent: 'var(--robot-white-accent)'
+  },
+  blue: {
+    primary: 'var(--robot-blue)',
+    secondary: 'var(--robot-blue-secondary)',
+    accent: 'var(--robot-blue-accent)'
+  },
+  red: {
+    primary: 'var(--robot-red)',
+    secondary: 'var(--robot-red-secondary)',
+    accent: 'var(--robot-red-accent)'
+  },
+  green: {
+    primary: 'var(--robot-green)',
+    secondary: 'var(--robot-green-secondary)',
+    accent: 'var(--robot-green-accent)'
+  },
+  yellow: {
+    primary: 'var(--robot-yellow)',
+    secondary: 'var(--robot-yellow-secondary)',
+    accent: 'var(--robot-yellow-accent)'
+  }
+};
+colorButtons.forEach(btn => {
+  btn.addEventListener('click', () => {
+    const color = btn.dataset.color;
+    const theme = colorThemes[color];
+    root.style.setProperty('--robot-primary', theme.primary);
+    root.style.setProperty('--robot-secondary', theme.secondary);
+    root.style.setProperty('--robot-accent', theme.accent);
+    createRobotSound(440 + Math.random() * 100, 0.2, 'sine');
+    if (color === 'reset') {
+      speak("Beep-boop... Back to defaults!");
+    } else {
+      speak('*Beep* New color activated!');
+    }
+  });
+});
+const eyeColorButtons = document.querySelectorAll('.eye-color-btn');
+eyeColorButtons.forEach(btn => {
+  btn.addEventListener('click', () => {
+    eyeColorButtons.forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const eyeColor = btn.dataset.eyeColor;
+    const colorValue = eyeColor === 'blue' ? 'var(--eye-blue)' : 'var(--eye-black)';
+    eyes.forEach(eye => {
+      eye.style.background = colorValue;
+    });
+    createRobotSound(600, 0.15, 'sine');
+    speak(eyeColor === 'blue' ? "Beep... Blue eyes online!" : "Beep... Black eyes activated!");
+  });
+});
+const feedBtn = document.querySelector('.feed-btn');
+const cookie = document.querySelector('.cookie');
+function feedRobot() {
+  const robotRect = robot.getBoundingClientRect();
+  cookie.style.display = 'block';
+  cookie.style.left = `${robotRect.left + robotRect.width / 2 - 15}px`;
+  cookie.style.top = `${robotRect.top + robotRect.height / 2 - 100}px`;
+  setTimeout(() => {
+    cookie.style.top = `${robotRect.top + robotRect.height / 2 - 40}px`;
+  }, 500);
+  setTimeout(() => {
+    mouth.style.animation = 'nom 0.3s ease-in-out 3';
+    cookie.style.transform = 'scale(0)';
+    playEatingSound();
+    speak('Mmm... *whirr* Cookie detected!');
+  }, 1000);
+  setTimeout(() => {
+    cookie.style.display = 'none';
+    cookie.style.transform = 'scale(1)';
+    mouth.style.animation = '';
+    emotions.happy.expression();
+    speak('*Happy beep* Yummy!');
+  }, 2500);
+}
+feedBtn.addEventListener('click', feedRobot);
+const sleepBtn = document.querySelector('.sleep-btn');
+const dreamBubble = document.querySelector('.dream-bubble');
+let isSleeping = false;
+function updateSleepMode(isSleeping) {
+  if (isSleeping) {
+    eyes.forEach(eye => {
+      eye.classList.add('closed');
+      eye.style.transform = '';
+    });
+    speak('*yawn* Time for sleep in my cozy star pajamas... zzz...');
+    feedBtn.disabled = true;
+    document.querySelectorAll('.emotion-btn').forEach(btn => btn.disabled = true);
+    document.querySelectorAll('.color-btn').forEach(btn => btn.disabled = true);
+    document.querySelectorAll('.eye-color-btn').forEach(btn => btn.disabled = true);
+    if (danceBtn) {
+      danceBtn.disabled = true;
+    }
+  } else {
+    eyes.forEach(eye => {
+      eye.classList.remove('closed');
+      eye.style.transform = '';
+    });
+    createRobotSound(440, 0.3, 'sine');
+    setTimeout(() => createRobotSound(550, 0.2, 'sine'), 300);
+    speak('Good morning! *happy beep* That was a comfy sleep!');
+    feedBtn.disabled = false;
+    document.querySelectorAll('.emotion-btn').forEach(btn => btn.disabled = false);
+    document.querySelectorAll('.color-btn').forEach(btn => btn.disabled = false);
+    document.querySelectorAll('.eye-color-btn').forEach(btn => btn.disabled = false);
+    if (danceBtn) {
+      danceBtn.disabled = false;
+    }
+    emotions.happy.expression();
+  }
+}
+sleepBtn.addEventListener('click', () => {
+  isSleeping = !isSleeping;
+  sleepBtn.classList.toggle('active');
+  robot.classList.toggle('sleeping');
+  if (isSleeping) {
+    if (meditateBtn) {
+      meditateBtn.disabled = true;
+    }
+    sleepBtn.textContent = 'Wake Up';
+    eyes.forEach(eye => eye.classList.add('closed'));
+  } else {
+    if (meditateBtn) {
+      meditateBtn.disabled = false;
+    }
+    sleepBtn.textContent = 'Sleep Mode';
+    eyes.forEach(eye => eye.classList.remove('closed'));
+  }
+  updateSleepMode(isSleeping);
+});
+let voiceEnabled = true;
+const voiceBtn = document.querySelector('.voice-btn');
+voiceBtn.addEventListener('click', () => {
+  voiceEnabled = !voiceEnabled;
+  voiceBtn.classList.toggle('active');
+  voiceBtn.textContent = voiceEnabled ? 'On' : 'Off';
+  createRobotSound(voiceEnabled ? 660 : 440, 0.2, 'sine');
+  if (!voiceEnabled) {
+    speechBubble.textContent = "Voice deactivated!";
+    speechBubble.style.opacity = '1';
+    setTimeout(() => {
+      speechBubble.style.opacity = '0';
+    }, 2000);
+  }
+});
+function playEatingSound() {
+  for (let i = 0; i < 3; i++) {
+    setTimeout(() => {
+      createRobotSound(330 + Math.random() * 110, 0.15, 'square');
+    }, i * 300);
+  }
+}
+emotions.happy.expression();
+const playBtn = document.querySelector('.play-btn');
+playBtn.addEventListener('click', () => {
+  isPlaying = !isPlaying;
+  playBtn.classList.toggle('active');
+  butterfly.style.display = isPlaying ? 'block' : 'none';
+  if (isPlaying) {
+    playEmotionSound('playful');
+  } else {
+    butterfly.style.display = 'none';
+    eyes.forEach(eye => {
+      eye.style.transform = '';
+    });
+  }
+});
+const settingsBtn = document.querySelector('.settings-btn');
+const colorMenu = document.querySelector('.color-menu');
+const eyeColorMenu = document.querySelector('.eye-color-menu');
+settingsBtn.addEventListener('click', () => {
+  const colorMenu = document.querySelector('.color-menu');
+  colorMenu.style.display = colorMenu.style.display === 'flex' ? 'none' : 'flex';
+  createRobotSound(440, 0.1, 'sine');
+});
+let currentWeather = null;
+let weatherInterval = null;
+function clearWeatherEffects() {
+  if (weatherInterval) {
+    clearInterval(weatherInterval);
+    weatherInterval = null;
+  }
+  document.querySelector('.weather-effect').innerHTML = '';
+  currentWeather = null;
+  if (robot.classList.contains('shivering')) {
+    robot.classList.remove('shivering');
+  }
+}
+function createRainDrop() {
+  const drop = document.createElement('div');
+  drop.className = 'rain-drop';
+  drop.style.left = Math.random() * 100 + 'vw';
+  drop.style.animationDuration = Math.random() * 0.5 + 0.5 + 's';
+  drop.addEventListener('animationend', () => drop.remove());
+  return drop;
+}
+function createSnowflake() {
+  const flake = document.createElement('div');
+  flake.className = 'snow-flake';
+  flake.style.left = Math.random() * 100 + 'vw';
+  flake.style.animationDuration = Math.random() * 2 + 2 + 's';
+  flake.addEventListener('animationend', () => flake.remove());
+  return flake;
+}
+function createLeaf() {
+  const leaf = document.createElement('div');
+  leaf.className = 'leaf';
+  leaf.style.top = Math.random() * 100 + 'vh';
+  leaf.style.animationDuration = Math.random() * 3 + 3 + 's';
+  leaf.addEventListener('animationend', () => leaf.remove());
+  return leaf;
+}
+function createCloud() {
+  const cloud = document.createElement('div');
+  cloud.className = 'cloud';
+  cloud.style.top = Math.random() * 30 + 'vh';
+  cloud.style.opacity = '0';
+  cloud.style.setProperty('--cloud-offset', Math.random() * 360 + 'deg');
+  cloud.style.transform = 'scale(' + (Math.random() * 0.5 + 0.8) + ')';
+  cloud.addEventListener('animationend', () => cloud.remove());
+  return cloud;
+}
+function createSun() {
+  const sun = document.createElement('div');
+  sun.className = 'sun';
+  return sun;
+}
+function startWeatherEffect(weather) {
+  clearWeatherEffects();
+  currentWeather = weather;
+  switch (weather) {
+    case 'rain':
+      weatherInterval = setInterval(() => {
+        document.querySelector('.weather-effect').appendChild(createRainDrop());
+      }, 50);
+      break;
+    case 'snow':
+      robot.classList.add('shivering');
+      weatherInterval = setInterval(() => {
+        document.querySelector('.weather-effect').appendChild(createSnowflake());
+      }, 200);
+      speak("*Brr* It's c-c-cold! *shivering beeps*");
+      break;
+    case 'wind':
+      weatherInterval = setInterval(() => {
+        document.querySelector('.weather-effect').appendChild(createLeaf());
+      }, 500);
+      break;
+    case 'cloudy':
+      weatherInterval = setInterval(() => {
+        document.querySelector('.weather-effect').appendChild(createCloud());
+      }, 5000);
+      for (let i = 0; i < 3; i++) {
+        setTimeout(() => {
+          const cloud = createCloud();
+          cloud.style.left = i * 30 + 'vw';
+          document.querySelector('.weather-effect').appendChild(cloud);
+        }, i * 1000);
+      }
+      break;
+    case 'sunny':
+      document.body.classList.add('sunny-weather');
+      const sun = createSun();
+      document.querySelector('.weather-effect').appendChild(sun);
+      for (let i = 0; i < 2; i++) {
+        setTimeout(() => {
+          const bird = createBird();
+          bird.style.left = i * 40 + 'vw';
+          document.querySelector('.weather-effect').appendChild(bird);
+        }, i * 2000);
+      }
+      weatherInterval = setInterval(() => {
+        if (Math.random() > 0.5) {
+          document.querySelector('.weather-effect').appendChild(createBird());
+        }
+      }, 8000);
+      break;
+  }
+}
+const weatherBtn = document.querySelector('.weather-btn');
+weatherBtn.addEventListener('click', () => {
+  document.querySelector('.weather-panel').classList.toggle('visible');
+  createRobotSound(440, 0.1, 'sine');
+});
+document.querySelectorAll('.weather-option').forEach(option => {
+  option.addEventListener('click', () => {
+    if (option.dataset.weather === 'sunny' && !document.body.classList.contains('light-mode')) {
+      speak("*Beep* Sunny weather only available in light mode!");
+      document.querySelector('.weather-panel').classList.remove('visible');
+      return;
+    }
+    startWeatherEffect(option.dataset.weather);
+    document.querySelector('.weather-panel').classList.remove('visible');
+    speak(`*Beep* ${option.dataset.weather} weather activated!`);
+  });
+});
+function createStars() {
+  const starsContainer = document.createElement('div');
+  starsContainer.className = 'stars-container';
+  document.body.appendChild(starsContainer);
+  for (let i = 0; i < 100; i++) {
+    const star = document.createElement('div');
+    star.className = 'star';
+    star.style.left = Math.random() * 100 + 'vw';
+    star.style.top = Math.random() * 100 + 'vh';
+    const size = Math.random() * 2 + 1;
+    star.style.width = size + 'px';
+    star.style.height = size + 'px';
+    if (Math.random() > 0.5) {
+      star.classList.add('twinkle');
+      star.style.animationDelay = Math.random() * 3 + 's';
+    }
+    starsContainer.appendChild(star);
+  }
+}
+createStars();
+let isCaring = false;
+const careBtn = document.querySelector('.care-btn');
+const magicStar = document.querySelector('.magic-star');
+careBtn.addEventListener('click', () => {
+  if (!document.body.classList.contains('light-mode')) {
+    isCaring = !isCaring;
+    careBtn.classList.toggle('active');
+    if (isCaring) {
+      document.querySelector('.arm-left').style.transform = 'rotate(-45deg) translateX(20px)';
+      document.querySelector('.arm-right').style.transform = 'rotate(45deg) translateX(-20px)';
+      magicStar.style.display = 'block';
+      magicStar.style.transform = 'translate(-50%, -50%) scale(0)';
+      magicStar.style.opacity = '1';
+      const robotBody = document.querySelector('.body');
+      const robotRect = robotBody.getBoundingClientRect();
+      magicStar.style.top = `${robotRect.top + robotRect.height / 2}px`;
+      magicStar.style.left = `${robotRect.left + robotRect.width / 2}px`;
+      requestAnimationFrame(() => {
+        magicStar.style.transform = 'translate(-50%, -50%) scale(1)';
+      });
+      const phrases = ["A star for you!", "That is your magic star!", "Here's your special star!", "A sparkle of magic for you!"];
+      const randomPhrase = phrases[Math.floor(Math.random() * phrases.length)];
+      speak(randomPhrase);
+      createRobotSound(880, 0.3, 'sine');
+      setTimeout(() => createRobotSound(1100, 0.2, 'sine'), 300);
+      setTimeout(() => {
+        document.querySelector('.arm-left').style.transform = '';
+        document.querySelector('.arm-right').style.transform = '';
+        magicStar.style.transform = 'translate(-50%, -50%) scale(0)';
+        magicStar.style.opacity = '0';
+        setTimeout(() => {
+          magicStar.style.display = 'none';
+        }, 500);
+        isCaring = false;
+        careBtn.classList.remove('active');
+      }, 3000);
+    }
+  } else {
+    speak("Stars only shine in the dark! Switch to dark mode first!");
+    createRobotSound(440, 0.2, 'sine');
+  }
+});
+let isHugging = false;
+const hugBtn = document.querySelector('.hug-btn');
+const virtualHug = document.querySelector('.virtual-hug');
+function giveHug() {
+  if (isHugging) return;
+  isHugging = true;
+  hugBtn.classList.add('active');
+  virtualHug.style.left = '50%';
+  virtualHug.style.top = '50%';
+  virtualHug.style.animation = 'hugAnimation 2s forwards';
+  document.querySelector('.arm-left').style.transform = 'rotate(-90deg) translateX(20px)';
+  document.querySelector('.arm-right').style.transform = 'rotate(90deg) translateX(-20px)';
+  createRobotSound(440, 0.3, 'sine');
+  setTimeout(() => createRobotSound(550, 0.2, 'sine'), 300);
+  const hugPhrases = ["*Happy beep* Hugs are the best!", "Aww, thank you for the hug!", "*Whirr* I love hugs!", "Virtual hugs make me happy!"];
+  speak(hugPhrases[Math.floor(Math.random() * hugPhrases.length)]);
+  setTimeout(() => {
+    document.querySelector('.arm-left').style.transform = '';
+    document.querySelector('.arm-right').style.transform = '';
+    virtualHug.style.animation = '';
+    hugBtn.classList.remove('active');
+    isHugging = false;
+  }, 2000);
+}
+hugBtn.addEventListener('click', giveHug);
+let isShowingGratitude = false;
+const gratitudeBtn = document.querySelector('.gratitude-btn');
+gratitudeBtn.addEventListener('click', () => {
+  if (isShowingGratitude) return;
+  isShowingGratitude = true;
+  gratitudeBtn.classList.add('active');
+  document.querySelector('.arm-left').style.transform = 'rotate(-20deg) translateY(10px)';
+  document.querySelector('.arm-right').style.transform = 'rotate(20deg) translateY(10px)';
+  createRobotSound(440, 0.2, 'sine');
+  setTimeout(() => createRobotSound(550, 0.3, 'sine'), 200);
+  setTimeout(() => createRobotSound(660, 0.4, 'sine'), 500);
+  const gratitudePhrase = "Thank you for all your attention and reactions! *happy beep*";
+  speak(gratitudePhrase);
+  setTimeout(() => {
+    document.querySelector('.arm-left').style.transform = '';
+    document.querySelector('.arm-right').style.transform = '';
+    gratitudeBtn.classList.remove('active');
+    isShowingGratitude = false;
+    emotions.happy.expression();
+  }, 2500);
+});
+let activeImage = null;
+let initialX;
+let initialY;
+let initialScale;
+let isScaling = false;
+const imageUpload = document.getElementById('imageUpload');
+function handleImageUpload(e) {
+  const file = e.target.files[0];
+  if (file && file.type.startsWith('image/')) {
+    const reader = new FileReader();
+    reader.onload = function (event) {
+      const img = document.createElement('div');
+      img.className = 'uploaded-image';
+      img.style.width = '200px';
+      img.style.height = '200px';
+      img.style.backgroundImage = `url(${event.target.result})`;
+      img.style.backgroundSize = 'contain';
+      img.style.backgroundRepeat = 'no-repeat';
+      img.style.backgroundPosition = 'center';
+      img.style.position = 'absolute';
+      img.style.left = '50%';
+      img.style.top = '50%';
+      img.style.transform = 'translate(-50%, -50%)';
+      const scaleHandle = document.createElement('div');
+      scaleHandle.className = 'scale-handle';
+      img.appendChild(scaleHandle);
+      document.body.appendChild(img);
+      setupImageInteraction(img);
+    };
+    reader.readAsDataURL(file);
+  }
+}
+function setupImageInteraction(img) {
+  const scaleHandle = img.querySelector('.scale-handle');
+  img.addEventListener('mousedown', startDragging);
+  img.addEventListener('touchstart', startDragging);
+  scaleHandle.addEventListener('mousedown', startScaling);
+  scaleHandle.addEventListener('touchstart', startScaling);
+  function startDragging(e) {
+    if (e.target === scaleHandle) return;
+    e.preventDefault();
+    activeImage = img;
+    img.classList.add('active');
+    const rect = img.getBoundingClientRect();
+    const touch = e.type === 'touchstart' ? e.touches[0] : e;
+    initialX = touch.clientX - rect.left;
+    initialY = touch.clientY - rect.top;
+    document.addEventListener('mousemove', drag);
+    document.addEventListener('touchmove', drag);
+    document.addEventListener('mouseup', stopDragging);
+    document.addEventListener('touchend', stopDragging);
+  }
+  function startScaling(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    isScaling = true;
+    activeImage = img;
+    const touch = e.type === 'touchstart' ? e.touches[0] : e;
+    initialScale = {
+      width: img.offsetWidth,
+      height: img.offsetHeight,
+      x: touch.clientX,
+      y: touch.clientY
+    };
+    document.addEventListener('mousemove', scale);
+    document.addEventListener('touchmove', scale);
+    document.addEventListener('mouseup', stopScaling);
+    document.addEventListener('touchend', stopScaling);
+  }
+}
+function drag(e) {
+  if (!activeImage || isScaling) return;
+  e.preventDefault();
+  const touch = e.type === 'touchmove' ? e.touches[0] : e;
+  activeImage.style.left = `${touch.clientX - initialX}px`;
+  activeImage.style.top = `${touch.clientY - initialY}px`;
+}
+function scale(e) {
+  if (!activeImage || !isScaling) return;
+  e.preventDefault();
+  const touch = e.type === 'touchmove' ? e.touches[0] : e;
+  const deltaX = touch.clientX - initialScale.x;
+  const deltaY = touch.clientY - initialScale.y;
+  const scale = Math.max(0.5, 1 + (deltaX + deltaY) / 200);
+  activeImage.style.width = `${initialScale.width * scale}px`;
+  activeImage.style.height = `${initialScale.height * scale}px`;
+}
+function stopDragging() {
+  if (activeImage) {
+    activeImage.classList.remove('active');
+    activeImage = null;
+  }
+  document.removeEventListener('mousemove', drag);
+  document.removeEventListener('touchmove', drag);
+  document.removeEventListener('mouseup', stopDragging);
+  document.removeEventListener('touchend', stopDragging);
+}
+function stopScaling() {
+  isScaling = false;
+  activeImage = null;
+  document.removeEventListener('mousemove', scale);
+  document.removeEventListener('touchmove', scale);
+  document.removeEventListener('mouseup', stopScaling);
+  document.removeEventListener('touchend', stopScaling);
+}
+document.querySelector('.theme-toggle').addEventListener('click', () => {
+  document.body.classList.toggle('light-mode');
+  const themeToggleBtn = document.querySelector('.theme-toggle');
+  const pageTitle = document.querySelector('.page-title');
+  if (document.body.classList.contains('light-mode')) {
+    themeToggleBtn.textContent = 'Dark Mode';
+    pageTitle.style.color = 'black';
+    root.style.setProperty('--robot-primary', 'var(--light-robot-primary)');
+    root.style.setProperty('--robot-secondary', 'var(--light-robot-secondary)');
+    root.style.setProperty('--robot-accent', 'var(--light-robot-accent)');
+  } else {
+    themeToggleBtn.textContent = 'Light Mode';
+    pageTitle.style.color = 'white';
+    root.style.setProperty('--robot-primary', 'var(--robot-white-primary)');
+    root.style.setProperty('--robot-secondary', 'var(--robot-white-secondary)');
+    root.style.setProperty('--robot-accent', 'var(--robot-white-accent)');
+  }
+  createRobotSound(440, 0.1, 'sine');
+  speak(document.body.classList.contains('light-mode') ? '*Beep* Light mode activated!' : '*Beep* Dark mode activated!');
+});
+const danceBtn = document.querySelector('.dance-btn');
+danceBtn.addEventListener('click', () => {
+  robot.classList.toggle('dancing');
+  danceBtn.classList.toggle('active');
+  if (robot.classList.contains('dancing')) {
+    speak('*musical beep* Time to dance!');
+    createRobotSound(880, 0.2, 'sine');
+  } else {
+    speak('*happy beep* That was fun!');
+    createRobotSound(440, 0.2, 'sine');
+    setTimeout(() => {
+      emotions.happy.expression();
+    }, 500);
+  }
+});
+const meditateBtn = document.querySelector('.meditate-btn');
+meditateBtn.addEventListener('click', () => {
+  robot.classList.toggle('meditating');
+  meditateBtn.classList.toggle('active');
+  if (robot.classList.contains('meditating')) {
+    speak('*peaceful beep* Entering meditation mode...');
+    createRobotSound(440, 0.3, 'sine');
+    eyes.forEach(eye => eye.classList.add('closed'));
+  } else {
+    speak('*tranquil beep* Meditation complete');
+    createRobotSound(880, 0.2, 'sine');
+    eyes.forEach(eye => eye.classList.remove('closed'));
+    setTimeout(() => {
+      emotions.happy.expression();
+    }, 500);
+  }
+});
+const objectsPanel = document.querySelector('.objects-panel');
+const headphonesImg = {
+  src: '/Headphones (1).png',
+  width: '100px',
+  height: '100px'
+};
+function createMovableObject(imgData) {
+  const obj = document.createElement('div');
+  obj.className = 'movable-object';
+  obj.style.width = imgData.width;
+  obj.style.height = imgData.height;
+  obj.style.backgroundImage = `url(${imgData.src})`;
+  obj.style.backgroundSize = 'contain';
+  obj.style.backgroundRepeat = 'no-repeat';
+  obj.style.backgroundPosition = 'center';
+  obj.style.position = 'absolute';
+  obj.style.left = '50%';
+  obj.style.top = '50%';
+  obj.style.transform = 'translate(-50%, -50%)';
+  obj.style.cursor = 'move';
+  obj.style.zIndex = '1000';
+  obj.style.opacity = '0';
+  const img = new Image();
+  img.onload = () => {
+    obj.style.opacity = '1';
+  };
+  img.src = imgData.src;
+  const scaleHandle = document.createElement('div');
+  scaleHandle.className = 'scale-handle';
+  obj.appendChild(scaleHandle);
+  document.body.appendChild(obj);
+  setupObjectInteraction(obj);
+}
+function setupObjectInteraction(obj) {
+  const scaleHandle = obj.querySelector('.scale-handle');
+  let isDragging = false;
+  let isScaling = false;
+  let initialX, initialY;
+  let initialScale;
+  obj.addEventListener('mousedown', startDragging);
+  obj.addEventListener('touchstart', startDragging);
+  scaleHandle.addEventListener('mousedown', startScaling);
+  scaleHandle.addEventListener('touchstart', startScaling);
+  function startDragging(e) {
+    if (e.target === scaleHandle) return;
+    e.preventDefault();
+    isDragging = true;
+    const rect = obj.getBoundingClientRect();
+    const touch = e.type === 'touchstart' ? e.touches[0] : e;
+    initialX = touch.clientX - rect.left;
+    initialY = touch.clientY - rect.top;
+    document.addEventListener('mousemove', drag);
+    document.addEventListener('touchmove', drag);
+    document.addEventListener('mouseup', stopDragging);
+    document.addEventListener('touchend', stopDragging);
+  }
+  function drag(e) {
+    if (!isDragging) return;
+    e.preventDefault();
+    const touch = e.type === 'touchmove' ? e.touches[0] : e;
+    obj.style.left = `${touch.clientX - initialX}px`;
+    obj.style.top = `${touch.clientY - initialY}px`;
+  }
+  function stopDragging() {
+    isDragging = false;
+    document.removeEventListener('mousemove', drag);
+    document.removeEventListener('touchmove', drag);
+    document.removeEventListener('mouseup', stopDragging);
+    document.removeEventListener('touchend', stopDragging);
+  }
+  function startScaling(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    isScaling = true;
+    const touch = e.type === 'touchstart' ? e.touches[0] : e;
+    initialScale = {
+      width: obj.offsetWidth,
+      height: obj.offsetHeight,
+      x: touch.clientX,
+      y: touch.clientY
+    };
+    document.addEventListener('mousemove', scale);
+    document.addEventListener('touchmove', scale);
+    document.addEventListener('mouseup', stopScaling);
+    document.addEventListener('touchend', stopScaling);
+  }
+  function scale(e) {
+    if (!isScaling) return;
+    e.preventDefault();
+    const touch = e.type === 'touchmove' ? e.touches[0] : e;
+    const deltaX = touch.clientX - initialScale.x;
+    const deltaY = touch.clientY - initialScale.y;
+    const scale = Math.max(0.5, 1 + (deltaX + deltaY) / 200);
+    obj.style.width = `${initialScale.width * scale}px`;
+    obj.style.height = `${initialScale.height * scale}px`;
+  }
+  function stopScaling() {
+    isScaling = false;
+    document.removeEventListener('mousemove', scale);
+    document.removeEventListener('touchmove', scale);
+    document.removeEventListener('mouseup', stopScaling);
+    document.removeEventListener('touchend', stopScaling);
+  }
+}
+let isListening = false;
+let noteInterval;
+function createMusicNote() {
+  const notes = ['♪', '♫', '♬', '♩'];
+  const note = document.createElement('div');
+  note.className = 'musical-note';
+  note.textContent = notes[Math.floor(Math.random() * notes.length)];
+  const robotHead = document.querySelector('.head');
+  const rect = robotHead.getBoundingClientRect();
+  note.style.left = `${rect.left + Math.random() * rect.width}px`;
+  note.style.top = `${rect.top}px`;
+  document.body.appendChild(note);
+  note.addEventListener('animationend', () => note.remove());
+}
+function startListeningMusic() {
+  robot.classList.add('listening');
+  eyes.forEach(eye => eye.classList.add('closed'));
+  const headphones = document.createElement('div');
+  headphones.style.position = 'absolute';
+  headphones.style.width = '200px';
+  headphones.style.top = '-30px';
+  headphones.style.left = '-50px';
+  headphones.style.zIndex = '10';
+  const img = document.createElement('img');
+  img.src = '/Headphones (1).png';
+  img.style.width = '100%';
+  img.style.height = '100%';
+  headphones.appendChild(img);
+  const scaleHandle = document.createElement('div');
+  scaleHandle.className = 'scale-handle';
+  headphones.appendChild(scaleHandle);
+  document.querySelector('.head').appendChild(headphones);
+  let isDragging = false;
+  let isScaling = false;
+  let startX, startY, startWidth, startHeight;
+  img.addEventListener('mousedown', e => {
+    if (e.target === scaleHandle) return;
+    isDragging = true;
+    startX = e.clientX - headphones.offsetLeft;
+    startY = e.clientY - headphones.offsetTop;
+  });
+  scaleHandle.addEventListener('mousedown', e => {
+    isScaling = true;
+    startWidth = headphones.offsetWidth;
+    startHeight = headphones.offsetHeight;
+    startX = e.clientX;
+    startY = e.clientY;
+  });
+  document.addEventListener('mousemove', e => {
+    if (isDragging) {
+      headphones.style.left = `${e.clientX - startX}px`;
+      headphones.style.top = `${e.clientY - startY}px`;
+    } else if (isScaling) {
+      const width = startWidth + (e.clientX - startX);
+      const height = startHeight + (e.clientY - startY);
+      headphones.style.width = `${width}px`;
+      headphones.style.height = `${height}px`;
+    }
+  });
+  document.addEventListener('mouseup', () => {
+    isDragging = false;
+    isScaling = false;
+  });
+  img.addEventListener('touchstart', e => {
+    if (e.target === scaleHandle) return;
+    isDragging = true;
+    startX = e.touches[0].clientX - headphones.offsetLeft;
+    startY = e.touches[0].clientY - headphones.offsetTop;
+  });
+  scaleHandle.addEventListener('touchstart', e => {
+    isScaling = true;
+    startWidth = headphones.offsetWidth;
+    startHeight = headphones.offsetHeight;
+    startX = e.touches[0].clientX;
+    startY = e.touches[0].clientY;
+  });
+  document.addEventListener('touchmove', e => {
+    if (isDragging) {
+      headphones.style.left = `${e.touches[0].clientX - startX}px`;
+      headphones.style.top = `${e.touches[0].clientY - startY}px`;
+    } else if (isScaling) {
+      const width = startWidth + (e.touches[0].clientX - startX);
+      const height = startHeight + (e.touches[0].clientY - startY);
+      headphones.style.width = `${width}px`;
+      headphones.style.height = `${height}px`;
+    }
+  });
+  document.addEventListener('touchend', () => {
+    isDragging = false;
+    isScaling = false;
+  });
+  noteInterval = setInterval(createMusicNote, 500);
+}
+function stopListeningMusic() {
+  robot.classList.remove('listening');
+  eyes.forEach(eye => eye.classList.remove('closed'));
+  const headphones = document.querySelector('.head > div');
+  if (headphones) {
+    headphones.remove();
+  }
+  clearInterval(noteInterval);
+}
+const musicBtn = document.querySelector('.music-btn');
+musicBtn.addEventListener('click', () => {
+  isListening = !isListening;
+  musicBtn.classList.toggle('active');
+  if (isListening) {
+    startListeningMusic();
+  } else {
+    stopListeningMusic();
+  }
+});</script>
+</body></html>
