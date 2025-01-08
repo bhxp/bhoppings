@@ -1,0 +1,1095 @@
+<html><head><base href="https://gist.githubusercontent.com/">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&amp;display=swap" rel="stylesheet">
+<style>
+body { 
+    margin: 0; 
+    font-family: 'Orbitron', sans-serif;
+}
+canvas { display: block; }
+
+.control-button {
+    position: fixed;
+    padding: 12px 24px;
+    background-color: rgba(0, 150, 255, 0.2);
+    border: 2px solid rgba(0, 150, 255, 0.5);
+    border-radius: 8px;
+    cursor: pointer;
+    z-index: 1000;
+    color: #00ffff;
+    font-family: 'Orbitron', sans-serif;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    backdrop-filter: blur(5px);
+    transition: all 0.3s ease;
+    text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+    box-shadow: 0 0 15px rgba(0, 150, 255, 0.3);
+}
+
+#optionsButton {
+    top: 20px;
+    left: 20px;
+}
+
+#planetButton {
+    top: 20px;
+    right: 20px;
+}
+
+#pauseButton {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+}
+
+#bakeButton {
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+}
+
+#intermissionButton {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+#intermissionModal {
+    display: none;
+}
+
+.intermission-modal-close {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+}
+
+.control-button:hover {
+    background-color: rgba(0, 150, 255, 0.3);
+    box-shadow: 0 0 20px rgba(0, 150, 255, 0.5);
+    transform: scale(1.05);
+}
+
+.menu {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0, 20, 40, 0.95);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    border: none;
+    backdrop-filter: blur(10px);
+}
+
+.planet-menu-content {
+    background-color: rgba(0, 30, 60, 0.9);
+    padding: 40px;
+    border-radius: 20px;
+    border: 2px solid rgba(0, 150, 255, 0.5);
+    box-shadow: 0 0 30px rgba(0, 150, 255, 0.3);
+    max-width: 400px;
+    width: 90%;
+    position: relative;
+}
+
+.menu-close {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: none;
+    border: none;
+    color: #00ffff;
+    font-size: 24px;
+    cursor: pointer;
+    padding: 10px;
+}
+
+.menu-close:hover {
+    transform: scale(1.1);
+}
+
+.menu-title {
+    color: #00ffff;
+    text-align: center;
+    margin-bottom: 30px;
+    font-size: 24px;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+}
+
+.option {
+    margin: 15px 0;
+    display: flex;
+    align-items: center;
+}
+
+label {
+    margin-left: 10px;
+    color: #00ffff;
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+input[type="radio"], input[type="checkbox"] {
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    border: 2px solid rgba(0, 150, 255, 0.5);
+    border-radius: 4px;
+    background: rgba(0, 20, 40, 0.9);
+    cursor: pointer;
+    position: relative;
+}
+
+input[type="radio"]:checked, input[type="checkbox"]:checked {
+    background: rgba(0, 150, 255, 0.5);
+}
+
+input[type="radio"]:checked::after, input[type="checkbox"]:checked::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 10px;
+    height: 10px;
+    background: #00ffff;
+    border-radius: 2px;
+    box-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+}
+
+input[type="radio"], input[type="checkbox"] {
+    transition: all 0.3s ease;
+}
+
+input[type="radio"]:hover, input[type="checkbox"]:hover {
+    transform: scale(1.1);
+    box-shadow: 0 0 15px rgba(0, 150, 255, 0.4);
+}
+
+.option input[type="checkbox"]:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+.option input[type="checkbox"]:disabled + label {
+    color: #666;
+    cursor: not-allowed;
+}
+
+.option.disabled input[type="radio"] {
+    opacity: 0.3;
+    pointer-events: none;
+}
+
+.option.disabled label {
+    color: #666;
+    cursor: not-allowed;
+}
+
+.upload-button {
+    background-color: rgba(0, 150, 255, 0.2);
+    border: 2px solid rgba(0, 150, 255, 0.5);
+    color: #00ffff;
+    padding: 5px 10px;
+    margin-left: 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.upload-button:hover {
+    background-color: rgba(0, 150, 255, 0.3);
+    transform: scale(1.05);
+}
+
+.intermission-select-button {
+    display: block;
+    width: 100%;
+    padding: 12px;
+    margin: 10px 0;
+    background-color: rgba(0, 150, 255, 0.2);
+    border: 2px solid rgba(0, 150, 255, 0.5);
+    color: #00ffff;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    font-family: 'Orbitron', sans-serif;
+    letter-spacing: 2px;
+    backdrop-filter: blur(5px);
+    text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+    box-shadow: 0 0 15px rgba(0, 150, 255, 0.3);
+}
+
+.intermission-select-button:hover {
+    background-color: rgba(0, 150, 255, 0.3);
+    box-shadow: 0 0 20px rgba(0, 150, 255, 0.5);
+    transform: scale(1.05);
+}
+
+.intermission-select-button.active {
+    background-color: rgba(0, 150, 255, 0.5);
+}
+
+.intermission-select-button:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+#loadingScreen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.8);
+    color: #00ffff;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 24px;
+    z-index: 2000;
+    visibility: hidden; /* Hidden by default */
+}
+</style>
+</head><body>
+<div id="loadingScreen">Loading...</div>
+<button id="optionsButton" class="control-button">Control Panel</button>
+<button id="planetButton" class="control-button">Planet Select</button>
+<button id="pauseButton" class="control-button" style="bottom: 20px; right: 20px;">Pause</button>
+<button id="bakeButton" class="control-button" style="bottom: 20px; left: 20px;">Bake Image</button>
+<button id="intermissionButton" class="control-button" style="bottom: 20px; left: 50%; transform: translateX(-50%);">Begin Intermission</button>
+
+<div id="optionsMenu" class="menu">
+    <div class="planet-menu-content">
+        <button class="menu-close">&#xd7;</button>
+        <h2 class="menu-title">Control Panel</h2>
+        <div class="option">
+            <input type="radio" name="earthMode" id="dayMode" checked>
+            <label for="dayMode">Day</label>
+        </div>
+        <div class="option">
+            <input type="radio" name="earthMode" id="nightMode">
+            <label for="nightMode">Night</label>
+        </div>
+        <div class="option">
+            <input type="checkbox" id="invertControls">
+            <label for="invertControls">Invert Controls</label>
+        </div>
+        <div class="option">
+            <input type="checkbox" id="snowstormMode" disabled>
+            <label for="snowstormMode">Snowstorm</label>
+        </div>
+        <div class="option">
+            <input type="checkbox" id="textureImprovement">
+            <label for="textureImprovement">Texture Improvements</label>
+        </div>
+        <input type="text" id="unlockCommand" placeholder="Enter command" style="width: 100%; margin-bottom: 10px; padding: 5px;">
+    </div>
+</div>
+
+<div id="planetMenu" class="menu">
+    <div class="planet-menu-content">
+        <button class="menu-close">&#xd7;</button>
+        <h2 class="menu-title">Select Planet</h2>
+        <div class="option">
+            <input type="radio" name="planetSelect" id="earthSelect" checked>
+            <label for="earthSelect">Earth</label>
+        </div>
+        <div class="option disabled">
+            <input type="radio" name="planetSelect" id="marsSelect">
+            <label for="marsSelect">Mars</label>
+        </div>
+        <div class="option disabled">
+            <input type="radio" name="planetSelect" id="mercurySelect">
+            <label for="mercurySelect">Mercury</label>
+        </div>
+        <div class="option disabled">
+            <input type="radio" name="planetSelect" id="venusSelect">
+            <label for="venusSelect">Venus</label>
+        </div>
+        <div class="option disabled">
+            <input type="radio" name="planetSelect" id="jupiterSelect">
+            <label for="jupiterSelect">Jupiter</label>
+        </div>
+        <div class="option disabled">
+            <input type="radio" name="planetSelect" id="saturnSelect">
+            <label for="saturnSelect">Saturn</label>
+        </div>
+        <div class="option disabled">
+            <input type="radio" name="planetSelect" id="uranusSelect">
+            <label for="uranusSelect">Uranus</label>
+        </div>
+        <div class="option disabled">
+            <input type="radio" name="planetSelect" id="neptuneSelect">
+            <label for="neptuneSelect">Neptune</label>
+        </div>
+        <div class="option">
+            <input type="radio" name="planetSelect" id="customSelect">
+            <label for="customSelect">Custom</label>
+            <input type="file" id="customTextureUpload" accept="image/*" style="display:none;">
+            <button id="uploadTextureButton" class="upload-button">Upload Texture</button>
+        </div>
+        <hr style="border: 1px solid rgba(0, 150, 255, 0.5); margin: 15px 0;">
+        <div class="option">
+            <input type="radio" name="shapeSelect" id="sphereSelect" checked>
+            <label for="sphereSelect">Sphere</label>
+        </div>
+        <div class="option">
+            <input type="radio" name="shapeSelect" id="donutSelect">
+            <label for="donutSelect">Donut</label>
+        </div>
+        <div class="option">
+            <input type="radio" name="shapeSelect" id="cubeSelect">
+            <label for="cubeSelect">Cube</label>
+        </div>
+        <div class="option">
+            <input type="radio" name="shapeSelect" id="flatSelect">
+            <label for="flatSelect">Flat</label>
+        </div>
+    </div>
+</div>
+
+<div id="intermissionModal" class="menu">
+    <div class="planet-menu-content">
+        <button class="menu-close intermission-modal-close">&#xd7;</button>
+        <h2 class="menu-title">Intermission</h2>
+        <button id="intermission1Button" class="intermission-select-button active">Intermission 1</button>
+        <button id="intermission2Button" class="intermission-select-button" disabled>Intermission 2</button>
+        <button id="intermission3Button" class="intermission-select-button" disabled>Intermission 3</button>
+    </div>
+</div>
+
+<script>const optionsButton = document.getElementById('optionsButton');
+const planetButton = document.getElementById('planetButton');
+const optionsMenu = document.getElementById('optionsMenu');
+const planetMenu = document.getElementById('planetMenu');
+const invertControls = document.getElementById('invertControls');
+invertControls.addEventListener('change', () => {
+  saveSettings();
+});
+let isOptionsMenuOpen = false;
+let isPlanetMenuOpen = false;
+let isIntermissionModalOpen = false;
+const intermissionModal = document.getElementById('intermissionModal');
+const intermissionModalClose = document.querySelector('.intermission-modal-close');
+optionsButton.addEventListener('click', () => {
+  isOptionsMenuOpen = !isOptionsMenuOpen;
+  optionsMenu.style.display = isOptionsMenuOpen ? 'flex' : 'none';
+  if (isPlanetMenuOpen) {
+    isPlanetMenuOpen = false;
+    planetMenu.style.display = 'none';
+  }
+  if (isIntermissionModalOpen) {
+    isIntermissionModalOpen = false;
+    intermissionModal.style.display = 'none';
+  }
+});
+planetButton.addEventListener('click', () => {
+  isPlanetMenuOpen = !isPlanetMenuOpen;
+  planetMenu.style.display = isPlanetMenuOpen ? 'flex' : 'none';
+  if (isOptionsMenuOpen) {
+    isOptionsMenuOpen = false;
+    optionsMenu.style.display = 'none';
+  }
+  if (isIntermissionModalOpen) {
+    isIntermissionModalOpen = false;
+    intermissionModal.style.display = 'none';
+  }
+});
+const intermissionButton = document.getElementById('intermissionButton');
+intermissionButton.addEventListener('click', () => {
+  isIntermissionModalOpen = !isIntermissionModalOpen;
+  intermissionModal.style.display = isIntermissionModalOpen ? 'flex' : 'none';
+  if (isOptionsMenuOpen) {
+    isOptionsMenuOpen = false;
+    optionsMenu.style.display = 'none';
+  }
+  if (isPlanetMenuOpen) {
+    isPlanetMenuOpen = false;
+    planetMenu.style.display = 'none';
+  }
+});
+intermissionModalClose.addEventListener('click', () => {
+  isIntermissionModalOpen = false;
+  intermissionModal.style.display = 'none';
+});
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 2000);
+const renderer = new THREE.WebGLRenderer({
+  antialias: true
+});
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setPixelRatio(window.devicePixelRatio);
+document.body.appendChild(renderer.domElement);
+const textureLoader = new THREE.TextureLoader();
+textureLoader.anisotropy = renderer.capabilities.getMaxAnisotropy();
+const baseURL = 'https://raw.githubusercontent.com/Segually/Segually/refs/heads/main/3DES/';
+const earthDayTexture = textureLoader.load(`${baseURL}2k_earth_daymap.jpg`);
+const earthNightTexture = textureLoader.load(`${baseURL}2k_earth_nightmap.jpg`);
+const moonTexture = textureLoader.load(`${baseURL}2k_moon.jpg`);
+const moonImprovedTexture = textureLoader.load(`${baseURL}2k_moon_improved.png`);
+const starsTexture = textureLoader.load(`${baseURL}2k_stars.jpg`);
+const earthSpecularMap = textureLoader.load(`${baseURL}2k_earth_specular_map.tif`);
+const sunTexture = textureLoader.load(`${baseURL}2k_sun.jpg`);
+const marsTexture = textureLoader.load(`${baseURL}2k_mars.jpg`);
+const venusTexture = textureLoader.load(`${baseURL}2k_venus_surface.jpg`);
+const venusAtmosphereTexture = textureLoader.load(`${baseURL}2k_venus_atmosphere.jpg`);
+const jupiterTexture = textureLoader.load(`${baseURL}2k_jupiter.jpg`);
+const saturnTexture = textureLoader.load(`${baseURL}2k_saturn.jpg`);
+const saturnRingTexture = textureLoader.load(`${baseURL}2k_saturn_ring_alpha.png`);
+const uranusTexture = textureLoader.load(`${baseURL}2k_uranus.jpg`);
+const neptuneTexture = textureLoader.load(`${baseURL}2k_neptune.jpg`);
+const mercuryTexture = textureLoader.load(`${baseURL}2k_mercury.jpg`);
+const snowstormTexture = textureLoader.load(`${baseURL}2k_snowstorm_earth_daymap.png`);
+const snowstormSunTexture = textureLoader.load(`${baseURL}2k_snowstorm_sun.png`);
+const earthHeightMap = textureLoader.load(`${baseURL}2k_earth_heightmap.png`);
+const moonHeightMap = textureLoader.load(`${baseURL}2k_moon_heightmap.png`);
+const earthUpdatedDayTexture = textureLoader.load(`${baseURL}2k_earth_updated_daymap.png`);
+const phobosTexture = textureLoader.load(`${baseURL}phobos_tex_01.png`);
+const deimosTexture = textureLoader.load(`${baseURL}deimos_tex_01.jpg.003.png`);
+const skyGeometry = new THREE.SphereGeometry(1000, 60, 40);
+const skyMaterial = new THREE.MeshBasicMaterial({
+  map: starsTexture,
+  side: THREE.BackSide
+});
+const skybox = new THREE.Mesh(skyGeometry, skyMaterial);
+scene.add(skybox);
+const sunGeometry = new THREE.SphereGeometry(100, 64, 64);
+const sunMaterial = new THREE.MeshBasicMaterial({
+  map: sunTexture,
+  emissive: new THREE.Color(0xffff00),
+  emissiveIntensity: 0.5
+});
+const sun = new THREE.Mesh(sunGeometry, sunMaterial);
+sun.position.set(500, 0, -800);
+scene.add(sun);
+const GEOMETRIES = {
+  sphere: new THREE.SphereGeometry(5, 128, 128),
+  donut: new THREE.TorusGeometry(5, 2, 128, 128),
+  cube: new THREE.BoxGeometry(8, 8, 8).scale(1.25, 1.25, 1.25),
+  flat: new THREE.CircleGeometry(7, 128)
+};
+const ATMOSPHERE_GEOMETRIES = {
+  sphere: new THREE.SphereGeometry(5.2, 128, 128),
+  donut: new THREE.TorusGeometry(5.2, 2.1, 128, 128),
+  cube: new THREE.BoxGeometry(8.4, 8.4, 8.4).scale(1.25, 1.25, 1.25),
+  flat: new THREE.CircleGeometry(7.25, 128)
+};
+const materialSettings = {
+  specular: new THREE.Color(0x666666),
+  shininess: 5,
+  roughness: 0.7,
+  metalness: 0.2
+};
+const earthMaterial = new THREE.MeshStandardMaterial({
+  map: earthDayTexture,
+  specularMap: earthSpecularMap,
+  bumpMap: earthHeightMap,
+  bumpScale: 0.05,
+  ...materialSettings
+});
+const marsMaterial = new THREE.MeshStandardMaterial({
+  map: marsTexture,
+  ...materialSettings
+});
+const venusMaterial = new THREE.MeshStandardMaterial({
+  map: venusTexture,
+  ...materialSettings
+});
+const venusAtmosphereMaterial = new THREE.MeshStandardMaterial({
+  map: venusAtmosphereTexture,
+  transparent: true,
+  opacity: 0.5,
+  ...materialSettings
+});
+const jupiterMaterial = new THREE.MeshStandardMaterial({
+  map: jupiterTexture,
+  ...materialSettings
+});
+const saturnMaterial = new THREE.MeshStandardMaterial({
+  map: saturnTexture,
+  ...materialSettings
+});
+const saturnRingMaterial = new THREE.MeshStandardMaterial({
+  map: saturnRingTexture,
+  transparent: true,
+  side: THREE.DoubleSide,
+  ...materialSettings
+});
+const uranusMaterial = new THREE.MeshStandardMaterial({
+  map: uranusTexture,
+  ...materialSettings
+});
+const neptuneMaterial = new THREE.MeshStandardMaterial({
+  map: neptuneTexture,
+  ...materialSettings
+});
+const mercuryMaterial = new THREE.MeshStandardMaterial({
+  map: mercuryTexture,
+  ...materialSettings
+});
+const phobosMaterial = new THREE.MeshStandardMaterial({
+  map: phobosTexture,
+  ...materialSettings
+});
+const deimosMaterial = new THREE.MeshStandardMaterial({
+  map: deimosTexture,
+  ...materialSettings
+});
+const customMaterialCreation = texture => new THREE.MeshStandardMaterial({
+  map: texture,
+  ...materialSettings
+});
+const earth = new THREE.Mesh(GEOMETRIES.sphere, earthMaterial);
+const mars = new THREE.Mesh(GEOMETRIES.sphere, marsMaterial);
+const venus = new THREE.Mesh(GEOMETRIES.sphere, venusMaterial);
+const venusAtmosphere = new THREE.Mesh(ATMOSPHERE_GEOMETRIES.sphere, venusAtmosphereMaterial);
+const jupiter = new THREE.Mesh(GEOMETRIES.sphere, jupiterMaterial);
+const saturn = new THREE.Mesh(GEOMETRIES.sphere, saturnMaterial);
+const saturnRing = new THREE.Mesh(new THREE.RingGeometry(6, 10, 128), saturnRingMaterial);
+saturnRing.rotation.x = Math.PI / 2;
+const uranus = new THREE.Mesh(GEOMETRIES.sphere, uranusMaterial);
+const neptune = new THREE.Mesh(GEOMETRIES.sphere, neptuneMaterial);
+const mercury = new THREE.Mesh(GEOMETRIES.sphere, mercuryMaterial);
+const phobosGeometry = new THREE.SphereGeometry(0.5, 32, 32);
+const deimosGeometry = new THREE.SphereGeometry(0.3, 32, 32);
+const phobos = new THREE.Mesh(phobosGeometry, phobosMaterial);
+const deimos = new THREE.Mesh(deimosGeometry, deimosMaterial);
+let currentPlanet = earth;
+scene.add(earth);
+const moonGeometry = new THREE.SphereGeometry(1.5, 32, 32);
+const moonMaterial = new THREE.MeshPhongMaterial({
+  map: moonTexture,
+  bumpMap: moonHeightMap,
+  bumpScale: 0.05,
+  specular: new THREE.Color(0x222222),
+  shininess: 5
+});
+const moon = new THREE.Mesh(moonGeometry, moonMaterial);
+scene.add(moon);
+const ambientLight = new THREE.AmbientLight(0x404040, 0.5);
+scene.add(ambientLight);
+const sunLight = new THREE.DirectionalLight(0xffffff, 1);
+sunLight.position.set(50, 0, 50);
+scene.add(sunLight);
+const cameraContainer = new THREE.Object3D();
+scene.add(cameraContainer);
+cameraContainer.add(camera);
+camera.position.set(0, 0, 20);
+camera.lookAt(currentPlanet.position);
+document.getElementById('earthSelect').addEventListener('change', () => {
+  if (unlockedPlanet.includes('earth')) {
+    scene.remove(currentPlanet);
+    scene.remove(venusAtmosphere);
+    scene.remove(moon);
+    scene.remove(saturnRing);
+    scene.add(earth);
+    scene.add(moon);
+    currentPlanet = earth;
+    updatePlanetShape();
+    saveSettings();
+  } else {
+    alert('This planet is not unlocked yet.');
+  }
+});
+document.getElementById('marsSelect').addEventListener('change', () => {
+  scene.remove(currentPlanet);
+  scene.remove(venusAtmosphere);
+  scene.remove(moon);
+  scene.remove(saturnRing);
+  scene.add(mars);
+  currentPlanet = mars;
+  updatePlanetShape();
+  saveSettings();
+});
+document.getElementById('venusSelect').addEventListener('change', () => {
+  scene.remove(currentPlanet);
+  scene.remove(moon);
+  scene.remove(saturnRing);
+  scene.add(venus);
+  scene.add(venusAtmosphere);
+  currentPlanet = venus;
+  updatePlanetShape();
+  saveSettings();
+});
+document.getElementById('dayMode').addEventListener('change', () => {
+  if (!document.getElementById('snowstormMode').checked) {
+    earthMaterial.map = earthDayTexture;
+  } else {
+    earthMaterial.map = snowstormTexture;
+  }
+  earthMaterial.needsUpdate = true;
+  saveSettings();
+});
+document.getElementById('nightMode').addEventListener('change', () => {
+  earthMaterial.map = earthNightTexture;
+  earthMaterial.needsUpdate = true;
+  saveSettings();
+});
+document.getElementById('mercurySelect').addEventListener('change', () => {
+  scene.remove(currentPlanet);
+  scene.remove(venusAtmosphere);
+  scene.remove(moon);
+  scene.remove(saturnRing);
+  scene.add(mercury);
+  currentPlanet = mercury;
+  updatePlanetShape();
+  saveSettings();
+});
+document.getElementById('jupiterSelect').addEventListener('change', () => {
+  scene.remove(currentPlanet);
+  scene.remove(venusAtmosphere);
+  scene.remove(moon);
+  scene.remove(saturnRing);
+  scene.add(jupiter);
+  currentPlanet = jupiter;
+  updatePlanetShape();
+  saveSettings();
+});
+document.getElementById('saturnSelect').addEventListener('change', () => {
+  scene.remove(currentPlanet);
+  scene.remove(venusAtmosphere);
+  scene.remove(moon);
+  scene.add(saturn);
+  scene.add(saturnRing);
+  currentPlanet = saturn;
+  updatePlanetShape();
+  saveSettings();
+});
+document.getElementById('uranusSelect').addEventListener('change', () => {
+  scene.remove(currentPlanet);
+  scene.remove(venusAtmosphere);
+  scene.remove(moon);
+  scene.remove(saturnRing);
+  scene.add(uranus);
+  currentPlanet = uranus;
+  updatePlanetShape();
+  saveSettings();
+});
+document.getElementById('neptuneSelect').addEventListener('change', () => {
+  scene.remove(currentPlanet);
+  scene.remove(venusAtmosphere);
+  scene.remove(moon);
+  scene.remove(saturnRing);
+  scene.add(neptune);
+  currentPlanet = neptune;
+  updatePlanetShape();
+  saveSettings();
+});
+document.getElementById('sphereSelect').addEventListener('change', updatePlanetShape);
+document.getElementById('donutSelect').addEventListener('change', updatePlanetShape);
+document.getElementById('cubeSelect').addEventListener('change', updatePlanetShape);
+document.getElementById('flatSelect').addEventListener('change', updatePlanetShape);
+document.getElementById('snowstormMode').addEventListener('change', () => {
+  document.getElementById('snowstormMode').checked = false;
+  document.getElementById('snowstormMode').disabled = true;
+});
+document.getElementById('snowstormMode').disabled = true;
+document.getElementById('snowstormMode').parentElement.style.pointerEvents = 'none';
+document.getElementById('textureImprovement').addEventListener('change', () => {
+  if (document.getElementById('textureImprovement').checked) {
+    moonMaterial.map = moonImprovedTexture;
+  } else {
+    moonMaterial.map = moonTexture;
+  }
+  moonMaterial.needsUpdate = true;
+  if (document.getElementById('textureImprovement').checked) {
+    if (!document.getElementById('snowstormMode').checked) {
+      earthMaterial.map = document.getElementById('dayMode').checked ? earthUpdatedDayTexture : earthNightTexture;
+    } else {
+      earthMaterial.map = snowstormTexture;
+    }
+  } else {
+    if (!document.getElementById('snowstormMode').checked) {
+      earthMaterial.map = document.getElementById('dayMode').checked ? earthDayTexture : earthNightTexture;
+    } else {
+      earthMaterial.map = snowstormTexture;
+    }
+  }
+  earthMaterial.needsUpdate = true;
+  saveSettings();
+});
+let customPlanetTexture = null;
+const customTextureUpload = document.getElementById('customTextureUpload');
+const uploadTextureButton = document.getElementById('uploadTextureButton');
+const customSelect = document.getElementById('customSelect');
+uploadTextureButton.addEventListener('click', () => {
+  customTextureUpload.click();
+});
+customTextureUpload.addEventListener('change', event => {
+  customPlanetTexture = textureLoader.load(e.target.result);
+  const customMaterial = customMaterialCreation(customPlanetTexture);
+});
+function updatePlanetShape() {
+  if (document.querySelector('input[name="planetSelect"]:checked').closest('.option').classList.contains('disabled')) {
+    return;
+  }
+  const selectedShape = document.querySelector('input[name="shapeSelect"]:checked').id.replace('Select', '');
+  const newGeometry = GEOMETRIES[selectedShape.toLowerCase()];
+  const currentRotation = currentPlanet.rotation.clone();
+  currentPlanet.geometry.dispose();
+  currentPlanet.geometry = newGeometry;
+  currentPlanet.rotation.copy(currentRotation);
+  if (currentPlanet === saturn) {
+    saturnRing.geometry.dispose();
+    if (selectedShape === 'flat') {
+      saturnRing.geometry = new THREE.RingGeometry(8, 14, 128);
+      saturnRing.position.z = 0.05;
+    } else if (selectedShape === 'donut') {
+      saturnRing.geometry = new THREE.TorusGeometry(7, 1, 128, 128);
+      saturnRing.rotation.x = 0;
+    } else if (selectedShape === 'cube') {
+      saturnRing.geometry = new THREE.RingGeometry(10, 16, 128);
+    } else {
+      saturnRing.geometry = new THREE.RingGeometry(6, 10, 128);
+      saturnRing.rotation.x = Math.PI / 2;
+    }
+  }
+  if (selectedShape === 'cube') {
+    currentPlanet.geometry.attributes.uv.array = new Float32Array([0, 0, 1, 0, 0, 1, 1, 1, 0, 0, 1, 0, 0, 1, 1, 1, 0, 0, 1, 0, 0, 1, 1, 1]);
+    currentPlanet.geometry.attributes.uv.needsUpdate = true;
+  }
+  if (selectedShape === 'flat') {
+    currentPlanet.rotation.x = 0;
+    currentPlanet.rotation.z = 0;
+    currentPlanet.material.side = THREE.DoubleSide;
+  } else {
+    currentPlanet.material.side = THREE.FrontSide;
+  }
+  if (currentPlanet === venus && venusAtmosphere) {
+    venusAtmosphere.geometry.dispose();
+    venusAtmosphere.geometry = ATMOSPHERE_GEOMETRIES[selectedShape.toLowerCase()];
+    if (selectedShape === 'flat') {
+      venusAtmosphere.material.side = THREE.DoubleSide;
+      venusAtmosphere.position.z = 0.05;
+    } else {
+      venusAtmosphere.material.side = THREE.FrontSide;
+      venusAtmosphere.position.z = 0;
+    }
+  }
+  if (currentPlanet === customPlanetMesh && customPlanetMesh !== null) {
+    const selectedShape = document.querySelector('input[name="shapeSelect"]:checked').id.replace('Select', '');
+    const newGeometry = GEOMETRIES[selectedShape.toLowerCase()];
+    customPlanetMesh.geometry.dispose();
+    customPlanetMesh.geometry = newGeometry;
+    customPlanetMesh.material = customMaterialCreation(customPlanetTexture);
+  }
+  if (currentPlanet === mars) {
+    scene.add(phobos);
+    scene.add(deimos);
+  } else {
+    scene.remove(phobos);
+    scene.remove(deimos);
+  }
+  saveSettings();
+}
+let targetZoom = camera.position.z;
+let isDragging = false;
+let previousMousePosition = {
+  x: 0,
+  y: 0
+};
+const ZOOM_SPEED = 0.1;
+const MIN_ZOOM = 8;
+const MAX_ZOOM = 50;
+document.addEventListener('mousedown', event => {
+  isDragging = true;
+  previousMousePosition = {
+    x: event.clientX,
+    y: event.clientY
+  };
+});
+document.addEventListener('mousemove', event => {
+  if (!isDragging) return;
+  const deltaMove = {
+    x: event.clientX - previousMousePosition.x,
+    y: event.clientY - previousMousePosition.y
+  };
+  const invertFactor = invertControls.checked ? -1 : 1;
+  cameraContainer.rotation.y += deltaMove.x * 0.01 * invertFactor;
+  const selectedShape = document.querySelector('input[name="shapeSelect"]:checked').id.replace('Select', '');
+  if (selectedShape !== 'flat') {
+    cameraContainer.rotation.x += deltaMove.y * 0.01 * invertFactor;
+    cameraContainer.rotation.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, cameraContainer.rotation.x));
+  }
+  previousMousePosition = {
+    x: event.clientX,
+    y: event.clientY
+  };
+});
+document.addEventListener('mouseup', () => {
+  isDragging = false;
+});
+document.addEventListener('wheel', event => {
+  const zoomFactor = invertControls.checked ? -1 : 1;
+  targetZoom += event.deltaY * 0.01 * zoomFactor;
+  targetZoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, targetZoom));
+});
+let moonAngle = 0;
+let phobosAngle = 0;
+let deimosAngle = Math.PI;
+const phobosOrbitRadius = 7;
+const deimosOrbitRadius = 10;
+const phobosOrbitSpeed = 0.003;
+const deimosOrbitSpeed = 0.002;
+const moonOrbitRadius = 10;
+const moonOrbitSpeed = 0.005;
+const rotationSpeed = 0.002;
+let rotationPaused = false;
+let customPlanetMesh = null;
+const pauseButton = document.getElementById('pauseButton');
+pauseButton.addEventListener('click', () => {
+  rotationPaused = !rotationPaused;
+  pauseButton.textContent = rotationPaused ? 'Unpause' : 'Pause';
+});
+let currentIntermission = 'intermission1';
+function setupIntermissionButtons() {
+  const intermissionButtons = [document.getElementById('intermission1Button'), document.getElementById('intermission2Button'), document.getElementById('intermission3Button')];
+  intermissionButtons.forEach(button => {
+    button.addEventListener('click', () => {
+      intermissionButtons.forEach(btn => btn.classList.remove('active'));
+      button.classList.add('active');
+      currentIntermission = button.id.replace('Button', '');
+      saveSettings();
+    });
+  });
+}
+setupIntermissionButtons();
+let unlockedPlanet = ['earth'];
+function loadSettings() {
+  const savedSettings = localStorage.getItem('planetSimSettings');
+  if (savedSettings) {
+    const settings = JSON.parse(savedSettings);
+    if (!settings.unlockedPlanet) {
+      settings.unlockedPlanet = ['earth'];
+    }
+    const unlockedPlanet = settings.unlockedPlanet || ['earth'];
+    let initialLoad = true;
+    try {
+      const planetSelect = document.getElementById(settings.planet);
+      if (planetSelect && unlockedPlanet.includes(settings.planet)) {
+        planetSelect.checked = true;
+        if (initialLoad) planetSelect.dispatchEvent(new Event('change'));
+      }
+      const earthModeSelect = document.getElementById(settings.earthMode);
+      if (earthModeSelect) {
+        earthModeSelect.checked = true;
+        if (initialLoad) earthModeSelect.dispatchEvent(new Event('change'));
+      }
+      const shapeSelect = document.getElementById(settings.shape || 'sphereSelect');
+      if (shapeSelect) {
+        shapeSelect.checked = true;
+        if (initialLoad) shapeSelect.dispatchEvent(new Event('change'));
+      }
+      invertControls.checked = settings.invertControls ?? false;
+      const textureImprovement = document.getElementById('textureImprovement');
+      if (textureImprovement) {
+        textureImprovement.checked = settings.textureImprovement ?? false;
+        if (initialLoad) textureImprovement.dispatchEvent(new Event('change'));
+      }
+      const snowstormCheckbox = document.getElementById('snowstormMode');
+      if (snowstormCheckbox) {
+        snowstormCheckbox.checked = false;
+        snowstormCheckbox.disabled = true;
+        snowstormCheckbox.parentElement.style.pointerEvents = 'none';
+      }
+      if (settings.customTexture) {
+        customTextureUpload.value = settings.customTexture;
+        const reader = new FileReader();
+        reader.onload = e => {
+          if (e.target.result) {
+            customPlanetTexture = textureLoader.load(e.target.result);
+            const customMaterial = new THREE.MeshPhongMaterial({
+              map: customPlanetTexture,
+              ...materialSettings
+            });
+            customPlanetMesh = new THREE.Mesh(GEOMETRIES.sphere, customMaterial);
+            customSelect.addEventListener('change', () => {
+              scene.remove(currentPlanet);
+              scene.remove(venusAtmosphere);
+              scene.remove(moon);
+              scene.remove(saturnRing);
+              scene.add(customPlanetMesh);
+              currentPlanet = customPlanetMesh;
+              updatePlanetShape();
+              saveSettings();
+            });
+          }
+        };
+        reader.readAsDataURL(settings.customTexture);
+      }
+      if (settings.unlockedPlanet && settings.unlockedPlanet.length > 1) {
+        const planetSelects = ['marsSelect', 'mercurySelect', 'venusSelect', 'jupiterSelect', 'saturnSelect', 'uranusSelect', 'neptuneSelect', 'customSelect'];
+        planetSelects.forEach(selectId => {
+          const selectElement = document.getElementById(selectId);
+          const parentOption = selectElement.closest('.option');
+          parentOption.classList.remove('disabled');
+          selectElement.disabled = false;
+        });
+        unlockedPlanet = settings.unlockedPlanet;
+      }
+      const intermissionButton = document.getElementById((settings.currentIntermission || 'intermission1') + 'Button');
+      if (intermissionButton) {
+        intermissionButton.click();
+      }
+      if (settings.textureImprovement) {
+        moonMaterial.map = moonImprovedTexture;
+        moonMaterial.needsUpdate = true;
+      }
+      initialLoad = false;
+    } catch (error) {
+      console.error('Error loading settings:', error);
+      invertControls.checked = false;
+    }
+  } else {
+    invertControls.checked = false;
+  }
+}
+const textureImprovement = {
+  enabled: false
+};
+const improveTextureSetting = document.getElementById('textureImprovement');
+improveTextureSetting.addEventListener('change', event => {
+  textureImprovement.enabled = event.target.checked;
+  if (textureImprovement.enabled) {
+    earthMaterial.map = earthUpdatedDayTexture;
+    moonMaterial.map = moonImprovedTexture;
+  } else {
+    earthMaterial.map = document.getElementById('dayMode').checked ? earthDayTexture : earthNightTexture;
+    moonMaterial.map = moonTexture;
+  }
+  earthMaterial.needsUpdate = true;
+  moonMaterial.needsUpdate = true;
+  saveSettings();
+});
+function saveSettings() {
+  const settings = {
+    planet: document.querySelector('input[name="planetSelect"]:checked').id,
+    earthMode: document.querySelector('input[name="earthMode"]:checked').id,
+    invertControls: invertControls.checked,
+    shape: document.querySelector('input[name="shapeSelect"]:checked').id,
+    textureImprovement: document.getElementById('textureImprovement').checked,
+    customTexture: customPlanetTexture ? customTextureUpload.value : null,
+    unlockedPlanet: unlockedPlanet
+  };
+  localStorage.setItem('planetSimSettings', JSON.stringify(settings));
+}
+function bakeCurrentScene() {
+  renderer.render(scene, camera);
+  const dataURL = renderer.domElement.toDataURL('image/png');
+  const downloadLink = document.createElement('a');
+  downloadLink.href = dataURL;
+  downloadLink.download = `planet_scene_${new Date().toISOString()}.png`;
+  downloadLink.click();
+}
+document.getElementById('bakeButton').addEventListener('click', bakeCurrentScene);
+function animate() {
+  if (!window.settingsLoaded) {
+    loadSettings();
+    window.settingsLoaded = true;
+  }
+  requestAnimationFrame(animate);
+  camera.position.z += (targetZoom - camera.position.z) * ZOOM_SPEED;
+  if (!rotationPaused) {
+    currentPlanet.rotation.y += rotationSpeed;
+    if (currentPlanet === venus) {
+      venusAtmosphere.rotation.y = currentPlanet.rotation.y;
+    }
+    if (currentPlanet === saturn) {
+      saturnRing.rotation.z += rotationSpeed;
+    }
+    if (currentPlanet === earth) {
+      moonAngle += moonOrbitSpeed;
+      moon.position.x = Math.cos(moonAngle) * moonOrbitRadius;
+      moon.position.z = Math.sin(moonAngle) * moonOrbitRadius;
+      moon.rotation.y += 0.01;
+      moon.lookAt(earth.position);
+    }
+    if (currentPlanet === mars) {
+      phobosAngle += phobosOrbitSpeed;
+      deimosAngle += deimosOrbitSpeed;
+      phobos.position.x = Math.cos(phobosAngle) * phobosOrbitRadius;
+      phobos.position.z = Math.sin(phobosAngle) * phobosOrbitRadius;
+      phobos.rotation.y += 0.01;
+      deimos.position.x = Math.cos(deimosAngle) * deimosOrbitRadius;
+      deimos.position.z = Math.sin(deimosAngle) * deimosOrbitRadius;
+      deimos.rotation.y += 0.01;
+    }
+  }
+  camera.lookAt(currentPlanet.position);
+  renderer.render(scene, camera);
+}
+window.addEventListener('resize', () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
+document.querySelectorAll('.menu-close')[0].addEventListener('click', () => {
+  isOptionsMenuOpen = false;
+  optionsMenu.style.display = 'none';
+});
+document.querySelectorAll('.menu-close')[1].addEventListener('click', () => {
+  isPlanetMenuOpen = false;
+  planetMenu.style.display = 'none';
+});
+function initializePlanetLocks() {
+  const planetSelects = ['marsSelect', 'mercurySelect', 'venusSelect', 'jupiterSelect', 'saturnSelect', 'uranusSelect', 'neptuneSelect', 'customSelect'];
+  planetSelects.forEach(selectId => {
+    const selectElement = document.getElementById(selectId);
+    const parentOption = selectElement.closest('.option');
+    parentOption.classList.add('disabled');
+    selectElement.disabled = true;
+  });
+  document.getElementById('earthSelect').closest('.option').classList.remove('disabled');
+  document.getElementById('earthSelect').disabled = false;
+}
+initializePlanetLocks();
+const unlockCommand = document.getElementById('unlockCommand');
+unlockCommand.addEventListener('keypress', event => {
+  if (event.key === 'Enter') {
+    if (unlockCommand.value.toLowerCase() === 'unlock all') {
+      const planetSelects = ['marsSelect', 'mercurySelect', 'venusSelect', 'jupiterSelect', 'saturnSelect', 'uranusSelect', 'neptuneSelect', 'customSelect'];
+      planetSelects.forEach(selectId => {
+        const selectElement = document.getElementById(selectId);
+        const parentOption = selectElement.closest('.option');
+        parentOption.classList.remove('disabled');
+        selectElement.disabled = false;
+      });
+      unlockedPlanet = planetSelects.map(id => id.replace('Select', ''));
+      saveSettings();
+      unlockCommand.value = 'All planets unlocked!';
+      unlockCommand.disabled = true;
+    } else if (unlockCommand.value.toLowerCase() === 'reset') {
+      localStorage.removeItem('planetSimSettings');
+      unlockedPlanet = ['earth'];
+      const planetSelects = ['marsSelect', 'mercurySelect', 'venusSelect', 'jupiterSelect', 'saturnSelect', 'uranusSelect', 'neptuneSelect', 'customSelect'];
+      planetSelects.forEach(selectId => {
+        const selectElement = document.getElementById(selectId);
+        const parentOption = selectElement.closest('.option');
+        parentOption.classList.add('disabled');
+        selectElement.disabled = true;
+      });
+      location.reload();
+    }
+  }
+});
+const loadingScreen = document.getElementById('loadingScreen');
+loadingScreen.style.visibility = 'visible';
+const loadingDelay = 3000;
+window.addEventListener('load', () => {
+  setTimeout(() => {
+    loadingScreen.style.visibility = 'hidden';
+  }, loadingDelay);
+});
+loadSettings();
+animate();</script>
+</body></html>
