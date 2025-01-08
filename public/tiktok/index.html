@@ -1,0 +1,275 @@
+<html><head><base href="/">
+  <title>TikTok Analytics Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background: #f8f9fa;
+    }
+    
+    .dashboard {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    
+    .header {
+      text-align: center;
+      padding: 20px;
+      background: linear-gradient(45deg, #fe2c55, #25f4ee);
+      color: white;
+      border-radius: 10px;
+      margin-bottom: 30px;
+    }
+    
+    .stats-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+    
+    .stat-card {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    
+    .chart-container {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      margin-bottom: 20px;
+    }
+    
+    .time-recommendations, .hashtag-section {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      margin-bottom: 20px;
+    }
+    
+    .best-time, .hashtag {
+      display: inline-block;
+      padding: 8px 16px;
+      background: #fe2c55;
+      color: white;
+      border-radius: 20px;
+      margin: 5px;
+    }
+
+    .hashtag {
+      background: linear-gradient(135deg, #25f4ee, #fe2c55);
+      cursor: pointer;
+      transition: transform 0.3s ease;
+    }
+
+    .hashtag:hover {
+      transform: scale(1.05);
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+      100% { transform: scale(1); }
+    }
+
+    .highlight {
+      animation: pulse 2s infinite;
+    }
+
+    .today-recommendation {
+      background: linear-gradient(135deg, #25f4ee, #fe2c55);
+      color: white;
+      padding: 20px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+
+    .today-time {
+      font-size: 1.5em;
+      font-weight: bold;
+      margin: 10px 0;
+    }
+
+    .copied-message {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: #4CAF50;
+      color: white;
+      padding: 10px 20px;
+      border-radius: 5px;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="dashboard">
+    <div class="header">
+      <h1>📊 TikTok Analytics Dashboard</h1>
+      <p>Optimize your posting schedule for maximum engagement</p>
+    </div>
+
+    <div class="today-recommendation">
+      <h2>Today's Best Posting Time</h2>
+      <div id="todayRecommendation" class="today-time"></div>
+      <p id="additionalInfo"></p>
+    </div>
+    
+    <div class="stats-container">
+      <div class="stat-card">
+        <h3>Peak Engagement Hours</h3>
+        <div class="best-time highlight">3:00 PM - 6:00 PM PST</div>
+        <p>Highest user activity during evening hours</p>
+      </div>
+      
+      <div class="stat-card">
+        <h3>Best Days to Post</h3>
+        <div class="best-time">Tuesday</div>
+        <div class="best-time">Thursday</div>
+        <div class="best-time">Friday</div>
+      </div>
+      
+      <div class="stat-card">
+        <h3>Content Duration Sweet Spot</h3>
+        <div class="best-time">21-34 seconds</div>
+        <p>Optimal video length for maximum engagement</p>
+      </div>
+    </div>
+
+    <div class="hashtag-section">
+      <h2>Trending Hashtags</h2>
+      <p>Click to copy trending hashtags:</p>
+      <div class="hashtag" onclick="copyHashtag('#brainrot')">#brainrot</div>
+      <div class="hashtag" onclick="copyHashtag('#sigma')">#sigma</div>
+      <div class="hashtag" onclick="copyHashtag('#ohiosigma')">#ohiosigma</div>
+    </div>
+    
+    <div class="chart-container">
+      <canvas id="engagementChart"></canvas>
+    </div>
+    
+    <div class="chart-container">
+      <canvas id="weeklyChart"></canvas>
+    </div>
+    
+    <div class="time-recommendations">
+      <h2>Detailed Posting Schedule (PST)</h2>
+      <p><strong>Monday:</strong> 3AM, 7AM, 7PM</p>
+      <p><strong>Tuesday:</strong> 11PM, 1AM, 6AM</p>
+      <p><strong>Wednesday:</strong> 4AM, 5AM, 8PM</p>
+      <p><strong>Thursday:</strong> 6AM, 9AM, 4PM</p>
+      <p><strong>Friday:</strong> 2AM, 10AM, 12PM</p>
+      <p><strong>Saturday:</strong> 8AM, 4PM, 5PM</p>
+      <p><strong>Sunday:</strong> 4AM, 5AM, 1PM</p>
+    </div>
+  </div>
+
+  <div id="copiedMessage" class="copied-message">
+    Hashtag copied to clipboard!
+  </div>
+
+  <script>
+    // Best time recommendations by day
+    const bestTimes = {
+      0: { time: "4AM", info: "Early morning posts perform best on Sundays" },
+      1: { time: "7AM", info: "Morning posts reach the work crowd on Mondays" },
+      2: { time: "6AM", info: "Early morning is prime time on Tuesdays" },
+      3: { time: "8PM", info: "Evening engagement peaks on Wednesdays" },
+      4: { time: "4PM", info: "Afternoon posts perform best on Thursdays" },
+      5: { time: "12PM", info: "Lunch hour is prime time on Fridays" },
+      6: { time: "4PM", info: "Late afternoon reaches weekend browsers on Saturdays" }
+    };
+
+    // Get today's recommendation
+    const today = new Date().getDay();
+    const todayRec = document.getElementById('todayRecommendation');
+    const additionalInfo = document.getElementById('additionalInfo');
+    todayRec.textContent = `Best time to post today: ${bestTimes[today].time} PST`;
+    additionalInfo.textContent = bestTimes[today].info;
+
+    // Hashtag copy functionality
+    function copyHashtag(hashtag) {
+      navigator.clipboard.writeText(hashtag).then(() => {
+        const message = document.getElementById('copiedMessage');
+        message.style.display = 'block';
+        setTimeout(() => {
+          message.style.display = 'none';
+        }, 2000);
+      });
+    }
+
+    // Engagement by Hour Chart
+    const engagementCtx = document.getElementById('engagementChart').getContext('2d');
+    new Chart(engagementCtx, {
+      type: 'line',
+      data: {
+        labels: ['12AM', '2AM', '4AM', '6AM', '8AM', '10AM', '12PM', '2PM', '4PM', '6PM', '8PM', '10PM'],
+        datasets: [{
+          label: 'Engagement Rate',
+          data: [2, 1.8, 1.5, 3.2, 4.5, 5.2, 4.8, 4.2, 5.5, 7.2, 6.8, 5.5],
+          borderColor: '#fe2c55',
+          backgroundColor: 'rgba(254, 44, 85, 0.1)',
+          fill: true,
+          tension: 0.4
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          title: {
+            display: true,
+            text: 'Engagement Rate by Hour'
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            title: {
+              display: true,
+              text: 'Engagement Rate (%)'
+            }
+          }
+        }
+      }
+    });
+
+    // Weekly Performance Chart
+    const weeklyCtx = document.getElementById('weeklyChart').getContext('2d');
+    new Chart(weeklyCtx, {
+      type: 'bar',
+      data: {
+        labels: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'],
+        datasets: [{
+          label: 'Average Views',
+          data: [15000, 22000, 18000, 25000, 23000, 17000, 16000],
+          backgroundColor: '#25f4ee'
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          title: {
+            display: true,
+            text: 'Average Views by Day of Week'
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            title: {
+              display: true,
+              text: 'Views'
+            }
+          }
+        }
+      }
+    });
+  </script>
+</body></html>
