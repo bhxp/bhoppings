@@ -1,0 +1,2612 @@
+<html><head><base href="http://example.com/">
+    <title>3D Studio Editor</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            background: #2c2c2c;
+        }
+
+        .toolbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 40px;
+            background: #333;
+            display: flex;
+            align-items: center;
+            padding: 0 10px;
+            gap: 10px;
+            z-index: 100;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        .toolbar-button {
+            background: #444;
+            border: none;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .toolbar-button:hover {
+            background: #555;
+        }
+
+        .toolbar-button.active {
+            background: #6a6a6a;
+        }
+
+        .dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            background: #444;
+            min-width: 160px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+            z-index: 101;
+            border-radius: 4px;
+        }
+
+        .dropdown:hover .dropdown-content {
+            display: block;
+        }
+
+        .dropdown-item {
+            color: white;
+            padding: 8px 12px;
+            text-decoration: none;
+            display: block;
+        }
+
+        .dropdown-item:hover {
+            background: #555;
+        }
+
+        #viewport {
+            position: fixed;
+            top: 40px;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: #1e1e1e;
+        }
+
+        .grid {
+            stroke: rgba(255,255,255,0.1);
+            stroke-width: 1;
+        }
+
+        .color-picker {
+            margin: 5px;
+            width: 100px;
+        }
+
+        .texture-menu {
+            display: none;
+            position: absolute;
+            background: #444;
+            padding: 15px;
+            border-radius: 4px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+        }
+
+        .texture-menu.active {
+            display: block;
+        }
+
+        .texture-option {
+            margin: 5px 0;
+            color: white;
+        }
+
+        .play-overlay {
+            position: fixed;
+            top: 40px;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0);
+            display: none;
+            z-index: 200;
+            align-items: center;
+            justify-content: center;
+            cursor: none;
+        }
+
+        .play-overlay.active {
+            display: flex;
+        }
+
+        .stop-button {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            background: #f44336;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background 0.3s;
+            z-index: 201;
+        }
+
+        .stop-button:hover {
+            background: #d32f2f;
+        }
+        
+        input[type="number"] {
+            width: 60px;
+            background: #333;
+            border: 1px solid #555;
+            color: white;
+            padding: 4px;
+            border-radius: 4px;
+        }
+
+        .object-menu {
+            position: fixed;
+            right: 20px;
+            top: 60px; 
+            max-height: 80vh;
+            overflow-y: auto;
+            background: #444;
+            padding: 10px;
+            border-radius: 4px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            display: none;
+            z-index: 1000;
+            color: white;
+            width: 300px;
+        }
+
+        .object-menu.active {
+            display: block;
+        }
+
+        .object-menu button {
+            display: block;
+            width: 100%;
+            padding: 5px;
+            margin: 5px 0;
+            background: #555;
+            border: none;
+            color: white;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+
+        .object-menu button:hover {
+            background: #666;
+        }
+
+        .texture-selector {
+            position: absolute;
+            background: #444;
+            padding: 15px;
+            border-radius: 4px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            display: none;
+            z-index: 1000;
+            color: white;
+        }
+
+        .texture-selector.active {
+            display: block;
+        }
+        
+        canvas {
+          touch-action: none;
+        }
+        
+        #joystick {
+            z-index: 1000;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-touch-callout: none;
+        }
+
+        .jump-button {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.5);
+            border: none;
+            color: white;
+            font-size: 24px;
+            display: none;
+            z-index: 1000;
+            touch-action: none;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+
+        .jump-button.active {
+            display: block;
+        }
+        
+        .joystick {
+            position: fixed;
+            bottom: 20px; 
+            left: 20px;
+            width: 100px;
+            height: 100px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 50%;
+            touch-action: none;
+            display: none;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        .joystick-knob {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            background: rgba(255,255,255,0.5);
+            border-radius: 50%;
+            top: 30px;
+            left: 30px;
+        }
+        
+        .camera-joystick {
+            position: fixed;
+            bottom: 20px;
+            right: 120px;
+            width: 120px;
+            height: 120px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 50%;
+            touch-action: none;
+            display: none;
+            user-select: none;
+            -webkit-user-select: none;
+            z-index: 1000;
+        }
+
+        .camera-joystick-knob {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            background: rgba(255,255,255,0.5);
+            border-radius: 50%;
+            top: 35px;
+            left: 35px;
+            pointer-events: none;
+        }
+        
+        .property-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 10px 0;
+            color: white;
+        }
+
+        .object-menu h3 {
+            margin-top: 0;
+            color: white;
+        }
+        
+        .glow-effect {
+            filter: drop-shadow(0 0 10px currentColor);
+        }
+        
+        .animation-controls {
+            margin: 10px 0;
+        }
+
+        .object-menu input[type="number"] {
+            width: 60px;
+            margin-left: 5px;
+        }
+
+        .audio-controls {
+            margin: 15px 0;
+            padding: 10px;
+            background: rgba(0,0,0,0.1);
+            border-radius: 4px;
+        }
+
+        .audio-controls h4 {
+            margin-top: 0;
+            margin-bottom: 10px;
+        }
+
+        .audio-controls button {
+            margin: 5px;
+            padding: 5px 15px;
+        }
+
+        .audio-upload-btn {
+            display: block;
+            width: 100%;
+            margin: 10px 0;
+            padding: 8px;
+            background: #555;
+            color: white;
+            text-align: center;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .audio-upload-btn:hover {
+            background: #666;
+        }
+        
+        .physics-properties {
+          display: none;
+        }
+        
+        .physics-properties.show {
+          display: flex;
+        }
+        
+        .climb-cube {
+          border: 2px solid #00ff00;
+          box-shadow: 0 0 10px #00ff00;
+        }
+
+        .collision-enabled {
+          border: 1px solid #00ff00;
+        }
+        
+        .sign-text-editor {
+          margin: 10px 0;
+        }
+
+        .sign-text-editor textarea {
+          width: 100%;
+          height: 100px;
+          background: #333;
+          color: white;
+          border: 1px solid #555;
+          border-radius: 4px;
+          padding: 8px;
+          font-family: Arial, sans-serif;
+          min-height: 100px;
+          height: auto;
+          resize: vertical;
+        }
+        
+        .sign-text {
+          position: absolute;
+          pointer-events: none;
+          background: rgba(0,0,0,0.7);
+          color: white;
+          padding: 10px;
+          border-radius: 4px;
+          text-align: center;
+          white-space: pre-wrap;
+        }
+
+        .property-row select {
+          background: #333;
+          color: white;
+          border: 1px solid #555;
+          padding: 4px;
+          border-radius: 4px;
+        }
+        
+        .popup {
+          display: none;
+          position: absolute;
+          background: #444;
+          padding: 15px;
+          border-radius: 4px;
+          box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+          z-index: 1000;
+          color: white;
+        }
+
+        .popup.active {
+          display: block;
+        }
+        
+        .light-properties {
+            display: none;
+        }
+
+        .light-properties.show {
+            display: flex;
+        }
+        
+        .text-properties {
+          margin: 10px 0;
+        }
+
+        .text-properties textarea {
+          width: 100%;
+          min-height: 60px;
+          background: #333;
+          color: white;
+          border: 1px solid #555;
+          border-radius: 4px;
+          padding: 8px;
+          font-family: Arial, sans-serif;
+          resize: vertical;
+        }
+        
+        .chat-container {
+          display: none;
+          position: fixed;
+          bottom: 20px;
+          right: 20px;
+          width: 300px;
+          height: 400px;
+          background: rgba(0,0,0,0.8);
+          border-radius: 8px;
+          color: white;
+          flex-direction: column;
+          z-index: 1000;
+        }
+
+        .chat-container.active {
+          display: flex;
+        }
+
+        .username-display {
+          padding: 5px 10px;
+          background: rgba(255,255,255,0.1);
+          border-bottom: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .chat-message {
+          background: rgba(255,255,255,0.1);
+          padding: 8px;
+          border-radius: 4px;
+          margin: 4px 0;
+          word-break: break-word;
+        }
+
+        .chat-message .username {
+          color: #4CAF50;
+          font-weight: bold;
+          margin-right: 8px;
+        }
+        
+        .chat-messages {
+          flex-grow: 1;
+          overflow-y: auto;
+          padding: 10px;
+          display: flex; 
+          flex-direction: column-reverse;
+        }
+
+        .chat-input {
+          display: flex;
+          padding: 10px;
+          gap: 8px;
+        }
+
+        .chat-input input {
+          flex-grow: 1;
+          background: rgba(255,255,255,0.1);
+          border: none;
+          padding: 8px;
+          color: white;
+          border-radius: 4px;
+        }
+
+        .chat-input button {
+          background: #444;
+          border: none;
+          color: white;
+          padding: 8px 16px;
+          border-radius: 4px;
+          cursor: pointer;
+        }
+        
+        .toggle-chat-btn {
+          position: absolute;
+          top: 5px;
+          right: 5px;
+          background: #444;
+          color: white;
+          border: none;
+          padding: 5px 10px;
+          border-radius: 4px;
+          cursor: pointer;
+          z-index: 1001;
+        }
+
+        .toggle-chat-btn:hover {
+          background: #555;
+        }
+
+        .chat-container.hidden {
+          display: none !important;
+        }
+    </style>
+    <link rel="manifest" href="manifest.json">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128/examples/js/loaders/GLTFLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128/examples/js/controls/TransformControls.js"></script>
+    <script>
+        // Add SimplexNoise library import
+        const script = document.createElement('script');
+        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/simplex-noise/2.4.0/simplex-noise.min.js';
+        document.head.appendChild(script);
+    </script>
+</head>
+<body>
+    <div class="toolbar">
+        <div class="dropdown">
+            <button class="toolbar-button">File</button>
+            <div class="dropdown-content">
+                <a href="#" class="dropdown-item" id="newScene">New</a>
+                <label class="dropdown-item">
+                  Open
+                  <input type="file" id="loadScene" accept=".zworld" style="display:none">
+                </label>
+                <a href="#" class="dropdown-item" id="saveScene">Save</a>
+            </div>
+        </div>
+        <div class="dropdown">
+            <button class="toolbar-button">Edit</button>
+            <div class="dropdown-content">
+                <a href="https://example.com/undo" class="dropdown-item">Undo</a>
+                <a href="https://example.com/redo" class="dropdown-item">Redo</a>
+                <a href="https://example.com/copy" class="dropdown-item">Copy</a>
+                <a href="https://example.com/paste" class="dropdown-item">Paste</a>
+            </div>
+        </div>
+        <div class="dropdown">
+            <button class="toolbar-button">View</button>
+            <div class="dropdown-content">
+                <a href="https://example.com/properties" class="dropdown-item">Properties</a>
+                <a href="https://example.com/explorer" class="dropdown-item">Explorer</a>
+                <a href="https://example.com/output" class="dropdown-item">Output</a>
+            </div>
+        </div>
+        <button class="toolbar-button">Select</button>
+        <button class="toolbar-button" id="playButton">Play</button>
+        <div class="dropdown">
+            <button class="toolbar-button">Menu</button>
+            <div class="dropdown-content" id="textureMenu">
+                <div class="texture-option">
+                    <label>Ground Color:</label>
+                    <input type="color" class="color-picker" id="groundColor" value="#ffffff">
+                </div>
+                <div class="texture-option">
+                    <label>Add Shape:</label>
+                    <select id="addShape" class="dropdown-item">
+                        <option value>Select Shape...</option>
+                        <option value="cube" data-is-climb="true">Climb Cube</option>
+                        <option value="cube">Cube</option>
+                        <option value="sphere">Sphere</option>
+                        <option value="cylinder">Cylinder</option>
+                        <option value="cone">Cone</option>
+                        <option value="wedge">Wedge</option>
+                        <option value="torus">Torus</option>
+                        <option value="pyramid">Pyramid</option>
+                    </select>
+                </div>
+                <div class="texture-option">
+                    <label>Platform Texture:</label>
+                    <select id="groundTexture" class="dropdown-item">
+                        <option value="grass">Grass</option>
+                        <option value="wood">Wood</option>
+                        <option value="metal">Metal</option> 
+                        <option value="water">Water</option>
+                        <option value="brick">Brick</option>
+                        <option value="sand">Sand</option>
+                        <option value="fabric">Fabric</option>
+                        <option value="squares">Squares</option>
+                        <option value="lego">Lego</option>
+                    </select>
+                </div>
+                <div class="texture-option">
+                    <label>Add Model:</label>
+                    <select id="addModel" class="dropdown-item">
+                        <option value>Select Model...</option>
+                        <option value="etchASketch">Etch A Sketch</option> 
+                        <option value="robloxNoob">Roblox Noob</option>
+                    </select>
+                </div>
+                <div class="texture-option">
+                    <label>Texture Repeat X:</label>
+                    <input type="range" id="repeatX" min="1" max="10" value="1">
+                </div>
+                <div class="texture-option">
+                    <label>Texture Repeat Y:</label>
+                    <input type="range" id="repeatY" min="1" max="10" value="1">
+                </div>
+                <div class="texture-option">
+                    <label>Skybox:</label>
+                    <select id="skyboxTexture" class="dropdown-item">
+                        <option value="bluesky">Blue Sky</option>
+                        <option value="sunset">Sunset</option>
+                        <option value="night">Night Sky</option>
+                        <option value="space">Space</option>
+                    </select>
+                </div>
+                <div class="texture-option">
+                    <label>Day Cycle:</label>
+                    <input type="checkbox" id="dayCycleEnabled">
+                </div>
+                <div class="texture-option">
+                    <label>Cycle Speed:</label>
+                    <input type="range" id="cycleSpeed" min="0.1" max="5" step="0.1" value="1">
+                </div>
+                <div class="texture-option">
+                    <label>Import Model:</label>
+                    <input type="file" id="modelImport" accept=".glb,.gltf">
+                </div>
+                <div class="texture-option">
+                    <label>Generate Terrain:</label>
+                    <select id="generateTerrain" class="dropdown-item">
+                        <option value="">Select Type...</option>
+                        <option value="flat">Flat</option>
+                        <option value="hills">Rolling Hills</option>
+                        <option value="mountains">Mountains</option>
+                        <option value="valley">Valley</option>
+                        <option value="blocky">Blocky</option>
+                    </select>
+                </div>
+                <div class="texture-option">
+                    <label>Import Texture:</label>
+                    <input type="file" id="textureImport" accept="image/*">
+                </div>
+                <div class="texture-option">
+                    <label>Weather:</label>
+                    <select id="weatherType" class="dropdown-item">
+                        <option value="none">None</option>
+                        <option value="rain">Rain</option>
+                        <option value="snow">Snow</option>
+                        <option value="fog">Fog</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        <div class="dropdown">
+            <button class="toolbar-button">Transform</button>
+            <div class="dropdown-content">
+                <div class="texture-option">
+                    <label>Position X (inches):</label>
+                    <input type="number" id="posX" value="0" step="0.1">
+                </div>
+                <div class="texture-option">
+                    <label>Position Y (inches):</label>
+                    <input type="number" id="posY" value="0" step="0.1">
+                </div>
+                <div class="texture-option">
+                    <label>Position Z (inches):</label>
+                    <input type="number" id="posZ" value="0" step="0.1">
+                </div>
+                <div class="texture-option">
+                    <label>Scale X (inches):</label>
+                    <input type="number" id="scaleX" value="1" step="0.1" min="0.1">
+                </div>
+                <div class="texture-option">
+                    <label>Scale Y (inches):</label>
+                    <input type="number" id="scaleY" value="1" step="0.1" min="0.1">
+                </div>
+                <div class="texture-option">
+                    <label>Scale Z (inches):</label>
+                    <input type="number" id="scaleZ" value="1" step="0.1" min="0.1">
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="measureOverlay" style="position: fixed; pointer-events: none; color: white; font-family: monospace;"></div>
+    <div id="viewport"></div>
+    <div class="object-menu" id="objectMenu">
+        <h3>Object Properties</h3>
+        <div class="property-row">
+            <label>Collision:</label>
+            <input type="checkbox" id="objectCollision" checked>
+        </div>
+        <div class="property-row">
+            <label>Neon Effect:</label>
+            <input type="checkbox" id="objectNeon">
+        </div>
+        <div class="property-row">
+            <label>Opacity:</label>
+            <input type="range" id="objectOpacity" min="0" max="1" step="0.1" value="1">
+        </div>
+        <div class="property-row">
+            <label>Object Color:</label>
+            <input type="color" id="objectColor" value="#ffffff">
+        </div>
+        <div class="property-row">
+            <label>Object Texture:</label> 
+            <select id="objectTexture">
+              <option value="none">None</option>
+              <option value="grass">Grass</option>
+              <option value="wood">Wood</option>
+              <option value="metal">Metal</option>
+              <option value="water">Water</option>
+              <option value="brick">Brick</option>
+              <option value="sand">Sand</option>
+              <option value="fabric">Fabric</option>
+              <option value="studs">Studs</option>
+              <option value="lego">Lego</option>
+              <option value="custom">Custom</option>
+            </select>
+        </div>
+        <div class="property-row">
+          <label>Physics Enabled:</label>
+          <input type="checkbox" id="objectPhysics">
+        </div>
+        <div class="property-row physics-properties">
+          <label>Mass:</label>
+          <input type="number" id="objectMass" value="1" min="0.1" step="0.1">
+        </div>
+        <div class="property-row physics-properties">
+          <label>Bounce:</label>
+          <input type="number" id="objectBounce" value="0.5" min="0" max="1" step="0.1">
+        </div>
+        <div class="property-row">
+            <label>Light Enabled:</label>
+            <input type="checkbox" id="objectLight">
+        </div>
+        <div class="property-row light-properties">
+            <label>Light Color:</label>
+            <input type="color" id="lightColor" value="#ffffff">
+        </div>
+        <div class="property-row light-properties">
+            <label>Light Intensity:</label>
+            <input type="range" id="lightIntensity" min="0" max="2" step="0.1" value="1">
+        </div>
+        <div class="property-row light-properties">
+            <label>Light Distance:</label>
+            <input type="number" id="lightDistance" value="5" min="0" step="0.5">
+        </div>
+        <button id="moveObject">Move</button>
+        <button id="stretchObject">Stretch</button>
+        <button id="rotateObject">Rotate</button>
+        <button id="changeTexture">Change Texture</button>
+        <div class="property-row">
+            <button id="deleteObject" class="toolbar-button">Delete Object</button>
+        </div>
+        <div class="animation-controls">
+            <h4>Animation</h4>
+            <div class="property-row">
+                <label>Enable Animation:</label>
+                <input type="checkbox" id="objectAnimation">
+            </div>
+            <div class="property-row">
+                <label>Move X:</label>
+                <input type="number" id="animMoveX" value="0" step="0.1">
+            </div>
+            <div class="property-row">
+                <label>Move Y:</label>
+                <input type="number" id="animMoveY" value="0" step="0.1">
+            </div>
+            <div class="property-row">
+                <label>Move Z:</label>
+                <input type="number" id="animMoveZ" value="0" step="0.1">
+            </div>
+            <div class="property-row">
+                <label>Duration (s):</label>
+                <input type="number" id="animDuration" value="1" min="0.1" step="0.1">
+            </div>
+        </div>
+
+        <div class="audio-controls">
+            <h4>Audio</h4>
+            <input type="file" id="audioFileInput" accept="audio/*">
+            <button class="audio-upload-btn" id="uploadAudioBtn">Upload Audio</button>
+            <div class="property-row">
+                <label>Loop Audio:</label>
+                <input type="checkbox" id="audioLoop">
+            </div>
+            <div class="property-row">
+                <button class="toolbar-button" id="playAudioBtn">Play</button>
+                <button class="toolbar-button" id="stopAudioBtn">Stop</button>
+            </div>
+        </div>
+        <div class="property-row">
+          <label>Texture Repeat X:</label>
+          <input type="number" id="objectTextureX" value="1" min="0.1" step="0.1">
+        </div>
+        <div class="property-row">
+          <label>Texture Repeat Y:</label>
+          <input type="number" id="objectTextureY" value="1" min="0.1" step="0.1">
+        </div>
+        <div class="property-row">
+          <label>Water Effect:</label>
+          <input type="checkbox" id="objectWater">
+        </div>
+        <div class="property-row">
+          <label>Player Model:</label>
+          <select id="playerModel">
+            <option value="robloxNoob">Roblox Noob</option>
+            <option value="custom">Custom</option>
+          </select>
+        </div>
+    </div>
+    <div class="texture-selector" id="textureSelector">
+        <h3>Select Texture</h3>
+        <select id="objectTexture2">
+            <option value="grass">Grass</option>
+            <option value="wood">Wood</option>
+            <option value="metal">Metal</option>
+            <option value="water">Water</option>
+            <option value="brick">Brick</option>
+            <option value="sand">Sand</option>
+            <option value="fabric">Fabric</option>
+            <option value="studs">Studs</option>
+            <option value="lego">Lego</option>
+            <option value="custom">Custom</option>
+        </select>
+        <button id="applyTexture">Apply</button>
+        <button id="cancelTexture">Cancel</button>
+    </div>
+    <button class="jump-button" id="jumpButton">Jump</button>
+    <div class="play-overlay">
+        <button class="stop-button">Stop Playing</button>
+    </div>
+    <div class="joystick" id="joystick">
+        <div class="joystick-knob"></div>
+    </div>
+    <div class="camera-joystick" id="cameraJoystick">
+        <div class="camera-joystick-knob"></div>
+    </div>
+    <div class="chat-container">
+      <button id="toggleChat" class="toggle-chat-btn">Hide Chat</button>
+      <div class="chat-messages" id="chatMessages"></div>
+      <div class="chat-input">
+        <input type="text" id="chatInput" placeholder="Type a message...">
+        <button id="chatSend">Send</button>
+      </div>
+    </div>
+
+    <script>
+        // Add physics constants
+        const FRICTION = 0.92;
+        const ANGULAR_DAMPING = 0.98;
+        const COLLISION_PUSH_STRENGTH = 0.1; 
+        const PLAYER_COLLISION_MARGIN = 0.1; 
+        const COLLISION_CHECK_INTERVAL = 1/60; 
+        const TERRAIN_SEGMENTS = 64;
+        const TERRAIN_HEIGHT_SCALE = 5;
+        const MODEL_FOLLOW_SPEED = 0.2;
+        const MODEL_ROTATION_SPEED = 0.2;
+        const MIN_MOVEMENT_THRESHOLD = 0.001;
+        const THIRD_PERSON_DISTANCE = 7;
+        const THIRD_PERSON_HEIGHT = 3;
+        const CAMERA_LERP_FACTOR = 0.15;
+        const CAMERA_COLLISION_OFFSET = 0.5;
+        let desiredCameraPosition = new THREE.Vector3();
+        // Add constants for improved movement control
+        const MOVEMENT_SPEED = 0.05; 
+        const MOVEMENT_DAMPING = 0.9;
+        const MAX_VELOCITY = 0.2; 
+        const WALKING_SPEED = 0.05;
+        const WALK_SPEED = 0.03;
+        const RUN_SPEED = 0.06; 
+        const CAMERA_FOLLOW_DISTANCE = 5;
+        const CAMERA_HEIGHT = 2;
+
+        // Add default models
+        const defaultModels = {
+          etchASketch: null,
+          robloxNoob: null
+        };
+
+        window.addEventListener('error', function(event) {
+            console.error('Script error:', event.error);
+        });
+        const GRAVITY = -0.02;  
+        const CLIMB_FORCE = 0.2;
+        const JUMP_FORCE = 0.5;
+        let isPlaying = false;
+        let transformControl;
+        let velocity = new THREE.Vector3();
+        let currentVelocity = new THREE.Vector3();
+        let targetVelocity = new THREE.Vector3();
+        let targetCameraRotation = {x: 0, y: 0};
+        let currentCameraRotation = {x: 0, y: 0};
+        let spawnPoint = new THREE.Vector3(0, 5, 5);
+        const scene = new THREE.Scene();
+        const ambientLight = new THREE.AmbientLight(0x404040);
+        scene.add(ambientLight);
+
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+        directionalLight.position.set(1, 1, 1);
+        scene.add(directionalLight);
+        let sunLight = new THREE.DirectionalLight(0xffffff, 1);
+        sunLight.position.set(1, 1, 1);
+        scene.add(sunLight);
+        
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer();
+        renderer.setSize(window.innerWidth, window.innerHeight - 40);
+        document.getElementById('viewport').appendChild(renderer.domElement);
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+        controls.screenSpacePanning = false;
+        controls.minDistance = 1;
+        controls.maxDistance = 1000;
+        controls.maxPolarAngle = Math.PI / 2;
+        controls.touches = {
+        ONE: THREE.TOUCH.ROTATE,
+        TWO: THREE.TOUCH.DOLLY_PAN
+        };
+        transformControl = new THREE.TransformControls(camera, renderer.domElement);
+        transformControl.addEventListener('dragging-changed', function (event) {
+        controls.enabled = !event.value;
+        });
+        scene.add(transformControl);
+        let selectedObject = null;
+        let groundObject = null;
+        let playerModel = null;
+        const textureLoader = new THREE.TextureLoader();
+        const gltfLoader = new THREE.GLTFLoader();
+        const textures = {
+        grass: textureLoader.load('grass_texture_for_level_by_tikes_tastic_d395qrm-pre.jpg', 
+            undefined,
+            undefined, 
+            error => console.error('Error loading grass texture:', error)
+        ),
+        wood: textureLoader.load('f76845882247420778b218aab6ab8d03.jpg',
+            undefined,
+            undefined,
+            error => console.error('Error loading wood texture:', error)
+        ),
+        metal: textureLoader.load('metal.png',
+            undefined,
+            undefined,
+            error => console.error('Error loading metal texture:', error)
+        ),
+        water: textureLoader.load('texture water waves ligth-blue.png',
+            undefined,
+            undefined,
+            error => console.error('Error loading water texture:', error)
+        ),
+        brick: textureLoader.load('Wall.webp',
+            undefined,
+            undefined,
+            error => console.error('Error loading brick texture:', error)
+        ),
+        sand: textureLoader.load('dbwm528-78b11079-6ce9-4182-9166-d6c07af7d494.png',
+            undefined,
+            undefined,
+            error => console.error('Error loading sand texture:', error)
+        ),
+        fabric: textureLoader.load('cn40k99826b91.jpg',
+            undefined,
+            undefined,
+            error => console.error('Error loading fabric texture:', error)
+        ),
+        studs: textureLoader.load('IMG_0350.jpeg',
+            undefined,
+            undefined,
+            error => console.error('Error loading studs texture:', error)
+        ),
+        lego: textureLoader.load('download (5).jpg',
+            undefined,
+            undefined,
+            error => console.error('Error loading lego texture:', error)
+        )
+        };
+        const skyboxTextures = {
+        bluesky: Array(6).fill('1eprhbtmvoo51.png'),
+        sunset: ['https://threejs.org/examples/textures/cube/MilkyWay/px.jpg', 'https://threejs.org/examples/textures/cube/MilkyWay/nx.jpg', 'https://threejs.org/examples/textures/cube/MilkyWay/py.jpg', 'https://threejs.org/examples/textures/cube/MilkyWay/ny.jpg', 'https://threejs.org/examples/textures/cube/MilkyWay/pz.jpg', 'https://threejs.org/examples/textures/cube/MilkyWay/nz.jpg'],
+        night: ['https://threejs.org/examples/textures/cube/Park2/px.jpg', 'https://threejs.org/examples/textures/cube/Park2/nx.jpg', 'https://threejs.org/examples/textures/cube/Park2/py.jpg', 'https://threejs.org/examples/textures/cube/Park2/ny.jpg', 'https://threejs.org/examples/textures/cube/Park2/pz.jpg', 'https://threejs.org/examples/textures/cube/Park2/nz.jpg'],
+        space: ['https://threejs.org/examples/textures/cube/Park3Med/px.jpg', 'https://threejs.org/examples/textures/cube/Park3Med/nx.jpg', 'https://threejs.org/examples/textures/cube/Park3Med/py.jpg', 'https://threejs.org/examples/textures/cube/Park3Med/ny.jpg', 'https://threejs.org/examples/textures/cube/Park3Med/pz.jpg', 'https://threejs.org/examples/textures/cube/Park3Med/nz.jpg']
+        };
+        const cubeTextureLoader = new THREE.CubeTextureLoader();
+        let currentSkybox = cubeTextureLoader.load(skyboxTextures.bluesky);
+        scene.background = currentSkybox;
+        const inchesToUnits = inches => inches;
+        const unitsToInches = units => units;
+        const groundGeometry = new THREE.BoxGeometry(20, 1, 20);
+        const groundMaterial = new THREE.MeshPhongMaterial({
+            map: textures.grass,
+            color: 0xffffff,
+            shininess: 30
+        });
+        groundObject = new THREE.Mesh(groundGeometry, groundMaterial);
+        groundObject.position.y = -0.5;
+        scene.add(groundObject);
+        let dayCycleEnabled = false;
+        let cycleSpeed = 1;
+        let time = 0;
+        const objectProperties = new WeakMap();
+        const objectAnimations = new WeakMap();
+        const objectAudios = new WeakMap();
+        let isClimbing = false;
+        let climbCooldown = false;
+        let playerVelocity = new THREE.Vector3();
+        const originalPositions = new WeakMap();
+        let isRunning = false;
+        let username = 'Player' + Math.floor(Math.random() * 1000);
+        let chatVisible = false;
+        let players = {}; // Store other players and their models
+        
+        function initializeObjectProperties(object) {
+            object.traverse(child => {
+                if (child.isMesh) {
+                    const oldMaterial = child.material;
+                    child.material = new THREE.MeshPhongMaterial({
+                        map: oldMaterial.map,
+                        color: oldMaterial.color || 0xffffff,
+                        transparent: oldMaterial.transparent,
+                        opacity: oldMaterial.opacity,
+                        emissive: new THREE.Color(0x000000),
+                        emissiveIntensity: 0,
+                        shininess: 30
+                    });
+                    child.material.needsUpdate = true;
+                    
+                    objectProperties.set(child, {
+                        collision: true,
+                        neon: false,
+                        opacity: 1.0,
+                        color: '#ffffff',
+                        texture: 'none',
+                        physics: false,
+                        mass: 1,
+                        bounce: 0.5,
+                        light: false,
+                        lightColor: '#ffffff',
+                        lightIntensity: 1,
+                        lightDistance: 5,
+                        text: '',
+                        textColor: '#ffffff',
+                        textSize: 16,
+                        textPosition: 'center',
+                        textureRepeatX: 1,
+                        textureRepeatY: 1,
+                        waterEffect: false,
+                    });
+                    initializeAnimation(child);
+                    objectAudios.set(child, {
+                        audio: null,
+                        loop: false
+                    });
+                    child.userData.velocity = new THREE.Vector3();
+                    child.userData.angularVelocity = new THREE.Vector3();
+                    
+                    if (!child.userData.pointLight) {
+                        const light = new THREE.PointLight(0xffffff, 1, 5);
+                        light.visible = false;
+                        child.add(light);
+                        child.userData.pointLight = light;
+                    }
+                }
+            });
+        }
+
+        function initializeAnimation(object) {
+            const startPosition = object.position.clone();
+            const animation = {
+                enabled: false,
+                moveX: 0,
+                moveY: 0,
+                moveZ: 0,
+                duration: 1,
+                startPosition: startPosition,
+                startTime: null,
+                startRotation: object.rotation.clone()
+            };
+            objectAnimations.set(object, animation);
+        }
+
+        function updateAnimation(deltaTime) {
+            scene.traverse((object) => {
+                if (object.isMesh) {
+                    const animation = objectAnimations.get(object);
+                    if (animation && animation.enabled) {
+                        if (!animation.startTime) {
+                            animation.startTime = performance.now();
+                            animation.startPosition = object.position.clone();
+                            animation.startRotation = object.rotation.clone();
+                        }
+                        
+                        const elapsedTime = (performance.now() - animation.startTime) / 1000;
+                        const progress = (elapsedTime % animation.duration) / animation.duration;
+                        
+                        // Use smooth easing
+                        const t = 0.5 - Math.cos(progress * Math.PI) / 2;
+                        
+                        // Animate position
+                        object.position.x = animation.startPosition.x + animation.moveX * t;
+                        object.position.y = animation.startPosition.y + animation.moveY * t;
+                        object.position.z = animation.startPosition.z + animation.moveZ * t;
+                        
+                        // Add rotation for rolling objects
+                        if (object.geometry instanceof THREE.SphereGeometry) {
+                            const distance = new THREE.Vector3(
+                                animation.moveX, 
+                                animation.moveY,
+                                animation.moveZ
+                            ).length();
+                            
+                            const radius = object.scale.x / 2;
+                            const rotation = (distance * t) / radius;
+                            
+                            object.rotation.x = animation.startRotation.x + rotation;
+                            object.rotation.z = animation.startRotation.z - rotation;
+                        }
+                    }
+                }
+            });
+            if (isPlaying && playerModel) {
+                // Add slight bob when moving
+                if (currentVelocity.length() > MIN_MOVEMENT_THRESHOLD) {
+                    const bobHeight = Math.sin(performance.now() * 0.01) * 0.1;
+                    playerModel.position.y += bobHeight;
+                }
+            }
+        }
+        initializeObjectProperties(groundObject);
+        initializeAnimation(groundObject);
+        camera.position.set(10, 10, 10);
+        camera.lookAt(0, 0, 0);
+        let currentMode = 'select';
+        const objectMenu = document.getElementById('objectMenu');
+        const textureSelector = document.getElementById('textureSelector');
+        document.getElementById('moveObject').addEventListener('click', () => {
+            currentMode = 'move';
+            if (selectedObject) {
+                transformControl.attach(selectedObject);
+                transformControl.setMode('translate');
+            }
+            objectMenu.classList.remove('active');
+            objectMenu.style.display = 'none';
+        });
+        document.getElementById('stretchObject').addEventListener('click', () => {
+            currentMode = 'stretch';
+            if (selectedObject) {
+                transformControl.attach(selectedObject);
+                transformControl.setMode('scale'); 
+            }
+            objectMenu.classList.remove('active');
+            objectMenu.style.display = 'none';
+        });
+        document.getElementById('rotateObject').addEventListener('click', () => {
+            currentMode = 'rotate';
+            if (selectedObject) {
+                transformControl.attach(selectedObject);
+                transformControl.setMode('rotate');
+            }
+            objectMenu.classList.remove('active'); 
+            objectMenu.style.display = 'none';
+        });
+        document.getElementById('changeTexture').addEventListener('pointerdown', event => {
+            textureSelector.style.left = (event.touches ? event.touches[0].clientX : event.clientX) + 'px';
+            textureSelector.style.top = (event.touches ? event.touches[0].clientY : event.clientY) + 'px';
+            textureSelector.classList.add('active');
+            objectMenu.classList.remove('active');
+        });
+        document.getElementById('applyTexture').addEventListener('click', () => {
+            if (selectedObject) {
+                const textureValue = document.getElementById('objectTexture2').value;
+                selectedObject.material.map = textures[textureValue];
+                selectedObject.material.needsUpdate = true;
+            }
+            textureSelector.classList.remove('active');
+        });
+        document.getElementById('cancelTexture').addEventListener('click', () => {
+            textureSelector.classList.remove('active');
+        });
+        document.getElementById('deleteObject').addEventListener('click', () => {
+            if (selectedObject && selectedObject !== groundObject) {
+                if (selectedObject.userData.pointLight) {
+                  selectedObject.remove(selectedObject.userData.pointLight);
+                  selectedObject.userData.pointLight = null;
+                }
+                scene.remove(selectedObject);
+                objectMenu.classList.remove('active');
+                objectMenu.style.display = 'none';
+                selectedObject = null;
+            }
+        });
+        document.addEventListener('pointerdown', event => {
+            if (!objectMenu.contains(event.target) && 
+                !textureSelector.contains(event.target) && 
+                event.target !== renderer.domElement && 
+                !event.target.closest('.toolbar-button') && 
+                !event.target.closest('.dropdown-content') &&
+                !event.target.closest('.popup')) {
+                
+                // Hide all popups
+                document.querySelectorAll('.popup').forEach(popup => {
+                    popup.classList.remove('active');
+                    popup.style.display = 'none';
+                });
+                
+                objectMenu.classList.remove('active');
+                textureSelector.classList.remove('active');
+                objectMenu.style.display = 'none';
+            }
+        });
+        function updateTransformInputs() {
+            if (!selectedObject) {
+                return;
+            }
+            
+            document.getElementById('posX').value = unitsToInches(selectedObject.position.x);
+            document.getElementById('posY').value = unitsToInches(selectedObject.position.y);
+            document.getElementById('posZ').value = unitsToInches(selectedObject.position.z);
+            document.getElementById('scaleX').value = unitsToInches(selectedObject.scale.x);
+            document.getElementById('scaleY').value = unitsToInches(selectedObject.scale.y);
+            document.getElementById('scaleZ').value = unitsToInches(selectedObject.scale.z);
+        }
+        ['posX', 'posY', 'posZ'].forEach(id => {
+            document.getElementById(id).addEventListener('change', e => {
+                if (!selectedObject) return;
+                const value = inchesToUnits(parseFloat(e.target.value));
+                const axis = id.charAt(3).toLowerCase();
+                selectedObject.position[axis] = value;
+            });
+        });
+        ['scaleX', 'scaleY', 'scaleZ'].forEach(id => {
+            document.getElementById(id).addEventListener('change', e => {
+                if (!selectedObject) return;
+                const value = Math.max(0.1, inchesToUnits(parseFloat(e.target.value)));
+                const axis = id.charAt(5).toLowerCase();
+                selectedObject.scale[axis] = value;
+                
+                // Update ground texture repeat if needed
+                if (selectedObject === groundObject) {
+                    updateGroundTextureScale();
+                }
+            });
+        });
+        const raycaster = new THREE.Raycaster();
+        const mouse = new THREE.Vector2();
+        renderer.domElement.addEventListener('pointerdown', event => {
+            if (isPlaying) return;
+            const rect = renderer.domElement.getBoundingClientRect();
+            mouse.x = (event.clientX - rect.left) / rect.width * 2 - 1;
+            mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+            raycaster.setFromCamera(mouse, camera);
+            const intersects = raycaster.intersectObjects(scene.children);
+            if (intersects.length > 0) {
+                selectedObject = intersects[0].object;
+                updateTransformInputs();
+                objectMenu.style.display = 'block';
+                objectMenu.classList.add('active');
+                updateObjectProperties();
+            } else {
+                selectedObject = null;
+                objectMenu.classList.remove('active');
+                textureSelector.classList.remove('active');
+                objectMenu.style.display = 'none';
+                transformControl.detach();
+            }
+        });
+        document.getElementById('groundTexture').addEventListener('change', e => {
+            groundObject.material.map = textures[e.target.value];
+            groundObject.material.side = THREE.DoubleSide;
+            const repeatX = Math.max(1, Math.floor(groundObject.scale.x / 20));
+            const repeatZ = Math.max(1, Math.floor(groundObject.scale.z / 20)); 
+            groundObject.material.map.repeat.set(repeatX, repeatZ);
+            groundObject.material.map.wrapS = THREE.RepeatWrapping;
+            groundObject.material.map.wrapT = THREE.RepeatWrapping;
+            groundObject.material.needsUpdate = true;
+        });
+        document.getElementById('groundColor').addEventListener('change', e => {
+            groundObject.material.color.setStyle(e.target.value);
+        });
+        document.getElementById('repeatX').addEventListener('input', e => {
+            const value = parseInt(e.target.value);
+            groundObject.material.map.repeat.x = value;
+            groundObject.material.map.wrapS = THREE.RepeatWrapping;
+            groundObject.material.needsUpdate = true;
+        });
+        document.getElementById('repeatY').addEventListener('input', e => {
+            const value = parseInt(e.target.value);
+            groundObject.material.map.repeat.y = value;
+            groundObject.material.map.wrapT = THREE.RepeatWrapping;
+            groundObject.material.needsUpdate = true;
+        });
+        document.getElementById('cycleSpeed').addEventListener('input', e => {
+            cycleSpeed = parseFloat(e.target.value);
+        });
+
+        document.getElementById('dayCycleEnabled').addEventListener('change', e => {
+            dayCycleEnabled = e.target.checked;
+        });
+
+        document.getElementById('modelImport').addEventListener('change', e => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    const arrayBuffer = event.target.result;
+                    gltfLoader.parse(arrayBuffer, '', (gltf) => {
+                        const model = gltf.scene;
+                        model.position.y = 1;
+                        scene.add(model);
+                        selectedObject = model;
+                        updateTransformInputs();
+                        initializeObjectProperties(model);
+                    });
+                };
+                reader.readAsArrayBuffer(file);
+            }
+        });
+        gltfLoader.load('etch_a_sketch.glb', gltf => {
+        defaultModels.etchASketch = gltf.scene;
+        gltf.scene.traverse(child => {
+            if (child.isMesh) {
+            child.material = new THREE.MeshBasicMaterial({
+                color: 0xffffff
+            });
+            }
+        });
+        }, xhr => {
+        console.log(xhr.loaded / xhr.total * 100 + '% loaded');
+        }, error => {
+        console.error('Error loading etch_a_sketch.glb:', error);
+        });
+        gltfLoader.load('roblox-noob.glb', gltf => {
+        defaultModels.robloxNoob = gltf.scene;
+        gltf.scene.traverse(child => {
+            if (child.isMesh) {
+            child.material = new THREE.MeshBasicMaterial({
+                color: 0xffffff
+            });
+            }
+        });
+        }, xhr => {
+        console.log(xhr.loaded / xhr.total * 100 + '% loaded');
+        }, error => {
+        console.error('Error loading roblox-noob.glb:', error);
+        });
+        document.getElementById('addModel').addEventListener('change', e => {
+        const modelType = e.target.value;
+        if (!modelType) return;
+        try {
+            if (!defaultModels[modelType]) {
+            console.error('Model not loaded:', modelType);
+            return;
+            }
+            const model = defaultModels[modelType].clone();
+            model.traverse(child => {
+                if (child.isMesh) {
+                  child.material = new THREE.MeshBasicMaterial({
+                    color: 0xffffff
+                  });
+                }
+              });
+            model.scale.set(0.5, 0.5, 0.5);
+            model.position.y = 1;
+            scene.add(model);
+            selectedObject = model;
+            updateTransformInputs();
+            initializeObjectProperties(selectedObject);
+            e.target.value = '';
+        } catch (error) {
+            console.error('Error adding model:', error);
+        }
+        });
+        document.getElementById('addShape').addEventListener('change', e => {
+            const shapeType = e.target.value;
+            if (!shapeType) return;
+            
+            let geometry;
+            switch (shapeType) {
+                case 'cube':
+                    geometry = new THREE.BoxGeometry(1, 1, 1);
+                    if (e.target.value === 'cube' && e.target.dataset.isClimb === 'true') {
+                      const mesh = new THREE.Mesh(geometry, new THREE.MeshPhongMaterial({color: 0xffffff}));
+                      mesh.userData.isClimbCube = true;
+                      mesh.material.emissive.setHex(0x00ff00);
+                      mesh.material.emissiveIntensity = 0.5;
+                      scene.add(mesh);
+                      selectedObject = mesh;
+                    } else {
+                      const mesh = new THREE.Mesh(geometry, new THREE.MeshPhongMaterial({color: 0xffffff}));
+                      scene.add(mesh);
+                      selectedObject = mesh;
+                    }
+                    break;
+                case 'sphere':
+                    geometry = new THREE.SphereGeometry(0.5, 32, 32);
+                    const mesh = new THREE.Mesh(geometry, new THREE.MeshPhongMaterial({color: 0xffffff}));
+                    scene.add(mesh);
+                    selectedObject = mesh;
+                    break;
+                case 'cylinder':
+                    geometry = new THREE.CylinderGeometry(0.5, 0.5, 1, 32);
+                    const cylinderMesh = new THREE.Mesh(geometry, new THREE.MeshPhongMaterial({color: 0xffffff}));
+                    scene.add(cylinderMesh);
+                    selectedObject = cylinderMesh;
+                    break;
+                case 'cone':
+                    geometry = new THREE.ConeGeometry(0.5, 1, 32);
+                    const coneMesh = new THREE.Mesh(geometry, new THREE.MeshPhongMaterial({color: 0xffffff}));
+                    scene.add(coneMesh);
+                    selectedObject = coneMesh;
+                    break;
+                case 'wedge':
+                    geometry = new THREE.ExtrudeGeometry(
+                        new THREE.Shape([
+                            new THREE.Vector2(0, 0),
+                            new THREE.Vector2(1, 0),
+                            new THREE.Vector2(0, 1)
+                        ]), 
+                        {depth: 1, bevelEnabled: false}
+                    );
+                    const wedgeMesh = new THREE.Mesh(geometry, new THREE.MeshPhongMaterial({color: 0xffffff}));
+                    scene.add(wedgeMesh);
+                    selectedObject = wedgeMesh;
+                    break;
+                case 'torus':
+                    geometry = new THREE.TorusGeometry(0.5, 0.2, 16, 32);
+                    const torusMesh = new THREE.Mesh(geometry, new THREE.MeshPhongMaterial({color: 0xffffff}));
+                    scene.add(torusMesh);
+                    selectedObject = torusMesh;
+                    break;
+                case 'pyramid':
+                    geometry = new THREE.ConeGeometry(0.5, 1, 4);
+                    const pyramidMesh = new THREE.Mesh(geometry, new THREE.MeshPhongMaterial({color: 0xffffff}));
+                    scene.add(pyramidMesh);
+                    selectedObject = pyramidMesh;
+                    break;
+            }
+            
+            if (selectedObject) {
+                updateTransformInputs();
+                initializeObjectProperties(selectedObject);
+            }
+            e.target.value = '';
+        });
+        document.getElementById('skyboxTexture').addEventListener('change', e => {
+            const newSkybox = cubeTextureLoader.load(skyboxTextures[e.target.value]);
+            scene.background = newSkybox;
+        });
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        let cameraJoystickActive = false;
+        let cameraJoystickOffset = new THREE.Vector2(0, 0);
+        document.getElementById('cameraJoystick').addEventListener('pointermove', e => {
+            if (!cameraJoystickActive) return;
+            e.preventDefault();
+
+            const rect = document.getElementById('cameraJoystick').getBoundingClientRect();
+            const knob = document.getElementById('cameraJoystick').querySelector('.camera-joystick-knob'); 
+            const centerX = rect.width / 2;  
+            const centerY = rect.height / 2;
+
+            let moveX = e.clientX - rect.left - centerX;
+            let moveY = e.clientY - rect.top - centerY;
+
+            const maxDistance = 40;
+            const distance = Math.min(maxDistance, Math.sqrt(moveX * moveX + moveY * moveY));
+            const angle = Math.atan2(moveY, moveX);
+
+            // Update knob position
+            const knobX = Math.cos(angle) * distance + centerX - knob.offsetWidth / 2;
+            const knobY = Math.sin(angle) * distance + centerY - knob.offsetHeight / 2;
+            knob.style.left = knobX + 'px';
+            knob.style.top = knobY + 'px';
+
+            if (isPlaying) {
+                const moveDirection = new THREE.Vector3();
+                moveDirection.x = moveX / 40;
+                moveDirection.z = moveY / 40;
+                moveDirection.normalize();
+                moveDirection.applyQuaternion(camera.quaternion);
+                moveDirection.y = 0;
+                currentVelocity.add(moveDirection.multiplyScalar(MOVEMENT_SPEED));
+
+                if (playerModel) {
+                    // Update model rotation with camera
+                    if (Math.abs(moveX) > 0.01 || Math.abs(moveY) > 0.01) {
+                        const rotY = -moveX / maxDistance;
+                        playerModel.rotation.y = THREE.MathUtils.lerp(
+                            playerModel.rotation.y,
+                            camera.rotation.y,
+                            MODEL_ROTATION_SPEED
+                        );
+                    }
+                }
+            }
+        });
+        document.getElementById('cameraJoystick').addEventListener('pointerdown', e => {
+            e.preventDefault();
+            cameraJoystickActive = true;
+            const rect = document.getElementById('cameraJoystick').getBoundingClientRect();
+            const knob = document.getElementById('cameraJoystick').querySelector('.camera-joystick-knob');
+            const centerX = rect.width / 2;  
+            const centerY = rect.height / 2;
+            knob.style.left = centerX - knob.offsetWidth / 2 + 'px';
+            knob.style.top = centerY - knob.offsetHeight / 2 + 'px';
+            document.getElementById('cameraJoystick').setPointerCapture(e.pointerId);
+            targetCameraRotation = {x: camera.rotation.x, y: camera.rotation.y};
+            currentCameraRotation = {x: camera.rotation.x, y: camera.rotation.y};
+        });
+        document.getElementById('cameraJoystick').addEventListener('pointerup', e => {
+            e.preventDefault();
+            cameraJoystickActive = false;
+            const knob = document.getElementById('cameraJoystick').querySelector('.camera-joystick-knob');
+            knob.style.left = '35px';  
+            knob.style.top = '35px';   
+        });
+        document.getElementById('playButton').addEventListener('click', () => {
+            if (isPlaying) {
+                scene.traverse((object) => {
+                    if (object.isMesh) {
+                        const audioData = objectAudios.get(object);
+                        if (audioData && audioData.audio && audioData.loop) {
+                            audioData.audio.play();
+                        }
+                    }
+                });
+            } else {
+                scene.traverse((object) => {
+                    if (object.isMesh) {
+                        const audioData = objectAudios.get(object);
+                        if (audioData && audioData.audio) {
+                            audioData.audio.pause();
+                        }
+                    }
+                });
+            }
+            isPlaying = !isPlaying;
+            const playButton = document.getElementById('playButton');
+            const playOverlay = document.querySelector('.play-overlay');
+            const toolbar = document.querySelector('.toolbar');
+            const jumpButton = document.getElementById('jumpButton');
+            let onMouseMove, onKeyDown; // Declare handler references
+
+            if (isPlaying) {
+                playButton.classList.add('active');
+                playOverlay.classList.add('active');
+                toolbar.style.display = 'none';
+                if (isPlaying) {
+                    // Find spawn point
+                    scene.traverse((object) => {
+                        if (object === groundObject) {
+                            spawnPoint.set(
+                              object.position.x,
+                              object.position.y + (object.scale.y / 2) + 5,
+                              object.position.z
+                            );
+                        }
+                    });
+                    
+                    // Set camera position to spawn point
+                    camera.position.copy(spawnPoint);
+                }
+                // ... rest of play mode setup
+                controls.enabled = false;
+                transformControl.detach();
+                transformControl.enabled = false;
+                let canJump = true;
+                let isJumping = false;
+                playerVelocity = new THREE.Vector3();
+                isClimbing = false;
+                scene.traverse((object) => {
+                    if (object.isMesh && object !== groundObject) {
+                        // Store original position
+                        originalPositions.set(object, object.position.clone());
+                    }
+                });
+                controls.enabled = false;
+                transformControl.detach();
+                transformControl.enabled = false;
+                let velocity = new THREE.Vector3();
+                if (isMobile) {
+                    jumpButton.classList.add('active');
+                    jumpButton.addEventListener('touchstart', () => {
+                        if (canJump) {
+                            playerVelocity.y = JUMP_FORCE;
+                            isJumping = true;
+                            canJump = false;
+                            if (playerModel) {
+                                playerModel.position.y += 0.5; // Small visual jump
+                            }
+                        }
+                    });
+                    const cameraJoystick = document.getElementById('cameraJoystick');
+                    cameraJoystick.style.display = 'block';
+                    let lastTouchX = 0;
+                    let lastTouchY = 0;
+                    const joystick = document.getElementById('joystick');
+                    joystick.style.display = 'block';
+                    let joystickActive = false;
+                    let isCameraRotating = false;
+                    renderer.domElement.addEventListener('touchstart', e => {
+                        if (!isPlaying) return;
+                        if (joystickActive) return;
+                        
+                        isCameraRotating = true;
+                        touchStartX = e.touches[0].clientX;
+                        touchStartY = e.touches[0].clientY;
+                    });
+                    renderer.domElement.addEventListener('touchend', e => {
+                        if (!isPlaying) return;
+                        isCameraRotating = false;
+                    });
+                    renderer.domElement.addEventListener('touchcancel', e => {
+                        if (!isPlaying) return; 
+                        isCameraRotating = false;
+                    });
+                    renderer.domElement.addEventListener('touchmove', e => {
+                        if (!joystickActive) {
+                            const rect = renderer.domElement.getBoundingClientRect();
+                            const x = e.touches[0].clientX - rect.left;
+                            const y = e.touches[0].clientY - rect.top;
+                            
+                            camera.rotation.y -= e.movementX * 0.005;
+                            camera.rotation.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, camera.rotation.x - e.movementY * 0.005));
+                        }
+                    });
+                } else {
+                    document.body.requestPointerLock();
+                    
+                    onMouseMove = function(event) {
+                        if (!isPlaying) return;
+                        camera.rotation.y -= event.movementX * 0.002;
+                        camera.rotation.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, camera.rotation.x - event.movementY * 0.002));
+                    };
+                    
+                    onKeyDown = function(event) {
+                        if (!isPlaying) return;
+                        const moveDirection = new THREE.Vector3();
+                        switch (event.key.toLowerCase()) {
+                            case 'w':
+                                moveDirection.z = -1;
+                                break;
+                            case 's':
+                                moveDirection.z = 1;
+                                break;
+                            case 'a':
+                                moveDirection.x = -1;
+                                break;
+                            case 'd':
+                                moveDirection.x = 1;
+                                break;
+                            case ' ':
+                                if (canJump) {
+                                    playerVelocity.y = JUMP_FORCE;
+                                    isJumping = true;
+                                    canJump = false;
+                                }
+                                break;
+                        }
+                        moveDirection.normalize();
+                        moveDirection.applyQuaternion(camera.quaternion);
+                        moveDirection.y = 0;
+                        camera.position.add(moveDirection.multiplyScalar(WALKING_SPEED));
+                    };
+                    
+                    document.addEventListener('mousemove', onMouseMove);
+                    document.addEventListener('keydown', onKeyDown);
+                }
+                document.querySelector('.chat-container').classList.add('active');
+                chatVisible = true;
+                
+                if (!document.querySelector('.username-display')) {
+                  const usernameDisplay = document.createElement('div');
+                  usernameDisplay.className = 'username-display';
+                  usernameDisplay.textContent = 'Playing as: ' + username;
+                  document.querySelector('.chat-container').insertBefore(
+                    usernameDisplay,
+                    document.querySelector('.chat-messages')
+                  );
+                }
+            } else {
+                playButton.classList.remove('active');
+                playOverlay.classList.remove('active');
+                toolbar.style.display = 'flex';
+                jumpButton.classList.remove('active');
+                controls.enabled = true;
+                transformControl.enabled = true;
+
+                // Stop all audio when exiting play mode
+                scene.traverse((object) => {
+                    if (object.isMesh) {
+                        const audioData = objectAudios.get(object);
+                        if (audioData && audioData.audio) {
+                            audioData.audio.pause();
+                            audioData.audio.currentTime = 0;
+                        }
+                    }
+                });
+                
+                try {
+                    if (isMobile) {
+                        document.getElementById('cameraJoystick').style.display = 'none';
+                        document.getElementById('joystick').style.display = 'none';
+                    } else {
+                        if (document.pointerLockElement === document.body) {
+                            document.exitPointerLock();
+                        }
+                    }
+                    
+                    // Reset camera and controls
+                    camera.position.set(10, 10, 10);
+                    camera.lookAt(0, 0, 0);
+                    controls.target.set(0, 0, 0);
+                    controls.update();
+                    
+                    // Reset all rotations and velocities
+                    camera.rotation.set(0, 0, 0);
+                    velocity.set(0, 0, 0);
+                    currentVelocity.set(0, 0, 0);
+                    targetVelocity.set(0, 0, 0);
+                    targetCameraRotation = {x: 0, y: 0};
+                    currentCameraRotation = {x: 0, y: 0};
+                    
+                    // Remove event listeners
+                    if (onMouseMove) {
+                        document.removeEventListener('mousemove', onMouseMove);
+                        onMouseMove = null;
+                    }
+                    if (onKeyDown) {
+                        document.removeEventListener('keydown', onKeyDown);
+                        onKeyDown = null;
+                    }
+                } catch (error) {
+                    console.error('Error cleaning up play mode:', error);
+                    // Attempt recovery
+                    camera.position.set(10, 10, 10);
+                    camera.rotation.set(0, 0, 0);
+                    controls.enabled = true;
+                }
+                scene.traverse((object) => {
+                    if (object.isMesh && object !== groundObject) {
+                        const originalPos = originalPositions.get(object);
+                        if (originalPos) {
+                            object.position.copy(originalPos);
+                        }
+                    }
+                });
+                document.querySelector('.chat-container').classList.remove('active');
+                chatVisible = false;
+            }
+        });
+        document.querySelector('.stop-button').addEventListener('click', () => {
+            const playButton = document.getElementById('playButton');
+            if (playButton) {
+                playButton.click();
+            }
+        });
+        const PLAYER_HEIGHT = 2;
+        const SPAWN_HEIGHT = 5;
+        let lastTime = performance.now();
+        const MOVEMENT_SMOOTHING = 0.1;
+        let touchStartX = 0;
+        let touchStartY = 0;
+        let isCameraRotating = false;
+        
+        function updateObjectProperties() {
+            if (!selectedObject) return;
+            
+            let props = objectProperties.get(selectedObject);
+            if (!props) {
+                initializeObjectProperties(selectedObject);
+                props = objectProperties.get(selectedObject);
+            }
+
+            document.getElementById('objectCollision').checked = props.collision;
+            document.getElementById('objectNeon').checked = props.neon;
+            document.getElementById('objectOpacity').value = props.opacity;
+            document.getElementById('objectColor').value = props.color;
+            document.getElementById('objectTexture').value = props.texture;
+            const animation = objectAnimations.get(selectedObject);
+            if (animation) {
+                document.getElementById('objectAnimation').checked = animation.enabled;
+                document.getElementById('animMoveX').value = animation.moveX;
+                document.getElementById('animMoveY').value = animation.moveY;
+                document.getElementById('animMoveZ').value = animation.moveZ;
+                document.getElementById('animDuration').value = animation.duration;
+            }
+            const audio = objectAudios.get(selectedObject);
+            if (audio) {
+                document.getElementById('audioLoop').checked = audio.loop;
+            }
+            document.getElementById('objectPhysics').checked = props.physics;
+            document.getElementById('objectMass').value = props.mass;
+            document.getElementById('objectBounce').value = props.bounce;
+
+            const physicsProps = document.querySelectorAll('.physics-properties');
+            physicsProps.forEach(el => {
+                el.classList.toggle('show', props.physics);
+            });
+            
+            document.getElementById('objectLight').checked = props.light;
+            document.getElementById('lightColor').value = props.lightColor;
+            document.getElementById('lightIntensity').value = props.lightIntensity;
+            document.getElementById('lightDistance').value = props.lightDistance;
+
+            const lightProps = document.querySelectorAll('.light-properties');
+            lightProps.forEach(el => {
+                el.classList.toggle('show', props.light);
+            });
+            
+            document.getElementById('objectTextureX').value = props.textureRepeatX;
+            document.getElementById('objectTextureY').value = props.textureRepeatY;
+            document.getElementById('objectWater').checked = props.waterEffect;
+        }
+
+        document.getElementById('objectColor').addEventListener('change', e => {
+            if (!selectedObject) return;
+            let props = objectProperties.get(selectedObject);
+            if (props) {
+                props.color = e.target.value;
+                selectedObject.material.color.setStyle(e.target.value);
+                selectedObject.material.needsUpdate = true;
+            }
+        });
+
+        document.getElementById('objectTexture').addEventListener('change', e => {
+            if (!selectedObject) return;
+            let props = objectProperties.get(selectedObject);
+            if (props) {
+                props.texture = e.target.value;
+                if (e.target.value === 'none') {
+                    selectedObject.material.map = null;
+                } else {
+                    selectedObject.material.map = textures[e.target.value];
+                    if (selectedObject === groundObject) {
+                        updateGroundTextureScale();
+                    }
+                }
+                selectedObject.material.needsUpdate = true;
+            }
+        });
+
+        document.getElementById('objectCollision').addEventListener('change', e => {
+            if (!selectedObject) return;
+            let props = objectProperties.get(selectedObject);
+            if (props) {
+                props.collision = e.target.checked;
+                selectedObject.userData.hasCollision = e.target.checked;
+                
+                // Update visual feedback
+                if (e.target.checked) {
+                    selectedObject.material.emissiveIntensity = 0.2;
+                    selectedObject.material.emissive.setHex(0x00ff00);
+                } else {
+                    selectedObject.material.emissiveIntensity = 0;
+                    selectedObject.material.emissive.setHex(0x000000);
+                }
+                selectedObject.material.needsUpdate = true;
+                
+                // Disable physics if collisions are disabled
+                if (!e.target.checked) {
+                    props.physics = false;
+                    document.getElementById('objectPhysics').checked = false;
+                    document.querySelectorAll('.physics-properties').forEach(el => {
+                        el.classList.remove('show');
+                    });
+                }
+            }
+        });
+
+        document.getElementById('objectNeon').addEventListener('change', e => {
+            if (!selectedObject) return;
+            let props = objectProperties.get(selectedObject);
+            if (props) {
+                props.neon = e.target.checked;
+                if (e.target.checked) {
+                    selectedObject.material.emissive.setStyle(selectedObject.material.color.getStyle());
+                    selectedObject.material.emissiveIntensity = 0.5;
+                    selectedObject.material.shininess = 100;
+                } else {
+                    selectedObject.material.emissive.setRGB(0, 0, 0);
+                    selectedObject.material.emissiveIntensity = 0;
+                    selectedObject.material.shininess = 30;
+                }
+                selectedObject.material.needsUpdate = true;
+            }
+        });
+
+        document.getElementById('objectOpacity').addEventListener('input', e => {
+            if (!selectedObject) return;
+            let props = objectProperties.get(selectedObject);
+            if (props) {
+                const opacity = parseFloat(e.target.value);
+                props.opacity = opacity;
+                selectedObject.material.opacity = opacity;
+                selectedObject.material.transparent = opacity < 1;
+                selectedObject.material.needsUpdate = true;
+            }
+        });
+
+        document.getElementById('objectAnimation').addEventListener('change', e => {
+            if (!selectedObject) return;
+            const animation = objectAnimations.get(selectedObject);
+            if (animation) {
+                animation.enabled = e.target.checked;
+                animation.startTime = null;
+            }
+        });
+
+        ['animMoveX', 'animMoveY', 'animMoveZ'].forEach(id => {
+            document.getElementById(id).addEventListener('change', e => {
+                if (!selectedObject) return;
+                const animation = objectAnimations.get(selectedObject);
+                if (animation) {
+                    animation[id.replace('anim', 'move').toLowerCase()] = parseFloat(e.target.value);
+                    animation.startTime = null;
+                }
+            });
+        });
+
+        document.getElementById('animDuration').addEventListener('change', e => {
+            if (!selectedObject) return;
+            const animation = objectAnimations.get(selectedObject);
+            if (animation) {
+                animation.duration = Math.max(0.1, parseFloat(e.target.value));
+                animation.startTime = null;
+            }
+        });
+
+        document.getElementById('uploadAudioBtn').addEventListener('click', () => {
+            document.getElementById('audioFileInput').click();
+        });
+
+        document.getElementById('audioFileInput').addEventListener('change', e => {
+            if (!selectedObject) return;
+            const file = e.target.files[0];
+            if (file) {
+                const audio = new Audio(URL.createObjectURL(file));
+                const audioData = objectAudios.get(selectedObject);
+                if (audioData) {
+                    if (audioData.audio) {
+                        audioData.audio.pause();
+                        URL.revokeObjectURL(audioData.audio.src);
+                    }
+                    audioData.audio = audio;
+                    audioData.audio.loop = audioData.loop;
+                    
+                    // Auto-play if in play mode
+                    if (isPlaying) {
+                        audio.play().catch(err => console.error('Audio playback failed:', err));
+                    }
+                }
+            }
+        });
+
+        document.getElementById('audioLoop').addEventListener('change', e => {
+            if (!selectedObject) return;
+            const audioData = objectAudios.get(selectedObject);
+            if (audioData && audioData.audio) {
+                audioData.audio.pause();
+                audioData.audio.currentTime = 0;
+                audioData.loop = e.target.checked;
+                audioData.audio.loop = e.target.checked;
+                
+                if (isPlaying) {
+                    audioData.audio.play();
+                }
+            }
+        });
+
+        document.getElementById('playAudioBtn').addEventListener('click', () => {
+            if (!selectedObject || !isPlaying) return;
+            const audioData = objectAudios.get(selectedObject);
+            if (audioData && audioData.audio) {
+                audioData.audio.play().catch(err => console.error('Audio playback failed:', err));
+            }
+        });
+
+        document.getElementById('stopAudioBtn').addEventListener('click', () => {
+            if (!selectedObject) return;
+            const audioData = objectAudios.get(selectedObject);
+            if (audioData && audioData.audio) {
+                audioData.audio.pause();
+                audioData.audio.currentTime = 0;
+            }
+        });
+
+        document.getElementById('objectPhysics').addEventListener('change', e => {
+            if (!selectedObject) return;
+            let props = objectProperties.get(selectedObject);
+            if (props) {
+                props.physics = e.target.checked;
+                const physicsProps = document.querySelectorAll('.physics-properties');
+                physicsProps.forEach(el => {
+                    el.classList.toggle('show', props.physics);
+                });
+            }
+        });
+
+        document.getElementById('objectMass').addEventListener('change', e => {
+            if (!selectedObject) return;
+            let props = objectProperties.get(selectedObject);
+            if (props) {
+                props.mass = Math.max(0.1, parseFloat(e.target.value));
+            }
+        });
+
+        document.getElementById('objectBounce').addEventListener('change', e => {
+            if (!selectedObject) return;
+            let props = objectProperties.get(selectedObject);
+            if (props) {
+                props.bounce = Math.min(1, Math.max(0, parseFloat(e.target.value)));
+            }
+        });
+
+        document.getElementById('objectLight').addEventListener('change', e => {
+            if (!selectedObject) return;
+            let props = objectProperties.get(selectedObject);
+            if (props) {
+                props.light = e.target.checked;
+                selectedObject.userData.pointLight.visible = e.target.checked;
+                
+                const lightProps = document.querySelectorAll('.light-properties');
+                lightProps.forEach(el => {
+                    el.classList.toggle('show', props.light);
+                });
+            }
+        });
+
+        document.getElementById('lightColor').addEventListener('change', e => {
+            if (!selectedObject) return;
+            let props = objectProperties.get(selectedObject);
+            if (props) {
+                props.lightColor = e.target.value;
+                selectedObject.userData.pointLight.color.setStyle(e.target.value);
+            }
+        });
+
+        document.getElementById('lightIntensity').addEventListener('input', e => {
+            if (!selectedObject) return;
+            let props = objectProperties.get(selectedObject);
+            if (props) {
+                props.lightIntensity = parseFloat(e.target.value);
+                selectedObject.userData.pointLight.intensity = props.lightIntensity;
+            }
+        });
+
+        document.getElementById('lightDistance').addEventListener('change', e => {
+            if (!selectedObject) return;
+            let props = objectProperties.get(selectedObject);
+            if (props) {
+                props.lightDistance = parseFloat(e.target.value);
+                selectedObject.userData.pointLight.distance = props.lightDistance;
+            }
+        });
+
+        function generateTerrain(type) {
+            if (!groundObject || !window.SimplexNoise) return;
+            
+            const noise = new SimplexNoise();
+            const geometry = new THREE.PlaneGeometry(
+                groundObject.scale.x,
+                groundObject.scale.z, 
+                TERRAIN_SEGMENTS,
+                TERRAIN_SEGMENTS
+            );
+            
+            const positions = geometry.attributes.position.array;
+            
+            for (let i = 0; i < positions.length; i += 3) {
+                const x = positions[i];
+                const z = positions[i+2];
+                
+                let height = 0;
+                switch(type) {
+                    case 'hills':
+                        height = noise.noise2D(x * 0.05, z * 0.05) * TERRAIN_HEIGHT_SCALE;
+                        break;
+                    case 'mountains':  
+                        height = Math.pow(Math.abs(noise.noise2D(x * 0.03, z * 0.03)), 1.5) * TERRAIN_HEIGHT_SCALE * 2;
+                        break;
+                    case 'valley':
+                        const distFromCenter = Math.sqrt(x*x + z*z) * 0.1;
+                        height = TERRAIN_HEIGHT_SCALE * 2 - Math.pow(distFromCenter, 1.2) + 
+                                 noise.noise2D(x * 0.05, z * 0.05) * TERRAIN_HEIGHT_SCALE * 0.5;
+                        break;
+                    case 'blocky':
+                        height = Math.round(noise.noise2D(x * 0.05, z * 0.05) * 3) * TERRAIN_HEIGHT_SCALE * 0.5;
+                        break;
+                }
+                
+                positions[i+1] = height;
+            }
+            
+            geometry.attributes.position.needsUpdate = true;
+            geometry.computeVertexNormals();
+            
+            const terrainMaterial = groundObject.material.clone();
+            terrainMaterial.side = THREE.DoubleSide;
+            
+            const terrain = new THREE.Mesh(geometry, terrainMaterial);
+            terrain.rotation.x = -Math.PI / 2;
+            terrain.position.copy(groundObject.position);
+            
+            scene.traverse(child => {
+                if (child.userData.isTerrain) {
+                    scene.remove(child); 
+                }
+            });
+            
+            terrain.userData.isTerrain = true;
+            scene.add(terrain);
+        }
+
+        document.getElementById('generateTerrain').addEventListener('change', e => {
+            if (!window.SimplexNoise) {
+                console.error('SimplexNoise not loaded yet');
+                return;
+            }
+            generateTerrain(e.target.value);
+            e.target.value = '';
+        });
+        
+        document.getElementById('textureImport').addEventListener('change', e => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    const texture = textureLoader.load(event.target.result);
+                    texture.wrapS = THREE.RepeatWrapping;
+                    texture.wrapT = THREE.RepeatWrapping;
+                    textures['custom'] = texture;
+                    
+                    const textureSelects = document.querySelectorAll('select[id^="objectTexture"]');
+                    textureSelects.forEach(select => {
+                        if (!select.querySelector('option[value="custom"]')) {
+                            const option = document.createElement('option');
+                            option.value = 'custom';
+                            option.textContent = 'Custom';
+                            select.appendChild(option);
+                        }
+                    });
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+        
+        function loadRobloxNoob() {
+            gltfLoader.load('roblox-noob.glb', (gltf) => {
+                playerModel = gltf.scene;
+                playerModel.scale.set(0.5, 0.5, 0.5); 
+                playerModel.visible = false; // Always show model since it represents the player
+                scene.add(playerModel);
+                
+                // Create collision box for player
+                const box = new THREE.Box3().setFromObject(playerModel);
+                const size = box.getSize(new THREE.Vector3());
+                const playerCollider = new THREE.Mesh(
+                    new THREE.BoxGeometry(size.x, size.y, size.z),
+                    new THREE.MeshBasicMaterial({visible: false})
+                );
+                playerCollider.position.copy(playerModel.position);
+                scene.add(playerCollider);
+            });
+        }
+
+        loadRobloxNoob();
+        
+        function animate() {
+            try {
+                requestAnimationFrame(animate);
+                
+                const currentTime = performance.now();
+                const deltaTime = (currentTime - lastTime) / 1000;
+                lastTime = currentTime;
+
+                if (isPlaying) {
+                    if (cameraJoystickActive) {
+                        camera.rotation.x = THREE.MathUtils.lerp(
+                            camera.rotation.x,
+                            targetCameraRotation.x,
+                            0.1
+                        );
+                        
+                        camera.rotation.y = THREE.MathUtils.lerp(
+                            camera.rotation.y,
+                            targetCameraRotation.y,
+                            0.1
+                        );
+                        
+                        camera.rotation.z = 0;
+                    }
+                    
+                    if (isClimbing) {
+                        playerVelocity.y = CLIMB_FORCE;
+                    } else {
+                        playerVelocity.y += GRAVITY;
+                    }
+                    
+                    let canMove = true;
+                    scene.traverse((object) => {
+                        if (object.isMesh && object !== groundObject) {
+                            const props = objectProperties.get(object);
+                            if (props?.collision) {
+                                const bbox = new THREE.Box3().setFromObject(object);
+                                const playerBox = new THREE.Box3().setFromCenterAndSize(
+                                    camera.position,
+                                    new THREE.Vector3(1, 2, 1)
+                                );
+                                
+                                if (bbox.intersectsBox(playerBox)) {
+                                    if (props.physics) {
+                                        const impact = object.position.clone().sub(camera.position).normalize();
+                                        const strength = 0.05; 
+                                        
+                                        object.userData.velocity.add(impact.multiplyScalar(strength));
+                                        
+                                        if (object.geometry instanceof THREE.SphereGeometry ||
+                                            object.geometry instanceof THREE.CylinderGeometry) {
+                                            const rotationAxis = new THREE.Vector3(-impact.z, 0, impact.x);
+                                            if (!object.userData.angularVelocity) {
+                                                object.userData.angularVelocity = new THREE.Vector3();
+                                            }
+                                            object.userData.angularVelocity.add(
+                                                rotationAxis.multiplyScalar(0.1 * strength)
+                                            );
+                                        }
+                                    } else {
+                                        const intersection = playerBox.intersect(bbox);
+                                        const size = new THREE.Vector3();
+                                        intersection.getSize(size);
+                                        
+                                        if (size.x < size.y && size.x < size.z) {
+                                            camera.position.x += (size.x + 0.1) * Math.sign(camera.position.x - object.position.x);
+                                        } else if (size.y < size.x && size.y < size.z) {
+                                            camera.position.y += (size.y + 0.1) * Math.sign(camera.position.y - object.position.y);
+                                        } else {
+                                            camera.position.z += (size.z + 0.1) * Math.sign(camera.position.z - object.position.z);
+                                        }
+                                        
+                                        const oldY = playerVelocity.y;
+                                        playerVelocity.set(0, oldY, 0);
+                                        currentVelocity.set(0, 0, 0);
+                                    }
+                                }
+                            }
+                        }
+                    });
+                    
+                    camera.position.add(playerVelocity);
+                    
+                    const downRay = new THREE.Raycaster(
+                        camera.position,
+                        new THREE.Vector3(0, -1, 0)
+                    );
+                    const standingIntersects = downRay.intersectObjects(scene.children);
+                    
+                    if (standingIntersects.length > 0 && standingIntersects[0].distance < PLAYER_HEIGHT) {
+                        camera.position.y = standingIntersects[0].point.y + PLAYER_HEIGHT;
+                        playerVelocity.y = 0;
+                        canJump = true;
+                        isJumping = false;
+                        isClimbing = false;
+                    }
+                    
+                    scene.traverse((object) => {
+                        if (object.isMesh && object !== groundObject) {
+                            const props = objectProperties.get(object);
+                            if (props?.collision) {
+                                const bbox1 = new THREE.Box3().setFromObject(object);
+                                const bbox2 = new THREE.Box3().setFromObject(groundObject);
+                                
+                                if (bbox1.intersectsBox(bbox2)) {
+                                    hasCollision = true;
+                                    
+                                    const normal = object.position.clone()
+                                        .sub(groundObject.position)
+                                        .normalize();
+                                    
+                                    const relativeVel = object.userData.velocity.clone();
+                                    
+                                    object.userData.velocity.reflect(normal)
+                                        .multiplyScalar(props.bounce * 0.5);
+                                    
+                                    if (object.geometry instanceof THREE.SphereGeometry ||
+                                        object.geometry instanceof THREE.CylinderGeometry) {
+                                        const rotationAxis = new THREE.Vector3(
+                                            -relativeVel.z, 
+                                            0,
+                                            relativeVel.x
+                                        );
+                                        if (!object.userData.angularVelocity) {
+                                            object.userData.angularVelocity = new THREE.Vector3();
+                                        }
+                                        object.userData.angularVelocity.add(
+                                            rotationAxis.multiplyScalar(0.1 * relativeVel.length())
+                                        );
+                                    }
+                                }
+                            }
+                        }
+                    });
+                    
+                    const frontRay = new THREE.Raycaster(
+                        camera.position,
+                        new THREE.Vector3(
+                            -Math.sin(camera.rotation.y),
+                            0,
+                            -Math.cos(camera.rotation.y)
+                        )
+                    );
+                    
+                    const climbIntersects = frontRay.intersectObjects(scene.children);
+                    if (climbIntersects.length > 0 && 
+                        climbIntersects[0].distance < 2) {
+                        const hitObject = climbIntersects[0].object;
+                        const props = objectProperties.get(hitObject);
+                        if (props?.collision && hitObject.userData.isClimbCube) {
+                            if (!climbCooldown && isJumping) {
+                                isClimbing = true;
+                                playerVelocity.y = CLIMB_FORCE;
+                                climbCooldown = true;
+                                setTimeout(() => {
+                                    climbCooldown = false;
+                                }, 500);
+                            }
+                        }
+                    } else {
+                        isClimbing = false;
+                    }
+                    
+                    if (camera.position.y < -50) {
+                        camera.position.copy(spawnPoint);
+                        playerVelocity.set(0, 0, 0);
+                        currentVelocity.set(0, 0, 0);
+                    }
+                } else {
+                    if (controls) {
+                        controls.update();
+                    }
+                }
+
+                if (groundObject) {
+                    updateAnimation(deltaTime);
+                }
+
+                if (dayCycleEnabled) {
+                    const dayTime = (Math.sin(time) + 1) / 2;
+                    
+                    // Update sun position
+                    sunLight.position.x = Math.cos(time * cycleSpeed) * 100;
+                    sunLight.position.y = Math.sin(time * cycleSpeed) * 100;
+                    sunLight.position.z = 0;
+                    
+                    // Update light intensities
+                    sunLight.intensity = Math.max(0, Math.sin(time * cycleSpeed));
+                    ambientLight.intensity = 0.2 + dayTime * 0.3;
+                    
+                    // Update sky color
+                    const skyColor = new THREE.Color();
+                    const dayColor = new THREE.Color(0x87CEEB);
+                    const nightColor = new THREE.Color(0x000033);
+                    skyColor.lerpColors(nightColor, dayColor, dayTime);
+                    scene.background = new THREE.Color(skyColor);
+                    time += deltaTime;
+                }
+
+                if (isPlaying) {
+                    // Update velocity and movement logic
+                    currentVelocity.multiplyScalar(MOVEMENT_DAMPING);
+                    
+                    // Add current velocity to camera position
+                    camera.position.add(currentVelocity);
+                    
+                    // Handle keyboard input for desktop
+                    if (!isMobile) {
+                        const moveDirection = new THREE.Vector3();
+                        
+                        if (keys.w) moveDirection.z -= 1;
+                        if (keys.s) moveDirection.z += 1;
+                        if (keys.a) moveDirection.x -= 1;
+                        if (keys.d) moveDirection.x += 1;
+                        
+                        if (moveDirection.length() > 0) {
+                            moveDirection.normalize();
+                            moveDirection.applyQuaternion(camera.quaternion);
+                            moveDirection.y = 0;
+                            currentVelocity.add(moveDirection.multiplyScalar(MOVEMENT_SPEED));
+                        }
+                    }
+                    
+                    // Clamp velocity to prevent excessive speed
+                    const speed = currentVelocity.length();
+                    if (speed > MAX_VELOCITY) {
+                        currentVelocity.multiplyScalar(MAX_VELOCITY / speed);
+                    }
+                }
+                
+                if (playerModel && isPlaying) {
+                    playerModel.visible = true;
+                    
+                    playerModel.position.copy(camera.position);
+                    playerModel.position.y -= PLAYER_HEIGHT;
+                    
+                    playerModel.rotation.y = camera.rotation.y;
+                    
+                    if (playerVelocity.y > 0) {
+                        playerModel.position.y += playerVelocity.y;
+                    }
+                    
+                    if (currentVelocity.length() > MIN_MOVEMENT_THRESHOLD) {
+                        const bobHeight = Math.sin(performance.now() * 0.01) * 0.1;
+                        playerModel.position.y += bobHeight;
+                    }
+                }
+
+                // Update other players' models
+                Object.entries(players).forEach(([playerName, data]) => {
+                    if (playerName !== username) {
+                        if (!players[playerName].model) {
+                            // Create new model for other player
+                            const otherModel = playerModel.clone();
+                            otherModel.scale.set(0.5, 0.5, 0.5);
+                            scene.add(otherModel);
+                            players[playerName].model = otherModel;
+                        }
+                        // Update other player model position and rotation
+                        players[playerName].model.position.copy(data.position);
+                        players[playerName].model.rotation.copy(data.rotation);
+                    }
+                });
+
+                renderer.render(scene, camera);
+            } catch (error) {
+                console.error('Animation loop error:', error);
+                if (!isPlaying) {
+                    camera.position.set(10, 10, 10);
+                    camera.lookAt(0, 0, 0);
+                    if (controls) controls.update();
+                }
+            }
+        }
+        animate();
+        window.addEventListener('resize', onWindowResize, false);
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight - 40);
+            transformControl.updateMatrix();
+        }
+        window.addEventListener('unhandledrejection', event => {
+            console.error('Unhandled promise rejection:', event.reason);
+        });
+        const joystick = document.getElementById('joystick');
+        let joystickActive = false;
+        let joystickOffset = new THREE.Vector2(0, 0);
+        joystick.addEventListener('pointerdown', e => {
+            e.preventDefault();
+            joystickActive = true;
+            const rect = joystick.getBoundingClientRect();
+            const knob = joystick.querySelector('.joystick-knob');
+            const centerX = rect.width / 2;
+            const centerY = rect.height / 2;
+            knob.style.left = centerX - knob.offsetWidth / 2 + 'px';
+            knob.style.top = centerY - knob.offsetHeight / 2 + 'px';
+            joystick.setPointerCapture(e.pointerId);
+        });
+        joystick.addEventListener('pointermove', e => {
+            if (!joystickActive) return;
+            e.preventDefault();
+            const rect = joystick.getBoundingClientRect();
+            const knob = joystick.querySelector('.joystick-knob');
+            const centerX = rect.width / 2;
+            const centerY = rect.height / 2;
+            let moveX = e.clientX - rect.left - centerX;
+            let moveY = e.clientY - rect.top - centerY;
+            const distance = Math.min(40, Math.sqrt(moveX * moveX + moveY * moveY));
+            const angle = Math.atan2(moveY, moveX);
+            const knobX = Math.cos(angle) * distance + centerX - knob.offsetWidth / 2;
+            const knobY = Math.sin(angle) * distance + centerY - knob.offsetHeight / 2;
+            knob.style.left = knobX + 'px';
+            knob.style.top = knobY + 'px';
+            
+            if (isPlaying) {
+                const moveDirection = new THREE.Vector3();
+                moveDirection.x = moveX / 40;
+                moveDirection.z = moveY / 40;
+                moveDirection.normalize();
+                moveDirection.applyQuaternion(camera.quaternion);
+                moveDirection.y = 0;
+                currentVelocity.add(moveDirection.multiplyScalar(MOVEMENT_SPEED));
+
+                if (playerModel) {
+                    playerModel.rotation.y = camera.rotation.y;
+                }
+            }
+        });
+        joystick.addEventListener('pointerup', e => {
+            e.preventDefault();
+            joystickActive = false;
+            joystickOffset.set(0, 0);
+            currentVelocity.multiplyScalar(0.5); // Gradual stop instead of immediate
+            const knob = joystick.querySelector('.joystick-knob');
+            knob.style.left = '30px';
+            knob.style.top = '30px';
+        });
+        if (!isPlaying) {
+            controls.maxPolarAngle = Math.PI;
+        } else {
+            controls.maxPolarAngle = Math.PI / 2;
+        }
+        let chatMessages = [];
+        const maxMessages = 50;
+
+        function addChatMessage(message, user = username) {
+          chatMessages.unshift({
+            username: user,
+            message: message,
+            timestamp: Date.now()
+          });
+          
+          if (chatMessages.length > maxMessages) {
+            chatMessages.pop();
+          }
+          
+          const container = document.getElementById('chatMessages');
+          const messageEl = document.createElement('div');
+          messageEl.className = 'chat-message';
+          
+          const usernameSpan = document.createElement('span');
+          usernameSpan.className = 'username';
+          usernameSpan.textContent = user;
+          
+          messageEl.appendChild(usernameSpan);
+          messageEl.appendChild(document.createTextNode(message));
+          
+          container.insertBefore(messageEl, container.firstChild);
+          
+          // Broadcast message to other players (mock implementation)
+          if (isPlaying && user === username) {
+            broadcastMessage(message);
+          }
+        }
+
+        document.getElementById('chatInput').addEventListener('keypress', (e) => {
+          if (e.key === 'Enter') {
+            const message = e.target.value.trim();
+            if (message) {
+              addChatMessage(message);
+              e.target.value = '';
+            }
+          }
+        });
+
+        document.getElementById('chatSend').addEventListener('click', () => {
+          const input = document.getElementById('chatInput');
+          const message = input.value.trim();
+          if (message) {
+            addChatMessage(message);
+            input.value = '';
+          }
+        });
+        
+        function broadcastMessage(message) {
+            // Mock implementation - in real app would send to server
+            console.log(`Broadcasting message from ${username}: ${message}`);
+            // Simulate receiving message from other players
+            setTimeout(() => {
+                const otherPlayer = Object.keys(players).find(name => name !== username);
+                if (otherPlayer) {
+                    addChatMessage(`Response to: ${message}`, otherPlayer);
+                }
+            }, 1000);
+        }
+        
+        document.getElementById('toggleChat').addEventListener('click', () => {
+          const chatContainer = document.querySelector('.chat-container');
+          const btn = document.getElementById('toggleChat');
+          
+          if (chatContainer.classList.contains('hidden')) {
+            chatContainer.classList.remove('hidden');
+            btn.textContent = 'Hide Chat';
+          } else {
+            chatContainer.classList.add('hidden'); 
+            btn.textContent = 'Show Chat';
+          }
+        });
+    </script>
+</body>
+</html>
