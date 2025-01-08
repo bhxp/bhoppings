@@ -1,0 +1,1256 @@
+<html><head><base href="/">
+<style>
+body {
+  margin: 0;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #000;
+  overflow: hidden;
+}
+
+#info {
+  position: fixed;
+  top: 10px;
+  left: 10px;
+  color: white;
+  font-family: Arial, sans-serif;
+  pointer-events: none;
+}
+
+#crosshair {
+  position: fixed;
+  top: 50%;
+  left: 50%; 
+  transform: translate(-50%, -50%);
+  color: white;
+  font-size: 20px;
+  pointer-events: none;
+  display: none;
+}
+
+/* Add new highlight animation keyframes */
+@keyframes highlightFade {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 0.3;
+    transform: scale(1);
+  }
+}
+</style>
+</head>
+<body>
+<div id="info">Drag to rotate &#x2022; Scroll to zoom &#x2022; Click planets to focus</div>
+<div id="crosshair">+</div>
+
+<script type="module">import * as THREE from 'https://cdn.skypack.dev/three@0.136.0';
+import { OrbitControls } from 'https://cdn.skypack.dev/three@0.136.0/examples/jsm/controls/OrbitControls.js';
+import { GLTFLoader } from 'https://cdn.skypack.dev/three@0.136.0/examples/jsm/loaders/GLTFLoader.js';
+import { FBXLoader } from 'https://cdn.skypack.dev/three@0.136.0/examples/jsm/loaders/FBXLoader.js';
+import gsap from 'https://cdn.skypack.dev/gsap';
+const AXIAL_TILTS = {
+  mercury: 0.027 * (Math.PI / 180),
+  venus: 177.4 * (Math.PI / 180),
+  earth: 23.5 * (Math.PI / 180),
+  mars: 0,
+  jupiter: 3.0 * (Math.PI / 180),
+  saturn: 26.73 * (Math.PI / 180),
+  uranus: 97.77 * (Math.PI / 180),
+  neptune: 28.32 * (Math.PI / 180),
+  pluto: 122.53 * (Math.PI / 180),
+  makemake: 0,
+  haumea: 28 * (Math.PI / 180),
+  eris: 78 * (Math.PI / 180)
+};
+const LANDING_DISTANCE = 2.2;
+const MIN_SURFACE_DISTANCE = 0.1;
+const LANDING_HEIGHT = 1.5;
+const LANDED_MOVE_SPEED = 0.05;
+const ZOOM_SPEED = 0.1;
+const MIN_ZOOM = 1.2;
+const MAX_ZOOM = 10;
+let currentZoom = 2;
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 100000);
+const renderer = new THREE.WebGLRenderer({
+  antialias: true,
+  shadowMap: {
+    enabled: true,
+    type: THREE.PCFSoftShadowMap
+  }
+});
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.shadowMap.enabled = true;
+renderer.setClearColor(0x000000, 1);
+document.body.appendChild(renderer.domElement);
+const raycaster = new THREE.Raycaster();
+const mouse = new THREE.Vector2();
+const skyGeometry = new THREE.SphereGeometry(2000, 32, 32);
+const skyMaterial = new THREE.PointsMaterial({
+  color: 0xFFFFFF,
+  size: 1.0,
+  sizeAttenuation: false
+});
+const starVertices = [];
+for (let i = 0; i < 5000; i++) {
+  const theta = 2 * Math.PI * Math.random();
+  const phi = Math.acos(2 * Math.random() - 1);
+  const x = 2000 * Math.sin(phi) * Math.cos(theta);
+  const y = 2000 * Math.sin(phi) * Math.sin(theta);
+  const z = 2000 * Math.cos(phi);
+  starVertices.push(x, y, z);
+}
+const starGeometry = new THREE.BufferGeometry();
+starGeometry.setAttribute('position', new THREE.Float32BufferAttribute(starVertices, 3));
+const stars = new THREE.Points(starGeometry, skyMaterial);
+scene.add(stars);
+const sunGeometry = new THREE.SphereGeometry(10, 32, 32);
+const textureLoader = new THREE.TextureLoader();
+const lensFlareTexture = textureLoader.load('Flare-Lens-PNG-File-Download-Free.png');
+const sunMaterial = new THREE.MeshStandardMaterial({
+  color: 0xffffff,
+  emissive: 0xffffff,
+  emissiveIntensity: 1
+});
+const sun = new THREE.Mesh(sunGeometry, sunMaterial);
+scene.add(sun);
+const sunLight = new THREE.PointLight(0xffffff, 0.8, 100000);
+sunLight.position.copy(sun.position);
+sunLight.castShadow = true;
+sunLight.shadow.camera.far = 100000;
+sunLight.shadow.mapSize.width = 4096;
+sunLight.shadow.mapSize.height = 4096;
+sunLight.shadow.camera.near = 0.1;
+sunLight.shadow.bias = -0.0001;
+scene.add(sunLight);
+const lensFlareSprite = new THREE.Sprite(new THREE.SpriteMaterial({
+  map: lensFlareTexture,
+  color: 0xffffff,
+  transparent: true,
+  blending: THREE.AdditiveBlending
+}));
+lensFlareSprite.scale.set(200, 200, 1);
+sun.add(lensFlareSprite);
+const mercuryOrbit = new THREE.Object3D();
+scene.add(mercuryOrbit);
+const mercuryGeometry = new THREE.SphereGeometry(0.8, 32, 32);
+const mercuryTexture = textureLoader.load('mercury (1).jpg');
+const mercuryMaterial = new THREE.MeshPhongMaterial({
+  map: mercuryTexture,
+  bumpMap: mercuryTexture,
+  bumpScale: 0.1,
+  specular: new THREE.Color(0x111111),
+  shininess: 5
+});
+const mercury = new THREE.Mesh(mercuryGeometry, mercuryMaterial);
+mercury.rotation.x = AXIAL_TILTS.mercury;
+mercury.position.x = 100;
+mercury.userData.name = 'Mercury';
+mercuryOrbit.add(mercury);
+const mercuryOrbitLine = new THREE.Mesh(new THREE.RingGeometry(100, 100.1, 128), new THREE.MeshBasicMaterial({
+  color: 0x444444,
+  side: THREE.DoubleSide,
+  transparent: true,
+  opacity: 0.3
+}));
+mercuryOrbitLine.rotation.x = Math.PI / 2;
+mercuryOrbitLine.name = 'orbitLine';
+scene.add(mercuryOrbitLine);
+const venusOrbit = new THREE.Object3D();
+scene.add(venusOrbit);
+const venusGeometry = new THREE.SphereGeometry(1.5, 32, 32);
+const venusTexture = textureLoader.load('venus.jpg');
+const venusMaterial = new THREE.MeshPhongMaterial({
+  map: venusTexture,
+  bumpMap: venusTexture,
+  bumpScale: 0.1,
+  specular: new THREE.Color(0x111111),
+  shininess: 5
+});
+const venus = new THREE.Mesh(venusGeometry, venusMaterial);
+venus.rotation.x = AXIAL_TILTS.venus;
+venus.position.x = 180;
+venus.userData.name = 'Venus';
+venusOrbit.add(venus);
+const venusOrbitLine = new THREE.Mesh(new THREE.RingGeometry(180, 180.1, 128), new THREE.MeshBasicMaterial({
+  color: 0x444444,
+  side: THREE.DoubleSide,
+  transparent: true,
+  opacity: 0.3
+}));
+venusOrbitLine.rotation.x = Math.PI / 2;
+venusOrbitLine.name = 'orbitLine';
+scene.add(venusOrbitLine);
+const earthOrbit = new THREE.Object3D();
+scene.add(earthOrbit);
+const earthGeometry = new THREE.SphereGeometry(2, 64, 64);
+const earthTexture = textureLoader.load('earth (1).jpg');
+const earthMaterial = new THREE.MeshPhongMaterial({
+  map: earthTexture,
+  bumpMap: earthTexture,
+  bumpScale: 0.02,
+  specular: new THREE.Color(0x111111),
+  shininess: 5
+});
+const earth = new THREE.Mesh(earthGeometry, earthMaterial);
+earth.rotation.x = AXIAL_TILTS.earth;
+earth.position.x = 280;
+earth.userData.name = 'Earth';
+earthOrbit.add(earth);
+const earthAtmosphereGeometry = new THREE.SphereGeometry(2.02, 64, 64);
+const earthAtmosphereMaterial = new THREE.MeshPhongMaterial({
+  color: 0x8494c4,
+  transparent: true,
+  opacity: 0.2,
+  side: THREE.DoubleSide,
+  depthWrite: false,
+  blending: THREE.AdditiveBlending
+});
+const earthAtmosphere = new THREE.Mesh(earthAtmosphereGeometry, earthAtmosphereMaterial);
+earth.add(earthAtmosphere);
+const cloudTexture = textureLoader.load('Clouds.png');
+const cloudGeometry = new THREE.SphereGeometry(2.03, 64, 64);
+const cloudMaterial = new THREE.MeshPhongMaterial({
+  map: cloudTexture,
+  transparent: true,
+  opacity: 0.6,
+  side: THREE.DoubleSide,
+  depthWrite: false,
+  blending: THREE.AdditiveBlending
+});
+const clouds = new THREE.Mesh(cloudGeometry, cloudMaterial);
+earthAtmosphere.add(clouds);
+const moonOrbit = new THREE.Object3D();
+earth.add(moonOrbit);
+const moonGeometry = new THREE.SphereGeometry(0.5, 32, 32);
+const moonTexture = textureLoader.load('Moon.png');
+const moonMaterial = new THREE.MeshPhongMaterial({
+  map: moonTexture,
+  bumpMap: moonTexture,
+  bumpScale: 0.1,
+  specular: new THREE.Color(0x111111),
+  shininess: 5
+});
+const moon = new THREE.Mesh(moonGeometry, moonMaterial);
+moon.position.x = 6;
+moon.userData.name = 'Moon';
+moonOrbit.add(moon);
+const moonOrbitLine = new THREE.Mesh(new THREE.RingGeometry(6, 6.05, 64), new THREE.MeshBasicMaterial({
+  color: 0x444444,
+  side: THREE.DoubleSide,
+  transparent: true,
+  opacity: 0.3
+}));
+moonOrbitLine.rotation.x = Math.PI / 2;
+moonOrbitLine.name = 'orbitLine';
+earth.add(moonOrbitLine);
+const earthOrbitLine = new THREE.Mesh(new THREE.RingGeometry(280, 280.1, 128), new THREE.MeshBasicMaterial({
+  color: 0x444444,
+  side: THREE.DoubleSide,
+  transparent: true,
+  opacity: 0.3
+}));
+earthOrbitLine.rotation.x = Math.PI / 2;
+earthOrbitLine.name = 'orbitLine';
+scene.add(earthOrbitLine);
+const marsOrbit = new THREE.Object3D();
+scene.add(marsOrbit);
+const marsGeometry = new THREE.SphereGeometry(1.6, 32, 32);
+const marsTexture = textureLoader.load('mars.png');
+const marsMaterial = new THREE.MeshPhongMaterial({
+  map: marsTexture,
+  bumpMap: marsTexture,
+  bumpScale: 0.1,
+  specular: new THREE.Color(0x111111),
+  shininess: 5
+});
+const mars = new THREE.Mesh(marsGeometry, marsMaterial);
+mars.rotation.x = AXIAL_TILTS.mars;
+mars.position.x = 400;
+mars.userData.name = 'Mars';
+marsOrbit.add(mars);
+const marsOrbitLine = new THREE.Mesh(new THREE.RingGeometry(400, 400.1, 128), new THREE.MeshBasicMaterial({
+  color: 0x444444,
+  side: THREE.DoubleSide,
+  transparent: true,
+  opacity: 0.3
+}));
+marsOrbitLine.rotation.x = Math.PI / 2;
+marsOrbitLine.name = 'orbitLine';
+scene.add(marsOrbitLine);
+const phobosOrbit = new THREE.Object3D();
+mars.add(phobosOrbit);
+const phobosGeometry = new THREE.SphereGeometry(0.15, 32, 32);
+const phobosTexture = textureLoader.load('Phobos.jpg');
+const phobosMaterial = new THREE.MeshPhongMaterial({
+  map: phobosTexture,
+  bumpMap: phobosTexture,
+  bumpScale: 0.05,
+  specular: new THREE.Color(0x333333),
+  shininess: 25
+});
+const phobos = new THREE.Mesh(phobosGeometry, phobosMaterial);
+phobos.position.x = 3;
+phobos.userData.name = 'Phobos';
+phobosOrbit.add(phobos);
+const deimosOrbit = new THREE.Object3D();
+mars.add(deimosOrbit);
+const deimosGeometry = new THREE.SphereGeometry(0.1, 32, 32);
+const deimosTexture = textureLoader.load('deimos.jpg');
+const deimosMaterial = new THREE.MeshPhongMaterial({
+  map: deimosTexture,
+  bumpMap: deimosTexture,
+  bumpScale: 0.05,
+  specular: new THREE.Color(0x333333),
+  shininess: 25
+});
+const deimos = new THREE.Mesh(deimosGeometry, deimosMaterial);
+deimos.position.x = 5;
+deimos.userData.name = 'Deimos';
+deimosOrbit.add(deimos);
+const phobosOrbitLine = new THREE.Mesh(new THREE.RingGeometry(3, 3.05, 64), new THREE.MeshBasicMaterial({
+  color: 0x444444,
+  side: THREE.DoubleSide,
+  transparent: true,
+  opacity: 0.3
+}));
+phobosOrbitLine.rotation.x = Math.PI / 2;
+phobosOrbitLine.name = 'orbitLine';
+mars.add(phobosOrbitLine);
+const deimosOrbitLine = new THREE.Mesh(new THREE.RingGeometry(5, 5.05, 64), new THREE.MeshBasicMaterial({
+  color: 0x444444,
+  side: THREE.DoubleSide,
+  transparent: true,
+  opacity: 0.3
+}));
+deimosOrbitLine.rotation.x = Math.PI / 2;
+deimosOrbitLine.name = 'orbitLine';
+mars.add(deimosOrbitLine);
+const ceresOrbit = new THREE.Object3D();
+scene.add(ceresOrbit);
+const ceresGeometry = new THREE.SphereGeometry(1.2, 32, 32);
+const ceresTexture = textureLoader.load('Ceres.jpg');
+const ceresMaterial = new THREE.MeshPhongMaterial({
+  map: ceresTexture,
+  bumpMap: ceresTexture,
+  bumpScale: 0.1,
+  specular: new THREE.Color(0x111111),
+  shininess: 5
+});
+const ceres = new THREE.Mesh(ceresGeometry, ceresMaterial);
+ceres.position.x = 480;
+ceres.userData.name = 'Ceres';
+ceresOrbit.add(ceres);
+const ceresOrbitLine = new THREE.Mesh(new THREE.RingGeometry(480, 480.1, 128), new THREE.MeshBasicMaterial({
+  color: 0x444444,
+  side: THREE.DoubleSide,
+  transparent: true,
+  opacity: 0.3
+}));
+ceresOrbitLine.rotation.x = Math.PI / 2;
+ceresOrbitLine.name = 'orbitLine';
+scene.add(ceresOrbitLine);
+const jupiterOrbit = new THREE.Object3D();
+scene.add(jupiterOrbit);
+const jupiterGeometry = new THREE.SphereGeometry(8, 32, 32);
+const jupiterTexture = textureLoader.load('jupiter.jpg');
+const jupiterMaterial = new THREE.MeshPhongMaterial({
+  map: jupiterTexture,
+  bumpMap: jupiterTexture,
+  bumpScale: 0.1,
+  specular: new THREE.Color(0x111111),
+  shininess: 5
+});
+const saturnOrbit = new THREE.Object3D();
+scene.add(saturnOrbit);
+const saturnGeometry = new THREE.SphereGeometry(3.5, 32, 32);
+saturnGeometry.scale(1, 0.9, 1);
+const saturnTexture = textureLoader.load('Saturn.jpg');
+const saturnMaterial = new THREE.MeshPhongMaterial({
+  map: saturnTexture,
+  bumpMap: saturnTexture,
+  bumpScale: 0.1,
+  specular: new THREE.Color(0x111111),
+  shininess: 5
+});
+const saturn = new THREE.Mesh(saturnGeometry, saturnMaterial);
+saturn.rotation.x = AXIAL_TILTS.saturn;
+saturn.position.x = 840;
+saturn.userData.name = 'Saturn';
+const saturnLight = new THREE.PointLight(0xffffff, 0.25);
+saturnLight.position.set(0, 10, 0);
+saturn.add(saturnLight);
+saturnOrbit.add(saturn);
+const titanOrbit = new THREE.Object3D();
+saturn.add(titanOrbit);
+const titanGeometry = new THREE.SphereGeometry(1.5, 32, 32);
+const titanTexture = textureLoader.load('Titan (1).jpg');
+const titanMaterial = new THREE.MeshPhongMaterial({
+  map: titanTexture,
+  bumpMap: titanTexture,
+  bumpScale: 0.1,
+  specular: new THREE.Color(0x111111),
+  shininess: 5
+});
+const titan = new THREE.Mesh(titanGeometry, titanMaterial);
+titan.position.x = 70;
+titan.userData.name = 'Titan';
+titanOrbit.add(titan);
+const titanOrbitLine = new THREE.Mesh(new THREE.RingGeometry(70, 70.05, 64), new THREE.MeshBasicMaterial({
+  color: 0x444444,
+  side: THREE.DoubleSide,
+  transparent: true,
+  opacity: 0.3
+}));
+titanOrbitLine.rotation.x = Math.PI / 2;
+titanOrbitLine.name = 'orbitLine';
+saturn.add(titanOrbitLine);
+const rheaOrbit = new THREE.Object3D();
+saturn.add(rheaOrbit);
+const rheaGeometry = new THREE.SphereGeometry(0.8, 32, 32);
+const rheaTexture = textureLoader.load('Rhea.jpg');
+const rheaMaterial = new THREE.MeshPhongMaterial({
+  map: rheaTexture,
+  bumpMap: rheaTexture,
+  bumpScale: 0.1,
+  specular: new THREE.Color(0x111111),
+  shininess: 5
+});
+const rhea = new THREE.Mesh(rheaGeometry, rheaMaterial);
+rhea.position.x = 56;
+rhea.userData.name = 'Rhea';
+rheaOrbit.add(rhea);
+const rheaOrbitLine = new THREE.Mesh(new THREE.RingGeometry(56, 56.05, 64), new THREE.MeshBasicMaterial({
+  color: 0x444444,
+  side: THREE.DoubleSide,
+  transparent: true,
+  opacity: 0.3
+}));
+rheaOrbitLine.rotation.x = Math.PI / 2;
+rheaOrbitLine.name = 'orbitLine';
+saturn.add(rheaOrbitLine);
+const iapetusOrbit = new THREE.Object3D();
+saturn.add(iapetusOrbit);
+const iapetusGeometry = new THREE.SphereGeometry(0.7, 32, 32);
+const iapetusTexture = textureLoader.load('Iapetus.jpg');
+const iapetusMaterial = new THREE.MeshPhongMaterial({
+  map: iapetusTexture,
+  bumpMap: iapetusTexture,
+  bumpScale: 0.1,
+  specular: new THREE.Color(0x111111),
+  shininess: 5
+});
+const iapetus = new THREE.Mesh(iapetusGeometry, iapetusMaterial);
+iapetus.position.x = 84;
+iapetus.userData.name = 'Iapetus';
+iapetusOrbit.add(iapetus);
+const iapetusOrbitLine = new THREE.Mesh(new THREE.RingGeometry(84, 84.05, 64), new THREE.MeshBasicMaterial({
+  color: 0x444444,
+  side: THREE.DoubleSide,
+  transparent: true,
+  opacity: 0.3
+}));
+iapetusOrbitLine.rotation.x = Math.PI / 2;
+iapetusOrbitLine.name = 'orbitLine';
+saturn.add(iapetusOrbitLine);
+const dioneOrbit = new THREE.Object3D();
+saturn.add(dioneOrbit);
+const dioneGeometry = new THREE.SphereGeometry(0.6, 32, 32);
+const dioneTexture = textureLoader.load('Dione.jpg');
+const dioneMaterial = new THREE.MeshPhongMaterial({
+  map: dioneTexture,
+  bumpMap: dioneTexture,
+  bumpScale: 0.1,
+  specular: new THREE.Color(0x111111),
+  shininess: 5
+});
+const dione = new THREE.Mesh(dioneGeometry, dioneMaterial);
+dione.position.x = 44;
+dione.userData.name = 'Dione';
+dioneOrbit.add(dione);
+const dioneOrbitLine = new THREE.Mesh(new THREE.RingGeometry(44, 44.05, 64), new THREE.MeshBasicMaterial({
+  color: 0x444444,
+  side: THREE.DoubleSide,
+  transparent: true,
+  opacity: 0.3
+}));
+dioneOrbitLine.rotation.x = Math.PI / 2;
+dioneOrbitLine.name = 'orbitLine';
+saturn.add(dioneOrbitLine);
+const tethysOrbit = new THREE.Object3D();
+saturn.add(tethysOrbit);
+const tethysGeometry = new THREE.SphereGeometry(0.5, 32, 32);
+const tethysTexture = textureLoader.load('Thetys.jpg');
+const tethysMaterial = new THREE.MeshPhongMaterial({
+  map: tethysTexture,
+  bumpMap: tethysTexture,
+  bumpScale: 0.1,
+  specular: new THREE.Color(0x111111),
+  shininess: 5
+});
+const tethys = new THREE.Mesh(tethysGeometry, tethysMaterial);
+tethys.position.x = 36;
+tethys.userData.name = 'Tethys';
+tethysOrbit.add(tethys);
+const tethysOrbitLine = new THREE.Mesh(new THREE.RingGeometry(36, 36.05, 64), new THREE.MeshBasicMaterial({
+  color: 0x444444,
+  side: THREE.DoubleSide,
+  transparent: true,
+  opacity: 0.3
+}));
+tethysOrbitLine.rotation.x = Math.PI / 2;
+tethysOrbitLine.name = 'orbitLine';
+saturn.add(tethysOrbitLine);
+const enceladusOrbit = new THREE.Object3D();
+saturn.add(enceladusOrbit);
+const enceladusGeometry = new THREE.SphereGeometry(0.4, 32, 32);
+const enceladusTexture = textureLoader.load('Enceladus.jpg');
+const enceladusMaterial = new THREE.MeshPhongMaterial({
+  map: enceladusTexture,
+  bumpMap: enceladusTexture,
+  bumpScale: 0.1,
+  specular: new THREE.Color(0x111111),
+  shininess: 5
+});
+const enceladus = new THREE.Mesh(enceladusGeometry, enceladusMaterial);
+enceladus.position.x = 28;
+enceladus.userData.name = 'Enceladus';
+enceladusOrbit.add(enceladus);
+const enceladusOrbitLine = new THREE.Mesh(new THREE.RingGeometry(28, 28.05, 64), new THREE.MeshBasicMaterial({
+  color: 0x444444,
+  side: THREE.DoubleSide,
+  transparent: true,
+  opacity: 0.3
+}));
+enceladusOrbitLine.rotation.x = Math.PI / 2;
+enceladusOrbitLine.name = 'orbitLine';
+saturn.add(enceladusOrbitLine);
+const mimasOrbit = new THREE.Object3D();
+saturn.add(mimasOrbit);
+const mimasGeometry = new THREE.SphereGeometry(0.3, 32, 32);
+const mimasTexture = textureLoader.load('Mimas.jpg');
+const mimasMaterial = new THREE.MeshPhongMaterial({
+  map: mimasTexture,
+  bumpMap: mimasTexture,
+  bumpScale: 0.1,
+  specular: new THREE.Color(0x111111),
+  shininess: 5
+});
+const mimas = new THREE.Mesh(mimasGeometry, mimasMaterial);
+mimas.position.x = 20;
+mimas.userData.name = 'Mimas';
+mimasOrbit.add(mimas);
+const mimasOrbitLine = new THREE.Mesh(new THREE.RingGeometry(20, 20.05, 64), new THREE.MeshBasicMaterial({
+  color: 0x444444,
+  side: THREE.DoubleSide,
+  transparent: true,
+  opacity: 0.3
+}));
+mimasOrbitLine.rotation.x = Math.PI / 2;
+mimasOrbitLine.name = 'orbitLine';
+saturn.add(mimasOrbitLine);
+const saturnRingGeometry = new THREE.RingGeometry(4.3, 6.8, 64);
+const saturnRingTexture = textureLoader.load('saturnrings.png');
+const saturnRingMaterial = new THREE.MeshPhongMaterial({
+  map: saturnRingTexture,
+  side: THREE.DoubleSide,
+  transparent: false,
+  opacity: 1.0,
+  specular: new THREE.Color(0x333333),
+  shininess: 25,
+  bumpMap: saturnRingTexture,
+  bumpScale: 0.05
+});
+const saturnRing = new THREE.Mesh(saturnRingGeometry, saturnRingMaterial);
+saturnRing.rotation.x = Math.PI / 2;
+saturnRing.position.y = 0;
+saturnRing.name = 'saturnRing';
+saturn.add(saturnRing);
+const jupiter = new THREE.Mesh(jupiterGeometry, jupiterMaterial);
+jupiter.rotation.x = AXIAL_TILTS.jupiter;
+jupiter.position.x = 600;
+jupiter.userData.name = 'Jupiter';
+jupiterOrbit.add(jupiter);
+const jupiterOrbitLine = new THREE.Mesh(new THREE.RingGeometry(600, 600.1, 128), new THREE.MeshBasicMaterial({
+  color: 0x444444,
+  side: THREE.DoubleSide,
+  transparent: true,
+  opacity: 0.3
+}));
+jupiterOrbitLine.rotation.x = Math.PI / 2;
+jupiterOrbitLine.name = 'orbitLine';
+scene.add(jupiterOrbitLine);
+const europaOrbit = new THREE.Object3D();
+jupiter.add(europaOrbit);
+const europaGeometry = new THREE.SphereGeometry(0.8, 32, 32);
+const europaTexture = textureLoader.load('europa.jpg');
+const europaMaterial = new THREE.MeshPhongMaterial({
+  map: europaTexture,
+  bumpMap: europaTexture,
+  bumpScale: 0.1,
+  specular: new THREE.Color(0x111111),
+  shininess: 5
+});
+const europa = new THREE.Mesh(europaGeometry, europaMaterial);
+europa.position.x = 32; // Changed from 16
+europa.userData.name = 'Europa';
+europaOrbit.add(europa);
+const europaOrbitLine = new THREE.Mesh(new THREE.RingGeometry(32, 32.05, 64), new THREE.MeshBasicMaterial({
+  color: 0x444444,
+  side: THREE.DoubleSide,
+  transparent: true,
+  opacity: 0.3
+}));
+europaOrbitLine.rotation.x = Math.PI / 2;
+europaOrbitLine.name = 'orbitLine';
+jupiter.add(europaOrbitLine);
+const callistoOrbit = new THREE.Object3D();
+jupiter.add(callistoOrbit);
+const callistoGeometry = new THREE.SphereGeometry(1.2, 32, 32);
+const callistoTexture = textureLoader.load('cal;listo.jpg');
+const callistoMaterial = new THREE.MeshPhongMaterial({
+  map: callistoTexture,
+  bumpMap: callistoTexture,
+  bumpScale: 0.1,
+  specular: new THREE.Color(0x111111),
+  shininess: 5
+});
+const callisto = new THREE.Mesh(callistoGeometry, callistoMaterial);
+callisto.position.x = 56; // Changed from 28
+callisto.userData.name = 'Callisto';
+callistoOrbit.add(callisto);
+const callistoOrbitLine = new THREE.Mesh(new THREE.RingGeometry(56, 56.05, 64), new THREE.MeshBasicMaterial({
+  color: 0x444444,
+  side: THREE.DoubleSide,
+  transparent: true,
+  opacity: 0.3
+}));
+callistoOrbitLine.rotation.x = Math.PI / 2;
+callistoOrbitLine.name = 'orbitLine';
+jupiter.add(callistoOrbitLine);
+const ganymedeOrbit = new THREE.Object3D();
+jupiter.add(ganymedeOrbit);
+const ganymedeGeometry = new THREE.SphereGeometry(1.3, 32, 32);
+const ganymedeTexture = textureLoader.load('ganymede_texture_map__11k__by_askaniy_dddhxoy-pre.jpg');
+const ganymedeMaterial = new THREE.MeshPhongMaterial({
+  map: ganymedeTexture,
+  bumpMap: ganymedeTexture,
+  bumpScale: 0.1,
+  specular: new THREE.Color(0x111111),
+  shininess: 5
+});
+const ganymede = new THREE.Mesh(ganymedeGeometry, ganymedeMaterial);
+ganymede.position.x = 44; // Changed from 22
+ganymede.userData.name = 'Ganymede';
+ganymedeOrbit.add(ganymede);
+const ganymedeOrbitLine = new THREE.Mesh(new THREE.RingGeometry(44, 44.05, 64), new THREE.MeshBasicMaterial({
+  color: 0x444444,
+  side: THREE.DoubleSide,
+  transparent: true,
+  opacity: 0.3
+}));
+ganymedeOrbitLine.rotation.x = Math.PI / 2;
+ganymedeOrbitLine.name = 'orbitLine';
+jupiter.add(ganymedeOrbitLine);
+const ioOrbit = new THREE.Object3D();
+jupiter.add(ioOrbit);
+const ioGeometry = new THREE.SphereGeometry(0.9, 32, 32);
+const ioTexture = textureLoader.load('io_truecolor_texture_map_8k_by_fargetanik_dbpxndx-fullview.jpg');
+const ioMaterial = new THREE.MeshPhongMaterial({
+  map: ioTexture,
+  bumpMap: ioTexture,
+  bumpScale: 0.1,
+  specular: new THREE.Color(0x111111),
+  shininess: 5
+});
+const io = new THREE.Mesh(ioGeometry, ioMaterial);
+io.position.x = 20; // Changed from 10
+io.userData.name = 'Io';
+ioOrbit.add(io);
+const ioOrbitLine = new THREE.Mesh(new THREE.RingGeometry(20, 20.05, 64), new THREE.MeshBasicMaterial({
+  color: 0x444444,
+  side: THREE.DoubleSide,
+  transparent: true,
+  opacity: 0.3
+}));
+ioOrbitLine.rotation.x = Math.PI / 2;
+ioOrbitLine.name = 'orbitLine';
+jupiter.add(ioOrbitLine);
+const saturnOrbitLine = new THREE.Mesh(new THREE.RingGeometry(840, 840.1, 128), new THREE.MeshBasicMaterial({
+  color: 0x444444,
+  side: THREE.DoubleSide,
+  transparent: true,
+  opacity: 0.3
+}));
+saturnOrbitLine.rotation.x = Math.PI / 2;
+saturnOrbitLine.name = 'orbitLine';
+scene.add(saturnOrbitLine);
+const uranusOrbit = new THREE.Object3D();
+scene.add(uranusOrbit);
+const uranusGeometry = new THREE.SphereGeometry(2.5, 32, 32);
+const uranusTexture = textureLoader.load('Uranus.png');
+const uranusMaterial = new THREE.MeshPhongMaterial({
+  map: uranusTexture,
+  bumpMap: uranusTexture,
+  bumpScale: 0.1,
+  specular: new THREE.Color(0x111111),
+  shininess: 5
+});
+const uranus = new THREE.Mesh(uranusGeometry, uranusMaterial);
+uranus.rotation.x = AXIAL_TILTS.uranus;
+uranus.position.x = 1080;
+uranus.userData.name = 'Uranus';
+uranusOrbit.add(uranus);
+const uranusRingGeometry = new THREE.RingGeometry(3.5, 6.0, 64);
+const uranusRingTexture = textureLoader.load('Rings.png');
+const uranusRingMaterial = new THREE.MeshPhongMaterial({
+  map: uranusRingTexture,
+  side: THREE.DoubleSide,
+  transparent: true,
+  opacity: 0.6,
+  specular: new THREE.Color(0x333333),
+  shininess: 25,
+  bumpMap: uranusRingTexture,
+  bumpScale: 0.05
+});
+const uranusRing = new THREE.Mesh(uranusRingGeometry, uranusRingMaterial);
+uranusRing.rotation.x = Math.PI / 2;
+uranusRing.position.y = 0;
+uranusRing.rotation.z = AXIAL_TILTS.uranus;
+uranusRing.name = 'uranusRing';
+uranus.add(uranusRing);
+const uranusOrbitLine = new THREE.Mesh(new THREE.RingGeometry(1080, 1080.1, 128), new THREE.MeshBasicMaterial({
+  color: 0x444444,
+  side: THREE.DoubleSide,
+  transparent: true,
+  opacity: 0.3
+}));
+uranusOrbitLine.rotation.x = Math.PI / 2;
+uranusOrbitLine.name = 'orbitLine';
+scene.add(uranusOrbitLine);
+const neptuneOrbit = new THREE.Object3D();
+scene.add(neptuneOrbit);
+const neptuneGeometry = new THREE.SphereGeometry(2.3, 32, 32);
+const neptuneTexture = textureLoader.load('Neptune.jpg');
+const neptuneMaterial = new THREE.MeshPhongMaterial({
+  map: neptuneTexture,
+  bumpMap: neptuneTexture,
+  bumpScale: 0.1,
+  specular: new THREE.Color(0x111111),
+  shininess: 5
+});
+const neptune = new THREE.Mesh(neptuneGeometry, neptuneMaterial);
+neptune.rotation.x = AXIAL_TILTS.neptune;
+neptune.position.x = 1360;
+neptune.userData.name = 'Neptune';
+neptuneOrbit.add(neptune);
+const neptuneOrbitLine = new THREE.Mesh(new THREE.RingGeometry(1360, 1360.1, 128), new THREE.MeshBasicMaterial({
+  color: 0x444444,
+  side: THREE.DoubleSide,
+  transparent: true,
+  opacity: 0.3
+}));
+neptuneOrbitLine.rotation.x = Math.PI / 2;
+neptuneOrbitLine.name = 'orbitLine';
+scene.add(neptuneOrbitLine);
+const plutoOrbit = new THREE.Object3D();
+scene.add(plutoOrbit);
+const plutoGeometry = new THREE.SphereGeometry(0.8, 32, 32);
+const plutoTexture = textureLoader.load('Pluto.jpg');
+const plutoMaterial = new THREE.MeshPhongMaterial({
+  map: plutoTexture,
+  bumpMap: plutoTexture,
+  bumpScale: 0.1,
+  specular: new THREE.Color(0x111111),
+  shininess: 5
+});
+const pluto = new THREE.Mesh(plutoGeometry, plutoMaterial);
+pluto.rotation.x = AXIAL_TILTS.pluto;
+pluto.position.x = 1600;
+pluto.userData.name = 'Pluto';
+plutoOrbit.add(pluto);
+const plutoOrbitLine = new THREE.Mesh(new THREE.RingGeometry(1600, 1600.1, 128), new THREE.MeshBasicMaterial({
+  color: 0x444444,
+  side: THREE.DoubleSide,
+  transparent: true,
+  opacity: 0.3
+}));
+plutoOrbitLine.rotation.x = Math.PI / 2;
+plutoOrbitLine.name = 'orbitLine';
+scene.add(plutoOrbitLine);
+const haumeaOrbit = new THREE.Object3D();
+scene.add(haumeaOrbit);
+const haumeaGeometry = new THREE.SphereGeometry(0.7, 32, 32);
+haumeaGeometry.scale(1.9, 1, 1.4);
+const haumeaTexture = textureLoader.load('haumea.jpg');
+const haumeaMaterial = new THREE.MeshPhongMaterial({
+  map: haumeaTexture,
+  bumpMap: haumeaTexture,
+  bumpScale: 0.1,
+  specular: new THREE.Color(0x111111),
+  shininess: 5
+});
+const haumea = new THREE.Mesh(haumeaGeometry, haumeaMaterial);
+haumea.rotation.x = AXIAL_TILTS.haumea;
+haumea.position.x = 1760;
+haumea.userData.name = 'Haumea';
+haumeaOrbit.add(haumea);
+const haumeaOrbitLine = new THREE.Mesh(new THREE.RingGeometry(1760, 1760.1, 128), new THREE.MeshBasicMaterial({
+  color: 0x444444,
+  side: THREE.DoubleSide,
+  transparent: true,
+  opacity: 0.3
+}));
+haumeaOrbitLine.rotation.x = Math.PI / 2;
+haumeaOrbitLine.name = 'orbitLine';
+scene.add(haumeaOrbitLine);
+const makemakeOrbit = new THREE.Object3D();
+scene.add(makemakeOrbit);
+const makemakeGeometry = new THREE.SphereGeometry(0.7, 32, 32);
+const makemakeTexture = textureLoader.load('makemake.jpg');
+const makemakeMaterial = new THREE.MeshPhongMaterial({
+  map: makemakeTexture,
+  bumpMap: makemakeTexture,
+  bumpScale: 0.1,
+  specular: new THREE.Color(0x111111),
+  shininess: 5
+});
+const makemake = new THREE.Mesh(makemakeGeometry, makemakeMaterial);
+makemake.rotation.x = AXIAL_TILTS.makemake;
+makemake.position.x = 1920;
+makemake.userData.name = 'Makemake';
+makemakeOrbit.add(makemake);
+const makemakeOrbitLine = new THREE.Mesh(new THREE.RingGeometry(1920, 1920.1, 128), new THREE.MeshBasicMaterial({
+  color: 0x444444,
+  side: THREE.DoubleSide,
+  transparent: true,
+  opacity: 0.3
+}));
+makemakeOrbitLine.rotation.x = Math.PI / 2;
+makemakeOrbitLine.name = 'orbitLine';
+scene.add(makemakeOrbitLine);
+const erisOrbit = new THREE.Object3D();
+scene.add(erisOrbit);
+const erisGeometry = new THREE.SphereGeometry(0.9, 32, 32);
+const erisTexture = textureLoader.load('eris.jpg');
+const erisMaterial = new THREE.MeshPhongMaterial({
+  map: erisTexture,
+  bumpMap: erisTexture,
+  bumpScale: 0.1,
+  specular: new THREE.Color(0x111111),
+  shininess: 5
+});
+const eris = new THREE.Mesh(erisGeometry, erisMaterial);
+eris.rotation.x = AXIAL_TILTS.eris;
+eris.position.x = 2080;
+eris.userData.name = 'Eris';
+erisOrbit.add(eris);
+const erisOrbitLine = new THREE.Mesh(new THREE.RingGeometry(2080, 2080.1, 128), new THREE.MeshBasicMaterial({
+  color: 0x444444,
+  side: THREE.DoubleSide,
+  transparent: true,
+  opacity: 0.3
+}));
+erisOrbitLine.rotation.x = Math.PI / 2;
+erisOrbitLine.name = 'orbitLine';
+scene.add(erisOrbitLine);
+const mirandaOrbit = new THREE.Object3D();
+uranus.add(mirandaOrbit);
+const mirandaGeometry = new THREE.SphereGeometry(0.4, 32, 32);
+const mirandaTexture = textureLoader.load('Miranda.png');
+const mirandaMaterial = new THREE.MeshPhongMaterial({
+  map: mirandaTexture,
+  bumpMap: mirandaTexture,
+  bumpScale: 0.1,
+  specular: new THREE.Color(0x111111),
+  shininess: 5
+});
+const miranda = new THREE.Mesh(mirandaGeometry, mirandaMaterial);
+miranda.position.x = 5;
+miranda.userData.name = 'Miranda';
+mirandaOrbit.add(miranda);
+const arielOrbit = new THREE.Object3D();
+uranus.add(arielOrbit);
+const arielGeometry = new THREE.SphereGeometry(0.5, 32, 32);
+const arielTexture = textureLoader.load('Ariel.png');
+const arielMaterial = new THREE.MeshPhongMaterial({
+  map: arielTexture,
+  bumpMap: arielTexture,
+  bumpScale: 0.1,
+  specular: new THREE.Color(0x111111),
+  shininess: 5
+});
+const ariel = new THREE.Mesh(arielGeometry, arielMaterial);
+ariel.position.x = 8;
+ariel.userData.name = 'Ariel';
+arielOrbit.add(ariel);
+const umbrielOrbit = new THREE.Object3D();
+uranus.add(umbrielOrbit);
+const umbrielGeometry = new THREE.SphereGeometry(0.5, 32, 32);
+const umbrielTexture = textureLoader.load('Umbriel.jpg');
+const umbrielMaterial = new THREE.MeshPhongMaterial({
+  map: umbrielTexture,
+  bumpMap: umbrielTexture,
+  bumpScale: 0.1,
+  specular: new THREE.Color(0x111111),
+  shininess: 5
+});
+const umbriel = new THREE.Mesh(umbrielGeometry, umbrielMaterial);
+umbriel.position.x = 11;
+umbriel.userData.name = 'Umbriel';
+umbrielOrbit.add(umbriel);
+const titaniaOrbit = new THREE.Object3D();
+uranus.add(titaniaOrbit);
+const titaniaGeometry = new THREE.SphereGeometry(0.6, 32, 32);
+const titaniaTexture = textureLoader.load('Titania.jpg');
+const titaniaMaterial = new THREE.MeshPhongMaterial({
+  map: titaniaTexture,
+  bumpMap: titaniaTexture,
+  bumpScale: 0.1,
+  specular: new THREE.Color(0x111111),
+  shininess: 5
+});
+const titania = new THREE.Mesh(titaniaGeometry, titaniaMaterial);
+titania.position.x = 14;
+titania.userData.name = 'Titania';
+titaniaOrbit.add(titania);
+const oberonOrbit = new THREE.Object3D();
+uranus.add(oberonOrbit);
+const oberonGeometry = new THREE.SphereGeometry(0.6, 32, 32);
+const oberonTexture = textureLoader.load('Oberon.jpg');
+const oberonMaterial = new THREE.MeshPhongMaterial({
+  map: oberonTexture,
+  bumpMap: oberonTexture,
+  bumpScale: 0.1,
+  specular: new THREE.Color(0x111111),
+  shininess: 5
+});
+const oberon = new THREE.Mesh(oberonGeometry, oberonMaterial);
+oberon.position.x = 17;
+oberon.userData.name = 'Oberon';
+oberonOrbit.add(oberon);
+const mirandaOrbitLine = new THREE.Mesh(new THREE.RingGeometry(5, 5.05, 64), new THREE.MeshBasicMaterial({
+  color: 0x444444,
+  side: THREE.DoubleSide,
+  transparent: true,
+  opacity: 0.3
+}));
+mirandaOrbitLine.rotation.x = Math.PI / 2;
+mirandaOrbitLine.name = 'orbitLine';
+uranus.add(mirandaOrbitLine);
+const arielOrbitLine = new THREE.Mesh(new THREE.RingGeometry(8, 8.05, 64), new THREE.MeshBasicMaterial({
+  color: 0x444444,
+  side: THREE.DoubleSide,
+  transparent: true,
+  opacity: 0.3
+}));
+arielOrbitLine.rotation.x = Math.PI / 2;
+arielOrbitLine.name = 'orbitLine';
+uranus.add(arielOrbitLine);
+const umbrielOrbitLine = new THREE.Mesh(new THREE.RingGeometry(11, 11.05, 64), new THREE.MeshBasicMaterial({
+  color: 0x444444,
+  side: THREE.DoubleSide,
+  transparent: true,
+  opacity: 0.3
+}));
+umbrielOrbitLine.rotation.x = Math.PI / 2;
+umbrielOrbitLine.name = 'orbitLine';
+uranus.add(umbrielOrbitLine);
+const titaniaOrbitLine = new THREE.Mesh(new THREE.RingGeometry(14, 14.05, 64), new THREE.MeshBasicMaterial({
+  color: 0x444444,
+  side: THREE.DoubleSide,
+  transparent: true,
+  opacity: 0.3
+}));
+titaniaOrbitLine.rotation.x = Math.PI / 2;
+titaniaOrbitLine.name = 'orbitLine';
+uranus.add(titaniaOrbitLine);
+const oberonOrbitLine = new THREE.Mesh(new THREE.RingGeometry(17, 17.05, 64), new THREE.MeshBasicMaterial({
+  color: 0x444444,
+  side: THREE.DoubleSide,
+  transparent: true,
+  opacity: 0.3
+}));
+oberonOrbitLine.rotation.x = Math.PI / 2;
+oberonOrbitLine.name = 'orbitLine';
+uranus.add(oberonOrbitLine);
+camera.position.z = 10000;
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.dampingFactor = 0.05;
+controls.screenSpacePanning = false;
+controls.minDistance = 0.1;
+controls.maxDistance = 100000;
+let time = 0;
+let focusedObject = null;
+let movementSpeed = 1.0;
+let isFirstPerson = false;
+let isLanded = false;
+let highlightedObject = null;
+const highlightGeometry = new THREE.RingGeometry(1.2, 1.3, 32);
+const highlightMaterial = new THREE.MeshBasicMaterial({
+  color: 0xffffff,
+  side: THREE.DoubleSide,
+  transparent: true,
+  opacity: 0
+});
+const highlightMesh = new THREE.Mesh(highlightGeometry, highlightMaterial);
+highlightMesh.visible = false;
+scene.add(highlightMesh);
+[mercury, venus, earth, mars, jupiter, saturn, uranus, neptune, ceres, pluto, haumea, makemake, eris, moon, europa, callisto, ganymede, io, titan, rhea, iapetus, dione, tethys, enceladus, mimas, miranda, ariel, umbriel, titania, oberon].forEach(mesh => {
+  mesh.castShadow = true;
+  mesh.receiveShadow = true;
+  mesh.material.ambient = new THREE.Color(0x000000);
+  mesh.material.ambient = 0;
+});
+[mercuryMaterial, venusMaterial, earthMaterial, marsMaterial, jupiterMaterial, saturnMaterial, uranusMaterial, neptuneMaterial, ceresMaterial, plutoMaterial, haumeaMaterial, makemakeMaterial, erisMaterial, mirandaMaterial, arielMaterial, umbrielMaterial, titaniaMaterial, oberonMaterial].forEach(material => {
+  material.needsUpdate = true;
+  material.ambient = new THREE.Color(0x000000);
+  material.ambient = 0;
+});
+window.addEventListener('click', event => {
+  if (!isFirstPerson) {
+    mouse.x = event.clientX / window.innerWidth * 2 - 1;
+    mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+    raycaster.setFromCamera(mouse, camera);
+    const meshes = [];
+    scene.traverse(object => {
+      if (object instanceof THREE.Mesh) {
+        meshes.push(object);
+      }
+    });
+    const intersects = raycaster.intersectObjects(meshes);
+    if (intersects.length > 0) {
+      if (!intersects[0].object.name?.includes('OrbitLine') && intersects[0].object !== saturnRing && intersects[0].object !== uranusRing && intersects[0].object !== sun && intersects[0].object !== lensFlareSprite) {
+        focusedObject = intersects[0].object;
+        controls.enabled = true;
+      }
+    }
+  }
+});
+document.addEventListener('keydown', event => {
+  if (event.key === 'Escape') {
+    focusedObject = null;
+    isFirstPerson = false;
+    isLanded = false;
+    controls.enabled = true;
+    document.getElementById('crosshair').style.display = 'none';
+    document.exitPointerLock();
+  }
+  if (focusedObject && !isFirstPerson && event.key === 'Enter') {
+    isFirstPerson = true;
+    controls.enabled = false;
+    document.getElementById('crosshair').style.display = 'block';
+    document.body.requestPointerLock();
+  }
+  if (isFirstPerson) {
+    const worldPosition = new THREE.Vector3();
+    focusedObject.getWorldPosition(worldPosition);
+    const distance = camera.position.distanceTo(worldPosition);
+    const radius = focusedObject.geometry?.parameters?.radius || 1;
+    if (distance <= radius * LANDING_DISTANCE) {
+      isLanded = true;
+    }
+    let moveSpeed = isLanded ? LANDED_MOVE_SPEED : movementSpeed;
+    switch (event.key.toLowerCase()) {
+      case 'w':
+        camera.position.z -= Math.cos(camera.rotation.y) * moveSpeed;
+        camera.position.x -= Math.sin(camera.rotation.y) * moveSpeed;
+        break;
+      case 's':
+        camera.position.z += Math.cos(camera.rotation.y) * moveSpeed;
+        camera.position.x += Math.sin(camera.rotation.y) * moveSpeed;
+        break;
+      case 'a':
+        camera.position.x -= Math.cos(camera.rotation.y) * moveSpeed;
+        camera.position.z += Math.sin(camera.rotation.y) * moveSpeed;
+        break;
+      case 'd':
+        camera.position.x += Math.cos(camera.rotation.y) * moveSpeed;
+        camera.position.z -= Math.sin(camera.rotation.y) * moveSpeed;
+        break;
+      case ' ':
+        if (isLanded) {
+          camera.position.y += moveSpeed;
+          isLanded = false;
+        }
+        break;
+    }
+    if (isLanded) {
+      const surfacePoint = worldPosition.clone().normalize().multiplyScalar(radius + LANDED_HEIGHT);
+      camera.position.y = surfacePoint.y;
+    }
+  }
+});
+document.addEventListener('wheel', event => {
+  if (focusedObject && !isFirstPerson) {
+    event.preventDefault();
+    const worldPosition = new THREE.Vector3();
+    focusedObject.getWorldPosition(worldPosition);
+    const radius = focusedObject.geometry?.parameters?.radius || 1;
+    let newZoom;
+    if (event.deltaY < 0) {
+      newZoom = Math.max(MIN_ZOOM, currentZoom - ZOOM_SPEED);
+    } else {
+      newZoom = Math.min(MAX_ZOOM, currentZoom + ZOOM_SPEED);
+    }
+    const newDistance = radius * newZoom;
+    if (newDistance >= radius + MIN_SURFACE_DISTANCE) {
+      currentZoom = newZoom;
+    }
+  }
+}, {
+  passive: false
+});
+document.addEventListener('mousemove', event => {
+  if (isFirstPerson && document.pointerLockElement) {
+    camera.rotation.y -= event.movementX * 0.002;
+    camera.rotation.x -= event.movementY * 0.002;
+    camera.rotation.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, camera.rotation.x));
+  } else {
+    mouse.x = event.clientX / window.innerWidth * 2 - 1;
+    mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+    raycaster.setFromCamera(mouse, camera);
+    const meshes = [];
+    scene.traverse(object => {
+      if (object instanceof THREE.Mesh && !object.name?.includes('orbitLine') && object !== saturnRing && object !== uranusRing && object !== sun && object !== lensFlareSprite) {
+        meshes.push(object);
+      }
+    });
+    const intersects = raycaster.intersectObjects(meshes);
+    if (intersects.length > 0) {
+      if (highlightedObject !== intersects[0].object) {
+        highlightedObject = intersects[0].object;
+        highlightMesh.visible = true;
+        highlightMesh.material.opacity = 0;
+        highlightMesh.scale.set(0.8, 0.8, 0.8);
+        gsap.to(highlightMesh.material, {
+          opacity: 0.3,
+          duration: 0.3,
+          ease: "power2.out"
+        });
+        gsap.to(highlightMesh.scale, {
+          x: 1,
+          y: 1,
+          z: 1,
+          duration: 0.3,
+          ease: "back.out"
+        });
+      }
+    } else {
+      if (highlightedObject) {
+        gsap.to(highlightMesh.material, {
+          opacity: 0,
+          duration: 0.2,
+          ease: "power2.in",
+          onComplete: () => {
+            highlightMesh.visible = false;
+            highlightedObject = null;
+          }
+        });
+      }
+    }
+  }
+});
+function animate() {
+  requestAnimationFrame(animate);
+  if (!isLanded) {
+    mercury.rotation.y += 0.0075 * 0.5 * 0.5;
+    venus.rotation.y += 0.006 * 0.5 * 0.5;
+    earth.rotation.y += 0.005 * 0.5 * 0.5;
+    mars.rotation.y += 0.004 * 0.5 * 0.5;
+    jupiter.rotation.y += 0.003 * 0.5 * 0.5;
+    saturn.rotation.y += 0.0025 * 0.5 * 0.5;
+    uranus.rotation.y += 0.002 * 0.5 * 0.5;
+    neptune.rotation.y += 0.0015 * 0.5 * 0.5;
+    ceres.rotation.y += 0.0035 * 0.5 * 0.5;
+    pluto.rotation.y += 0.001 * 0.5 * 0.5;
+    haumea.rotation.y += 0.001 * 0.5 * 0.5;
+    makemake.rotation.y += 0.001 * 0.5 * 0.5;
+    eris.rotation.y += 0.001 * 0.5 * 0.5;
+    sun.rotation.y += 0.001 * 0.5 * 0.5;
+    stars.rotation.y += 0.00005 * 0.5 * 0.5;
+    lensFlareSprite.rotation.z += 0.001 * 0.5 * 0.5;
+    phobosOrbit.rotation.y += 0.008 * 0.5 * 0.5;
+    deimosOrbit.rotation.y += 0.004 * 0.5 * 0.5;
+    earthAtmosphere.rotation.y += 0.001 * 0.5 * 0.5;
+    clouds.rotation.y += 0.001 * 0.5 * 0.5;
+    time += 0.0025 * 0.5 * 0.5;
+    mercuryOrbit.rotation.y = time * 0.4;
+    venusOrbit.rotation.y = time * 0.7;
+    earthOrbit.rotation.y = time * 0.6;
+    moonOrbit.rotation.y = time;
+    marsOrbit.rotation.y = time * 0.5;
+    jupiterOrbit.rotation.y = time * 0.3;
+    saturnOrbit.rotation.y = time * 0.2;
+    uranusOrbit.rotation.y = time * 0.15;
+    neptuneOrbit.rotation.y = time * 0.1;
+    ceresOrbit.rotation.y = time * 0.4;
+    plutoOrbit.rotation.y = time * 0.08;
+    haumeaOrbit.rotation.y = time * 0.07;
+    makemakeOrbit.rotation.y = time * 0.06;
+    erisOrbit.rotation.y = time * 0.05;
+    europaOrbit.rotation.y += 0.006 * 0.5 * 0.5;
+    callistoOrbit.rotation.y += 0.003 * 0.5 * 0.5;
+    ganymedeOrbit.rotation.y += 0.004 * 0.5 * 0.5;
+    ioOrbit.rotation.y += 0.008 * 0.5 * 0.5;
+    titanOrbit.rotation.y += 0.005 * 0.5 * 0.5;
+    rheaOrbit.rotation.y += 0.006 * 0.5 * 0.5;
+    iapetusOrbit.rotation.y += 0.003 * 0.5 * 0.5;
+    dioneOrbit.rotation.y += 0.007 * 0.5 * 0.5;
+    tethysOrbit.rotation.y += 0.008 * 0.5 * 0.5;
+    enceladusOrbit.rotation.y += 0.009 * 0.5 * 0.5;
+    mimasOrbit.rotation.y += 0.01 * 0.5 * 0.5;
+    mirandaOrbit.rotation.y += 0.01 * 0.5 * 0.5;
+    arielOrbit.rotation.y += 0.009 * 0.5 * 0.5;
+    umbrielOrbit.rotation.y += 0.008 * 0.5 * 0.5;
+    titaniaOrbit.rotation.y += 0.007 * 0.5 * 0.5;
+    oberonOrbit.rotation.y += 0.006 * 0.5 * 0.5;
+  }
+  if (focusedObject && !isFirstPerson) {
+    const worldPosition = new THREE.Vector3();
+    focusedObject.getWorldPosition(worldPosition);
+    controls.target.copy(worldPosition);
+    const radius = focusedObject.geometry?.parameters?.radius || 1;
+    const distance = radius * currentZoom;
+    const cameraOffset = new THREE.Vector3(0, 0, distance);
+    cameraOffset.applyQuaternion(camera.quaternion);
+    camera.position.copy(worldPosition).add(cameraOffset);
+  }
+  if (controls.enabled) {
+    controls.update();
+  }
+  sunLight.position.copy(sun.position);
+  if (focusedObject === moon && !isFirstPerson) {
+    const worldPosition = new THREE.Vector3();
+    moon.getWorldPosition(worldPosition);
+    const distance = camera.position.distanceTo(worldPosition);
+    const radius = moon.geometry.parameters.radius;
+    if (distance < radius + MIN_SURFACE_DISTANCE) {
+      const dir = camera.position.clone().sub(worldPosition).normalize();
+      const surfacePoint = worldPosition.clone().add(dir.multiplyScalar(radius + LANDING_HEIGHT));
+      camera.position.copy(surfacePoint);
+      camera.lookAt(worldPosition);
+    }
+  }
+  if (highlightedObject) {
+    const worldPosition = new THREE.Vector3();
+    highlightedObject.getWorldPosition(worldPosition);
+    highlightMesh.position.copy(worldPosition);
+    const scale = highlightedObject.geometry.parameters.radius * 2;
+    highlightMesh.scale.set(scale, scale, scale);
+    highlightMesh.lookAt(camera.position);
+  }
+  renderer.render(scene, camera);
+}
+window.addEventListener('resize', () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
+animate();</script>
+</body></html>
