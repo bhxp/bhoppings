@@ -1,0 +1,336 @@
+<html><head><base href="/">
+<meta charset="UTF-8">
+<style>
+  body {
+    margin: 0;
+    overflow: hidden;
+    background: #000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    font-family: monospace;
+  }
+  canvas {
+    background: #000;
+    cursor: pointer;
+  }
+  .controls {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    color: #fff;
+    background: rgba(0,0,0,0.7);
+    padding: 10px;
+    border-radius: 5px;
+  }
+  .toggle-btn {
+    background: #444;
+    color: #fff;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 3px;
+    cursor: pointer;
+    margin-top: 10px;
+  }
+  .toggle-btn.active {
+    background: #0f0;
+  }
+  .button-group {
+    display: flex;
+    gap: 5px;
+    margin-top: 10px;
+  }
+  .audio-controls {
+    margin-top: 10px;
+    border-top: 1px solid #333;
+    padding-top: 10px;
+  }
+  .copyright-window {
+    display: none;
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: rgba(0,0,0,0.9);
+    color: #fff;
+    padding: 20px;
+    border-radius: 5px;
+    border: 1px solid #333;
+    max-width: 400px;
+    font-size: 12px;
+  }
+  .copyright-window.show {
+    display: block;
+  }
+  .copyright-window h3 {
+    margin-top: 0;
+    color: #0f0;
+  }
+  .copyright-window a {
+    color: #0f0;
+    text-decoration: none;
+  }
+  .copyright-window a:hover {
+    text-decoration: underline;
+  }
+</style>
+</head>
+<body>
+<div class="controls">
+  Mouse: Drag to rotate | Wheel to zoom<br>
+  R: <input type="range" id="radiusR" min="50" max="200" value="100"><br>
+  r: <input type="range" id="radiusr" min="20" max="80" value="40"><br>
+  d: <input type="range" id="distanceD" min="30" max="120" value="60"><br>
+  Speed: <input type="range" id="speedControl" min="500" max="5000" value="2000"><br>
+  <div class="button-group">
+    <button class="toggle-btn" id="autoToggle">Auto Change</button>
+    <button class="toggle-btn" id="rotateLeftBtn">&#x2190; Rotate</button>
+    <button class="toggle-btn" id="rotateRightBtn">Rotate &#x2192;</button>
+  </div>
+  <div class="audio-controls">
+    Audio: <button class="toggle-btn" id="audioToggle">Play/Pause</button><br>
+    Volume: <input type="range" id="volumeControl" min="0" max="100" value="50"><br>
+    BPM: <input type="range" id="bpmControl" min="60" max="180" value="120"><br>
+    Waveform: <select id="waveformSelect">
+      <option value="sine">Sine</option>
+      <option value="square">Square</option>
+      <option value="sawtooth">Sawtooth</option>
+      <option value="triangle">Triangle</option>
+    </select>
+  </div>
+  <button class="toggle-btn" id="copyrightBtn">Show Credits</button>
+</div>
+
+<div class="copyright-window" id="copyrightWindow">
+  <h3>Credits &amp; Attributions</h3>
+  <p><strong>ASCII Hypocycloid Visualizer</strong><br>
+  Version 1.0.0</p>
+  
+  <p><strong>Created by:</strong><br>
+  Interactive ASCII Art Collaboration between Sonnet 3.5 (and therefore lots of people&apos;s training data) and Raymond Curtis Dukes</p>
+  
+  <p><strong>Technologies Used:</strong></p>
+  <ul>
+    <li>HTML5 Canvas</li>
+    <li>Web Audio API</li>
+    <li>JavaScript ES6+</li>
+  </ul>
+  
+  <p><strong>License:</strong><br>
+  MIT License</p>
+  
+  <p><strong>Copyright &#xa9; 2024</strong></p>
+  
+  <p>Permission is hereby granted, free of charge, to any person obtaining a copy
+  of this software and associated documentation files, to deal in the Software without
+  restriction, including without limitation the rights to use, copy, modify, merge,
+  publish, distribute, sublicense, and/or sell copies of the Software.</p>
+  
+  <button class="toggle-btn" onclick="document.getElementById(&apos;copyrightWindow&apos;).classList.remove(&apos;show&apos;)">Close</button>
+</div>
+
+<canvas id="asciiCanvas"></canvas>
+
+<script>const canvas = document.getElementById('asciiCanvas');
+const ctx = canvas.getContext('2d');
+const radiusRSlider = document.getElementById('radiusR');
+const radiusrSlider = document.getElementById('radiusr');
+const distanceDSlider = document.getElementById('distanceD');
+const speedControl = document.getElementById('speedControl');
+const autoToggle = document.getElementById('autoToggle');
+const rotateLeftBtn = document.getElementById('rotateLeftBtn');
+const rotateRightBtn = document.getElementById('rotateRightBtn');
+const audioToggle = document.getElementById('audioToggle');
+const volumeControl = document.getElementById('volumeControl');
+const bpmControl = document.getElementById('bpmControl');
+const waveformSelect = document.getElementById('waveformSelect');
+const copyrightBtn = document.getElementById('copyrightBtn');
+const copyrightWindow = document.getElementById('copyrightWindow');
+copyrightBtn.addEventListener('click', () => {
+  copyrightWindow.classList.toggle('show');
+  copyrightBtn.classList.toggle('active');
+});
+let audioContext;
+let isPlaying = false;
+let currentNote = 0;
+let currentChord = 0;
+const baseNotes = [261.63, 329.63, 392.00, 523.25];
+const chordProgressions = [[1, 1, 1, 1], [0.891, 0.891, 0.891, 0.891], [0.667, 0.667, 0.667, 0.667], [0.749, 0.749, 0.749, 0.749]];
+let arpIndex = 0;
+function initAudio() {
+  audioContext = new (window.AudioContext || window.webkitAudioContext)();
+}
+function playNote(frequency, duration) {
+  if (!audioContext) return;
+  const oscillator = audioContext.createOscillator();
+  const gainNode = audioContext.createGain();
+  const filterNode = audioContext.createBiquadFilter();
+  oscillator.type = waveformSelect.value;
+  oscillator.frequency.value = frequency;
+  filterNode.type = 'lowpass';
+  filterNode.frequency.value = 1000 + Math.sin(Date.now() * 0.001) * 500;
+  gainNode.gain.value = volumeControl.value / 100;
+  gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+  gainNode.gain.linearRampToValueAtTime(volumeControl.value / 100, audioContext.currentTime + 0.01);
+  gainNode.gain.exponentialRampToValueAtTime(0.00001, audioContext.currentTime + duration);
+  oscillator.connect(filterNode);
+  filterNode.connect(gainNode);
+  gainNode.connect(audioContext.destination);
+  oscillator.start();
+  oscillator.stop(audioContext.currentTime + duration);
+}
+function updateMusic() {
+  if (!isPlaying) return;
+  const bpm = parseInt(bpmControl.value);
+  const beatDuration = 60 / bpm;
+  const currentScale = chordProgressions[currentChord];
+  const noteFreq = baseNotes[arpIndex] * currentScale[arpIndex];
+  playNote(noteFreq, beatDuration * 0.8);
+  arpIndex = (arpIndex + 1) % 4;
+  if (arpIndex === 0) {
+    currentChord = (currentChord + 1) % chordProgressions.length;
+  }
+  setTimeout(updateMusic, beatDuration * 1000);
+}
+audioToggle.addEventListener('click', () => {
+  if (!audioContext) initAudio();
+  isPlaying = !isPlaying;
+  audioToggle.classList.toggle('active');
+  if (isPlaying) {
+    currentNote = 0;
+    currentChord = 0;
+    arpIndex = 0;
+    updateMusic();
+  }
+});
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+const asciiChars = ['@', '#', '$', '=', '*', '!', ';', ':', '~', '-', '.', ' '];
+let R = 100;
+let r = 40;
+let d = 60;
+let scale = 1.5;
+let rotation = 0;
+let isDragging = false;
+let lastMouseX = 0;
+let lastMouseY = 0;
+let isAutoChanging = false;
+let lastAutoChangeTime = 0;
+let autoRotateSpeed = 0;
+function autoChangeSettings() {
+  if (!isAutoChanging) return;
+  const currentTime = Date.now();
+  const changeInterval = parseInt(speedControl.value);
+  if (currentTime - lastAutoChangeTime > changeInterval) {
+    R = Math.random() * 150 + 50;
+    r = Math.random() * 60 + 20;
+    d = Math.random() * 90 + 30;
+    radiusRSlider.value = R;
+    radiusrSlider.value = r;
+    distanceDSlider.value = d;
+    points = generatePoints();
+    lastAutoChangeTime = currentTime;
+  }
+}
+autoToggle.addEventListener('click', () => {
+  isAutoChanging = !isAutoChanging;
+  autoToggle.classList.toggle('active');
+  lastAutoChangeTime = Date.now();
+});
+rotateLeftBtn.addEventListener('click', () => {
+  if (autoRotateSpeed === -0.02) {
+    autoRotateSpeed = 0;
+    rotateLeftBtn.classList.remove('active');
+  } else {
+    autoRotateSpeed = -0.02;
+    rotateLeftBtn.classList.add('active');
+    rotateRightBtn.classList.remove('active');
+  }
+});
+rotateRightBtn.addEventListener('click', () => {
+  if (autoRotateSpeed === 0.02) {
+    autoRotateSpeed = 0;
+    rotateRightBtn.classList.remove('active');
+  } else {
+    autoRotateSpeed = 0.02;
+    rotateRightBtn.classList.add('active');
+    rotateLeftBtn.classList.remove('active');
+  }
+});
+function generateHypocycloid(t) {
+  const x = (R - r) * Math.cos(t) + d * Math.cos((R - r) * t / r);
+  const y = (R - r) * Math.sin(t) - d * Math.sin((R - r) * t / r);
+  return {
+    x,
+    y
+  };
+}
+function generatePoints() {
+  const points = [];
+  for (let t = 0; t < Math.PI * 20; t += 0.05) {
+    const point = generateHypocycloid(t);
+    points.push(point);
+  }
+  return points;
+}
+let points = generatePoints();
+const centerX = canvas.width / 2;
+const centerY = canvas.height / 2;
+function animate() {
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.font = '12px monospace';
+  ctx.fillStyle = '#fff';
+  autoChangeSettings();
+  rotation += autoRotateSpeed;
+  points.forEach((point, i) => {
+    const x = centerX + point.x * scale;
+    const y = centerY + point.y * scale;
+    const rotatedX = Math.cos(rotation) * (x - centerX) - Math.sin(rotation) * (y - centerY) + centerX;
+    const rotatedY = Math.sin(rotation) * (x - centerX) + Math.cos(rotation) * (y - centerY) + centerY;
+    const charIndex = Math.floor(Math.abs(Math.sin(i * 0.1 + Date.now() * 0.001)) * (asciiChars.length - 1));
+    const char = asciiChars[charIndex];
+    ctx.fillText(char, rotatedX, rotatedY);
+  });
+  requestAnimationFrame(animate);
+}
+canvas.addEventListener('mousedown', e => {
+  isDragging = true;
+  lastMouseX = e.clientX;
+  lastMouseY = e.clientY;
+});
+canvas.addEventListener('mousemove', e => {
+  if (isDragging) {
+    const deltaX = e.clientX - lastMouseX;
+    const deltaY = e.clientY - lastMouseY;
+    rotation += deltaX * 0.01;
+    lastMouseX = e.clientX;
+    lastMouseY = e.clientY;
+  }
+});
+canvas.addEventListener('mouseup', () => {
+  isDragging = false;
+});
+canvas.addEventListener('wheel', e => {
+  e.preventDefault();
+  scale *= e.deltaY > 0 ? 0.9 : 1.1;
+  scale = Math.max(0.1, Math.min(scale, 8));
+});
+radiusRSlider.addEventListener('input', e => {
+  R = parseInt(e.target.value);
+  points = generatePoints();
+});
+radiusrSlider.addEventListener('input', e => {
+  r = parseInt(e.target.value);
+  points = generatePoints();
+});
+distanceDSlider.addEventListener('input', e => {
+  d = parseInt(e.target.value);
+  points = generatePoints();
+});
+window.addEventListener('resize', () => {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+});
+animate();</script>
+</body></html>
