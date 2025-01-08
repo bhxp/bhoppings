@@ -1,0 +1,3986 @@
+<html><head><base href="."><title>Ragdoll Physics Engine V3</title><style>
+body {
+    margin: 0;
+    overflow: hidden;
+    background: #1a1a1a;
+    font-family: Arial, sans-serif;
+}
+
+.controls {
+    position: fixed;
+    top: 10px;
+    left: 10px;
+    color: white;
+    background: rgba(0,0,0,0.5);
+    padding: 10px;
+    border-radius: 5px;
+    display: none;
+}
+
+button {
+    background: #4CAF50;
+    border: none;
+    color: white;
+    padding: 8px 16px;
+    cursor: pointer;
+    margin: 5px;
+    border-radius: 3px;
+    transition: background 0.3s;
+}
+
+button:hover {
+    background: #45a049;
+}
+
+input {
+    padding: 8px;
+    margin: 5px;
+    border-radius: 3px;
+    border: none;
+    width: 100px;
+}
+
+#canvas {
+    width: 100%;
+    height: 100vh;
+    display: none;
+}
+
+.menu {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #1a1a1a, #2c3e50);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.menu-content {
+    text-align: center;
+    color: white;
+}
+
+.menu h1 {
+    font-size: 3em;
+    margin-bottom: 30px;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+    color: #4CAF50 !important;
+}
+
+.menu-button {
+    font-size: 1.2em;
+    padding: 15px 30px;
+    margin: 10px;
+    background: #4CAF50;
+    border: none;
+    color: white;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: transform 0.2s, background 0.3s;
+}
+
+.menu-button:hover {
+    transform: scale(1.05);
+    background: #45a049;
+}
+
+.menu p {
+    animation: glow 2s ease-in-out infinite;
+}
+
+@keyframes glow {
+    0% { text-shadow: 0 0 5px rgba(76, 175, 80, 0.5); }
+    50% { text-shadow: 0 0 20px rgba(76, 175, 80, 0.8); }
+    100% { text-shadow: 0 0 5px rgba(76, 175, 80, 0.5); }
+}
+
+.credits {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.9);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 2000;
+}
+
+.credits-content {
+    background: #2c3e50;
+    padding: 30px;
+    border-radius: 10px;
+    color: white;
+    text-align: center;
+    max-width: 500px;
+}
+
+.close-credits {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: none;
+    border: none;
+    color: white;
+    font-size: 24px;
+    cursor: pointer;
+}
+
+.impact-particle {
+    position: absolute;
+    pointer-events: none;
+    background: rgba(255, 255, 255, 0.8);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+}
+
+.ripple {
+    position: absolute;
+    pointer-events: none;
+    border: 2px solid rgba(255, 255, 255, 0.5);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    animation: rippleEffect 1s ease-out forwards;
+}
+
+.blood-particle {
+    position: absolute;
+    pointer-events: none;
+    background: #ff0000;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    box-shadow: 0 0 5px rgba(255, 0, 0, 0.5);
+}
+
+.health-bar {
+    position: absolute;
+    height: 4px;
+    background: #ff0000;
+    transition: width 0.3s;
+    border-radius: 2px;
+    pointer-events: none;
+}
+
+.health-bar-bg {
+    position: absolute;
+    height: 4px;
+    background: rgba(0, 0, 0, 0.5);
+    border-radius: 2px;
+    pointer-events: none;
+}
+
+.build-controls {
+    position: fixed;
+    right: 10px;
+    top: 10px;
+    background: rgba(0,0,0,0.7);
+    padding: 10px;
+    border-radius: 5px;
+    display: none;
+}
+
+.build-button {
+    background: #444;
+    color: white;
+    padding: 8px 16px;
+    margin: 5px;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+}
+
+.build-button.active {
+    background: #4CAF50;
+}
+
+.build-preview {
+    position: absolute;
+    border: 2px dashed #4CAF50;
+    pointer-events: none;
+    background: rgba(76, 175, 80, 0.2);
+    z-index: 1000;
+    color: white;
+}
+
+.customization-panel {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(0, 0, 0, 0.9);
+    padding: 20px;
+    border-radius: 10px;
+    color: white;
+    z-index: 1000;
+    display: none;
+    min-width: 400px;
+    max-width: 500px;
+    box-shadow: 0 0 20px rgba(0,0,0,0.5);
+}
+
+.customization-panel * {
+    color: white !important;
+}
+
+.color-picker {
+    display: flex;
+    align-items: center;
+    margin: 10px 0;
+    justify-content: space-between;
+}
+
+.color-picker label {
+    margin-right: 10px;
+    color: white !important;
+}
+
+.color-picker input[type="color"] {
+    width: 50px;
+    height: 30px;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+}
+
+.close-customization {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: none;
+    border: none;
+    color: white;
+    font-size: 24px;
+    cursor: pointer;
+}
+
+.preview-container {
+    margin-top: 20px;
+    text-align: center;
+    border: 1px solid rgba(255,255,255,0.2);
+    padding: 10px;
+    border-radius: 5px;
+}
+
+#previewCanvas {
+    background: #1a1a1a;
+    border-radius: 5px;
+    margin-top: 10px;
+}
+
+@keyframes rippleEffect {
+    0% {
+        width: 0;
+        height: 0;
+        opacity: 1;
+    }
+    100% {
+        width: 100px;
+        height: 100px;
+        opacity: 0;
+    }
+}
+
+.space-scene {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    perspective: 1000px;
+    transform-style: preserve-3d;
+    overflow: hidden;
+}
+
+.stars {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    transform-style: preserve-3d;
+    animation: rotateStars 60s linear infinite;
+}
+
+.star {
+    position: absolute;
+    background: white;
+    border-radius: 50%;
+    animation: twinkle 1s infinite alternate;
+}
+
+.rocket-container {
+    position: absolute;
+    left: 60%;
+    top: 50%;
+    transform-style: preserve-3d;
+    animation: flyRocket 20s linear infinite;
+}
+
+.rocket {
+    position: relative;
+    width: 100px;
+    height: 200px;
+    transform-style: preserve-3d;
+    animation: rotateRocket 10s linear infinite;
+}
+
+.rocket-body {
+    position: absolute;
+    width: 60px;
+    height: 160px;
+    background: linear-gradient(45deg, #ff4444, #ff6666);
+    border-radius: 30px 30px 0 0;
+    transform: translateZ(30px);
+}
+
+.rocket-nose {
+    position: absolute;
+    top: -30px;
+    left: 15px;
+    width: 30px;
+    height: 30px;
+    background: #ff4444;
+    border-radius: 50% 50% 0 0;
+    transform: translateZ(30px);
+}
+
+.rocket-window {
+    position: absolute;
+    top: 40px;
+    left: 20px;
+    width: 20px;
+    height: 20px;
+    background: #88ccff;
+    border-radius: 50%;
+    border: 2px solid #444;
+    transform: translateZ(31px);
+}
+
+.rocket-flame {
+    position: absolute;
+    bottom: -40px;
+    left: 15px;
+    width: 30px;
+    height: 60px;
+    background: linear-gradient(to bottom, #ffdd44, #ff4444);
+    clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+    animation: flicker 0.1s infinite alternate;
+}
+
+.space-ragdoll {
+    position: absolute;
+    width: 30px;
+    height: 60px;
+    left: 80px;
+    top: 100px;
+    transform-style: preserve-3d;
+    animation: swingRagdoll 4s ease-in-out infinite;
+}
+
+.ragdoll-rope {
+    position: absolute;
+    width: 2px;
+    height: 80px;
+    background: #ffffff;
+    transform-origin: top;
+    left: 70px;
+    top: 80px;
+}
+
+.space-ragdoll-head {
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    background: #F5DEB3;
+    border-radius: 50%;
+    top: 0;
+    left: 5px;
+}
+
+.space-ragdoll-body {
+    position: absolute;
+    width: 20px;
+    height: 30px;
+    background: #4A90E2;
+    top: 20px;
+    left: 5px;
+}
+
+.space-ragdoll-arm {
+    position: absolute;
+    width: 8px;
+    height: 25px;
+    background: #F5DEB3;
+    transform-origin: top;
+}
+
+.space-ragdoll-leg {
+    position: absolute;
+    width: 8px;
+    height: 25px;
+    background: #2C3E50;
+    transform-origin: top;
+}
+
+@keyframes rotateStars {
+    from { transform: rotateZ(0deg); }
+    to { transform: rotateZ(360deg); }
+}
+
+@keyframes twinkle {
+    from { opacity: 0.2; }
+    to { opacity: 1; }
+}
+
+@keyframes flyRocket {
+    0% { transform: translate3d(-100%, -50%, -500px); }
+    100% { transform: translate3d(100%, -50%, 500px); }
+}
+
+@keyframes rotateRocket {
+    0% { transform: rotateY(0deg); }
+    100% { transform: rotateY(360deg); }
+}
+
+@keyframes flicker {
+    from { opacity: 0.8; transform: scaleY(0.9); }
+    to { opacity: 1; transform: scaleY(1.1); }
+}
+
+@keyframes swingRagdoll {
+    0% { transform: rotate(-10deg); }
+    50% { transform: rotate(10deg); }
+    100% { transform: rotate(-10deg); }
+}
+
+.contest-message {
+  background: rgba(0, 0, 0, 0.7);
+  padding: 20px;
+  border-radius: 10px;
+  margin: 20px;
+  max-width: 600px;
+  line-height: 1.5;
+  color: white !important;
+}
+
+.contest-message * {
+    color: white !important;
+}
+
+.contest-message a {
+  color: #4CAF50 !important;
+  text-decoration: none;
+  transition: color 0.3s;
+}
+
+.contest-message a:hover {
+  color: #45a049;
+  text-decoration: underline;
+}
+
+.rainbow-star {
+  animation: rainbowText 2s linear infinite;
+}
+
+@keyframes rainbowText {
+  0% { color: red; }
+  20% { color: orange; }
+  40% { color: yellow; }
+  60% { color: green; }
+  80% { color: blue; }
+  100% { color: violet; }
+}
+
+.ai-build-panel {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(0, 0, 0, 0.9);
+    padding: 20px;
+    border-radius: 10px;
+    color: white !important;
+    z-index: 1000;
+    display: none;
+    min-width: 400px;
+    max-width: 500px;
+    box-shadow: 0 0 20px rgba(0,0,0,0.5);
+}
+
+.ai-build-panel * {
+    color: white !important;
+}
+
+.ai-build-panel textarea {
+    width: 100%;
+    height: 100px;
+    margin: 10px 0;
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.2);
+    color: white;
+    padding: 10px;
+    border-radius: 5px;
+}
+
+.ai-build-panel .detail-slider {
+    width: 100%;
+    margin: 10px 0;
+}
+
+.snake-game {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: #000;
+  display: none;
+  z-index: 10000;
+  overflow: hidden;
+}
+
+.snake-background {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-size: cover;
+  background-position: center;
+  opacity: 0;
+  transition: opacity 2s ease-in-out;
+}
+
+.snake-background.active {
+  opacity: 1;
+}
+
+.snake-background-space {
+  background-image: linear-gradient(to bottom, #000033, #000066);
+}
+
+.snake-background-galaxy {
+  background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 800 800"><rect width="100%" height="100%" fill="%23000066"/><circle cx="400" cy="400" r="300" fill="%23000033" filter="blur(50px)"/><circle cx="300" cy="300" r="200" fill="%23000099" filter="blur(30px)"/></svg>');
+}
+
+.snake-background-earth {
+  background: linear-gradient(to bottom, #000066, #003366);
+}
+
+.snake-background-mars {
+  background: linear-gradient(to bottom, #330000, #660000);
+}
+
+.snake-background-rocket {
+  background: linear-gradient(to bottom, #000033, #000066);
+}
+
+.snake-background-nebula {
+    background: radial-gradient(circle at 50% 50%, 
+        rgba(255, 0, 255, 0.2),
+        rgba(0, 0, 255, 0.3),
+        rgba(0, 0, 0, 0.8)
+    );
+}
+
+.snake-background-aurora {
+    background: linear-gradient(45deg,
+        rgba(0, 255, 0, 0.2),
+        rgba(0, 0, 255, 0.2),
+        rgba(255, 0, 255, 0.2)
+    );
+    animation: aurora 10s infinite;
+}
+
+@keyframes aurora {
+    0% { filter: hue-rotate(0deg); }
+    100% { filter: hue-rotate(360deg); }
+}
+
+.snake-star {
+  position: absolute;
+  background: white;
+  border-radius: 50%;
+  animation: twinkle-snake 1s infinite alternate;
+}
+
+@keyframes twinkle-snake {
+  0% { opacity: 0.2; }
+  100% { opacity: 1; }
+}
+
+.snake-score {
+    position: fixed;
+    top: 10px;
+    left: 10px;
+    color: #4CAF50;
+    font-size: 24px;
+    font-family: monospace;
+    z-index: 10001;
+}
+
+.snake-name {
+    position: fixed;
+    top: 50px;
+    left: 10px;
+    color: #4CAF50;
+    font-size: 20px;
+    font-family: monospace;
+    z-index: 10001;
+}
+
+.snake-food {
+    position: absolute;
+    border-radius: 50%;
+}
+
+.snake-food.apple {
+    background: #ff0000;
+}
+
+.snake-food.banana {
+    background: #ffd700;
+    border-radius: 20px 0 0 0;
+}
+
+.snake-food.orange {
+    background: #ffa500;
+}
+
+.snake-segment {
+    position: absolute;
+    background: #4CAF50;
+    border-radius: 3px;
+}
+
+.snake-boost {
+    position: fixed;
+    top: 90px;
+    left: 10px;
+    color: #4CAF50;
+    font-size: 20px;
+    font-family: monospace;
+    z-index: 10001;
+}
+
+.snake-boost-bar {
+    position: fixed;
+    top: 120px;
+    left: 10px;
+    width: 100px;
+    height: 10px;
+    background: rgba(76, 175, 80, 0.3);
+    border: 1px solid #4CAF50;
+    z-index: 10001;
+}
+
+.snake-boost-fill {
+    height: 100%;
+    width: 100%;
+    background: #4CAF50;
+    transition: width 0.3s;
+}
+
+.tutorial-container {
+    position: fixed;
+    right: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(0,0,0,0.8);
+    padding: 20px;
+    border-radius: 10px;
+    color: white;
+    max-width: 300px;
+    z-index: 1000;
+    border: 2px solid #4CAF50;
+    display: none;
+}
+
+.tutorial-avatar {
+    width: 60px;
+    height: 60px;
+    background: #4CAF50;
+    border-radius: 50%;
+    margin: 0 auto 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+}
+
+.tutorial-message {
+    margin-bottom: 15px;
+    line-height: 1.4;
+}
+
+.tutorial-progress {
+    width: 100%;
+    height: 4px;
+    background: rgba(255,255,255,0.2);
+    border-radius: 2px;
+    margin-top: 10px;
+}
+
+.tutorial-progress-fill {
+    height: 100%;
+    background: #4CAF50;
+    border-radius: 2px;
+    transition: width 0.3s;
+}
+
+.tutorial-buttons {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 15px;
+}
+
+.tutorial-button {
+    background: #4CAF50;
+    border: none;
+    color: white;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+.tutorial-button:hover {
+    background: #45a049;
+}
+
+.tutorial-highlight {
+    position: absolute;
+    border: 2px solid #4CAF50;
+    border-radius: 5px;
+    pointer-events: none;
+    animation: glow 2s infinite;
+    z-index: 999;
+}
+
+@keyframes glow {
+    0% { box-shadow: 0 0 5px #4CAF50; }
+    50% { box-shadow: 0 0 20px #4CAF50; }
+    100% { box-shadow: 0 0 5px #4CAF50; }
+}
+
+.tutorial-cursor {
+    position: fixed;
+    width: 30px;
+    height: 30px;
+    pointer-events: none;
+    z-index: 10001;
+    transition: all 0.2s ease-out;
+}
+
+.tutorial-cursor.clicking {
+    transform: scale(0.8);
+}
+
+.tutorial-cursor svg {
+    width: 100%;
+    height: 100%;
+    fill: #4CAF50;
+    filter: drop-shadow(0 0 2px rgba(76, 175, 80, 0.5));
+}
+
+.tutorial-ragdoll {
+    position: absolute;
+    right: 20px;
+    width: 100px;
+    height: 200px;
+    pointer-events: none;
+    transform-style: preserve-3d;
+    animation: tutorialRagdollFloat 3s ease-in-out infinite;
+}
+
+.tutorial-ragdoll-label {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: white;
+    font-weight: bold;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+    pointer-events: none;
+    font-size: 14px;
+    z-index: 1;
+}
+
+@keyframes tutorialRagdollFloat {
+    0% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+    100% { transform: translateY(0px); }
+}
+
+.tutorial-ragdoll-part {
+    position: absolute;
+    background: #ff4444;
+    border-radius: 3px;
+}
+
+.tutorial-hammer {
+    position: absolute;
+    width: 40px;
+    height: 40px;
+    pointer-events: none;
+    transform-origin: bottom right;
+    z-index: 1002;
+    animation: hammerSwing 1s ease-in-out;
+}
+
+.tutorial-hammer svg {
+    width: 100%;
+    height: 100%;
+    fill: #4CAF50;
+}
+
+@keyframes hammerSwing {
+    0% { transform: rotate(0deg); }
+    50% { transform: rotate(-45deg); }
+    100% { transform: rotate(0deg); }
+}
+
+.tutorial-sparkle {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    background: #4CAF50;
+    border-radius: 50%;
+    pointer-events: none;
+    animation: sparkleEffect 0.5s ease-out forwards;
+}
+
+@keyframes sparkleEffect {
+    0% { transform: scale(0); opacity: 1; }
+    100% { transform: scale(2); opacity: 0; }
+}
+
+.achievement {
+    position: fixed;
+    top: 20px;
+    right: -300px;
+    background: rgba(76, 175, 80, 0.9);
+    color: white;
+    padding: 15px 20px;
+    border-radius: 10px;
+    box-shadow: 0 0 20px rgba(0,0,0,0.3);
+    transition: right 0.5s;
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: Arial, sans-serif;
+}
+
+.achievement.show {
+    right: 20px;
+}
+
+.achievement-icon {
+    font-size: 24px;
+}
+
+.achievement-text {
+    font-size: 16px;
+}
+
+.achievements-panel {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(0, 0, 0, 0.9);
+    padding: 20px;
+    border-radius: 10px;
+    color: white;
+    z-index: 1000;
+    display: none;
+    min-width: 400px;
+    max-width: 600px;
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+.achievement-item {
+    background: rgba(76, 175, 80, 0.2);
+    margin: 10px 0;
+    padding: 15px;
+    border-radius: 5px;
+    border: 1px solid #4CAF50;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.achievement-item.locked {
+    filter: grayscale(1);
+    opacity: 0.7;
+}
+
+.achievement-icon {
+    font-size: 24px;
+}
+
+.achievement-details h3 {
+    margin: 0 0 5px 0;
+    color: #4CAF50;
+}
+
+.achievement-details p {
+    margin: 0;
+    font-size: 14px;
+}
+
+.close-achievements {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: none;
+    border: none;
+    color: white;
+    font-size: 24px;
+    cursor: pointer;
+}
+
+.pause-menu {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 2000;
+}
+
+.pause-content {
+    background: #2c3e50;
+    padding: 30px;
+    border-radius: 10px;
+    text-align: center;
+    color: white;
+}
+
+.pause-content h2 {
+    margin-bottom: 20px;
+    color: #4CAF50;
+}
+
+.pause-button {
+    background: #4CAF50;
+    border: none;
+    color: white;
+    padding: 10px 20px;
+    margin: 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background 0.3s;
+}
+
+.pause-button:hover {
+    background: #45a049;
+}
+
+.confetti {
+    position: fixed;
+    pointer-events: none;
+    z-index: 1001;
+    animation: confettiFall linear forwards;
+}
+
+@keyframes confettiFall {
+    0% { transform: translateY(-10vh) rotate(0deg); }
+    100% { transform: translateY(100vh) rotate(720deg); }
+}
+
+.party-hat {
+    display: none;
+}
+
+.customize-hats {
+    display: none;
+}
+
+.hat-toggle, .hat-color-picker, .hat-preview {
+    display: none;
+}
+
+.music-player {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(0, 0, 0, 0.9);
+    padding: 20px;
+    border-radius: 10px;
+    color: white;
+    z-index: 2000;
+    display: none;
+    min-width: 400px;
+    max-width: 800px;
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+.music-player h2 {
+    margin-bottom: 20px;
+    color: #4CAF50;
+}
+
+.song-list {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+}
+
+.song-item {
+    background: rgba(76, 175, 80, 0.2);
+    padding: 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background 0.3s, transform 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 5px;
+}
+
+.song-item.retro {
+    background: linear-gradient(45deg, rgba(255, 0, 0, 0.2), rgba(0, 255, 255, 0.2));
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.song-item:hover {
+    background: rgba(76, 175, 80, 0.4);
+    transform: scale(1.02);
+}
+
+.song-item.playing {
+    background: #4CAF50;
+    transform: scale(1.05);
+}
+
+.song-item .song-icon {
+    font-size: 20px;
+}
+
+.close-music-player {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: none;
+    border: none;
+    color: white;
+    font-size: 24px;
+    cursor: pointer;
+}
+
+.music-controls {
+    margin-top: 20px;
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+}
+
+.music-controls button {
+    background: #4CAF50;
+    border: none;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+.music-controls button:hover {
+    background: #45a049;
+}
+
+.volume-control {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.volume-control input {
+    flex: 1;
+}
+
+.hammer-mode-btn {
+  background: #ff4444;
+  border: none;
+  color: white; 
+  padding: 8px 16px;
+  cursor: pointer;
+  margin: 5px;
+  border-radius: 3px;
+  transition: background 0.3s;
+}
+
+.hammer-mode-btn.active {
+  background: #cc0000;
+}
+
+.hammer-cursor {
+  position: fixed;
+  width: 32px;
+  height: 32px;
+  pointer-events: none;
+  z-index: 10000;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23ff4444' d='M2,19.63L13.43,8.2L12.72,7.5L14.14,6.07L12.72,4.65L14.14,3.23L15.55,4.65L13.43,6.77L14.14,7.5L15.55,6.07L16.97,7.5L15.55,8.9L16.26,9.61L17.68,8.2L19.09,9.61L17.68,11.03L16.26,9.61L15.55,10.32L19.09,13.86L21.92,11.03L10.5,22.45L2,19.63M14.14,12.44L11.03,15.55L9.61,14.14L12.72,11.03L14.14,12.44Z'/%3E%3C/svg%3E");
+  animation: hammerRotate 0.3s;
+  transform-origin: center;
+}
+
+@keyframes hammerRotate {
+  0% { transform: rotate(0deg); }
+  50% { transform: rotate(-45deg); }
+  100% { transform: rotate(0deg); }
+}
+
+.credit-message {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(0,0,0,0.9);
+  padding: 20px;
+  border-radius: 10px;
+  color: white;
+  z-index: 2000;
+  max-width: 500px;
+  text-align: center;
+  display: none;
+}
+
+.credit-message a {
+  color: #4CAF50;
+  text-decoration: none;
+}
+
+.credit-message a:hover {
+  text-decoration: underline;
+}
+
+.rainbow-ragdoll {
+  animation: rainbowGlow 2s linear infinite;
+}
+
+.portal-message {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(128, 0, 128, 0.8);
+  padding: 20px;
+  border-radius: 10px;
+  color: white;
+  text-align: center;
+  z-index: 9999;
+  display: none;
+  animation: portalPulse 2s infinite;
+}
+
+@keyframes rainbowGlow {
+  0% { filter: hue-rotate(0deg) drop-shadow(0 0 10px red); }
+  33% { filter: hue-rotate(120deg) drop-shadow(0 0 10px green); }
+  66% { filter: hue-rotate(240deg) drop-shadow(0 0 10px blue); }
+  100% { filter: hue-rotate(360deg) drop-shadow(0 0 10px red); }
+}
+
+@keyframes portalPulse {
+  0% { transform: translate(-50%, -50%) scale(1); }
+  50% { transform: translate(-50%, -50%) scale(1.1); }
+  100% { transform: translate(-50%, -50%) scale(1); }
+}
+
+@keyframes float {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+  100% { transform: translateY(0px); }
+}
+
+.admin-panel {
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    background: rgba(255, 0, 0, 0.7);
+    color: white;
+    padding: 10px;
+    border-radius: 10px;
+    z-index: 10000;
+    display: none;
+}
+
+.admin-button {
+    background: #ff4444;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    margin: 5px;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.admin-weapon {
+    position: fixed;
+    pointer-events: none;
+    z-index: 10001;
+}
+
+.laser {
+    position: fixed;
+    background: linear-gradient(to right, rgba(255,0,0,0.5), rgba(255,255,0,0.5));
+    height: 2px;
+    pointer-events: none;
+    z-index: 10001;
+    transition: all 0.1s;
+}
+
+@media (max-width: 768px) {
+    .controls {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        padding: 10px;
+    }
+    
+    .controls button {
+        flex: 1 1 100px;
+        margin: 5px;
+    }
+    
+    #mobile-music-controls {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        display: flex;
+        justify-content: space-around;
+        background: rgba(0,0,0,0.7);
+        padding: 10px;
+        z-index: 1000;
+    }
+    
+    .menu-button {
+        width: 80%;
+        max-width: 300px;
+    }
+    
+    .controls button[onclick="toggleMusicPlayer()"] {
+        background: #4A90E2; 
+        width: 100%;        
+        margin: 5px 0;      
+        padding: 12px 16px; 
+    }
+}
+</style></head><body>
+<div class="menu" id="startMenu">
+    <h1>Ragdoll Physics Engine V3</h1>
+    <button class="menu-button" onclick="startGame()">Start Game</button>
+    <button class="menu-button" onclick="startTutorial()">Tutorial</button>
+    <button class="menu-button" onclick="showCredits()">Credits</button>
+    <button class="menu-button" onclick="showAchievements()">Achievements</button>
+</div>
+
+<div class="space-scene">
+    <div class="stars"></div>
+    <div class="rocket-container">
+        <div class="rocket">
+            <div class="rocket-nose"></div>
+            <div class="rocket-body"></div>
+            <div class="rocket-window"></div>
+            <div class="rocket-flame"></div>
+        </div>
+        <div class="ragdoll-rope"></div>
+        <div class="space-ragdoll">
+            <div class="space-ragdoll-head"></div>
+            <div class="space-ragdoll-body"></div>
+            <div class="space-ragdoll-arm" style="left: -8px; transform: rotate(45deg);"></div>
+            <div class="space-ragdoll-arm" style="right: -8px; transform: rotate(-45deg);"></div>
+            <div class="space-ragdoll-leg" style="left: -4px; top: 50px; transform: rotate(15deg);"></div>
+            <div class="space-ragdoll-leg" style="right: -4px; top: 50px; transform: rotate(-15deg);"></div>
+        </div>
+    </div>
+</div>
+
+<div class="credits" id="creditsScreen">
+    <button class="close-credits" onclick="hideCredits()">&#xd7;</button>
+    <div class="credits-content">
+        <h2>Credits</h2>
+        <div style="border: 2px solid #4CAF50; padding: 20px; margin: 20px;">
+            <p>Officially developed by</p>
+            <h3>The Developer Himself</h3>
+        </div>
+        <p> 2024 Ragdoll Physics Engine</p>
+        <p>All rights reserved</p>
+    </div>
+</div>
+
+<div class="achievements-panel" id="achievementsPanel" style="display: none;">
+    <p>Achievements are being updated. Check back soon!</p>
+</div>
+
+<div class="controls">
+    <button onclick="spawnRagdoll()">Spawn Single Ragdoll</button>
+    <div style="display: inline-block;">
+        <input type="number" id="multiSpawnInput" min="1" max="100" value="1" style="width: 60px;">
+        <button onclick="multiSpawnRagdolls()">Spawn Multiple</button>
+    </div>
+    <button onclick="toggleGravity()">Toggle Gravity</button>
+    <button onclick="clearRagdolls()">Clear All</button>
+    <button onclick="openCustomization()">Customize Ragdolls</button>
+    <button onclick="toggleMusicPlayer()">Music Player</button>
+</div>
+
+<div class="build-controls">
+    <button class="build-button" data-shape="rectangle" onclick="selectBuildTool(&apos;rectangle&apos;)">Rectangle</button>
+    <button class="build-button" data-shape="circle" onclick="selectBuildTool(&apos;circle&apos;)">Circle</button>
+    <button class="build-button" data-shape="triangle" onclick="selectBuildTool(&apos;triangle&apos;)">Triangle</button>
+    <button class="build-button" onclick="toggleBuildMode()">Exit Build Mode</button>
+    <button class="build-button" onclick="openBuildColorCustomization()">Customize Colors</button>
+    <button class="build-button" onclick="openAIBuildPanel()">AI Build</button>
+</div>
+
+<div class="customization-panel" id="customizationPanel">
+    <button class="close-customization" onclick="closeCustomization()">&#xd7;</button>
+    <h3>Customize Ragdoll Colors</h3>
+    
+    <div class="color-picker">
+        <label>Head Color:</label>
+        <input type="color" id="headColor" value="#F5DEB3">
+    </div>
+    
+    <div class="color-picker">
+        <label>Body Color:</label>
+        <input type="color" id="bodyColor" value="#4A90E2">
+    </div>
+    
+    <div class="color-picker">
+        <label>Arms Color:</label>
+        <input type="color" id="armsColor" value="#F5DEB3">
+    </div>
+    
+    <div class="color-picker">
+        <label>Legs Color:</label>
+        <input type="color" id="legsColor" value="#2C3E50">
+    </div>
+    
+    <div class="color-picker">
+        <label>Joint Color:</label>
+        <input type="color" id="jointColor" value="#FFFFFF">
+    </div>
+
+    <div class="color-picker">
+        <label>Custom Glow:</label>
+        <input type="checkbox" id="enableGlow">
+        <input type="color" id="glowColor" value="#4CAF50">
+    </div>
+
+    <div class="color-picker">
+        <label>Opacity:</label>
+        <input type="range" id="opacitySlider" min="0.1" max="1" step="0.1" value="1">
+    </div>
+
+    <div class="color-picker">
+        <label>Metallic Effect:</label>
+        <input type="checkbox" id="metallicEffect">
+    </div>
+
+    <div class="preview-container">
+        <h4>Preview:</h4>
+        <canvas id="previewCanvas" width="200" height="250"></canvas>
+    </div>
+    
+    <button onclick="applyColors()">Apply Colors</button>
+</div>
+
+<div class="customization-panel" id="buildColorPanel">
+    <button class="close-customization" onclick="closeBuildColorCustomization()">&#xd7;</button>
+    <h3>Customize Build Colors</h3>
+    
+    <div class="color-picker">
+        <label>Shape Color:</label>
+        <input type="color" id="buildColor" value="#666666">
+    </div>
+    
+    <button onclick="applyBuildColors()">Apply Colors</button>
+</div>
+
+<div class="ai-build-panel" id="aiBuildPanel">
+    <button class="close-customization" onclick="closeAIBuildPanel()">&#xd7;</button>
+    <h3>AI Build Assistant</h3>
+    <textarea id="buildPrompt" placeholder="Describe what you want to build (e.g. &apos;create a ragdoll obstacle course&apos; or &apos;build a shooting range&apos;)"></textarea>
+    <div class="detail-level">
+        <label>Detail Level:</label>
+        <input type="range" class="detail-slider" id="detailLevel" min="1" max="5" value="3">
+        <span id="detailDisplay">Medium</span>
+    </div>
+    <button onclick="generateAIBuild()">Generate Build</button>
+</div>
+
+<div class="music-player" id="musicPlayer">
+    <button class="close-music-player" onclick="closeMusicPlayer()">&#xd7;</button>
+    <h2>Music Player</h2>
+    <div class="volume-control">
+        <span>Volume:</span>
+        <input type="range" id="volumeControl" min="0" max="1" step="0.1" value="0.3">
+    </div>
+    <div class="music-controls">
+        <button onclick="previousSong()">Previous</button>
+        <button onclick="playPauseSong()">Play/Pause</button>
+        <button onclick="nextSong()">Next</button>
+        <button onclick="toggleRepeat()">Repeat</button>
+        <button onclick="toggleShuffle()">Shuffle</button>
+    </div>
+    <div class="song-list" id="songList"></div>
+</div>
+
+<div class="snake-game" id="snakeGame">
+    <div class="snake-score">Score: <span id="snakeScore">0</span></div>
+    <div class="snake-name">Snake Name</div>
+    <div class="snake-background snake-background-space"></div>
+</div>
+
+<div class="pause-menu" id="pauseMenu">
+    <div class="pause-content">
+        <h2>Game Paused</h2>
+        <button class="pause-button" onclick="resumeGame()">Resume</button>
+        <button class="pause-button" onclick="returnToMainMenu()">Main Menu</button>
+    </div>
+</div>
+
+<div class="tutorial-container">
+    <div class="tutorial-avatar">&#x1f44b;</div>
+    <div class="tutorial-message"></div>
+    <div class="tutorial-progress">
+        <div class="tutorial-progress-fill"></div>
+    </div>
+    <div class="tutorial-buttons">
+        <button class="tutorial-button" onclick="previousTutorialStep()">Previous</button>
+        <button class="tutorial-button" onclick="nextTutorialStep()">Next</button>
+    </div>
+</div>
+
+<canvas id="canvas"></canvas>
+
+<audio id="backgroundMusic" loop>
+    <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" type="audio/mpeg">
+</audio>
+<audio id="clickSound">
+    <source src="https://www.soundhelix.com/examples/mp3/click.mp3" type="audio/mpeg">
+</audio>
+
+<div class="portal-message">
+  This is over... just kidding! You&apos;ve unlocked rainbow ragdolls!
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.18.0/matter.min.js"></script>
+<script>
+const IS_MOBILE = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+function initializeMobile() {
+    if (IS_MOBILE) {
+        // Mobile-specific adjustments
+        adjustButtonSizes();
+        setupMobileTouchControls();
+        optimizeMusicForMobile();
+        adjustRenderPerformance();
+        setupMobileOrientationHandling();
+        
+        // Add special handling for music button
+        const musicButton = document.querySelector('button[onclick="toggleMusicPlayer()"]');
+        if (musicButton) {
+            musicButton.style.fontSize = '18px'; 
+            musicButton.style.fontWeight = 'bold';
+        }
+    }
+}
+
+function adjustButtonSizes() {
+    const buttons = document.querySelectorAll('button');
+    buttons.forEach(button => {
+        button.style.fontSize = '16px';
+        button.style.padding = '12px 24px';
+        button.style.margin = '8px';
+    });
+}
+
+function setupMobileTouchControls() {
+    // Add touch support for dragging and manipulating ragdolls
+    const canvas = document.getElementById('canvas');
+    canvas.addEventListener('touchstart', handleTouchStart, false);
+    canvas.addEventListener('touchmove', handleTouchMove, false);
+    canvas.addEventListener('touchend', handleTouchEnd, false);
+}
+
+function handleTouchStart(e) {
+    e.preventDefault();
+    const touch = e.touches[0];
+    const rect = e.target.getBoundingClientRect();
+    const mouseEvent = new MouseEvent('mousedown', {
+        clientX: touch.clientX - rect.left,
+        clientY: touch.clientY - rect.top
+    });
+    e.target.dispatchEvent(mouseEvent);
+}
+
+function handleTouchMove(e) {
+    e.preventDefault();
+    const touch = e.touches[0];
+    const rect = e.target.getBoundingClientRect();
+    const mouseEvent = new MouseEvent('mousemove', {
+        clientX: touch.clientX - rect.left,
+        clientY: touch.clientY - rect.top
+    });
+    e.target.dispatchEvent(mouseEvent);
+}
+
+function handleTouchEnd(e) {
+    e.preventDefault();
+    const mouseEvent = new MouseEvent('mouseup');
+    e.target.dispatchEvent(mouseEvent);
+}
+
+function optimizeMusicForMobile() {
+    // Reduce music quality and preload for mobile
+    SONGS.forEach(song => {
+        song.url = song.url.replace('.mp3', '-mobile.mp3');
+    });
+    
+    // Reduce initial volume
+    document.getElementById('backgroundMusic').volume = 0.2;
+}
+
+function adjustRenderPerformance() {
+    // Reduce render complexity for mobile
+    if (render) {
+        render.options.hasBounds = true;
+        render.options.wireframes = false;
+        render.canvas.width = window.innerWidth;
+        render.canvas.height = window.innerHeight;
+    }
+    
+    // Limit number of simultaneous ragdolls
+    const MAX_MOBILE_RAGDOLLS = 20;
+}
+
+function setupMobileOrientationHandling() {
+    window.addEventListener('deviceorientation', handleDeviceOrientation, true);
+}
+
+function handleDeviceOrientation(event) {
+    // Optional: Use device orientation to influence gravity
+    if (engine && event.gamma !== null) {
+        engine.world.gravity.x = event.gamma / 10;
+    }
+}
+
+function addMobileMusicControls() {
+    const musicControls = document.createElement('div');
+    musicControls.id = 'mobile-music-controls';
+    musicControls.innerHTML = `
+        <button onclick="previousSong()">⏮️</button>
+        <button onclick="playPauseSong()">⏯️</button>
+        <button onclick="nextSong()">⏭️</button>
+    `;
+    document.body.appendChild(musicControls);
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Existing code...
+    
+    if (IS_MOBILE) {
+        initializeMobile();
+        addMobileMusicControls();
+    }
+});
+
+let buildMode = false;
+let activeBuildTool = null;
+let buildStart = null;
+let render;
+let World;
+let Bodies;
+let Constraint;
+let Composite;
+let Body;
+let engine;
+let ground;
+let buildPreview;
+let ragdollColors = {
+  head: '#F5DEB3',
+  body: '#4A90E2',
+  arms: '#F5DEB3',
+  legs: '#2C3E50',
+  joints: '#FFFFFF',
+  glow: '#4CAF50',
+  enableGlow: false,
+  opacity: 1,
+  metallic: false
+};
+let currentAIBuild = null;
+let snakeGame = {
+  active: false,
+  snake: [],
+  food: null,
+  direction: 'right',
+  score: 0,
+  gridSize: 20,
+  speed: 100,
+  container: null,
+  interval: null,
+  music: new Audio('https://www.soundhelix.com/examples/mp3/SoundHelix-Song-13.mp3'),
+  boost: {
+    active: false,
+    energy: 100,
+    rechargeRate: 0.5,
+    drainRate: 2
+  }
+};
+let keyBuffer = '';
+let keyBufferTimer = null;
+let tutorialCursor = null;
+let cursorAnimationFrame = null;
+const FRUIT_TYPES = [{
+  type: 'apple',
+  points: 10,
+  class: 'apple'
+}, {
+  type: 'banana',
+  points: 15,
+  class: 'banana'
+}, {
+  type: 'orange',
+  points: 20,
+  class: 'orange'
+}];
+const BACKGROUND_SCENES = ['space', 'galaxy', 'earth', 'mars', 'rocket', 'nebula', 'aurora'];
+let currentBackgroundIndex = 0;
+let backgroundInterval = null;
+let stars = [];
+const MUSIC_TRACKS = [{
+  name: 'Chill Beat 1',
+  url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3'
+}, {
+  name: 'Undertale Remix',
+  url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3'
+}, {
+  name: 'Electronic Beat',
+  url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3'
+}, {
+  name: 'Snake Theme',
+  url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-13.mp3'
+}, {
+  name: 'Tutorial Theme',
+  url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3'
+}];
+let currentPhase = 0;
+let phaseInterval;
+let tutorialStep = 0;
+let tutorialActive = false;
+let tutorialHighlight = null;
+let demoRagdoll = null;
+const TUTORIAL_STEPS = [{
+  message: "Hey there! I'll be showing you around. Watch as I demonstrate each feature!",
+  action: () => {}
+}, {
+  message: "First, let's spawn a ragdoll. I'll click this button to create one!",
+  highlight: "button[onclick='spawnRagdoll()']",
+  action: () => {
+    if (demoRagdoll) clearDemoRagdoll();
+    demoRagdoll = createRagdoll(window.innerWidth / 2, 50);
+    if (demoRagdoll) {
+      World.add(engine.world, [...demoRagdoll.bodies, ...demoRagdoll.constraints]);
+    }
+  }
+}, {
+  message: "Need more ragdolls? Here's how you can spawn multiple at once!",
+  highlight: "input#multiSpawnInput",
+  action: () => {}
+}, {
+  message: "Watch this - I can toggle gravity with just one click!",
+  highlight: "button[onclick='toggleGravity()']",
+  action: () => {
+    engine.world.gravity.y *= -1;
+    setTimeout(() => engine.world.gravity.y *= -1, 2000);
+  }
+}, {
+  message: "Let's make things colorful! Click here to customize your ragdolls.",
+  highlight: "button[onclick='openCustomization()']",
+  action: () => {}
+}, {
+  message: "Things getting messy? I'll show you how to clean everything up.",
+  highlight: "button[onclick='clearRagdolls()']",
+  action: () => {}
+}, {
+  message: "Time to build! Let me show you how to enter Build Mode.",
+  highlight: "button[onclick='toggleBuildMode()']",
+  action: () => {
+    const hammer = document.createElement('div');
+    hammer.className = 'tutorial-hammer';
+    hammer.innerHTML = `
+        <svg viewBox="0 0 24 24">
+            <path d="M2,19.63L13.43,8.2L12.72,7.5L14.14,6.07L12.72,4.65L14.14,3.23L15.55,4.65L13.43,6.77L14.14,7.5L15.55,6.07L16.97,7.5L15.55,8.9L16.26,9.61L17.68,8.2L19.09,9.61L17.68,11.03L16.26,9.61L15.55,10.32L19.09,13.86L21.92,11.03L10.5,22.45L2,19.63M14.14,12.44L11.03,15.55L9.61,14.14L12.72,11.03L14.14,12.44Z"/>
+        </svg>
+    `;
+    document.body.appendChild(hammer);
+    const button = document.querySelector("button[onclick='toggleBuildMode()']");
+    const rect = button.getBoundingClientRect();
+    hammer.style.left = rect.left - 20 + 'px';
+    hammer.style.top = rect.top - 20 + 'px';
+    setTimeout(() => {
+      for (let i = 0; i < 5; i++) {
+        const sparkle = document.createElement('div');
+        sparkle.className = 'tutorial-sparkle';
+        sparkle.style.left = rect.left + Math.random() * rect.width + 'px';
+        sparkle.style.top = rect.top + Math.random() * rect.height + 'px';
+        document.body.appendChild(sparkle);
+        setTimeout(() => sparkle.remove(), 500);
+      }
+      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+      oscillator.type = 'sine';
+      oscillator.frequency.setValueAtTime(440, audioContext.currentTime);
+      gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+      oscillator.start(audioContext.currentTime);
+      oscillator.stop(audioContext.currentTime + 0.5);
+    }, 500);
+    setTimeout(() => {
+      hammer.remove();
+      button.click();
+    }, 1000);
+  }
+}, {
+  message: "Pick your shapes here - rectangles, circles, or triangles!",
+  highlight: ".build-button[data-shape='rectangle']",
+  action: () => {}
+}, {
+  message: "Feeling creative? Let AI help you build amazing structures!",
+  highlight: "button[onclick='openAIBuildPanel()']",
+  action: () => {}
+}, {
+  message: "Here's a fun secret: Type 'snake' on your keyboard for a surprise game!",
+  action: () => {}
+}, {
+  message: "That's everything! Now you're ready to create amazing physics simulations!",
+  action: () => {
+    if (demoRagdoll) clearDemoRagdoll();
+  }
+}];
+let achievements = {};
+let allAchievements = {
+    multiSpawn: {
+        id: 'multiSpawn',
+        title: 'Crowd Control',
+        description: 'Spawn 10 or more ragdolls at once',
+        icon: '💥',
+        unlocked: false,
+        progress: 0,
+        required: 10
+    },
+    gravityMaster: {
+        id: 'gravityMaster', 
+        title: 'Gravity Master',
+        description: 'Toggle gravity 5 times',
+        icon: '🌍',
+        unlocked: false,
+        progress: 0,
+        required: 5
+    },
+    tutorialComplete: {
+        id: 'tutorialComplete',
+        title: 'Tutorial Master', 
+        description: 'Completed the tutorial and learned all the basics!',
+        icon: '🏆',
+        unlocked: false
+    }
+};
+let musicPlayerActive = false;
+let currentSongIndex = 0;
+let isPlaying = false;
+let isRepeat = false;
+let isShuffle = false;
+const SONGS = [{
+  name: "Chill Beat 1",
+  url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3"
+}, {
+  name: "Undertale Remix",
+  url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3"
+}, {
+  name: "Electronic Beat",
+  url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3"
+}, {
+  name: "Deep House",
+  url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3"
+}, {
+  name: "Synthwave",
+  url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-5.mp3"
+}, {
+  name: "Lo-Fi Beats",
+  url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-6.mp3"
+}, {
+  name: "Dance Mix",
+  url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-7.mp3"
+}, {
+  name: "Epic Orchestra",
+  url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3"
+}, {
+  name: "Retro Arcade",
+  url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-9.mp3"
+}, {
+  name: "8-Bit Adventure",
+  url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-10.mp3"
+}, {
+  name: "NES Nostalgia",
+  url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-11.mp3"
+}, {
+  name: "Chiptune Dreams",
+  url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-12.mp3"
+}];
+let hasRainbowAchievement = false;
+const adminWeapons = {
+  knife: {
+    damage: 50,
+    bleedoutEffect: true
+  },
+  gun: {
+    damage: 30,
+    fireRate: 100,
+    spreadAngle: 15
+  },
+  laser: {
+    damage: 100,
+    piercing: true
+  }
+};
+let adminMode = false;
+let activeAdminWeapon = null;
+let adminCursor = null;
+let laserLine = null;
+function clearAllRagdolls() {
+  const bodies = Composite.allBodies(engine.world);
+  bodies.forEach(body => {
+    if (body.ragdoll) {
+      World.remove(engine.world, body);
+    }
+  });
+}
+function toggleAdminWeapon(weaponType) {
+  if (activeAdminWeapon === weaponType) {
+    if (adminCursor) adminCursor.remove();
+    if (laserLine) laserLine.remove();
+    document.removeEventListener('mousemove', moveAdminCursor);
+    document.removeEventListener('click', useAdminWeapon);
+    activeAdminWeapon = null;
+    adminCursor = null;
+    laserLine = null;
+    return;
+  }
+  activeAdminWeapon = weaponType;
+  if (adminCursor) adminCursor.remove();
+  if (laserLine) laserLine.remove();
+  adminCursor = document.createElement('div');
+  adminCursor.className = 'admin-weapon';
+  switch (weaponType) {
+    case 'knife':
+      adminCursor.innerHTML = `
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="32" height="32" fill="red">
+                    <path d="M2,19.63L13.43,8.2L12.72,7.5L14.14,6.07L12.72,4.65L14.14,3.23L15.55,4.65L13.43,6.77L14.14,7.5L15.55,6.07L16.97,7.5L15.55,8.9L16.26,9.61L17.68,8.2L19.09,9.61L17.68,11.03L16.26,9.61L15.55,10.32L19.09,13.86L21.92,11.03L10.5,22.45L2,19.63Z"/>
+                </svg>
+            `;
+      break;
+    case 'gun':
+      adminCursor.innerHTML = `
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="32" height="32" fill="black">
+                    <path d="M7,5H23V13H7V5M16,15A2,2 0 0,0 18,13V5A2,2 0 0,0 16,3H7A2,2 0 0,0 5,5V13A2,2 0 0,0 7,15H2V17H22V15H16Z"/>
+                </svg>
+            `;
+      break;
+    case 'laser':
+      laserLine = document.createElement('div');
+      laserLine.className = 'laser';
+      document.body.appendChild(laserLine);
+      break;
+  }
+  document.body.appendChild(adminCursor);
+  document.addEventListener('mousemove', moveAdminCursor);
+  document.addEventListener('click', useAdminWeapon);
+}
+function moveAdminCursor(e) {
+  if (adminCursor) {
+    adminCursor.style.left = e.clientX + 'px';
+    adminCursor.style.top = e.clientY + 'px';
+  }
+  if (activeAdminWeapon === 'laser' && laserLine) {
+    const startX = window.innerWidth / 2;
+    const startY = window.innerHeight / 2;
+    const angle = Math.atan2(e.clientY - startY, e.clientX - startX);
+    const length = Math.sqrt(Math.pow(e.clientX - startX, 2) + Math.pow(e.clientY - startY, 2));
+    laserLine.style.left = startX + 'px';
+    laserLine.style.top = startY + 'px';
+    laserLine.style.width = length + 'px';
+    laserLine.style.transform = `rotate(${angle * 180 / Math.PI}deg)`;
+  }
+}
+function useAdminWeapon(e) {
+  if (!activeAdminWeapon) return;
+  const bodies = Composite.allBodies(engine.world);
+  const mousePosition = {
+    x: e.clientX,
+    y: e.clientY
+  };
+  bodies.forEach(body => {
+    if (body.ragdoll && Matter.Bounds.contains(body.bounds, mousePosition)) {
+      switch (activeAdminWeapon) {
+        case 'knife':
+          damageRagdoll(body, adminWeapons.knife.damage);
+          if (adminWeapons.knife.bleedoutEffect) {
+            createBloodParticles(body.position.x, body.position.y);
+            const armParts = bodies.filter(b => b.ragdoll && b.parentId === body.parentId && b.render.fillStyle === ragdollColors.arms);
+            armParts.forEach(armPart => {
+              World.remove(engine.world, armPart);
+            });
+          }
+          break;
+        case 'gun':
+          for (let i = 0; i < 5; i++) {
+            setTimeout(() => {
+              const spreadAngle = Math.random() * adminWeapons.gun.spreadAngle - adminWeapons.gun.spreadAngle / 2;
+              damageRagdoll(body, adminWeapons.gun.damage);
+              createParticles(body.position.x, body.position.y, '#ff0000');
+            }, i * adminWeapons.gun.fireRate);
+          }
+          break;
+        case 'laser':
+          damageRagdoll(body, adminWeapons.laser.damage);
+          createParticles(body.position.x, body.position.y, '#ff00ff');
+          break;
+      }
+    }
+  });
+}
+function stopMusicPhases() {
+  if (phaseInterval) {
+    clearInterval(phaseInterval);
+    phaseInterval = null;
+  }
+}
+function createStars() {
+  const starsContainer = document.querySelector('.stars');
+  for (let i = 0; i < 200; i++) {
+    const star = document.createElement('div');
+    star.className = 'star';
+    star.style.width = Math.random() * 3 + 'px';
+    star.style.height = star.style.width;
+    star.style.left = Math.random() * 100 + '%';
+    star.style.top = Math.random() * 100 + '%';
+    star.style.transform = `translateZ(${Math.random() * 1000}px)`;
+    star.style.animationDelay = Math.random() * 1 + 's';
+    starsContainer.appendChild(star);
+  }
+}
+function showMaintenanceMessage(message) {
+  const messageDiv = document.createElement('div');
+  messageDiv.style.position = 'fixed';
+  messageDiv.style.top = '50%';
+  messageDiv.style.left = '50%';
+  messageDiv.style.transform = 'translate(-50%, -50%)';
+  messageDiv.style.background = 'rgba(255, 0, 0, 0.9)';
+  messageDiv.style.color = 'white';
+  messageDiv.style.padding = '20px';
+  messageDiv.style.borderRadius = '10px';
+  messageDiv.style.zIndex = '10000';
+  messageDiv.style.textAlign = 'center';
+  messageDiv.style.boxShadow = '0 0 20px rgba(0,0,0,0.5)';
+  messageDiv.style.animation = 'fadeInOut 2s forwards';
+  messageDiv.innerHTML = `
+        <h3 style="margin: 0 0 10px 0"> Maintenance Notice</h3>
+        <p style="margin: 0">${message}</p>
+    `;
+  document.body.appendChild(messageDiv);
+  setTimeout(() => {
+    messageDiv.remove();
+  }, 2000);
+}
+function playClickSound() {
+  generateClickSound();
+}
+function generateClickSound() {
+  const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+  const oscillator = audioContext.createOscillator();
+  const gainNode = audioContext.createGain();
+  oscillator.connect(gainNode);
+  gainNode.connect(audioContext.destination);
+  oscillator.type = 'sine';
+  oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+  gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+  gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
+  oscillator.start(audioContext.currentTime);
+  oscillator.stop(audioContext.currentTime + 0.1);
+}
+function generateImpactSound(intensity) {
+  const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+  const oscillator = audioContext.createOscillator();
+  const gainNode = audioContext.createGain();
+  oscillator.connect(gainNode);
+  gainNode.connect(audioContext.destination);
+  oscillator.type = 'sine';
+  oscillator.frequency.setValueAtTime(100 + intensity * 50, audioContext.currentTime);
+  gainNode.gain.setValueAtTime(Math.min(0.3, intensity * 0.1), audioContext.currentTime);
+  gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
+  oscillator.start(audioContext.currentTime);
+  oscillator.stop(audioContext.currentTime + 0.2);
+}
+function generatePainSound(intensity) {
+  const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+  const oscillator = audioContext.createOscillator();
+  const gainNode = audioContext.createGain();
+  const filterNode = audioContext.createBiquadFilter();
+  oscillator.connect(filterNode);
+  filterNode.connect(gainNode);
+  gainNode.connect(audioContext.destination);
+  oscillator.type = 'sawtooth';
+  filterNode.type = 'lowpass';
+  filterNode.frequency.setValueAtTime(500, audioContext.currentTime);
+  filterNode.Q.value = 10;
+  oscillator.frequency.setValueAtTime(150, audioContext.currentTime);
+  oscillator.frequency.linearRampToValueAtTime(90, audioContext.currentTime + 0.3);
+  gainNode.gain.setValueAtTime(Math.min(0.4, intensity * 0.15), audioContext.currentTime);
+  gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+  oscillator.start(audioContext.currentTime);
+  oscillator.stop(audioContext.currentTime + 0.3);
+}
+function createParticles(x, y, color = '#ffffff') {
+  const particleCount = 15;
+  for (let i = 0; i < particleCount; i++) {
+    const particle = document.createElement('div');
+    particle.className = 'impact-particle';
+    const size = Math.random() * 6 + 2;
+    particle.style.width = size + 'px';
+    particle.style.height = size + 'px';
+    particle.style.background = color;
+    const angle = Math.random() * Math.PI * 2;
+    const velocity = Math.random() * 8 + 3;
+    const vx = Math.cos(angle) * velocity;
+    const vy = Math.sin(angle) * velocity;
+    particle.style.left = x + 'px';
+    particle.style.top = y + 'px';
+    document.body.appendChild(particle);
+    let opacity = 1;
+    let posX = x;
+    let posY = y;
+    let scale = 1;
+    const animate = () => {
+      posX += vx;
+      posY += vy;
+      opacity -= 0.03;
+      scale -= 0.01;
+      particle.style.transform = `translate(${posX - x}px, ${posY - y}px) scale(${scale})`;
+      particle.style.opacity = opacity;
+      if (opacity > 0) {
+        requestAnimationFrame(animate);
+      } else {
+        particle.remove();
+      }
+    };
+    requestAnimationFrame(animate);
+  }
+}
+function createBloodParticles(x, y) {
+  const particleCount = 20;
+  for (let i = 0; i < particleCount; i++) {
+    const particle = document.createElement('div');
+    particle.className = 'blood-particle';
+    const size = Math.random() * 4 + 2;
+    particle.style.width = size + 'px';
+    particle.style.height = size + 'px';
+    const angle = Math.random() * Math.PI * 2;
+    const velocity = Math.random() * 6 + 2;
+    const vx = Math.cos(angle) * velocity;
+    const vy = Math.sin(angle) * velocity;
+    particle.style.left = x + 'px';
+    particle.style.top = y + 'px';
+    document.body.appendChild(particle);
+    let opacity = 1;
+    let posX = x;
+    let posY = y;
+    const animate = () => {
+      posX += vx;
+      posY += vy + 0.5;
+      opacity -= 0.02;
+      particle.style.transform = `translate(${posX - x}px, ${posY - y}px)`;
+      particle.style.opacity = opacity;
+      if (opacity > 0) {
+        requestAnimationFrame(animate);
+      } else {
+        particle.remove();
+      }
+    };
+    requestAnimationFrame(animate);
+  }
+}
+function showSpeechBubble(x, y, text) {
+  const bubble = document.createElement('div');
+  bubble.className = 'speech-bubble';
+  bubble.textContent = text;
+  bubble.style.left = x + 'px';
+  bubble.style.top = y - 30 + 'px';
+  document.body.appendChild(bubble);
+  setTimeout(() => {
+    bubble.style.opacity = 0;
+    setTimeout(() => bubble.remove(), 300);
+  }, 2000);
+}
+function createRagdoll(x, y) {
+  try {
+    if (!Bodies || !Constraint) {
+      console.error('Matter.js components not initialized');
+      return null;
+    }
+    const parentId = Date.now();
+    const headRadius = 15;
+    const chestWidth = 40;
+    const chestHeight = 60;
+    const limbWidth = 15;
+    const limbHeight = 40;
+    const head = Bodies.circle(x, y, headRadius, {
+      render: {
+        fillStyle: ragdollColors.head,
+        opacity: ragdollColors.opacity,
+        gradient: ragdollColors.metallic ? {
+          type: 'linear',
+          x1: 0,
+          y1: 0,
+          x2: 1,
+          y2: 1,
+          colorStops: [{
+            offset: 0,
+            color: shadeColor(ragdollColors.head, 20)
+          }, {
+            offset: 0.5,
+            color: ragdollColors.head
+          }, {
+            offset: 1,
+            color: shadeColor(ragdollColors.head, -20)
+          }]
+        } : null,
+        shadow: ragdollColors.enableGlow ? {
+          color: ragdollColors.glow,
+          blur: 15,
+          offset: {
+            x: 0,
+            y: 0
+          }
+        } : null
+      },
+      ragdoll: true,
+      health: 100,
+      isHead: true,
+      parentId: parentId,
+      frictionAir: 0.001
+    });
+    const chest = Bodies.rectangle(x, y + 40, chestWidth, chestHeight, {
+      render: {
+        fillStyle: ragdollColors.body,
+        opacity: ragdollColors.opacity,
+        gradient: ragdollColors.metallic ? {
+          type: 'linear',
+          x1: 0,
+          y1: 0,
+          x2: 1,
+          y2: 1,
+          colorStops: [{
+            offset: 0,
+            color: shadeColor(ragdollColors.body, 20)
+          }, {
+            offset: 0.5,
+            color: ragdollColors.body
+          }, {
+            offset: 1,
+            color: shadeColor(ragdollColors.body, -20)
+          }]
+        } : null,
+        shadow: ragdollColors.enableGlow ? {
+          color: ragdollColors.glow,
+          blur: 15,
+          offset: {
+            x: 0,
+            y: 0
+          }
+        } : null
+      },
+      ragdoll: true,
+      health: 100,
+      parentId: parentId,
+      frictionAir: 0.001
+    });
+    const leftArm = Bodies.rectangle(x - 30, y + 40, limbWidth, limbHeight, {
+      render: {
+        fillStyle: ragdollColors.arms,
+        opacity: ragdollColors.opacity,
+        gradient: ragdollColors.metallic ? {
+          type: 'linear',
+          x1: 0,
+          y1: 0,
+          x2: 1,
+          y2: 1,
+          colorStops: [{
+            offset: 0,
+            color: shadeColor(ragdollColors.arms, 20)
+          }, {
+            offset: 0.5,
+            color: ragdollColors.arms
+          }, {
+            offset: 1,
+            color: shadeColor(ragdollColors.arms, -20)
+          }]
+        } : null,
+        shadow: ragdollColors.enableGlow ? {
+          color: ragdollColors.glow,
+          blur: 15,
+          offset: {
+            x: 0,
+            y: 0
+          }
+        } : null
+      },
+      ragdoll: true,
+      health: 100,
+      parentId: parentId,
+      frictionAir: 0.001
+    });
+    const rightArm = Bodies.rectangle(x + 30, y + 40, limbWidth, limbHeight, {
+      render: {
+        fillStyle: ragdollColors.arms,
+        opacity: ragdollColors.opacity,
+        gradient: ragdollColors.metallic ? {
+          type: 'linear',
+          x1: 0,
+          y1: 0,
+          x2: 1,
+          y2: 1,
+          colorStops: [{
+            offset: 0,
+            color: shadeColor(ragdollColors.arms, 20)
+          }, {
+            offset: 0.5,
+            color: ragdollColors.arms
+          }, {
+            offset: 1,
+            color: shadeColor(ragdollColors.arms, -20)
+          }]
+        } : null,
+        shadow: ragdollColors.enableGlow ? {
+          color: ragdollColors.glow,
+          blur: 15,
+          offset: {
+            x: 0,
+            y: 0
+          }
+        } : null
+      },
+      ragdoll: true,
+      health: 100,
+      parentId: parentId,
+      frictionAir: 0.001
+    });
+    const leftLeg = Bodies.rectangle(x - 15, y + 100, limbWidth, limbHeight, {
+      render: {
+        fillStyle: ragdollColors.legs,
+        opacity: ragdollColors.opacity,
+        gradient: ragdollColors.metallic ? {
+          type: 'linear',
+          x1: 0,
+          y1: 0,
+          x2: 1,
+          y2: 1,
+          colorStops: [{
+            offset: 0,
+            color: shadeColor(ragdollColors.legs, 20)
+          }, {
+            offset: 0.5,
+            color: ragdollColors.legs
+          }, {
+            offset: 1,
+            color: shadeColor(ragdollColors.legs, -20)
+          }]
+        } : null,
+        shadow: ragdollColors.enableGlow ? {
+          color: ragdollColors.glow,
+          blur: 15,
+          offset: {
+            x: 0,
+            y: 0
+          }
+        } : null
+      },
+      ragdoll: true,
+      health: 100,
+      parentId: parentId,
+      frictionAir: 0.001
+    });
+    const rightLeg = Bodies.rectangle(x + 15, y + 100, limbWidth, limbHeight, {
+      render: {
+        fillStyle: ragdollColors.legs,
+        opacity: ragdollColors.opacity,
+        gradient: ragdollColors.metallic ? {
+          type: 'linear',
+          x1: 0,
+          y1: 0,
+          x2: 1,
+          y2: 1,
+          colorStops: [{
+            offset: 0,
+            color: shadeColor(ragdollColors.legs, 20)
+          }, {
+            offset: 0.5,
+            color: ragdollColors.legs
+          }, {
+            offset: 1,
+            color: shadeColor(ragdollColors.legs, -20)
+          }]
+        } : null,
+        shadow: ragdollColors.enableGlow ? {
+          color: ragdollColors.glow,
+          blur: 15,
+          offset: {
+            x: 0,
+            y: 0
+          }
+        } : null
+      },
+      ragdoll: true,
+      health: 100,
+      parentId: parentId,
+      frictionAir: 0.001
+    });
+    const constraints = [Constraint.create({
+      bodyA: head,
+      bodyB: chest,
+      pointA: {
+        x: 0,
+        y: headRadius
+      },
+      pointB: {
+        x: 0,
+        y: -chestHeight / 2
+      },
+      stiffness: 0.9,
+      damping: 0.5,
+      length: 0,
+      render: {
+        strokeStyle: ragdollColors.joints,
+        lineWidth: 2
+      }
+    }), Constraint.create({
+      bodyA: chest,
+      bodyB: leftArm,
+      pointA: {
+        x: -chestWidth / 2,
+        y: -chestHeight / 4
+      },
+      pointB: {
+        x: 0,
+        y: -limbHeight / 4
+      },
+      stiffness: 0.9,
+      damping: 0.5,
+      render: {
+        strokeStyle: ragdollColors.joints,
+        lineWidth: 2
+      }
+    }), Constraint.create({
+      bodyA: chest,
+      bodyB: rightArm,
+      pointA: {
+        x: chestWidth / 2,
+        y: -chestHeight / 4
+      },
+      pointB: {
+        x: 0,
+        y: -limbHeight / 4
+      },
+      stiffness: 0.9,
+      damping: 0.5,
+      render: {
+        strokeStyle: ragdollColors.joints,
+        lineWidth: 2
+      }
+    }), Constraint.create({
+      bodyA: chest,
+      bodyB: leftLeg,
+      pointA: {
+        x: -chestWidth / 4,
+        y: chestHeight / 2
+      },
+      pointB: {
+        x: 0,
+        y: -limbHeight / 2
+      },
+      stiffness: 0.9,
+      damping: 0.5,
+      render: {
+        strokeStyle: ragdollColors.joints,
+        lineWidth: 2
+      }
+    }), Constraint.create({
+      bodyA: chest,
+      bodyB: rightLeg,
+      pointA: {
+        x: chestWidth / 4,
+        y: chestHeight / 2
+      },
+      pointB: {
+        x: 0,
+        y: -limbHeight / 2
+      },
+      stiffness: 0.9,
+      damping: 0.5,
+      render: {
+        strokeStyle: ragdollColors.joints,
+        lineWidth: 2
+      }
+    })];
+    if (hasRainbowAchievement) {
+      [head, chest, leftArm, rightArm, leftLeg, rightLeg].forEach(part => {
+        part.render.className = 'rainbow-ragdoll';
+      });
+    }
+    return {
+      bodies: [head, chest, leftArm, rightArm, leftLeg, rightLeg],
+      constraints: constraints
+    };
+  } catch (err) {
+    console.error('Error creating ragdoll:', err);
+    return null;
+  }
+}
+function createHealthBar(body) {
+  const healthBarBg = document.createElement('div');
+  healthBarBg.className = 'health-bar-bg';
+  const healthBar = document.createElement('div');
+  healthBar.className = 'health-bar';
+  healthBarBg.style.width = '30px';
+  healthBar.style.width = '30px';
+  document.body.appendChild(healthBarBg);
+  document.body.appendChild(healthBar);
+  return {
+    healthBar,
+    healthBarBg
+  };
+}
+function updateHealthBar(body, healthBar, healthBarBg) {
+  const pos = body.position;
+  const width = body.health / 100 * 30;
+  healthBar.style.width = width + 'px';
+  healthBar.style.left = pos.x - 15 + 'px';
+  healthBar.style.top = pos.y - 25 + 'px';
+  healthBarBg.style.left = pos.x - 15 + 'px';
+  healthBarBg.style.top = pos.y - 25 + 'px';
+}
+function damageRagdoll(body, damage) {
+  if (body.health) {
+    const oldHealth = body.health;
+    body.health = Math.max(0, body.health - damage);
+    createBloodParticles(body.position.x, body.position.y);
+    if (body.health <= 30 && oldHealth > 30) {
+      body.render.fillStyle = '#666666';
+      generatePainSound(damage * 0.8);
+    }
+    if (body.health <= 0 && oldHealth > 0) {
+      body.render.fillStyle = '#444444';
+      body.frictionAir = 0.05;
+      const ragdollParts = Composite.allBodies(engine.world).filter(b => b.ragdoll && b.parentId === body.parentId);
+      ragdollParts.forEach(part => {
+        part.health = 0;
+        part.render.fillStyle = '#444444';
+        createBloodParticles(part.position.x, part.position.y);
+      });
+      generatePainSound(20);
+    }
+  }
+}
+function showCredits() {
+  playClickSound();
+  document.getElementById('creditsScreen').style.display = 'flex';
+}
+function hideCredits() {
+  playClickSound();
+  document.getElementById('creditsScreen').style.display = 'none';
+}
+function openCustomization() {
+  playClickSound();
+  document.getElementById('customizationPanel').style.display = 'block';
+  initializePreview();
+}
+function closeCustomization() {
+  playClickSound();
+  document.getElementById('customizationPanel').style.display = 'none';
+  if (previewEngine) {
+    try {
+      Matter.Engine.clear(previewEngine);
+      Matter.Render.stop(previewRender);
+      Matter.Engine.stop(previewEngine);
+    } catch (err) {
+      console.error('Error cleaning up preview:', err);
+    }
+    previewEngine = null;
+    previewRender = null;
+    previewRagdoll = null;
+  }
+}
+function applyColors() {
+  playClickSound();
+  ragdollColors = {
+    head: document.getElementById('headColor').value,
+    body: document.getElementById('bodyColor').value,
+    arms: document.getElementById('armsColor').value,
+    legs: document.getElementById('legsColor').value,
+    joints: document.getElementById('jointColor').value,
+    glow: document.getElementById('glowColor').value,
+    enableGlow: document.getElementById('enableGlow').checked,
+    opacity: document.getElementById('opacitySlider').value,
+    metallic: document.getElementById('metallicEffect').checked
+  };
+  closeCustomization();
+}
+function selectBuildTool(shape) {
+  activeBuildTool = shape;
+  document.querySelectorAll('.build-button').forEach(btn => {
+    btn.classList.remove('active');
+  });
+  document.querySelector(`.build-button[data-shape="${shape}"]`).classList.add('active');
+  if (buildPreview) {
+    buildPreview.style.borderRadius = shape === 'circle' ? '50%' : '0';
+    buildPreview.style.clipPath = shape === 'triangle' ? 'polygon(50% 0%, 0% 100%, 100% 100%)' : 'none';
+  }
+}
+function toggleBuildMode() {
+  buildMode = !buildMode;
+  document.querySelector('.build-controls').style.display = buildMode ? 'block' : 'none';
+  playClickSound();
+  if (buildMode && !buildPreview) {
+    buildPreview = document.createElement('div');
+    buildPreview.className = 'build-preview';
+    if (activeBuildTool) {
+      buildPreview.style.borderRadius = activeBuildTool === 'circle' ? '50%' : '0';
+      if (activeBuildTool === 'triangle') {
+        buildPreview.style.clipPath = 'polygon(50% 0%, 0% 100%, 100% 100%)';
+      }
+    }
+    document.body.appendChild(buildPreview);
+  }
+}
+function initializeGame() {
+  try {
+    if (!isMatterAvailable()) {
+      console.error('Matter.js library not loaded');
+      return;
+    }
+    const Engine = Matter.Engine;
+    World = Matter.World;
+    Bodies = Matter.Bodies;
+    Constraint = Matter.Constraint;
+    Composite = Matter.Composite;
+    Body = Matter.Body;
+    engine = Engine.create({
+      gravity: {
+        x: 0,
+        y: 1
+      }
+    });
+    engine.timing.timeScale = 1;
+    const canvas = document.getElementById('canvas');
+    render = Matter.Render.create({
+      canvas: canvas,
+      engine: engine,
+      options: {
+        width: window.innerWidth,
+        height: window.innerHeight,
+        wireframes: false,
+        background: '#1a1a1a'
+      }
+    });
+    ground = Bodies.rectangle(window.innerWidth / 2, window.innerHeight - 30, window.innerWidth, 60, {
+      isStatic: true,
+      render: {
+        fillStyle: '#2c3e50'
+      }
+    });
+    World.add(engine.world, ground);
+    Matter.Events.on(engine, 'collisionStart', function (event) {
+      try {
+        event.pairs.forEach(function (pair) {
+          if (!pair || !pair.collision) return;
+          const impact = Math.abs(pair.collision.velocity);
+          const threshold = 3;
+          if (impact > threshold) {
+            const x = pair.collision.supports[0].x;
+            const y = pair.collision.supports[0].y;
+            if ((pair.bodyB === ground || pair.bodyA === ground) && (pair.bodyA.ragdoll || pair.bodyB.ragdoll)) {
+              createParticles(x, y, '#4CAF50');
+              generateImpactSound(impact);
+              const ragdollBody = pair.bodyA === ground ? pair.bodyB : pair.bodyA;
+              if (impact > 5) {
+                const damage = impact * 3;
+                damageRagdoll(ragdollBody, damage);
+                if (impact > 15) {
+                  ragdollBody.health = 0;
+                  const ragdollParts = Composite.allBodies(engine.world).filter(b => b.ragdoll && b.parentId === ragdollBody.parentId);
+                  ragdollParts.forEach(part => {
+                    part.health = 0;
+                    part.render.fillStyle = '#444444';
+                    createBloodParticles(part.position.x, part.position.y);
+                  });
+                  generatePainSound(20);
+                }
+              }
+            } else if (pair.bodyA.ragdoll && pair.bodyB.ragdoll) {
+              let color = '#ffffff';
+              if (pair.bodyA.render && pair.bodyA.render.fillStyle) {
+                color = pair.bodyA.render.fillStyle;
+              }
+              createParticles(x, y, color);
+              generateImpactSound(impact * 0.7);
+              if (impact > 4) {
+                damageRagdoll(pair.bodyA, impact);
+                damageRagdoll(pair.bodyB, impact);
+                generatePainSound(impact * 0.8);
+              }
+              const ripple = document.createElement('div');
+              ripple.className = 'ripple';
+              ripple.style.left = x + 'px';
+              ripple.style.top = y + 'px';
+              document.body.appendChild(ripple);
+              setTimeout(() => ripple.remove(), 1000);
+            }
+          }
+        });
+      } catch (err) {
+        console.error('Error handling collision:', err);
+      }
+    });
+    Matter.Events.on(engine, 'beforeUpdate', function () {});
+    Matter.Events.on(engine, 'afterRender', function () {
+      if (!engine || !engine.world) return;
+      const bodies = Composite.allBodies(engine.world);
+      bodies.forEach(body => {
+        if (body.ragdoll && body.isHead) {
+          if (!body.healthBarElements) {
+            body.healthBarElements = createHealthBar(body);
+          }
+          updateHealthBar(body, body.healthBarElements.healthBar, body.healthBarElements.healthBarBg);
+        }
+      });
+    });
+    const mouse = Matter.Mouse.create(render.canvas);
+    const mouseConstraint = Matter.MouseConstraint.create(engine, {
+      mouse: mouse,
+      constraint: {
+        stiffness: 0.2,
+        render: {
+          visible: true,
+          strokeStyle: '#ffffff',
+          lineWidth: 1
+        }
+      }
+    });
+    Matter.Events.on(mouseConstraint, 'mousedown', function (event) {
+      const body = event.source.body;
+      if (body && body.ragdoll) {
+        playClickSound();
+      }
+    });
+    Matter.Events.on(mouseConstraint, 'enddrag', function (event) {
+      const body = event.body;
+      if (body && body.ragdoll) {
+        const velocity = Matter.Vector.magnitude(body.velocity);
+        if (velocity > 10) {
+          damageRagdoll(body, velocity * 2);
+          generatePainSound(velocity * 0.3);
+        }
+      }
+    });
+    World.add(engine.world, mouseConstraint);
+    render.mouse = mouse;
+    canvas.addEventListener('mousedown', e => {
+      if (buildMode) {
+        const rect = canvas.getBoundingClientRect();
+        buildStart = {
+          x: e.clientX - rect.left,
+          y: e.clientY - rect.top
+        };
+        buildPreview.style.display = 'block';
+        buildPreview.style.width = '0px';
+        buildPreview.style.height = '0px';
+        buildPreview.style.left = buildStart.x + 'px';
+        buildPreview.style.top = buildStart.y + 'px';
+        buildPreview.style.backgroundColor = 'rgba(76, 175, 80, 0.2)';
+        buildPreview.style.color = 'white';
+        buildPreview.style.borderRadius = activeBuildTool === 'circle' ? '50%' : '0';
+        buildPreview.style.clipPath = activeBuildTool === 'triangle' ? 'polygon(50% 0%, 0% 100%, 100% 100%)' : 'none';
+        return;
+      }
+    });
+    canvas.addEventListener('mousemove', e => {
+      if (buildMode && buildStart) {
+        const rect = canvas.getBoundingClientRect();
+        const current = {
+          x: e.clientX - rect.left,
+          y: e.clientY - rect.top
+        };
+        const width = Math.abs(current.x - buildStart.x);
+        const height = Math.abs(current.y - buildStart.y);
+        buildPreview.style.width = width + 'px';
+        buildPreview.style.height = height + 'px';
+        buildPreview.style.left = Math.min(buildStart.x, current.x) + 'px';
+        buildPreview.style.top = Math.min(buildStart.y, current.y) + 'px';
+        buildPreview.style.display = 'block';
+        return;
+      }
+    });
+    canvas.addEventListener('mouseup', e => {
+      if (buildMode && buildStart) {
+        const rect = canvas.getBoundingClientRect();
+        const end = {
+          x: e.clientX - rect.left,
+          y: e.clientY - rect.top
+        };
+        const width = Math.abs(end.x - buildStart.x);
+        const height = Math.abs(end.y - buildStart.y);
+        if (width > 10 && height > 10) {
+          let newBody;
+          const centerX = (buildStart.x + end.x) / 2;
+          const centerY = (buildStart.y + end.y) / 2;
+          switch (activeBuildTool) {
+            case 'rectangle':
+              newBody = Bodies.rectangle(centerX, centerY, width, height, {
+                isStatic: true,
+                render: {
+                  fillStyle: '#666666'
+                }
+              });
+              break;
+            case 'circle':
+              const radius = Math.min(width, height) / 2;
+              newBody = Bodies.circle(centerX, centerY, radius, {
+                isStatic: true,
+                render: {
+                  fillStyle: '#666666'
+                }
+              });
+              break;
+            case 'triangle':
+              const vertices = [{
+                x: buildStart.x + width / 2,
+                y: buildStart.y
+              }, {
+                x: buildStart.x,
+                y: buildStart.y + height
+              }, {
+                x: buildStart.x + width,
+                y: buildStart.y + height
+              }];
+              newBody = Bodies.fromVertices(centerX, centerY, [vertices], {
+                isStatic: true,
+                render: {
+                  fillStyle: '#666666'
+                }
+              });
+              break;
+          }
+          if (newBody) {
+            World.add(engine.world, newBody);
+            playClickSound();
+            createParticles(centerX, centerY);
+          }
+        }
+        buildStart = null;
+        buildPreview.style.display = 'none';
+        buildPreview.style.width = '0px';
+        buildPreview.style.height = '0px';
+      }
+    });
+    allAchievements = allAchievements || {};
+    allAchievements.rainbowRagdoll = {
+      id: 'rainbowRagdoll',
+      title: 'Rainbow Master',
+      description: 'Discover the secret rainbow ragdoll power',
+      icon: '🌈',
+      unlocked: false
+    };
+    Matter.Engine.run(engine);
+    Matter.Render.run(render);
+  } catch (err) {
+    console.error('Error initializing game:', err);
+  }
+}
+let previewEngine, previewRender, previewRagdoll;
+function initializePreview() {
+  try {
+    if (!Matter || !Matter.Engine || !Matter.Render) {
+      console.error('Matter.js not properly loaded');
+      return;
+    }
+    if (previewEngine) {
+      try {
+        Matter.Engine.clear(previewEngine);
+        Matter.Render.stop(previewRender);
+        Matter.Engine.stop(previewEngine);
+      } catch (err) {
+        console.error('Error cleaning up preview:', err);
+      }
+    }
+    previewEngine = Matter.Engine.create({
+      gravity: {
+        x: 0,
+        y: 0
+      }
+    });
+    previewRender = Matter.Render.create({
+      canvas: document.getElementById('previewCanvas'),
+      engine: previewEngine,
+      options: {
+        width: 200,
+        height: 250,
+        wireframes: false,
+        background: '#1a1a1a'
+      }
+    });
+    previewRagdoll = createRagdoll(100, 125);
+    if (previewRagdoll) {
+      previewRagdoll.bodies.forEach(body => {
+        Matter.Body.setStatic(body, true);
+      });
+      World.add(previewEngine.world, [...previewRagdoll.bodies, ...previewRagdoll.constraints]);
+    }
+    Matter.Engine.run(previewEngine);
+    Matter.Render.run(previewRender);
+  } catch (err) {
+    console.error('Error initializing preview:', err);
+  }
+}
+function updatePreviewColors() {
+  if (!previewRagdoll) return;
+  const newColors = {
+    head: document.getElementById('headColor').value,
+    body: document.getElementById('bodyColor').value,
+    arms: document.getElementById('armsColor').value,
+    legs: document.getElementById('legsColor').value,
+    joints: document.getElementById('jointColor').value,
+    glow: document.getElementById('glowColor').value,
+    enableGlow: document.getElementById('enableGlow').checked,
+    opacity: document.getElementById('opacitySlider').value,
+    metallic: document.getElementById('metallicEffect').checked
+  };
+  previewRagdoll.bodies.forEach((body, index) => {
+    const color = index === 0 ? newColors.head : index === 1 ? newColors.body : index <= 3 ? newColors.arms : newColors.legs;
+    body.render.opacity = newColors.opacity;
+    if (newColors.metallic) {
+      body.render.gradient = {
+        type: 'linear',
+        x1: 0,
+        y1: 0,
+        x2: 1,
+        y2: 1,
+        colorStops: [{
+          offset: 0,
+          color: shadeColor(color, 20)
+        }, {
+          offset: 0.5,
+          color: color
+        }, {
+          offset: 1,
+          color: shadeColor(color, -20)
+        }]
+      };
+    } else {
+      body.render.gradient = null;
+      body.render.fillStyle = color;
+    }
+    if (newColors.enableGlow) {
+      body.render.shadow = {
+        color: newColors.glow,
+        blur: 15,
+        offset: {
+          x: 0,
+          y: 0
+        }
+      };
+    } else {
+      body.render.shadow = null;
+    }
+  });
+  previewRagdoll.constraints.forEach(constraint => {
+    constraint.render.strokeStyle = newColors.joints;
+  });
+}
+function openBuildColorCustomization() {
+  document.getElementById('buildColorPanel').style.display = 'block';
+  document.querySelectorAll('#buildColorPanel label').forEach(label => {
+    label.style.color = 'white';
+  });
+}
+function closeBuildColorCustomization() {
+  document.getElementById('buildColorPanel').style.display = 'none';
+}
+function applyBuildColors() {
+  const buildColor = document.getElementById('buildColor').value;
+  closeBuildColorCustomization();
+}
+function spawnRagdoll() {
+  playClickSound();
+  const ragdoll = createRagdoll(Math.random() * (window.innerWidth - 100) + 50, 50);
+  if (ragdoll) {
+    World.add(engine.world, [...ragdoll.bodies, ...ragdoll.constraints]);
+  }
+}
+function multiSpawnRagdolls() {
+  playClickSound();
+  let count = parseInt(document.getElementById('multiSpawnInput').value);
+  count = Math.min(Math.max(1, count), 100);
+  document.getElementById('multiSpawnInput').value = count;
+  if (count >= 10 && !allAchievements.multiSpawn.unlocked) {
+    showAchievement('Crowd Control', 'Spawn 10 or more ragdolls at once');
+  }
+  for (let i = 0; i < count; i++) {
+    spawnRagdoll();
+  }
+}
+function toggleGravity() {
+  playClickSound();
+  engine.world.gravity.y *= -1;
+  if (!allAchievements.gravityMaster.unlocked) {
+    allAchievements.gravityMaster.progress++;
+    if (allAchievements.gravityMaster.progress >= allAchievements.gravityMaster.required) {
+      showAchievement('Gravity Master', 'Toggle gravity 5 times');
+    }
+  }
+}
+function clearRagdolls() {
+  playClickSound();
+  const bodies = Matter.Composite.allBodies(engine.world);
+  const constraints = Matter.Composite.allConstraints(engine.world);
+  bodies.forEach(body => {
+    if (body !== ground) {
+      World.remove(engine.world, body);
+    }
+  });
+  constraints.forEach(constraint => {
+    World.remove(engine.world, constraint);
+  });
+  if (buildPreview) {
+    buildPreview.style.display = 'none';
+    buildPreview.style.width = '0px';
+    buildPreview.style.height = '0px';
+  }
+  buildStart = null;
+}
+function handleKeyPress(e) {
+  clearTimeout(keyBufferTimer);
+  keyBuffer += e.key.toLowerCase();
+  keyBufferTimer = setTimeout(() => keyBuffer = '', 1000);
+  if (keyBuffer.includes('snake')) {
+    keyBuffer = '';
+    toggleSnakeGame();
+  }
+  if (keyBuffer.includes('music')) {
+    keyBuffer = '';
+    toggleMusicPlayer();
+  }
+  if (snakeGame.active) {
+    switch (e.key) {
+      case 'ArrowUp':
+        if (snakeGame.direction !== 'down') snakeGame.direction = 'up';
+        break;
+      case 'ArrowDown':
+        if (snakeGame.direction !== 'up') snakeGame.direction = 'down';
+        break;
+      case 'ArrowLeft':
+        if (snakeGame.direction !== 'right') snakeGame.direction = 'left';
+        break;
+      case 'ArrowRight':
+        if (snakeGame.direction !== 'left') snakeGame.direction = 'right';
+        break;
+      case 'Escape':
+        toggleSnakeGame();
+        break;
+      case 'Shift':
+        if (snakeGame.boost.energy > 0) {
+          snakeGame.boost.active = true;
+        }
+        break;
+      case '0':
+        togglePause();
+        break;
+    }
+  }
+}
+function toggleSnakeGame() {
+  if (isPaused) {
+    togglePause();
+  }
+  if (!snakeGame.active && !allAchievements.snakeSecret.unlocked) {
+    showAchievement('Secret Snake', 'Discovered the hidden snake game!');
+  }
+  snakeGame.active = !snakeGame.active;
+  const gameElement = document.getElementById('snakeGame');
+  if (snakeGame.active) {
+    gameElement.style.display = 'block';
+    const bgMusic = document.getElementById('backgroundMusic');
+    bgMusic.pause();
+    stopMusicPhases();
+    snakeGame.music.src = MUSIC_TRACKS[3].url;
+    snakeGame.music.loop = true;
+    snakeGame.music.volume = 0.3;
+    snakeGame.music.play();
+    initSnakeGame();
+    initSnakeBackground();
+  } else {
+    gameElement.style.display = 'none';
+    snakeGame.music.pause();
+    snakeGame.music.currentTime = 0;
+    const bgMusic = document.getElementById('backgroundMusic');
+    currentPhase = 0;
+    bgMusic.src = MUSIC_TRACKS[currentPhase].url;
+    bgMusic.play();
+    startMusicPhases();
+    clearInterval(snakeGame.interval);
+    clearInterval(backgroundInterval);
+    clearStars();
+  }
+}
+function initSnakeGame() {
+  snakeGame.container = document.getElementById('snakeGame');
+  snakeGame.score = 0;
+  document.getElementById('snakeScore').textContent = '0';
+  while (snakeGame.container.children.length > 1) {
+    snakeGame.container.removeChild(snakeGame.container.lastChild);
+  }
+  const nameElement = document.createElement('div');
+  nameElement.className = 'snake-name';
+  nameElement.textContent = 'Kats Snake Game';
+  snakeGame.container.appendChild(nameElement);
+  snakeGame.snake = [{
+    x: 10,
+    y: 10
+  }];
+  snakeGame.direction = 'right';
+  createSnakeSegment(snakeGame.snake[0]);
+  createFood();
+  if (snakeGame.interval) clearInterval(snakeGame.interval);
+  snakeGame.interval = setInterval(updateSnakeGame, snakeGame.speed);
+  const boostText = document.createElement('div');
+  boostText.className = 'snake-boost';
+  boostText.textContent = 'Boost: 100%';
+  const boostBar = document.createElement('div');
+  boostBar.className = 'snake-boost-bar';
+  const boostFill = document.createElement('div');
+  boostFill.className = 'snake-boost-fill';
+  boostBar.appendChild(boostFill);
+  snakeGame.container.appendChild(boostText);
+  snakeGame.container.appendChild(boostBar);
+  snakeGame.boost.energy = 100;
+  snakeGame.boost.active = false;
+}
+function createSnakeSegment(position) {
+  const segment = document.createElement('div');
+  segment.className = 'snake-segment';
+  segment.style.width = segment.style.height = snakeGame.gridSize + 'px';
+  segment.style.left = position.x * snakeGame.gridSize + 'px';
+  segment.style.top = position.y * snakeGame.gridSize + 'px';
+  snakeGame.container.appendChild(segment);
+}
+function createFood() {
+  const food = document.createElement('div');
+  food.className = 'snake-food';
+  food.style.width = food.style.height = snakeGame.gridSize + 'px';
+  const maxX = Math.floor(window.innerWidth / snakeGame.gridSize);
+  const maxY = Math.floor(window.innerHeight / snakeGame.gridSize);
+  const position = {
+    x: Math.floor(Math.random() * maxX),
+    y: Math.floor(Math.random() * maxY)
+  };
+  const fruitType = FRUIT_TYPES[Math.floor(Math.random() * FRUIT_TYPES.length)];
+  food.classList.add(fruitType.class);
+  food.style.left = position.x * snakeGame.gridSize + 'px';
+  food.style.top = position.y * snakeGame.gridSize + 'px';
+  snakeGame.container.appendChild(food);
+  snakeGame.food = {
+    ...position,
+    type: fruitType
+  };
+}
+function updateSnakeGame() {
+  snakeGame.boost.energy = Math.max(0, snakeGame.boost.energy - (snakeGame.boost.active ? snakeGame.boost.drainRate : 0) + (snakeGame.boost.active ? 0 : snakeGame.boost.rechargeRate));
+  const boostText = snakeGame.container.querySelector('.snake-boost');
+  const boostFill = snakeGame.container.querySelector('.snake-boost-fill');
+  if (boostText && boostFill) {
+    boostText.textContent = `Boost: ${Math.round(snakeGame.boost.energy)}%`;
+    boostFill.style.width = `${snakeGame.boost.energy}%`;
+  }
+  const head = {
+    ...snakeGame.snake[0]
+  };
+  let moveAmount = 1;
+  if (snakeGame.boost.active) {
+    moveAmount = 2;
+  }
+  switch (snakeGame.direction) {
+    case 'up':
+      head.y -= moveAmount;
+      break;
+    case 'down':
+      head.y += moveAmount;
+      break;
+    case 'left':
+      head.x -= moveAmount;
+      break;
+    case 'right':
+      head.x += moveAmount;
+      break;
+  }
+  const maxX = Math.floor(window.innerWidth / snakeGame.gridSize);
+  const maxY = Math.floor(window.innerHeight / snakeGame.gridSize);
+  if (head.x < 0 || head.x >= maxX || head.y < 0 || head.y >= maxY) {
+    gameOver();
+    return;
+  }
+  if (snakeGame.snake.some(segment => segment.x === head.x && segment.y === head.y)) {
+    gameOver();
+    return;
+  }
+  if (head.x === snakeGame.food.x && head.y === snakeGame.food.y) {
+    snakeGame.container.removeChild(snakeGame.container.querySelector('.snake-food'));
+    createFood();
+    snakeGame.score += snakeGame.food.type.points;
+    document.getElementById('snakeScore').textContent = snakeGame.score;
+  } else {
+    snakeGame.snake.pop();
+    snakeGame.container.removeChild(snakeGame.container.querySelector('.snake-segment'));
+  }
+  snakeGame.snake.unshift(head);
+  createSnakeSegment(head);
+}
+function gameOver() {
+  clearInterval(snakeGame.interval);
+  alert(`Game Over! Score: ${snakeGame.score}`);
+  toggleSnakeGame();
+}
+function initSnakeBackground() {
+  const container = document.getElementById('snakeGame');
+  BACKGROUND_SCENES.forEach(scene => {
+    const bg = document.createElement('div');
+    bg.className = `snake-background snake-background-${scene}`;
+    container.insertBefore(bg, container.firstChild);
+  });
+  createSnakeStars();
+  backgroundInterval = setInterval(cycleBackground, 5000);
+  cycleBackground();
+}
+function cycleBackground() {
+  const backgrounds = document.querySelectorAll('.snake-background');
+  backgrounds.forEach(bg => bg.classList.remove('active'));
+  backgrounds[currentBackgroundIndex].classList.add('active');
+  currentBackgroundIndex = (currentBackgroundIndex + 1) % BACKGROUND_SCENES.length;
+  updateStars();
+}
+function createSnakeStars() {
+  clearStars();
+  const container = document.getElementById('snakeGame');
+  for (let i = 0; i < 100; i++) {
+    const star = document.createElement('div');
+    star.className = 'snake-star';
+    star.style.width = Math.random() * 3 + 'px';
+    star.style.height = star.style.width;
+    star.style.left = Math.random() * 100 + '%';
+    star.style.top = Math.random() * 100 + '%';
+    star.style.animationDelay = Math.random() * 2 + 's';
+    container.appendChild(star);
+    stars.push(star);
+  }
+}
+function updateStars() {
+  stars.forEach(star => {
+    star.style.left = Math.random() * 100 + '%';
+    star.style.top = Math.random() * 100 + '%';
+    star.style.animationDelay = Math.random() * 2 + 's';
+  });
+}
+function clearStars() {
+  stars.forEach(star => star.remove());
+  stars = [];
+}
+function startTutorial() {
+  tutorialActive = true;
+  tutorialStep = 0;
+  document.getElementById('startMenu').style.display = 'none';
+  document.querySelector('.space-scene').style.display = 'none';
+  document.getElementById('canvas').style.display = 'block';
+  document.querySelector('.controls').style.display = 'block';
+  if (!engine) {
+    initializeGame();
+  }
+  const music = document.getElementById('backgroundMusic');
+  if (music) {
+    music.src = MUSIC_TRACKS[4].url;
+    music.volume = 0.3;
+    music.play().catch(e => console.log("Tutorial audio autoplay prevented:", e));
+    stopMusicPhases();
+  }
+  document.querySelector('.tutorial-container').style.display = 'block';
+  const tutorialRagdoll = document.createElement('div');
+  tutorialRagdoll.className = 'tutorial-ragdoll';
+  const parts = [{
+    class: 'head',
+    style: 'width: 20px; height: 20px; top: 0; left: 40px; border-radius: 50%;'
+  }, {
+    class: 'torso',
+    style: 'width: 40px; height: 60px; top: 25px; left: 30px;'
+  }, {
+    class: 'leftArm',
+    style: 'width: 10px; height: 40px; top: 25px; left: 15px; transform: rotate(15deg);'
+  }, {
+    class: 'rightArm',
+    style: 'width: 10px; height: 40px; top: 25px; right: 15px; transform: rotate(-15deg);'
+  }, {
+    class: 'leftLeg',
+    style: 'width: 10px; height: 50px; top: 85px; left: 35px; transform: rotate(5deg);'
+  }, {
+    class: 'rightLeg',
+    style: 'width: 10px; height: 50px; top: 85px; right: 35px; transform: rotate(-5deg);'
+  }];
+  parts.forEach(part => {
+    const element = document.createElement('div');
+    element.className = 'tutorial-ragdoll-part ' + part.class;
+    element.style.cssText = part.style;
+    tutorialRagdoll.appendChild(element);
+  });
+  const label = document.createElement('div');
+  label.className = 'tutorial-ragdoll-label';
+  label.textContent = 'GUIDER';
+  tutorialRagdoll.appendChild(label);
+  document.querySelector('.tutorial-container').appendChild(tutorialRagdoll);
+  tutorialCursor = document.createElement('div');
+  tutorialCursor.className = 'tutorial-cursor';
+  tutorialCursor.innerHTML = `
+      <svg viewBox="0 0 24 24">
+          <path d="M7,2L17,12L7,22V13H2V11H7V2M9,13V19.5L15.5,13H12V6.5L5.5,13H9Z"/>
+      </svg>
+  `;
+  document.body.appendChild(tutorialCursor);
+  updateTutorialStep();
+}
+function updateTutorialStep() {
+  const step = TUTORIAL_STEPS[tutorialStep];
+  const container = document.querySelector('.tutorial-container');
+  const message = container.querySelector('.tutorial-message');
+  const progressFill = container.querySelector('.tutorial-progress-fill');
+  message.textContent = step.message;
+  progressFill.style.width = `${tutorialStep / (TUTORIAL_STEPS.length - 1) * 100}%`;
+  if (tutorialHighlight) tutorialHighlight.remove();
+  if (step.highlight) {
+    const element = document.querySelector(step.highlight);
+    if (element) {
+      tutorialHighlight = document.createElement('div');
+      tutorialHighlight.className = 'tutorial-highlight';
+      const rect = element.getBoundingClientRect();
+      tutorialHighlight.style.left = rect.left - 5 + 'px';
+      tutorialHighlight.style.top = rect.top - 5 + 'px';
+      tutorialHighlight.style.width = rect.width + 10 + 'px';
+      tutorialHighlight.style.height = rect.height + 10 + 'px';
+      document.body.appendChild(tutorialHighlight);
+    }
+  }
+  step.action();
+  if (tutorialCursor) {
+    if (cursorAnimationFrame) {
+      cancelAnimationFrame(cursorAnimationFrame);
+      cursorAnimationFrame = null;
+    }
+    const isBuildStep = step.message.includes("Time to build!");
+    if (!isBuildStep) {
+      const element = step.highlight ? document.querySelector(step.highlight) : null;
+      if (element) {
+        const rect = element.getBoundingClientRect();
+        const targetX = rect.left + rect.width / 2;
+        const targetY = rect.top + rect.height / 2;
+        tutorialCursor.style.display = 'block';
+        const moveCursor = () => {
+          const curRect = tutorialCursor.getBoundingClientRect();
+          const currentX = curRect.left + curRect.width / 2;
+          const currentY = curRect.top + curRect.height / 2;
+          const dx = (targetX - currentX) * 0.2;
+          const dy = (targetY - currentY) * 0.2;
+          if (Math.abs(dx) > 0.1 || Math.abs(dy) > 0.1) {
+            tutorialCursor.style.left = currentX + dx - curRect.width / 2 + 'px';
+            tutorialCursor.style.top = currentY + dy - curRect.height / 2 + 'px';
+            cursorAnimationFrame = requestAnimationFrame(moveCursor);
+          } else {
+            tutorialCursor.classList.add('clicking');
+            generateTutorialClickSound();
+            setTimeout(() => {
+              tutorialCursor.classList.remove('clicking');
+            }, 300);
+          }
+        };
+        moveCursor();
+      } else {
+        tutorialCursor.style.display = 'none';
+      }
+    } else {
+      tutorialCursor.style.display = 'none';
+    }
+  }
+}
+function nextTutorialStep() {
+  if (tutorialStep < TUTORIAL_STEPS.length - 1) {
+    tutorialStep++;
+    updateTutorialStep();
+  } else {
+    endTutorial();
+  }
+}
+function previousTutorialStep() {
+  if (tutorialStep > 0) {
+    tutorialStep--;
+    updateTutorialStep();
+  }
+}
+function endTutorial() {
+  tutorialActive = false;
+  document.querySelector('.tutorial-container').style.display = 'none';
+  if (tutorialHighlight) tutorialHighlight.remove();
+  if (demoRagdoll) clearDemoRagdoll();
+  if (tutorialCursor) {
+    tutorialCursor.remove();
+    tutorialCursor = null;
+  }
+  if (cursorAnimationFrame) {
+    cancelAnimationFrame(cursorAnimationFrame);
+    cursorAnimationFrame = null;
+  }
+  buildMode = false;
+  document.querySelector('.build-controls').style.display = 'none';
+  if (!achievements.tutorialComplete) {
+    achievements.tutorialComplete = true;
+    showAchievement('Tutorial Master', 'Completed the tutorial and learned all the basics!');
+  }
+  const music = document.getElementById('backgroundMusic');
+  if (music) {
+    currentPhase = 0;
+    music.src = MUSIC_TRACKS[currentPhase].url;
+    music.play().catch(e => console.log("Tutorial audio autoplay prevented:", e));
+    startMusicPhases();
+  }
+  if (!engine || !engine.world || Composite.allBodies(engine.world).length <= 1) {
+    document.getElementById('startMenu').style.display = 'flex';
+    document.querySelector('.space-scene').style.display = 'block';
+    document.getElementById('canvas').style.display = 'none';
+    document.querySelector('.controls').style.display = 'none';
+  }
+  const tutorialRagdoll = document.querySelector('.tutorial-ragdoll');
+  if (tutorialRagdoll) {
+    tutorialRagdoll.remove();
+  }
+}
+function clearDemoRagdoll() {
+  if (demoRagdoll) {
+    demoRagdoll.bodies.forEach(body => World.remove(engine.world, body));
+    demoRagdoll.constraints.forEach(constraint => World.remove(engine.world, constraint));
+    demoRagdoll = null;
+  }
+}
+window.addEventListener('resize', () => {
+  if (render && render.canvas) {
+    render.canvas.width = window.innerWidth;
+    render.canvas.height = window.innerHeight;
+    if (ground && Matter.Body) {
+      Matter.Body.setPosition(ground, {
+        x: window.innerWidth / 2,
+        y: window.innerHeight - 30
+      });
+    }
+  }
+  if (tutorialHighlight && tutorialActive) {
+    const step = TUTORIAL_STEPS[tutorialStep];
+    if (step.highlight) {
+      const element = document.querySelector(step.highlight);
+      if (element) {
+        const rect = element.getBoundingClientRect();
+        tutorialHighlight.style.left = rect.left - 5 + 'px';
+        tutorialHighlight.style.top = rect.top - 5 + 'px';
+        tutorialHighlight.style.width = rect.width + 10 + 'px';
+        tutorialHighlight.style.height = rect.height + 10 + 'px';
+      }
+    }
+  }
+});
+window.onerror = function (msg, url, lineNo, columnNo, error) {
+  console.error('Error: ', msg, '\nURL: ', url, '\nLine: ', lineNo, '\nColumn: ', columnNo, '\nError object: ', error);
+  return false;
+};
+const isMatterAvailable = () => {
+  return typeof Matter !== 'undefined' && Matter !== null;
+};
+function shadeColor(color, percent) {
+  let R = parseInt(color.substring(1, 3), 16);
+  let G = parseInt(color.substring(3, 5), 16);
+  let B = parseInt(color.substring(5, 7), 16);
+  R /= 255;
+  G /= 255;
+  B /= 255;
+  const max = Math.max(R, G, B);
+  const min = Math.min(R, G, B);
+  let h = 0;
+  if (max === min) {
+    h = 0;
+  } else if (max === R) {
+    h = 60 * ((G - B) / (max - min)) + (G < B ? 360 : 0);
+  } else if (max === G) {
+    h = 60 * ((B - R) / (max - min)) + 120;
+  } else {
+    h = 60 * ((R - G) / (max - min)) + 240;
+  }
+  const baseHue = 0;
+  let rotation = h - baseHue;
+  if (rotation < 0) rotation += 360;
+  return rotation;
+}
+async function getAIBuildInstructions(prompt, detailLevel) {
+  try {
+    const response = await fetch('/api/ai_completion', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify({
+        prompt: `Create a physics-based structure or scene in a 2D space using rectangles, circles, and triangles. Detail level: ${detailLevel}/5. User request: ${prompt}
+        
+        Response format should be an array of objects, each with:
+        - shape: "rectangle", "circle", or "triangle"
+        - x: x position (0-1000)
+        - y: y position (0-1000)
+        - width: width for rectangles/triangles
+        - height: height for rectangles/triangles
+        - radius: radius for circles
+        - color: hex color code
+        - isStatic: boolean
+        
+        <typescript-interface>
+        interface BuildInstruction {
+          shape: "rectangle" | "circle" | "triangle";
+          x: number;
+          y: number;
+          width?: number;
+          height?: number;
+          radius?: number;
+          color: string;
+          isStatic: boolean;
+        }
+        </typescript-interface>`,
+        data: {
+          detailLevel,
+          prompt
+        }
+      })
+    });
+    return await response.json();
+  } catch (error) {
+    console.error('Error getting AI build instructions:', error);
+    return [];
+  }
+}
+function openAIBuildPanel() {
+  document.getElementById('aiBuildPanel').style.display = 'block';
+  updateDetailDisplay();
+}
+function closeAIBuildPanel() {
+  document.getElementById('aiBuildPanel').style.display = 'none';
+}
+function updateDetailDisplay() {
+  const level = document.getElementById('detailLevel').value;
+  const display = document.getElementById('detailDisplay');
+  const labels = ['Very Simple', 'Simple', 'Medium', 'Detailed', 'Very Detailed'];
+  display.textContent = labels[level - 1];
+}
+async function generateAIBuild() {
+  const prompt = document.getElementById('buildPrompt').value;
+  const detailLevel = parseInt(document.getElementById('detailLevel').value);
+  if (!prompt) {
+    showMaintenanceMessage('Please enter a build description');
+    return;
+  }
+  showMaintenanceMessage('Generating build...');
+  const instructions = await getAIBuildInstructions(prompt, detailLevel);
+  if (currentAIBuild) {
+    currentAIBuild.forEach(body => {
+      if (body !== ground) {
+        World.remove(engine.world, body);
+      }
+    });
+  }
+  currentAIBuild = instructions.map(instruction => {
+    let body;
+    switch (instruction.shape) {
+      case 'rectangle':
+        body = Bodies.rectangle(instruction.x, instruction.y, instruction.width, instruction.height, {
+          isStatic: instruction.isStatic,
+          render: {
+            fillStyle: instruction.color
+          }
+        });
+        break;
+      case 'circle':
+        const radius = Math.min(instruction.width, instruction.height) / 2;
+        body = Bodies.circle(instruction.x, instruction.y, radius, {
+          isStatic: instruction.isStatic,
+          render: {
+            fillStyle: instruction.color
+          }
+        });
+        break;
+      case 'triangle':
+        const vertices = [{
+          x: instruction.x,
+          y: instruction.y - instruction.height / 2
+        }, {
+          x: instruction.x - instruction.width / 2,
+          y: instruction.y + instruction.height / 2
+        }, {
+          x: instruction.x + instruction.width / 2,
+          y: instruction.y + instruction.height / 2
+        }];
+        body = Bodies.fromVertices(instruction.x, instruction.y, [vertices], {
+          isStatic: instruction.isStatic,
+          render: {
+            fillStyle: instruction.color
+          }
+        });
+        break;
+    }
+    if (body) {
+      World.add(engine.world, body);
+    }
+    return body;
+  }).filter(body => body !== null);
+  closeAIBuildPanel();
+  showMaintenanceMessage('Build complete!');
+}
+document.addEventListener('DOMContentLoaded', function () {
+  ['headColor', 'bodyColor', 'armsColor', 'legsColor', 'jointColor', 'glowColor', 'enableGlow', 'opacitySlider', 'metallicEffect'].forEach(id => {
+    const element = document.getElementById(id);
+    if (element) {
+      element.addEventListener('input', updatePreviewColors);
+      element.addEventListener('change', updatePreviewColors);
+    } else {
+      console.warn(`Element with id ${id} not found`);
+    }
+  });
+  document.getElementById('detailLevel').addEventListener('input', updateDetailDisplay);
+  document.addEventListener('keydown', handleKeyPress);
+});
+document.addEventListener('keyup', function (e) {
+  if (e.key === 'Shift') {
+    snakeGame.boost.active = false;
+  }
+});
+function generateTutorialClickSound() {
+  const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+  const oscillator = audioContext.createOscillator();
+  const gainNode = audioContext.createGain();
+  oscillator.connect(gainNode);
+  gainNode.connect(audioContext.destination);
+  oscillator.type = 'sine';
+  oscillator.frequency.setValueAtTime(1200, audioContext.currentTime);
+  gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
+  gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.05);
+  oscillator.start(audioContext.currentTime);
+  oscillator.stop(audioContext.currentTime + 0.05);
+}
+function showAchievement(title, description) {
+  console.log(`Achievement blocked: ${title} - ${description}`);
+}
+function generateAchievementSound() {
+  const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+  const oscillator = audioContext.createOscillator();
+  const gainNode = audioContext.createGain();
+  oscillator.connect(gainNode);
+  gainNode.connect(audioContext.destination);
+  oscillator.type = 'sine';
+  oscillator.frequency.setValueAtTime(587.33, audioContext.currentTime);
+  oscillator.frequency.setValueAtTime(880, audioContext.currentTime + 0.1);
+  gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+  gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+  oscillator.start(audioContext.currentTime);
+  oscillator.stop(audioContext.currentTime + 0.3);
+}
+let isPaused = false;
+function togglePause() {
+  isPaused = !isPaused;
+  const pauseMenu = document.getElementById('pauseMenu');
+  if (isPaused) {
+    pauseMenu.style.display = 'flex';
+    if (engine) {
+      engine.timing.timeScale = 0;
+    }
+    if (snakeGame.active) {
+      clearInterval(snakeGame.interval);
+    }
+    const music = document.getElementById('backgroundMusic');
+    if (music) {
+      music.pause();
+    }
+    if (snakeGame.music) {
+      snakeGame.music.pause();
+    }
+  } else {
+    resumeGame();
+  }
+}
+function resumeGame() {
+  isPaused = false;
+  const pauseMenu = document.getElementById('pauseMenu');
+  pauseMenu.style.display = 'none';
+  if (engine) {
+    engine.timing.timeScale = 1;
+  }
+  if (snakeGame.active) {
+    snakeGame.interval = setInterval(updateSnakeGame, snakeGame.speed);
+  }
+  const music = document.getElementById('backgroundMusic');
+  if (music && !snakeGame.active) {
+    music.play().catch(e => console.log("Audio resume prevented:", e));
+  }
+  if (snakeGame.music && snakeGame.active) {
+    snakeGame.music.play().catch(e => console.log("Snake music resume prevented:", e));
+  }
+}
+function returnToMainMenu() {
+  isPaused = false;
+  const pauseMenu = document.getElementById('pauseMenu');
+  pauseMenu.style.display = 'none';
+  if (engine) {
+    engine.timing.timeScale = 1;
+  }
+  if (snakeGame.active) {
+    toggleSnakeGame();
+  }
+  clearRagdolls();
+  document.getElementById('startMenu').style.display = 'flex';
+  document.querySelector('.space-scene').style.display = 'block';
+  document.getElementById('canvas').style.display = 'none';
+  document.querySelector('.controls').style.display = 'none';
+  const music = document.getElementById('backgroundMusic');
+  if (music) {
+    currentPhase = 0;
+    music.src = MUSIC_TRACKS[currentPhase].url;
+    music.play().catch(e => console.log("Audio autoplay prevented:", e));
+    startMusicPhases();
+  }
+}
+function startMusicPhases() {
+  if (phaseInterval) {
+    clearInterval(phaseInterval);
+  }
+  phaseInterval = setInterval(() => {
+    currentPhase = (currentPhase + 1) % (MUSIC_TRACKS.length - 1);
+    const music = document.getElementById('backgroundMusic');
+    if (music) {
+      music.src = MUSIC_TRACKS[currentPhase].url;
+      music.play().catch(e => console.log("Audio transition prevented:", e));
+    }
+  }, 60000);
+}
+function createConfetti() {
+  const colors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff'];
+  const confetti = document.createElement('div');
+  confetti.className = 'confetti';
+  confetti.style.left = Math.random() * 100 + 'vw';
+  confetti.style.width = Math.random() * 10 + 5 + 'px';
+  confetti.style.height = Math.random() * 10 + 5 + 'px';
+  confetti.style.background = colors[Math.floor(Math.random() * colors.length)];
+  confetti.style.animationDuration = Math.random() * 2 + 3 + 's';
+  document.body.appendChild(confetti);
+  confetti.addEventListener('animationend', () => confetti.remove());
+}
+let confettiInterval;
+async function startGame() {
+  if (confettiInterval) {
+    clearInterval(confettiInterval);
+    confettiInterval = null;
+  }
+  try {
+    const user = await window.websim.getCreatedBy();
+    playClickSound();
+    document.getElementById('startMenu').style.display = 'none';
+    document.querySelector('.space-scene').style.display = 'none';
+    document.getElementById('canvas').style.display = 'block';
+    document.querySelector('.controls').style.display = 'block';
+    const music = document.getElementById('backgroundMusic');
+    if (music) {
+      music.volume = 0.3;
+      music.src = SONGS[0].url;
+      music.play().catch(e => console.log("Audio autoplay prevented:", e));
+    }
+    initializeGame();
+    isPaused = false;
+    const controls = document.querySelector('.controls');
+    if (controls) {
+      const buildButton = document.createElement('button');
+      buildButton.textContent = 'Build Mode';
+      buildButton.onclick = toggleBuildMode;
+      controls.appendChild(buildButton);
+      const hammerButton = document.createElement('button');
+      hammerButton.className = 'hammer-mode-btn';
+      hammerButton.textContent = 'Hammer Mode';
+      hammerButton.onclick = toggleHammerMode;
+      controls.appendChild(hammerButton);
+      const musicButton = document.createElement('button');
+      musicButton.textContent = 'Music Player';
+      musicButton.onclick = toggleMusicPlayer;
+      controls.appendChild(musicButton);
+    }
+    document.getElementById('creditMessage').style.display = 'block';
+    if (user && user.username === 'SandBoxOffical2') {
+      const adminPanel = document.createElement('div');
+      adminPanel.className = 'admin-panel';
+      adminPanel.innerHTML = `
+            <h3>Admin Panel</h3>
+            <button class="admin-button" onclick="clearAllRagdolls()">Kill All Ragdolls</button>
+            <button class="admin-button" onclick="toggleAdminWeapon('knife')">Admin Knife</button>
+            <button class="admin-button" onclick="toggleAdminWeapon('gun')">Admin Gun</button>
+            <button class="admin-button" onclick="toggleAdminWeapon('laser')">Admin Laser</button>
+        `;
+      document.body.appendChild(adminPanel);
+      const crown = document.querySelector('div[style*="👑"]');
+      if (crown) {
+        crown.onclick = () => {
+          adminPanel.style.display = adminPanel.style.display === 'none' ? 'block' : 'none';
+        };
+      }
+    }
+  } catch (err) {
+    console.error('Error in startGame:', err);
+  }
+}
+confettiInterval = setInterval(() => {
+  if (document.getElementById('startMenu').style.display !== 'none') {
+    createConfetti();
+  }
+}, 200);
+function toggleMusicPlayer() {
+  musicPlayerActive = !musicPlayerActive;
+  const player = document.getElementById('musicPlayer');
+  if (musicPlayerActive) {
+    player.style.display = 'block';
+    initializeMusicPlayer();
+  } else {
+    player.style.display = 'none';
+  }
+}
+function initializeMusicPlayer() {
+  const songList = document.getElementById('songList');
+  songList.innerHTML = '';
+  SONGS.forEach((song, index) => {
+    const songItem = document.createElement('div');
+    songItem.className = 'song-item' + (index === currentSongIndex ? ' playing' : '');
+    if (song.name.includes('Retro') || song.name.includes('8-Bit') || song.name.includes('NES') || song.name.includes('Chiptune')) {
+      songItem.classList.add('retro');
+    }
+    songItem.innerHTML = `
+        <span class="song-icon">♪</span>
+        <span class="song-name">${song.name}</span>
+    `;
+    songItem.onclick = () => playSong(index);
+    songList.appendChild(songItem);
+  });
+  document.getElementById('volumeControl').addEventListener('input', e => {
+    const music = document.getElementById('backgroundMusic');
+    if (music) {
+      music.volume = e.target.value;
+    }
+  });
+}
+function closeMusicPlayer() {
+  musicPlayerActive = false;
+  document.getElementById('musicPlayer').style.display = 'none';
+}
+function playSong(index) {
+  currentSongIndex = index;
+  const music = document.getElementById('backgroundMusic');
+  if (music) {
+    music.src = SONGS[index].url;
+    music.play();
+    isPlaying = true;
+    updatePlayingState();
+  }
+  if (SONGS[index].name.includes('Retro Arcade') && !hasRainbowAchievement) {
+    setTimeout(() => {
+      document.body.style.background = 'url("data:image/svg+xml,<svg xmlns=\'http://www.w3.org/2000/svg\'><defs><linearGradient id=\'a\'><stop offset=\'0\' stop-color=\'%23000066\'/><stop offset=\'1\' stop-color=\'%23660066\'/></linearGradient></defs><rect width=\'100%\' height=\'100%\' fill=\'url(%23a)\'/></svg>")';
+      const portalMessage = document.querySelector('.portal-message');
+      portalMessage.style.display = 'block';
+      setTimeout(() => {
+        portalMessage.style.display = 'none';
+        document.body.style.background = '#1a1a1a';
+        hasRainbowAchievement = true;
+        showAchievement('Rainbow Master', 'Discover the secret rainbow ragdoll power');
+        allAchievements.rainbowRagdoll.unlocked = true;
+      }, 5000);
+    }, 3000);
+  }
+}
+function updatePlayingState() {
+  document.querySelectorAll('.song-item').forEach((item, index) => {
+    item.classList.toggle('playing', index === currentSongIndex);
+  });
+}
+function playPauseSong() {
+  const music = document.getElementById('backgroundMusic');
+  if (music) {
+    if (isPlaying) {
+      music.pause();
+    } else {
+      music.play();
+    }
+    isPlaying = !isPlaying;
+  }
+}
+function nextSong() {
+  let nextIndex;
+  if (isShuffle) {
+    nextIndex = Math.floor(Math.random() * SONGS.length);
+  } else {
+    nextIndex = (currentSongIndex + 1) % SONGS.length;
+  }
+  playSong(nextIndex);
+}
+function previousSong() {
+  let prevIndex;
+  if (isShuffle) {
+    prevIndex = Math.floor(Math.random() * SONGS.length);
+  } else {
+    prevIndex = (currentSongIndex - 1 + SONGS.length) % SONGS.length;
+  }
+  playSong(prevIndex);
+}
+function toggleRepeat() {
+  isRepeat = !isRepeat;
+  const music = document.getElementById('backgroundMusic');
+  if (music) {
+    music.loop = isRepeat;
+  }
+}
+function toggleShuffle() {
+  isShuffle = !isShuffle;
+}
+document.getElementById('backgroundMusic').addEventListener('ended', () => {
+  if (!isRepeat) {
+    nextSong();
+  }
+});
+function toggleHammerMode() {
+  hammerMode = !hammerMode;
+  const btn = document.querySelector('.hammer-mode-btn');
+  btn.classList.toggle('active');
+  if (hammerMode) {
+    hammerCursor = document.createElement('div');
+    hammerCursor.className = 'hammer-cursor';
+    document.body.appendChild(hammerCursor);
+    document.addEventListener('mousemove', moveHammerCursor);
+    document.addEventListener('click', hammerClick);
+  } else {
+    if (hammerCursor) {
+      hammerCursor.remove();
+      hammerCursor = null;
+    }
+    document.removeEventListener('mousemove', moveHammerCursor);
+    document.removeEventListener('click', hammerClick);
+  }
+}
+function moveHammerCursor(e) {
+  if (hammerCursor) {
+    hammerCursor.style.left = e.clientX - 16 + 'px';
+    hammerCursor.style.top = e.clientY - 16 + 'px';
+  }
+}
+function hammerClick(e) {
+  const bodies = Composite.allBodies(engine.world);
+  const mousePosition = {
+    x: e.clientX,
+    y: e.clientY
+  };
+  bodies.forEach(body => {
+    if (body.ragdoll && Matter.Bounds.contains(body.bounds, mousePosition)) {
+      damageRagdoll(body, 20);
+      createParticles(mousePosition.x, mousePosition.y, '#ff4444');
+      hammerCursor.style.animation = 'none';
+      setTimeout(() => {
+        hammerCursor.style.animation = 'hammerRotate 0.3s';
+      }, 50);
+    }
+  });
+}
+function closeCredits() {
+  document.getElementById('creditMessage').style.display = 'none';
+}
+let hammerMode = false;
+let hammerCursor = null;
+function showAchievements() {
+    const panel = document.getElementById('achievementsPanel');
+    panel.style.display = 'block';
+    panel.innerHTML = '<h2>Achievements</h2>';
+    
+    Object.values(allAchievements).forEach(achievement => {
+        const achievementEl = document.createElement('div');
+        achievementEl.className = `achievement-item ${achievement.unlocked ? '' : 'locked'}`;
+        achievementEl.innerHTML = `
+            <div class="achievement-icon">${achievement.icon}</div>
+            <div class="achievement-details">
+                <h3>${achievement.title}</h3>
+                <p>${achievement.description}</p>
+                ${achievement.progress ? `<p>Progress: ${achievement.progress}/${achievement.required}</p>` : ''}
+            </div>
+        `;
+        panel.appendChild(achievementEl);
+    });
+}
+function showAchievement(title, description) {
+    const achievementPopup = document.createElement('div');
+    achievementPopup.className = 'achievement';
+    achievementPopup.innerHTML = `
+        <div class="achievement-icon">🏆</div>
+        <div class="achievement-text">
+            <strong>${title}</strong><br>
+            ${description}
+        </div>
+    `;
+    document.body.appendChild(achievementPopup);
+    
+    setTimeout(() => {
+        achievementPopup.classList.add('show');
+    }, 100);
+    
+    setTimeout(() => {
+        achievementPopup.classList.remove('show');
+        setTimeout(() => achievementPopup.remove(), 500);
+    }, 3000);
+    
+    generateAchievementSound();
+}
+</script>
+</body></html>
