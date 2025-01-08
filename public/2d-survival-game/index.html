@@ -1,0 +1,2819 @@
+<html><head><base href="https://example.com">
+  <meta charset="UTF-8">
+  <title>Procedural 2D Survival World</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      background: #000;
+      font-family: "Courier New", monospace;
+      color: #fff;
+    }
+    #game-container {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      outline: none;
+    }
+    canvas {
+      display: block;
+      background: #000;
+    }
+    #contextMenu, #inventoryContextMenu {
+      position: absolute;
+      background: #000;
+      border: 1px solid #fff;
+      color: #fff;
+      padding: 0;
+      min-width: 120px;
+      z-index: 1000;
+    }
+    #contextMenu ul, #inventoryContextMenu ul {
+      list-style-type: none;
+      margin: 0;
+      padding: 0;
+    }
+    #contextMenu li, #inventoryContextMenu li {
+      padding: 2px 5px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    #contextMenu li:hover, #inventoryContextMenu li:hover {
+      background: #fff;
+      color: #000;
+    }
+    #inventory, #craftingUI, #craftingStationUI, #furnaceUI, #sawmillUI, #debugMenu, #optionsPane, #tileItemsUI {
+      position: absolute;
+      top: 50px;
+      left: 10px;
+      background: #000;
+      border: 1px solid #fff;
+      color: #fff;
+      padding: 5px;
+      width: 250px;
+      max-height: calc(100vh - 100px);
+      overflow-y: auto;
+      font-size: 12px;
+    }
+    button {
+      background: #000;
+      color: #fff;
+      border: 1px solid #fff;
+      padding: 2px 4px;
+      margin: 2px;
+      min-width: 60px;
+    }
+    button:hover {
+      background: #fff;
+      color: #000;
+    }
+    #inventoryList li, #craftingList li, #craftingStationList li {
+      padding: 2px 0;
+      border-bottom: 1px solid #333;
+    }
+    #statusBar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      background: #000;
+      border-bottom: 1px solid #fff;
+      padding: 4px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      z-index: 100;
+    }
+    #healthBarFill {
+      background: #ff0000; 
+      height: 100%;
+      transition: width 0.2s;
+    }
+    #thirstBarFill { 
+      background: #0000ff; 
+      height: 100%;
+      transition: width 0.2s;
+    }
+    #hungerBarFill {
+      background: #00ff00; 
+      height: 100%;
+      transition: width 0.2s;
+    }
+    #healthBar, #thirstBar, #hungerBar {
+      width: 100px;
+      height: 8px;
+      border: 1px solid #fff;
+    }
+    .skillBar {
+      width: 60px;
+      height: 4px;
+      border: 1px solid #fff;
+    }
+    .skillBarFill {
+      background: #ffff00;
+      height: 100%;
+    }
+    #skillsContainer {
+      position: fixed;
+      top: 0;
+      right: 0;
+      background: #000;
+      border-left: 1px solid #fff;
+      border-bottom: 1px solid #fff;
+      padding: 4px;
+      z-index: 100;
+      font-size: 11px;
+      line-height: 1.2;
+    }
+    #debugMenu input, #debugMenu select {
+      background: #000;
+      color: #fff;
+      border: 1px solid #fff;
+      font-family: "Courier New", monospace;
+    }
+    #loadingScreen, #previewScreen {
+      background: #000;
+      color: #fff;
+      border: 1px solid #fff;
+    }
+    #loadingBarContainer, #loadingBarFill {
+      border: 1px solid #fff;
+      background: #000;
+    }
+    #craftingList li, #craftingStationList li {
+      position: relative;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 4px;
+      gap: 8px;
+    }
+    #craftingUI, #craftingStationUI {
+      max-height: 80vh;
+      overflow-y: auto;
+    }
+    .tooltip {
+      position: absolute;
+      background: #000;
+      border: 1px solid #fff;
+      color: #fff;
+      padding: 4px 8px;
+      font-size: 11px;
+      z-index: 1100;
+      pointer-events: none;
+      max-width: 200px;
+      white-space: pre-wrap;
+    }
+  </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/simplex-noise/2.4.0/simplex-noise.min.js"></script>
+</head>
+<body>
+  <div id="previewScreen">
+    <canvas id="previewCanvas" width="300" height="300"></canvas>
+    <button id="acceptWorldBtn">Accept World</button>
+    <button id="regenerateWorldBtn">Regenerate World</button>
+  </div>
+  <div id="loadingScreen">
+    <div>Generating World...</div>
+    <div id="loadingBarContainer">
+      <div id="loadingBarFill"></div>
+    </div>
+  </div>
+  <div id="statusBar">
+    <div id="healthBarContainer">
+      <span>Health:</span>
+      <div id="healthBar">
+        <div id="healthBarFill"></div>
+      </div>
+    </div>
+    <div id="thirstBarContainer">
+      <span>Thirst:</span>
+      <div id="thirstBar">
+        <div id="thirstBarFill"></div>
+      </div>
+    </div>
+    <div id="hungerBarContainer">
+      <span>Hunger:</span>
+      <div id="hungerBar">
+        <div id="hungerBarFill"></div>
+      </div>
+    </div>
+    <div id="skillsContainer">
+      <div class="skill">
+        <span>Woodcutting (Lv <span id="woodcuttingLevel"></span>)</span>
+        <div class="skillBar">
+          <div class="skillBarFill" id="woodcuttingBarFill"></div>
+        </div>
+      </div>
+      <div class="skill">
+        <span>Mining (Lv <span id="miningLevel"></span>)</span>
+        <div class="skillBar">
+          <div class="skillBarFill" id="miningBarFill"></div>
+        </div>
+      </div>
+      <div class="skill">
+        <span>Hand Crafting (Lv <span id="handCraftingLevel"></span>)</span>
+        <div class="skillBar">
+          <div class="skillBarFill" id="handCraftingBarFill"></div>
+        </div>
+      </div>
+      <div class="skill">
+        <span>Woodworking (Lv <span id="woodworkingLevel"></span>)</span>
+        <div class="skillBar">
+          <div class="skillBarFill" id="woodworkingBarFill"></div>
+        </div>
+      </div>
+      <div class="skill">
+        <span>Metalsmithing (Lv <span id="metalsmithingLevel"></span>)</span>
+        <div class="skillBar">
+          <div class="skillBarFill" id="metalsmithingBarFill"></div>
+        </div>
+      </div>
+      <div class="skill">
+        <span>Endurance (Lv <span id="enduranceLevel"></span>)</span>
+        <div class="skillBar">
+          <div class="skillBarFill" id="enduranceBarFill"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div id="game-container" tabindex="0">
+    <canvas id="gameCanvas"></canvas>
+    <div id="contextMenu">
+      <ul>
+        <li id="gatherOption">Gather</li>
+        <li id="inspectOption">Inspect</li>
+        <li id="drinkOption" style="display: none;">Drink</li>
+        <li id="tillOption" style="display: none;">Till</li>
+        <li id="openStationOption" style="display: none;">Open Crafting Station</li>
+        <li id="openFurnaceOption" style="display: none;">Open Furnace</li>
+        <li id="refuelFurnaceOption" style="display: none;">Refuel Furnace</li>
+        <li id="igniteFurnaceOption" style="display: none;">Ignite Furnace</li>
+        <li id="openSawmillOption" style="display: none;">Open Sawmill</li>
+        <li id="placeFurnitureOption" style="display: none;">Place Furniture</li>
+      </ul>
+    </div>
+    <div id="inventoryContextMenu">
+      <ul id="inventoryContextActions"></ul>
+    </div>
+  </div>
+  <div id="uiContainer">
+    <div id="inventory" style="display: none;">
+      <h2>Inventory</h2>
+      <ul id="inventoryList"></ul>
+      <button id="openCraftingBtn">Open Crafting</button>
+      <button id="closeInventoryBtn">Close</button>
+      <div id="mainHand">
+        <h3>Main Hand</h3>
+        <div id="mainHandSlot">None</div>
+      </div>
+    </div>
+    <div id="craftingUI" style="display: none;">
+      <h2>Crafting</h2>
+      <ul id="craftingList"></ul>
+      <button id="closeCraftingBtn">Close</button>
+    </div>
+    <div id="craftingStationUI" style="display: none;">
+      <h2>Crafting Station</h2>
+      <ul id="craftingStationList"></ul>
+      <button id="closeCraftingStationBtn">Close</button>
+    </div>
+    <div id="furnaceUI" style="display: none;">
+      <h2>Furnace</h2>
+      <div id="furnaceContents"></div>
+      <div>
+        <button id="addIronOreBtn">Add Iron Ore</button>
+        <button id="addCopperOreBtn">Add Copper Ore</button>
+        <button id="collectBarsBtn">Collect Bars</button>
+        <button id="closeFurnaceBtn">Close</button>
+      </div>
+    </div>
+    <div id="sawmillUI" style="display: none;">
+      <h2>Sawmill</h2>
+      <div id="sawmillContents"></div>
+      <div>
+        <button id="addPineLogBtn">Add Pine Logs</button>
+        <button id="collectPlanksBtn">Collect Planks</button>
+        <button id="closeSawmillBtn">Close</button>
+      </div>
+    </div>
+  </div>
+  <div id="optionsPane" style="display: none;">
+    <h2>Options</h2>
+    <label><input type="radio" name="cursorMode" value="none"> No Cursor Trail</label>
+    <label><input type="radio" name="cursorMode" value="always" checked> Always Show Cursor Trail</label>
+    <label><input type="radio" name="cursorMode" value="travelOnly"> Only Show While Traveling</label>
+    <button id="closeOptionsBtn">Close</button>
+  </div>
+  <div id="tileItemsUI" style="display: none;">
+    <h2>Ground Items</h2>
+    <ul id="tileItemsList"></ul>
+    <button id="closeTileItemsBtn">Close</button>
+  </div>
+  <div id="debugMenu" style="display: none;">
+    <h2>Debug Menu</h2>
+    <label>
+      Item:
+      <select id="debugItemSelect"></select>
+    </label>
+    <label>Quantity: <input type="number" id="debugItemQuantity" value="1"></label>
+    <label>Quality: <input type="number" id="debugItemQuality" value="0"></label>
+    <button id="debugSpawnItemBtn">Spawn Item</button>
+    <div style="margin-top:10px;">
+      <div>
+        <label>Heal Amount: <input type="number" id="debugHealAmount" value="25"></label>
+        <button id="debugHealBtn">Heal</button>
+      </div>
+      <div>
+        <label>Hydrate Amount: <input type="number" id="debugHydrateAmount" value="25"></label>
+        <button id="debugHydrateBtn">Hydrate</button>
+      </div>
+      <div>
+        <label>Satiate Amount: <input type="number" id="debugSatiateAmount" value="25"></label>
+        <button id="debugSatiateBtn">Satiate</button>
+      </div>
+      <div style="margin-top:5px;">
+        <select id="debugSkillSelect">
+          <option value="woodcutting">Woodcutting</option>
+          <option value="mining">Mining</option>
+          <option value="handCrafting">Hand Crafting</option>
+          <option value="woodworking">Woodworking</option>
+          <option value="metalsmithing">Metalsmithing</option>
+          <option value="endurance">Endurance</option>
+        </select>
+        <label>XP: <input type="number" id="debugSkillXP" value="100"></label>
+        <button id="debugSkillXPBtn">Add XP</button>
+      </div>
+    </div>
+    <button id="debugCloseBtn" style="margin-top:10px;">Close</button>
+  </div>
+  <div id="craftingSelectorUI" style="display: none;">
+    <h2 id="craftingSelectorTitle"></h2>
+    <ul id="craftingSelectorComponents"></ul>
+    <div id="craftingSelectorChoices">
+      <button id="craftingSelectorConfirm">Confirm</button>
+      <button id="craftingSelectorCancel">Cancel</button>
+    </div>
+  </div>
+  <script>function hideInventoryContextMenu() {
+  inventoryContextMenu.style.display = 'none';
+}
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+const container = document.getElementById('game-container');
+const contextMenu = document.getElementById('contextMenu');
+const gatherOption = document.getElementById('gatherOption');
+const inspectOption = document.getElementById('inspectOption');
+const drinkOption = document.getElementById('drinkOption');
+const tillOption = document.getElementById('tillOption');
+const openStationOption = document.getElementById('openStationOption');
+const openFurnaceOption = document.getElementById('openFurnaceOption');
+const refuelFurnaceOption = document.getElementById('refuelFurnaceOption');
+const igniteFurnaceOption = document.getElementById('igniteFurnaceOption');
+const openSawmillOption = document.getElementById('openSawmillOption');
+const placeFurnitureOption = document.getElementById('placeFurnitureOption');
+const inventoryDiv = document.getElementById('inventory');
+const inventoryList = document.getElementById('inventoryList');
+const inventoryContextMenu = document.getElementById('inventoryContextMenu');
+const inventoryContextActions = document.getElementById('inventoryContextActions');
+const craftingUI = document.getElementById('craftingUI');
+const craftingList = document.getElementById('craftingList');
+const openCraftingBtn = document.getElementById('openCraftingBtn');
+const closeCraftingBtn = document.getElementById('closeCraftingBtn');
+const closeInventoryBtn = document.getElementById('closeInventoryBtn');
+const mainHandSlot = document.getElementById('mainHandSlot');
+const craftingStationUI = document.getElementById('craftingStationUI');
+const craftingStationList = document.getElementById('craftingStationList');
+const closeCraftingStationBtn = document.getElementById('closeCraftingStationBtn');
+const furnaceUI = document.getElementById('furnaceUI');
+const furnaceContents = document.getElementById('furnaceContents');
+const addIronOreBtn = document.getElementById('addIronOreBtn');
+const addCopperOreBtn = document.getElementById('addCopperOreBtn');
+const collectBarsBtn = document.getElementById('collectBarsBtn');
+const closeFurnaceBtn = document.getElementById('closeFurnaceBtn');
+const sawmillUI = document.getElementById('sawmillUI');
+const sawmillContents = document.getElementById('sawmillContents');
+const addPineLogBtn = document.getElementById('addPineLogBtn');
+const collectPlanksBtn = document.getElementById('collectPlanksBtn');
+const closeSawmillBtn = document.getElementById('closeSawmillBtn');
+const loadingScreen = document.getElementById('loadingScreen');
+const loadingBarFill = document.getElementById('loadingBarFill');
+const previewScreen = document.getElementById('previewScreen');
+const previewCanvas = document.getElementById('previewCanvas');
+const acceptWorldBtn = document.getElementById('acceptWorldBtn');
+const regenerateWorldBtn = document.getElementById('regenerateWorldBtn');
+const optionsPane = document.getElementById('optionsPane');
+const closeOptionsBtn = document.getElementById('closeOptionsBtn');
+let cursorModeRadios = document.querySelectorAll('input[name="cursorMode"]');
+const tileItemsUI = document.getElementById('tileItemsUI');
+const tileItemsList = document.getElementById('tileItemsList');
+const closeTileItemsBtn = document.getElementById('closeTileItemsBtn');
+const debugMenu = document.getElementById('debugMenu');
+const debugItemSelect = document.getElementById('debugItemSelect');
+const debugItemQuantity = document.getElementById('debugItemQuantity');
+const debugItemQuality = document.getElementById('debugItemQuality');
+const debugSpawnItemBtn = document.getElementById('debugSpawnItemBtn');
+const debugHealAmount = document.getElementById('debugHealAmount');
+const debugHealBtn = document.getElementById('debugHealBtn');
+const debugHydrateAmount = document.getElementById('debugHydrateAmount');
+const debugHydrateBtn = document.getElementById('debugHydrateBtn');
+const debugSatiateAmount = document.getElementById('debugSatiateAmount');
+const debugSatiateBtn = document.getElementById('debugSatiateBtn');
+const debugSkillSelect = document.getElementById('debugSkillSelect');
+const debugSkillXP = document.getElementById('debugSkillXP');
+const debugSkillXPBtn = document.getElementById('debugSkillXPBtn');
+const debugCloseBtn = document.getElementById('debugCloseBtn');
+const craftingSelectorUI = document.getElementById('craftingSelectorUI');
+const craftingSelectorTitle = document.getElementById('craftingSelectorTitle');
+const craftingSelectorComponents = document.getElementById('craftingSelectorComponents');
+const craftingSelectorConfirm = document.getElementById('craftingSelectorConfirm');
+const craftingSelectorCancel = document.getElementById('craftingSelectorCancel');
+canvas.width = container.clientWidth;
+canvas.height = container.clientHeight;
+const TILE_SIZE = 32;
+let WORLD_WIDTH = 300;
+let WORLD_HEIGHT = 300;
+let world = [];
+let simplex = new SimplexNoise();
+let player = {
+  x: 0,
+  y: 0,
+  health: 100,
+  maxHealth: 100,
+  thirst: 100,
+  maxThirst: 100,
+  hunger: 100,
+  maxHunger: 100,
+  skills: {
+    woodcutting: 1,
+    mining: 1,
+    handCrafting: 1,
+    woodworking: 1,
+    metalsmithing: 1,
+    endurance: 1
+  },
+  xp: {
+    woodcutting: 0,
+    mining: 0,
+    handCrafting: 0,
+    woodworking: 0,
+    metalsmithing: 0,
+    endurance: 0
+  }
+};
+let inventory = [];
+const fuelKindlingValues = {
+  'leaves': 2,
+  'pineLog': 9,
+  'coal': 25
+};
+let cursorMode = 'always';
+cursorModeRadios.forEach(radio => {
+  radio.addEventListener('change', e => {
+    cursorMode = e.target.value;
+    updateCursorTrail();
+  });
+});
+let lineToCursor = [];
+let autoTravelPath = [];
+let autoTravelIndex = 0;
+let autoTravelActive = false;
+let moveCost = {
+  'grass': 100,
+  'trees': 300,
+  'rock': 300,
+  'mountain': 400,
+  'water': 500,
+  'tilled': 100,
+  'sapling': 100
+};
+let camera = {
+  x: 0,
+  y: 0
+};
+let mouseTileX = 0;
+let mouseTileY = 0;
+let mainHand = null;
+let placeMode = null;
+let selectedTile = null;
+let openFurnaceTile = null;
+let openSawmillTile = null;
+let nextMoveAllowed = 0;
+let debugSpawnMode = false;
+let debugSpawnData = {
+  itemType: '',
+  quantity: 1,
+  quality: 0
+};
+let debugItemOptions = ['pineLog', 'leaves', 'stone', 'coal', 'ironOre', 'copperOre', 'ironBar', 'copperBar', 'pineSeed', 'hoe', 'axe', 'pickaxe', 'flint', 'campfire', 'improvedCampfire', 'furnace', 'craftingTable', 'advancedCraftingTable', 'sawmill', 'plank'];
+debugItemOptions.forEach(item => {
+  let opt = document.createElement('option');
+  opt.value = item;
+  opt.textContent = item;
+  debugItemSelect.appendChild(opt);
+});
+function getRelativeCoords(e) {
+  const rect = container.getBoundingClientRect();
+  return {
+    x: e.clientX - rect.left,
+    y: e.clientY - rect.top
+  };
+}
+function updateCursorTrail() {
+  if (autoTravelActive && (cursorMode === 'always' || cursorMode === 'travelOnly')) {
+    lineToCursor = [...autoTravelPath];
+  } else if (cursorMode === 'always') {
+    lineToCursor = bresenhamLine(player.x, player.y, mouseTileX, mouseTileY);
+  } else {
+    lineToCursor = [];
+  }
+}
+function getItemQualityFromSkill(skill) {
+  let skillLevel = player.skills[skill] || 0;
+  let chanceForQuality = skillLevel * 0.01;
+  if (Math.random() < chanceForQuality) {
+    return 1;
+  }
+  return 0;
+}
+function addItemObject(itemObj) {
+  if (itemObj.durability !== undefined) {
+    inventory.push(itemObj);
+    updateInventoryUI();
+    return;
+  }
+  let existing = inventory.find(i => i.type === itemObj.type && i.durability === undefined && i.quality === itemObj.quality);
+  if (existing) {
+    existing.quantity += itemObj.quantity;
+  } else {
+    inventory.push(itemObj);
+  }
+  updateInventoryUI();
+}
+function addXp(skill, amount) {
+  if (!player.skills.hasOwnProperty(skill)) return;
+  player.xp[skill] += amount;
+  let xpNeeded = player.skills[skill] * 100;
+  while (player.xp[skill] >= xpNeeded) {
+    player.xp[skill] -= xpNeeded;
+    player.skills[skill]++;
+    alert('Your ' + skill + ' skill advanced to level ' + player.skills[skill] + '!');
+    xpNeeded = player.skills[skill] * 100;
+  }
+}
+function bresenhamLine(x0, y0, x1, y1) {
+  let points = [];
+  let dx = Math.abs(x1 - x0);
+  let sx = x0 < x1 ? 1 : -1;
+  let dy = -Math.abs(y1 - y0);
+  let sy = y0 < y1 ? 1 : -1;
+  let err = dx + dy;
+  while (true) {
+    points.push({
+      x: x0,
+      y: y0
+    });
+    if (x0 === x1 && y0 === y1) break;
+    let e2 = 2 * err;
+    if (e2 >= dy) {
+      err += dy;
+      x0 += sx;
+    }
+    if (e2 <= dx) {
+      err += dx;
+      y0 += sy;
+    }
+  }
+  return points;
+}
+function updateCamera() {
+  camera.x = player.x * TILE_SIZE - canvas.width / 2;
+  camera.y = player.y * TILE_SIZE - canvas.height / 2;
+  if (camera.x < 0) camera.x = 0;
+  if (camera.y < 0) camera.y = 0;
+  if (camera.x > WORLD_WIDTH * TILE_SIZE - canvas.width) {
+    camera.x = WORLD_WIDTH * TILE_SIZE - canvas.width;
+  }
+  if (camera.y > WORLD_HEIGHT * TILE_SIZE - canvas.height) {
+    camera.y = WORLD_HEIGHT * TILE_SIZE - canvas.height;
+  }
+}
+function drawWorld() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  if (shadeEnabled) {
+    ctx.globalAlpha = 0.3;
+    const colors = {
+      grass: '#007700',
+      rock: '#777777',
+      trees: '#00ff00',
+      mountain: '#555555',
+      water: '#0000ff',
+      tilled: '#553311',
+      sapling: '#00aa00'
+    };
+    const startX = Math.floor(camera.x / TILE_SIZE);
+    const startY = Math.floor(camera.y / TILE_SIZE);
+    const endX = Math.min(WORLD_WIDTH, startX + Math.ceil(canvas.width / TILE_SIZE) + 1);
+    const endY = Math.min(WORLD_HEIGHT, startY + Math.ceil(canvas.height / TILE_SIZE) + 1);
+    for (let ty = startY; ty < endY; ty++) {
+      for (let tx = startX; tx < endX; tx++) {
+        const screenX = tx * TILE_SIZE - camera.x;
+        const screenY = ty * TILE_SIZE - camera.y;
+        const height = elevation[ty][tx];
+        const shade = 1 - height;
+        ctx.fillStyle = `rgba(0,0,0,${shade})`;
+        ctx.fillRect(screenX, screenY, TILE_SIZE, TILE_SIZE);
+      }
+    }
+    ctx.globalAlpha = 1.0;
+  }
+  const colors = {
+    grass: '#007700',
+    rock: '#777777',
+    trees: '#00ff00',
+    mountain: '#555555',
+    water: '#0000ff',
+    tilled: '#553311',
+    sapling: '#00aa00'
+  };
+  const startX = Math.floor(camera.x / TILE_SIZE);
+  const startY = Math.floor(camera.y / TILE_SIZE);
+  const endX = Math.min(WORLD_WIDTH, startX + Math.ceil(canvas.width / TILE_SIZE) + 1);
+  const endY = Math.min(WORLD_HEIGHT, startY + Math.ceil(canvas.height / TILE_SIZE) + 1);
+  for (let ty = startY; ty < endY; ty++) {
+    for (let tx = startX; tx < endX; tx++) {
+      const tile = world[ty][tx];
+      const screenX = tx * TILE_SIZE - camera.x;
+      const screenY = ty * TILE_SIZE - camera.y;
+      if (tile.type === 'rock') {
+        ctx.fillStyle = colors.rock;
+      } else if (tile.type === 'trees') {
+        ctx.fillStyle = colors.trees;
+      } else if (tile.type === 'mountain') {
+        ctx.fillStyle = colors.mountain;
+      } else if (tile.type === 'water') {
+        ctx.fillStyle = colors.water;
+      } else if (tile.type === 'tilled') {
+        ctx.fillStyle = colors.tilled;
+      } else if (tile.type === 'sapling') {
+        ctx.fillStyle = colors.sapling;
+      } else {
+        ctx.fillStyle = colors.grass;
+      }
+      ctx.fillRect(screenX, screenY, TILE_SIZE, TILE_SIZE);
+      if (tile.type === 'rock') {
+        ctx.fillStyle = '#aaa';
+        ctx.beginPath();
+        ctx.ellipse(screenX + TILE_SIZE / 2, screenY + TILE_SIZE / 2, TILE_SIZE / 5, TILE_SIZE / 5, 0, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      if (tile.type === 'trees') {
+        ctx.fillStyle = '#060';
+        ctx.beginPath();
+        ctx.moveTo(screenX + TILE_SIZE / 2, screenY + 4);
+        ctx.lineTo(screenX + 4, screenY + TILE_SIZE - 4);
+        ctx.lineTo(screenX + TILE_SIZE - 4, screenY + TILE_SIZE - 4);
+        ctx.closePath();
+        ctx.fill();
+      }
+      if (tile.furnitureType === 'craftingTable') {
+        ctx.fillStyle = '#663300';
+        ctx.fillRect(screenX + 4, screenY + 4, TILE_SIZE - 8, TILE_SIZE - 8);
+      }
+      if (tile.furnitureType === 'advancedCraftingTable') {
+        ctx.fillStyle = '#552200';
+        ctx.fillRect(screenX + 4, screenY + 4, TILE_SIZE - 8, TILE_SIZE - 8);
+      }
+      if (tile.furnitureType === 'furnace') {
+        ctx.fillStyle = '#444444';
+        ctx.fillRect(screenX + 4, screenY + 4, TILE_SIZE - 8, TILE_SIZE - 8);
+      }
+      if (tile.furnitureType === 'campfire') {
+        ctx.fillStyle = '#aa3300';
+        ctx.fillRect(screenX + 4, screenY + 4, TILE_SIZE - 8, TILE_SIZE - 8);
+      }
+      if (tile.furnitureType === 'improvedCampfire') {
+        ctx.fillStyle = '#ee6600';
+        ctx.fillRect(screenX + 4, screenY + 4, TILE_SIZE - 8, TILE_SIZE - 8);
+      }
+      if (tile.furnitureType === 'sawmill') {
+        ctx.fillStyle = '#8B4513';
+        ctx.fillRect(screenX + 4, screenY + 4, TILE_SIZE - 8, TILE_SIZE - 8);
+      }
+      if (tile.resourceMax > 0 && tile.resourceCurrent > 0 && tile.type !== 'water') {
+        let ratio = tile.resourceCurrent / tile.resourceMax;
+        ctx.fillStyle = '#000';
+        ctx.fillRect(screenX, screenY + TILE_SIZE - 5, TILE_SIZE, 5);
+        ctx.fillStyle = '#ff0';
+        ctx.fillRect(screenX, screenY + TILE_SIZE - 5, TILE_SIZE * ratio, 5);
+      }
+      if (tile.onGround && tile.onGround.length > 0) {
+        ctx.save();
+        ctx.globalAlpha = 0.7;
+        for (let i = 0; i < tile.onGround.length; i++) {
+          let gItem = tile.onGround[i];
+          let color = '#ccc';
+          if (gItem.type === 'pineLog') color = '#6D4C41';
+          if (gItem.type === 'leaves') color = '#2E8B57';
+          if (gItem.type === 'stone') color = '#999';
+          if (gItem.type === 'coal') color = '#222';
+          if (gItem.type === 'ironOre') color = '#aaa';
+          if (gItem.type === 'copperOre') color = '#b87333';
+          if (gItem.type === 'ironBar') color = '#CFCFCF';
+          if (gItem.type === 'copperBar') color = '#BB8855';
+          if (gItem.type === 'seed' || gItem.type === 'pineSeed') color = '#00FF00';
+          if (gItem.type === 'hoe' || gItem.type === 'axe' || gItem.type === 'pickaxe') color = '#FFD700';
+          ctx.fillStyle = color;
+          ctx.beginPath();
+          let offset = i * 4;
+          ctx.arc(screenX + TILE_SIZE / 2 + offset - 4, screenY + TILE_SIZE / 2 + offset - 4, 4, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.restore();
+      }
+    }
+  }
+  if (cursorMode === 'always' || cursorMode === 'travelOnly' && autoTravelActive) {
+    for (let i = 0; i < lineToCursor.length; i++) {
+      let lx = lineToCursor[i].x;
+      let ly = lineToCursor[i].y;
+      let sx = lx * TILE_SIZE - camera.x;
+      let sy = ly * TILE_SIZE - camera.y;
+      ctx.save();
+      ctx.globalAlpha = 0.5;
+      ctx.fillStyle = '#ff0';
+      ctx.fillRect(sx, sy, TILE_SIZE, TILE_SIZE);
+      ctx.restore();
+    }
+  }
+  let playerScreenX = player.x * TILE_SIZE - camera.x;
+  let playerScreenY = player.y * TILE_SIZE - camera.y;
+  ctx.fillStyle = '#ff0';
+  ctx.beginPath();
+  ctx.arc(playerScreenX + TILE_SIZE / 2, playerScreenY + TILE_SIZE / 2, TILE_SIZE / 3, 0, Math.PI * 2);
+  ctx.fill();
+}
+function handleMovementPath(tileX, tileY) {
+  if (tileX >= 0 && tileX < WORLD_WIDTH && tileY >= 0 && tileY < WORLD_HEIGHT) {
+    autoTravelPath = bresenhamLine(player.x, player.y, tileX, tileY);
+    autoTravelIndex = 0;
+    autoTravelActive = true;
+    updateCursorTrail();
+  }
+}
+function handleMovementKey(key) {
+  let dx = 0;
+  let dy = 0;
+  switch (key) {
+    case 'Numpad8':
+      dy = -1;
+      break;
+    case 'Numpad2':
+      dy = 1;
+      break;
+    case 'Numpad4':
+      dx = -1;
+      break;
+    case 'Numpad6':
+      dx = 1;
+      break;
+    case 'Numpad7':
+      dx = -1;
+      dy = -1;
+      break;
+    case 'Numpad9':
+      dx = 1;
+      dy = -1;
+      break;
+    case 'Numpad1':
+      dx = -1;
+      dy = 1;
+      break;
+    case 'Numpad3':
+      dx = 1;
+      dy = 1;
+      break;
+    default:
+      break;
+  }
+  if ((dx !== 0 || dy !== 0) && performance.now() >= nextMoveAllowed) {
+    let newX = player.x + dx;
+    let newY = player.y + dy;
+    if (newX >= 0 && newX < WORLD_WIDTH && newY >= 0 && newY < WORLD_HEIGHT) {
+      let tileType = world[newY][newX].type;
+      let costTime = moveCost[tileType] || moveCost['grass'];
+      nextMoveAllowed = performance.now() + costTime;
+      player.x = newX;
+      player.y = newY;
+      if (dx !== 0 || dy !== 0) {
+        let tileHeight = elevation[newY][newX];
+        let heightMultiplier = 1 + Math.max(tileHeight - 0.60, 0);
+        addXp('endurance', 0.1 * heightMultiplier);
+      }
+    }
+  }
+}
+function screenToTile(mouseX, mouseY) {
+  let worldX = mouseX + camera.x;
+  let worldY = mouseY + camera.y;
+  let tileX = Math.floor(worldX / TILE_SIZE);
+  let tileY = Math.floor(worldY / TILE_SIZE);
+  return {
+    tileX,
+    tileY
+  };
+}
+function showContextMenu(x, y, tile) {
+  selectedTile = tile;
+  updateContextMenu(tile);
+  let menuRect = contextMenu.getBoundingClientRect();
+  let vpWidth = window.innerWidth;
+  let vpHeight = window.innerHeight;
+  let left = x;
+  let top = y;
+  if (left + menuRect.width > vpWidth) {
+    left = vpWidth - menuRect.width;
+  }
+  if (top + menuRect.height > vpHeight) {
+    top = vpHeight - menuRect.height;
+  }
+  contextMenu.style.left = left + 'px';
+  contextMenu.style.top = top + 'px';
+  contextMenu.style.display = 'block';
+}
+function hideContextMenu() {
+  contextMenu.style.display = 'none';
+  selectedTile = null;
+}
+function isFurniture(itemType) {
+  return ['craftingTable', 'advancedCraftingTable', 'furnace', 'campfire', 'improvedCampfire', 'sawmill'].includes(itemType);
+}
+function updateContextMenu(tile) {
+  gatherOption.style.display = 'none';
+  inspectOption.style.display = 'none';
+  drinkOption.style.display = 'none';
+  tillOption.style.display = 'none';
+  openStationOption.style.display = 'none';
+  openFurnaceOption.style.display = 'none';
+  refuelFurnaceOption.style.display = 'none';
+  igniteFurnaceOption.style.display = 'none';
+  openSawmillOption.style.display = 'none';
+  placeFurnitureOption.style.display = 'none';
+  if (!tile) return;
+  if (tile.type === 'water') {
+    drinkOption.style.display = 'block';
+  }
+  if (tile.type === 'grass' && mainHand && mainHand.type === 'hoe') {
+    tillOption.style.display = 'block';
+  }
+  if (tile.furnitureType === 'craftingTable' || tile.furnitureType === 'advancedCraftingTable') {
+    openStationOption.style.display = 'block';
+  }
+  if (tile.furnitureType === 'furnace') {
+    openFurnaceOption.style.display = 'block';
+    let canRefuel = inventory.some(it => fuelKindlingValues[it.type] > 0 && it.quantity > 0);
+    if (canRefuel) {
+      refuelFurnaceOption.style.display = 'block';
+    }
+    if (inventory.find(it => it.type === 'flint' && it.quantity > 0) && !tile.furnitureData.isIgnited && tile.furnitureData.fuel > 0) {
+      igniteFurnaceOption.style.display = 'block';
+    }
+  }
+  if (tile.furnitureType === 'sawmill') {
+    openSawmillOption.style.display = 'block';
+  }
+  if (tile.resourceType !== 'none' && tile.resourceCurrent > 0 && tile.type !== 'water') {
+    gatherOption.style.display = 'block';
+  }
+  inspectOption.style.display = 'block';
+  if (tile.type !== 'water' && tile.type !== 'rock' && tile.furnitureType === 'none' && mainHand && isFurniture(mainHand.type)) {
+    placeFurnitureOption.style.display = 'block';
+  }
+}
+function gatherResources(tile) {
+  let distX = Math.abs(tile.x - player.x);
+  let distY = Math.abs(tile.y - player.y);
+  if (distX > 2 || distY > 2) {
+    alert('Too far away to gather!');
+    return;
+  }
+  if (tile.resourceMax > 0 && tile.resourceCurrent > 0) {
+    let baseGatherRate = 10;
+    if (mainHand && (mainHand.type === 'axe' || mainHand.type === 'pickaxe' || mainHand.type === 'hoe')) {
+      baseGatherRate = 15;
+      if (mainHand.durability !== undefined) {
+        mainHand.durability -= 5;
+        if (mainHand.durability <= 0) {
+          alert(mainHand.type + ' broke!');
+          mainHand = null;
+          mainHandSlot.textContent = 'None';
+        } else {
+          mainHandSlot.textContent = mainHand.type + ' (Dur:' + mainHand.durability + ')';
+        }
+      }
+    } else {
+      baseGatherRate = baseGatherRate * 0.5;
+    }
+    let prevValue = tile.resourceCurrent;
+    tile.resourceCurrent -= baseGatherRate;
+    if (tile.resourceCurrent < 0) tile.resourceCurrent = 0;
+    let chunkGathered = prevValue - tile.resourceCurrent;
+    let quantityGained = Math.floor(chunkGathered);
+    let skillUsed = 'woodcutting';
+    if (tile.resourceType === 'stone' || tile.resourceType === 'ironOre' || tile.resourceType === 'copperOre' || tile.resourceType === 'coal') {
+      skillUsed = 'mining';
+    }
+    if (quantityGained > 0) {
+      alert('Gathered ' + quantityGained + ' ' + tile.resourceType + '!');
+    }
+    for (let i = 0; i < quantityGained; i++) {
+      let quality = getItemQualityFromSkill(skillUsed);
+      let item = {
+        type: tile.resourceType,
+        quantity: 1,
+        quality: quality
+      };
+      addItemObject(item);
+    }
+    if (tile.resourceType === 'pineLog') {
+      if (Math.random() < 0.4) {
+        let leavesAmount = Math.floor(quantityGained / 2) + 1;
+        for (let k = 0; k < leavesAmount; k++) {
+          let quality = getItemQualityFromSkill('woodcutting');
+          let leaves = {
+            type: 'leaves',
+            quantity: 1,
+            quality: quality
+          };
+          addItemObject(leaves);
+        }
+        alert('Got ' + leavesAmount + ' leaves as well!');
+      }
+      if (Math.random() < 0.1) {
+        let seedCount = Math.random() < 0.5 ? 1 : 2;
+        if (!tile.onGround) tile.onGround = [];
+        let existingSeed = tile.onGround.find(i => i.type === 'pineSeed' && !i.durability && i.quality === undefined);
+        if (existingSeed) {
+          existingSeed.quantity += seedCount;
+        } else {
+          tile.onGround.push({
+            type: 'pineSeed',
+            quantity: seedCount
+          });
+        }
+        alert('Some pine seeds fell on the ground!');
+      }
+    }
+    addXp(skillUsed, quantityGained);
+    if (tile.resourceCurrent <= 0) {
+      if (tile.type === 'mountain') {
+        tile.resourceMax = 0;
+        tile.resourceCurrent = 0;
+        tile.resourceType = 'none';
+      } else {
+        tile.type = 'grass';
+        tile.resourceMax = 0;
+        tile.resourceCurrent = 0;
+        tile.resourceType = 'none';
+      }
+    }
+  } else {
+    alert('No resources to gather here!');
+  }
+  player.hunger -= 0.5;
+  if (player.hunger < 0) player.hunger = 0;
+}
+function inspectTile(tile) {
+  let distX = Math.abs(tile.x - player.x);
+  let distY = Math.abs(tile.y - player.y);
+  if (distX > 2 || distY > 2) {
+    alert('Too far away to inspect!');
+    return;
+  }
+  let tileHeight = elevation[tile.y][tile.x];
+  let heightStr = tile.type !== 'water' ? `, Height: ${tileHeight.toFixed(2)}` : '';
+  alert('Inspecting tile at (' + tile.x + ', ' + tile.y + '). Type: ' + tile.type + (tile.furnitureType !== 'none' ? ', Furniture: ' + tile.furnitureType : '') + heightStr);
+}
+function drinkWater(tile) {
+  let distX = Math.abs(tile.x - player.x);
+  let distY = Math.abs(tile.y - player.y);
+  if (distX > 2 || distY > 2) {
+    alert('Too far away to drink!');
+    return;
+  }
+  player.thirst = player.maxThirst;
+  alert('You drink from the river. Thirst restored!');
+}
+function tillSoil(tile) {
+  let distX = Math.abs(tile.x - player.x);
+  let distY = Math.abs(tile.y - player.y);
+  if (distX > 2 || distY > 2) {
+    alert('Too far away to till!');
+    return;
+  }
+  if (tile.type === 'grass') {
+    tile.type = 'tilled';
+    alert('Tilled the soil!');
+  } else {
+    alert('Cannot till this tile!');
+  }
+}
+function placeFurniture(furnitureType, tile) {
+  let distX = Math.abs(tile.x - player.x);
+  let distY = Math.abs(tile.y - player.y);
+  if (distX > 2 || distY > 2) {
+    alert('Too far away to place furniture!');
+    return;
+  }
+  if (tile.type !== 'water' && tile.type !== 'rock' && tile.furnitureType === 'none') {
+    tile.furnitureType = furnitureType;
+    tile.furnitureQuality = mainHand.quality || 0;
+    if (furnitureType === 'furnace') {
+      tile.furnitureData = {
+        ironOre: 0,
+        copperOre: 0,
+        ironBar: 0,
+        copperBar: 0,
+        fuel: 0,
+        fuelMax: 100,
+        isIgnited: false,
+        smeltTimer: 0
+      };
+    } else if (furnitureType === 'campfire' || furnitureType === 'improvedCampfire') {
+      tile.furnitureData = {
+        fuel: 0,
+        fuelMax: 100,
+        isIgnited: false
+      };
+    } else if (furnitureType === 'sawmill') {
+      tile.furnitureData = {
+        pineLog: 0,
+        planks: 0,
+        sawTimer: 0
+      };
+    } else {
+      tile.furnitureData = null;
+    }
+    mainHand = null;
+    mainHandSlot.textContent = 'None';
+    alert(furnitureType + ' placed!');
+    updateInventoryUI();
+  } else {
+    alert('Cannot place here!');
+  }
+}
+function generateBase() {
+  world = [];
+  for (let y = 0; y < WORLD_HEIGHT; y++) {
+    let row = [];
+    for (let x = 0; x < WORLD_WIDTH; x++) {
+      let tile = {
+        x,
+        y,
+        type: 'grass',
+        resourceCurrent: 0,
+        resourceMax: 0,
+        resourceType: 'none',
+        furnitureType: 'none',
+        furnitureData: null,
+        furnitureQuality: 0,
+        onGround: []
+      };
+      row.push(tile);
+    }
+    world.push(row);
+  }
+  elevation = [];
+  for (let y = 0; y < WORLD_HEIGHT; y++) {
+    let row = [];
+    for (let x = 0; x < WORLD_WIDTH; x++) {
+      let nx = x / WORLD_WIDTH * 4;
+      let ny = y / WORLD_HEIGHT * 4;
+      let height = (simplex.noise2D(nx, ny) + 1) / 2;
+      row.push(height);
+    }
+    elevation.push(row);
+  }
+}
+function generateRiversAndLakes() {
+  let riverCount = 2 + Math.floor(Math.random() * 3);
+  for (let r = 0; r < riverCount; r++) {
+    let x = Math.floor(Math.random() * WORLD_WIDTH);
+    let y = 0;
+    while (y < WORLD_HEIGHT) {
+      world[y][x].type = 'water';
+      world[y][x].resourceType = 'none';
+      world[y][x].resourceMax = 0;
+      let lowestX = x;
+      let lowestElev = elevation[y][x];
+      for (let dx = -1; dx <= 1; dx++) {
+        let nx = x + dx;
+        if (nx >= 0 && nx < WORLD_WIDTH) {
+          let nextElev = elevation[Math.min(y + 1, WORLD_HEIGHT - 1)][nx];
+          if (nextElev < lowestElev) {
+            lowestX = nx;
+            lowestElev = nextElev;
+          }
+        }
+      }
+      x = lowestX;
+      y++;
+    }
+    let lakeRadius = 3 + Math.floor(Math.random() * 3);
+    let centerY = y - 1;
+    let centerX = x;
+    for (let yy = -lakeRadius; yy <= lakeRadius; yy++) {
+      for (let xx = -lakeRadius; xx <= lakeRadius; xx++) {
+        let ny = centerY + yy;
+        let nx = centerX + xx;
+        if (ny >= 0 && ny < WORLD_HEIGHT && nx >= 0 && nx < WORLD_WIDTH) {
+          let dist = Math.sqrt(xx * xx + yy * yy);
+          if (dist <= lakeRadius) {
+            world[ny][nx].type = 'water';
+            world[ny][nx].resourceType = 'none';
+            world[ny][nx].resourceMax = 0;
+          }
+        }
+      }
+    }
+  }
+}
+function generateMountains() {
+  for (let y = 0; y < WORLD_HEIGHT; y++) {
+    for (let x = 0; x < WORLD_WIDTH; x++) {
+      if (elevation[y][x] > 0.8 && Math.random() < 0.8) {
+        world[y][x].type = 'mountain';
+        world[y][x].resourceMax = 50;
+        world[y][x].resourceCurrent = 50;
+        let r = Math.random();
+        if (r < 0.2) {
+          world[y][x].resourceType = 'ironOre';
+        } else if (r < 0.4) {
+          world[y][x].resourceType = 'copperOre';
+        } else if (r < 0.6) {
+          world[y][x].resourceType = 'coal';
+        } else {
+          world[y][x].resourceType = 'none';
+        }
+      }
+    }
+  }
+}
+function generateForests() {
+  let forestClusters = 15 + Math.floor(Math.random() * 6);
+  for (let i = 0; i < forestClusters; i++) {
+    let centerX = Math.floor(Math.random() * WORLD_WIDTH);
+    let centerY = Math.floor(Math.random() * WORLD_HEIGHT);
+    let radius = 4 + Math.floor(Math.random() * 3);
+    for (let y = centerY - radius; y <= centerY + radius; y++) {
+      for (let x = centerX - radius; x <= centerX + radius; x++) {
+        if (x >= 0 && x < WORLD_WIDTH && y >= 0 && y < WORLD_HEIGHT) {
+          let dist = Math.sqrt((x - centerX) * (x - centerX) + (y - centerY) * (y - centerY));
+          if (dist < radius && elevation[y][x] < 0.7) {
+            if (Math.random() < 0.85) {
+              world[y][x].type = 'trees';
+              world[y][x].resourceMax = 50;
+              world[y][x].resourceCurrent = 50;
+              world[y][x].resourceType = 'pineLog';
+            } else {
+              world[y][x].type = 'rock';
+              world[y][x].resourceMax = 50;
+              world[y][x].resourceCurrent = 50;
+              world[y][x].resourceType = 'stone';
+            }
+          }
+        }
+      }
+    }
+  }
+  for (let y = 0; y < WORLD_HEIGHT; y++) {
+    for (let x = 0; x < WORLD_WIDTH; x++) {
+      let tile = world[y][x];
+      if (tile.type === 'grass') {
+        if (Math.random() < 0.02) {
+          tile.type = 'trees';
+          tile.resourceMax = 50;
+          tile.resourceCurrent = 50;
+          tile.resourceType = 'pineLog';
+        } else if (Math.random() < 0.005) {
+          tile.type = 'rock';
+          tile.resourceMax = 50;
+          tile.resourceCurrent = 50;
+          tile.resourceType = 'stone';
+        }
+      }
+    }
+  }
+}
+function showLoadingScreen() {
+  loadingScreen.style.display = 'flex';
+}
+function hideLoadingScreen() {
+  loadingScreen.style.display = 'none';
+}
+function updateLoadingBar(progress) {
+  loadingBarFill.style.width = progress + '%';
+}
+function doGenerateWorld() {
+  showLoadingScreen();
+  updateLoadingBar(0);
+  generateBase();
+  updateLoadingBar(25);
+  generateRiversAndLakes();
+  updateLoadingBar(50);
+  generateMountains();
+  updateLoadingBar(75);
+  generateForests();
+  updateLoadingBar(100);
+  hideLoadingScreen();
+  updateStatsUI();
+  player.x = Math.floor(WORLD_WIDTH / 2);
+  player.y = Math.floor(WORLD_HEIGHT / 2);
+  drawPreviewWorld();
+  showPreviewScreen();
+}
+function drawPreviewWorld() {
+  let pCtx = previewCanvas.getContext('2d');
+  let imageData = pCtx.createImageData(WORLD_WIDTH, WORLD_HEIGHT);
+  let data = imageData.data;
+  let i = 0;
+  for (let y = 0; y < WORLD_HEIGHT; y++) {
+    for (let x = 0; x < WORLD_WIDTH; x++) {
+      let tile = world[y][x];
+      let c = {
+        r: 0,
+        g: 0,
+        b: 0
+      };
+      switch (tile.type) {
+        case 'grass':
+          c = {
+            r: 7,
+            g: 112,
+            b: 7
+          };
+          break;
+        case 'rock':
+          c = {
+            r: 136,
+            g: 136,
+            b: 136
+          };
+          break;
+        case 'trees':
+          c = {
+            r: 0,
+            g: 176,
+            b: 0
+          };
+          break;
+        case 'mountain':
+          c = {
+            r: 85,
+            g: 85,
+            b: 85
+          };
+          break;
+        case 'water':
+          c = {
+            r: 0,
+            g: 102,
+            b: 255
+          };
+          break;
+        case 'tilled':
+          c = {
+            r: 91,
+            g: 58,
+            b: 30
+          };
+          break;
+        case 'sapling':
+          c = {
+            r: 39,
+            g: 102,
+            b: 0
+          };
+          break;
+      }
+      data[i++] = c.r;
+      data[i++] = c.g;
+      data[i++] = c.b;
+      data[i++] = 255;
+    }
+  }
+  pCtx.putImageData(imageData, 0, 0);
+}
+function showPreviewScreen() {
+  previewScreen.style.display = 'flex';
+}
+function hidePreviewScreen() {
+  previewScreen.style.display = 'none';
+}
+function initGame() {
+  update();
+}
+let lastUpdateTime = performance.now();
+function updateFurnaces(delta) {
+  let seconds = delta / 1000;
+  for (let i = 0; i < WORLD_HEIGHT; i++) {
+    for (let j = 0; j < WORLD_WIDTH; j++) {
+      let tile = world[i][j];
+      if (tile.furnitureType === 'furnace' && tile.furnitureData) {
+        const q = tile.furnitureQuality || 0;
+        if (tile.furnitureData.isIgnited) {
+          let burnRate = 2;
+          tile.furnitureData.fuel -= burnRate * seconds;
+          if (tile.furnitureData.fuel <= 0) {
+            tile.furnitureData.fuel = 0;
+            tile.furnitureData.isIgnited = false;
+          }
+          tile.furnitureData.smeltTimer += seconds * (1 + 0.1 * q);
+          while (tile.furnitureData.smeltTimer >= 1) {
+            tile.furnitureData.smeltTimer -= 1;
+            if (tile.furnitureData.ironOre > 0) {
+              tile.furnitureData.ironOre -= 1;
+              tile.furnitureData.ironBar += 1;
+            } else if (tile.furnitureData.copperOre > 0) {
+              tile.furnitureData.copperOre -= 1;
+              tile.furnitureData.copperBar += 1;
+            }
+          }
+        }
+      } else if ((tile.furnitureType === 'campfire' || tile.furnitureType === 'improvedCampfire') && tile.furnitureData) {
+        if (tile.furnitureData.isIgnited) {
+          let burnRate = 1;
+          if (tile.furnitureType === 'improvedCampfire') burnRate = 0.8;
+          tile.furnitureData.fuel -= burnRate * seconds;
+          if (tile.furnitureData.fuel <= 0) {
+            tile.furnitureData.fuel = 0;
+            tile.furnitureData.isIgnited = false;
+          }
+        }
+      }
+    }
+  }
+}
+function updateSawmills(delta) {
+  let seconds = delta / 1000;
+  for (let y = 0; y < WORLD_HEIGHT; y++) {
+    for (let x = 0; x < WORLD_WIDTH; x++) {
+      let tile = world[y][x];
+      if (tile.furnitureType === 'sawmill' && tile.furnitureData) {
+        const q = tile.furnitureQuality || 0;
+        tile.furnitureData.sawTimer += seconds * (1 + 0.1 * q);
+        while (tile.furnitureData.sawTimer >= 2) {
+          tile.furnitureData.sawTimer -= 2;
+          if (tile.furnitureData.pineLog > 0) {
+            tile.furnitureData.pineLog -= 1;
+            tile.furnitureData.planks += 1;
+          }
+        }
+      }
+    }
+  }
+}
+function updateThirstAndHunger(delta) {
+  let seconds = delta / 1000;
+  player.thirst -= 0.05 * seconds;
+  if (player.thirst < 0) {
+    player.thirst = 0;
+    player.health -= 0.1 * seconds;
+    if (player.health < 0) player.health = 0;
+  }
+}
+function update() {
+  updateCamera();
+  let now = performance.now();
+  let delta = now - lastUpdateTime;
+  lastUpdateTime = now;
+  updateFurnaces(delta);
+  updateSawmills(delta);
+  updateThirstAndHunger(delta);
+  if (autoTravelActive && performance.now() >= nextMoveAllowed) {
+    if (autoTravelIndex < autoTravelPath.length) {
+      let nextStep = autoTravelPath[autoTravelIndex];
+      let newX = nextStep.x;
+      let newY = nextStep.y;
+      if ((newX !== player.x || newY !== player.y) && newX >= 0 && newY >= 0 && newX < WORLD_WIDTH && newY < WORLD_HEIGHT) {
+        let tileType = world[newY][newX].type;
+        let costTime = moveCost[tileType] || moveCost['grass'];
+        nextMoveAllowed = performance.now() + costTime;
+        player.x = newX;
+        player.y = newY;
+        addXp('endurance', 0.1);
+      }
+      autoTravelIndex++;
+    } else {
+      autoTravelActive = false;
+      updateCursorTrail();
+    }
+  }
+  drawWorld();
+  updateStatsUI();
+  requestAnimationFrame(update);
+}
+function updateStatsUI() {
+  let healthPercent = player.health / player.maxHealth * 100;
+  if (healthPercent < 0) healthPercent = 0;
+  if (healthPercent > 100) healthPercent = 100;
+  document.getElementById('healthBarFill').style.width = healthPercent + '%';
+  let thirstPercent = player.thirst / player.maxThirst * 100;
+  if (thirstPercent < 0) thirstPercent = 0;
+  if (thirstPercent > 100) thirstPercent = 100;
+  document.getElementById('thirstBarFill').style.width = thirstPercent + '%';
+  let hungerPercent = player.hunger / player.maxHunger * 100;
+  if (hungerPercent < 0) hungerPercent = 0;
+  if (hungerPercent > 100) hungerPercent = 100;
+  document.getElementById('hungerBarFill').style.width = hungerPercent + '%';
+  document.getElementById('woodcuttingLevel').textContent = player.skills.woodcutting;
+  let woodcuttingXpNeeded = player.skills.woodcutting * 100;
+  let woodcuttingXpPercent = player.xp.woodcutting / woodcuttingXpNeeded * 100;
+  if (woodcuttingXpPercent > 100) woodcuttingXpPercent = 100;
+  document.getElementById('woodcuttingBarFill').style.width = woodcuttingXpPercent + '%';
+  document.getElementById('miningLevel').textContent = player.skills.mining;
+  let miningXpNeeded = player.skills.mining * 100;
+  let miningXpPercent = player.xp.mining / miningXpNeeded * 100;
+  if (miningXpPercent > 100) miningXpPercent = 100;
+  document.getElementById('miningBarFill').style.width = miningXpPercent + '%';
+  document.getElementById('handCraftingLevel').textContent = player.skills.handCrafting;
+  let handCraftingXpNeeded = player.skills.handCrafting * 100;
+  let handCraftingXpPercent = player.xp.handCrafting / handCraftingXpNeeded * 100;
+  if (handCraftingXpPercent > 100) handCraftingXpPercent = 100;
+  document.getElementById('handCraftingBarFill').style.width = handCraftingXpPercent + '%';
+  document.getElementById('woodworkingLevel').textContent = player.skills.woodworking;
+  let woodworkingXpNeeded = player.skills.woodworking * 100;
+  let woodworkingXpPercent = player.xp.woodworking / woodworkingXpNeeded * 100;
+  if (woodworkingXpPercent > 100) woodworkingXpPercent = 100;
+  document.getElementById('woodworkingBarFill').style.width = woodworkingXpPercent + '%';
+  document.getElementById('metalsmithingLevel').textContent = player.skills.metalsmithing;
+  let metalsmithingXpNeeded = player.skills.metalsmithing * 100;
+  let metalsmithingXpPercent = player.xp.metalsmithing / metalsmithingXpNeeded * 100;
+  if (metalsmithingXpPercent > 100) metalsmithingXpPercent = 100;
+  document.getElementById('metalsmithingBarFill').style.width = metalsmithingXpPercent + '%';
+  document.getElementById('enduranceLevel').textContent = player.skills.endurance;
+  let enduranceXpNeeded = player.skills.endurance * 100;
+  let enduranceXpPercent = player.xp.endurance / enduranceXpNeeded * 100;
+  if (enduranceXpPercent > 100) enduranceXpPercent = 100;
+  document.getElementById('enduranceBarFill').style.width = enduranceXpPercent + '%';
+}
+function updateInventoryUI() {
+  inventoryList.innerHTML = '';
+  inventory.forEach((item, index) => {
+    let li = document.createElement('li');
+    let displayText = '> ' + item.type;
+    if (item.quality !== undefined && item.quality > 0) {
+      displayText += ' [Q+' + item.quality + ']';
+    }
+    if (item.durability !== undefined) {
+      displayText += ' [D:' + item.durability + ']';
+    }
+    displayText += ' x' + item.quantity;
+    li.textContent = displayText;
+    li.addEventListener('contextmenu', e => {
+      e.preventDefault();
+      showInventoryContextMenu(e.clientX, e.clientY, item, index);
+    });
+    li.addEventListener('click', e => {
+      e.preventDefault();
+    });
+    inventoryList.appendChild(li);
+  });
+  if (mainHand) {
+    let text = '> ' + mainHand.type;
+    if (mainHand.durability !== undefined) {
+      text += ' [D:' + mainHand.durability + ']';
+    }
+    if (mainHand.quality !== undefined && mainHand.quality > 0) {
+      text += ' [Q+' + mainHand.quality + ']';
+    }
+    mainHandSlot.textContent = text;
+  } else {
+    mainHandSlot.textContent = '> None';
+  }
+}
+function toggleInventory() {
+  if (inventoryDiv.style.display === 'none' || inventoryDiv.style.display === '') {
+    inventoryDiv.style.display = 'block';
+    updateInventoryUI();
+  } else {
+    inventoryDiv.style.display = 'none';
+  }
+  layoutUI();
+}
+let selectedInventoryItem = null;
+let selectedInventoryIndex = null;
+function equipItem(item) {
+  if (mainHand) {
+    alert('Main hand is occupied! Unequip first to equip a new tool.');
+    return;
+  }
+  if (item.durability !== undefined) {
+    item.quantity -= 1;
+    if (item.quantity <= 0) {
+      let idx = inventory.indexOf(item);
+      if (idx >= 0) {
+        inventory.splice(idx, 1);
+      }
+    }
+    mainHand = {
+      ...item
+    };
+    mainHand.quantity = 1;
+    updateInventoryUI();
+  }
+}
+function unequipItem() {
+  if (mainHand) {
+    let sameStack = inventory.find(i => i.type === mainHand.type && i.durability === mainHand.durability && i.quality === mainHand.quality);
+    if (sameStack) {
+      sameStack.quantity += 1;
+    } else {
+      inventory.push({
+        type: mainHand.type,
+        quantity: 1,
+        durability: mainHand.durability,
+        quality: mainHand.quality
+      });
+    }
+    mainHand = null;
+    updateInventoryUI();
+  }
+}
+function dropSelectedItem(item) {
+  let tile = world[player.y][player.x];
+  if (!tile.onGround) tile.onGround = [];
+  if (item.durability !== undefined) {
+    let existing = tile.onGround.find(g => g.type === item.type && g.durability === item.durability && g.quality === item.quality);
+    if (existing) {
+      existing.quantity += 1;
+    } else {
+      tile.onGround.push({
+        type: item.type,
+        quantity: 1,
+        durability: item.durability,
+        quality: item.quality
+      });
+    }
+  } else {
+    let existing = tile.onGround.find(g => g.type === item.type && g.quality === item.quality && g.durability === undefined);
+    if (existing) {
+      existing.quantity += 1;
+    } else {
+      tile.onGround.push({
+        type: item.type,
+        quantity: 1,
+        quality: item.quality
+      });
+    }
+  }
+  item.quantity -= 1;
+  if (item.quantity <= 0) {
+    let idx = inventory.indexOf(item);
+    if (idx >= 0) {
+      inventory.splice(idx, 1);
+    }
+  }
+  updateInventoryUI();
+}
+function craftAxe() {
+  addXp('handCrafting', 1);
+  let pineLogItem = inventory.find(item => item.type === 'pineLog' && item.durability === undefined && !item.quality);
+  let stoneItem = inventory.find(item => item.type === 'stone' && item.durability === undefined && !item.quality);
+  if (pineLogItem && pineLogItem.quantity >= 3 && stoneItem && stoneItem.quantity >= 2) {
+    removeItem('pineLog', 3, 0);
+    removeItem('stone', 2, 0);
+    let newAxe = {
+      type: 'axe',
+      quantity: 1,
+      durability: 100
+    };
+    addItemObject(newAxe);
+    alert('Crafted an axe!');
+  } else {
+    alert('Not enough resources to craft an axe (need 3 pineLog, 2 stone)');
+  }
+}
+function craftPickaxe() {
+  addXp('handCrafting', 1);
+  let pineLogItem = inventory.find(item => item.type === 'pineLog' && item.durability === undefined && !item.quality);
+  let stoneItem = inventory.find(item => item.type === 'stone' && item.durability === undefined && !item.quality);
+  if (pineLogItem && pineLogItem.quantity >= 2 && stoneItem && stoneItem.quantity >= 4) {
+    removeItem('pineLog', 2, 0);
+    removeItem('stone', 4, 0);
+    let newPick = {
+      type: 'pickaxe',
+      quantity: 1,
+      durability: 100
+    };
+    addItemObject(newPick);
+    alert('Crafted a pickaxe!');
+  } else {
+    alert('Not enough resources to craft a pickaxe (need 2 pineLog, 4 stone)');
+  }
+}
+function craftHoe() {
+  addXp('handCrafting', 1);
+  let pineLogItem = inventory.find(item => item.type === 'pineLog' && item.durability === undefined && !item.quality);
+  let stoneItem = inventory.find(item => item.type === 'stone' && item.durability === undefined && !item.quality);
+  if (pineLogItem && pineLogItem.quantity >= 2 && stoneItem && stoneItem.quantity >= 2) {
+    removeItem('pineLog', 2, 0);
+    removeItem('stone', 2, 0);
+    let newHoe = {
+      type: 'hoe',
+      quantity: 1,
+      durability: 100
+    };
+    addItemObject(newHoe);
+    alert('Crafted a Hoe!');
+  } else {
+    alert('Not enough resources to craft a Hoe (need 2 pineLog, 2 stone)');
+  }
+}
+function craftCraftingTable() {
+  addXp('handCrafting', 1);
+  let pineLogItem = inventory.find(item => item.type === 'pineLog' && item.durability === undefined && !item.quality);
+  let stoneItem = inventory.find(item => item.type === 'stone' && item.durability === undefined && !item.quality);
+  if (pineLogItem && pineLogItem.quantity >= 5 && stoneItem && stoneItem.quantity >= 2) {
+    removeItem('pineLog', 5, 0);
+    removeItem('stone', 2, 0);
+    let table = {
+      type: 'craftingTable',
+      quantity: 1
+    };
+    addItemObject(table);
+    alert('Crafted a Crafting Table!');
+  } else {
+    alert('Not enough resources to craft a Crafting Table (need 5 pineLog, 2 stone)');
+  }
+}
+function craftBetterAxe() {
+  addXp('handCrafting', 1);
+  let pineLogItem = inventory.find(item => item.type === 'pineLog' && item.durability === undefined && !item.quality);
+  let stoneItem = inventory.find(item => item.type === 'stone' && item.durability === undefined && !item.quality);
+  if (pineLogItem && pineLogItem.quantity >= 10 && stoneItem && stoneItem.quantity >= 6) {
+    removeItem('pineLog', 10, 0);
+    removeItem('stone', 6, 0);
+    let newAxe = {
+      type: 'axe',
+      quantity: 1,
+      durability: 100
+    };
+    addItemObject(newAxe);
+    alert('Crafted a Better Axe!');
+  } else {
+    alert('Not enough resources to craft a Better Axe (need 10 pineLog, 6 stone)');
+  }
+}
+function craftAdvancedCraftingTable() {
+  addXp('handCrafting', 1);
+  let pineLogItem = inventory.find(item => item.type === 'pineLog' && item.durability === undefined && !item.quality);
+  let stoneItem = inventory.find(item => item.type === 'stone' && item.durability === undefined && !item.quality);
+  let ironBarItem = inventory.find(item => item.type === 'ironBar' && item.durability === undefined && !item.quality);
+  if (pineLogItem && pineLogItem.quantity >= 10 && stoneItem && stoneItem.quantity >= 10 && ironBarItem && ironBarItem.quantity >= 1) {
+    removeItem('pineLog', 10, 0);
+    removeItem('stone', 10, 0);
+    removeItem('ironBar', 1, 0);
+    let advTable = {
+      type: 'advancedCraftingTable',
+      quantity: 1
+    };
+    addItemObject(advTable);
+    alert('Crafted an Advanced Crafting Table!');
+  } else {
+    alert('Not enough resources to craft an Advanced Crafting Table (need 10 pineLog, 10 stone, 1 ironBar)');
+  }
+}
+function craftFurnace() {
+  addXp('handCrafting', 1);
+  let stoneItem = inventory.find(item => item.type === 'stone' && item.durability === undefined && !item.quality);
+  let pineLogItem = inventory.find(item => item.type === 'pineLog' && item.durability === undefined && !item.quality);
+  if (stoneItem && stoneItem.quantity >= 10 && pineLogItem && pineLogItem.quantity >= 5) {
+    removeItem('stone', 10, 0);
+    removeItem('pineLog', 5, 0);
+    let furnace = {
+      type: 'furnace',
+      quantity: 1
+    };
+    addItemObject(furnace);
+    alert('Crafted a Furnace!');
+  } else {
+    alert('Not enough resources to craft a Furnace (need 10 stone, 5 pineLog)');
+  }
+}
+function craftFlint() {
+  addXp('handCrafting', 1);
+  let stoneItem = inventory.find(item => item.type === 'stone' && item.durability === undefined && !item.quality);
+  if (stoneItem && stoneItem.quantity >= 1) {
+    removeItem('stone', 1, 0);
+    let flint = {
+      type: 'flint',
+      quantity: 1
+    };
+    addItemObject(flint);
+    alert('Crafted Flint!');
+  } else {
+    alert('Not enough stone to craft flint (need 1 stone).');
+  }
+}
+function craftCampfire() {
+  addXp('handCrafting', 1);
+  let pineLogItem = inventory.find(item => item.type === 'pineLog' && item.durability === undefined && !item.quality);
+  let leavesItem = inventory.find(item => item.type === 'leaves' && item.durability === undefined);
+  if (pineLogItem && pineLogItem.quantity >= 2 && leavesItem && leavesItem.quantity >= 3) {
+    removeItem('pineLog', 2, 0);
+    removeItem('leaves', 3, undefined);
+    let camp = {
+      type: 'campfire',
+      quantity: 1
+    };
+    addItemObject(camp);
+    alert('Crafted a Campfire!');
+  } else {
+    alert('Not enough resources to craft a Campfire (need 2 pineLog, 3 leaves)');
+  }
+}
+function craftImprovedCampfire() {
+  addXp('handCrafting', 1);
+  let stoneItem = inventory.find(item => item.type === 'stone' && item.durability === undefined && !item.quality);
+  let pineLogItem = inventory.find(item => item.type === 'pineLog' && item.durability === undefined && !item.quality);
+  let leavesItem = inventory.find(item => item.type === 'leaves' && item.durability === undefined);
+  if (stoneItem && stoneItem.quantity >= 4 && pineLogItem && pineLogItem.quantity >= 2 && leavesItem && leavesItem.quantity >= 5) {
+    removeItem('stone', 4, 0);
+    removeItem('pineLog', 2, 0);
+    removeItem('leaves', 5, undefined);
+    let camp = {
+      type: 'improvedCampfire',
+      quantity: 1
+    };
+    addItemObject(camp);
+    alert('Crafted an Improved Campfire!');
+  } else {
+    alert('Not enough resources to craft an Improved Campfire (need 4 stone, 2 pineLog, 5 leaves)');
+  }
+}
+function craftSawmill() {
+  addXp('handCrafting', 1);
+  let ironBarItem = inventory.find(item => item.type === 'ironBar' && item.durability === undefined && !item.quality);
+  let pineLogItem = inventory.find(item => item.type === 'pineLog' && item.durability === undefined && !item.quality);
+  let leavesItem = inventory.find(item => item.type === 'leaves' && item.durability === undefined);
+  if (ironBarItem && ironBarItem.quantity >= 1 && pineLogItem && pineLogItem.quantity >= 10 && leavesItem && leavesItem.quantity >= 5) {
+    removeItem('ironBar', 1, 0);
+    removeItem('pineLog', 10, 0);
+    removeItem('leaves', 5, undefined);
+    let sawmill = {
+      type: 'sawmill',
+      quantity: 1
+    };
+    addItemObject(sawmill);
+    alert('Crafted a Sawmill!');
+  } else {
+    alert('Not enough resources to craft a Sawmill (need 1 ironBar, 10 pineLog, 5 leaves)');
+  }
+}
+function removeItem(type, quantity = 1, quality = 0) {
+  let needed = quantity;
+  let removedCount = 0;
+  for (let i = 0; i < inventory.length; i++) {
+    let item = inventory[i];
+    if (item.type === type && item.durability === undefined && item.quality === quality) {
+      while (item.quantity > 0 && needed > 0) {
+        item.quantity--;
+        needed--;
+        removedCount++;
+        if (item.quantity <= 0) {
+          inventory.splice(i, 1);
+          i--;
+          break;
+        }
+      }
+      if (needed <= 0) break;
+    }
+  }
+  if (removedCount < quantity) {
+    return false;
+  }
+  updateInventoryUI();
+  return true;
+}
+const allRecipes = {
+  Axe: {
+    name: 'Axe',
+    resultType: 'axe',
+    baseDurability: 100,
+    requirements: [{
+      type: 'pineLog',
+      quantity: 3
+    }, {
+      type: 'stone',
+      quantity: 2
+    }],
+    skill: 'handCrafting'
+  },
+  Pickaxe: {
+    name: 'Pickaxe',
+    resultType: 'pickaxe',
+    baseDurability: 100,
+    requirements: [{
+      type: 'pineLog',
+      quantity: 2
+    }, {
+      type: 'stone',
+      quantity: 4
+    }],
+    skill: 'handCrafting'
+  },
+  Hoe: {
+    name: 'Hoe',
+    resultType: 'hoe',
+    baseDurability: 100,
+    requirements: [{
+      type: 'pineLog',
+      quantity: 2
+    }, {
+      type: 'stone',
+      quantity: 2
+    }],
+    skill: 'handCrafting'
+  },
+  CraftingTable: {
+    name: 'Crafting Table',
+    resultType: 'craftingTable',
+    baseDurability: null,
+    requirements: [{
+      type: 'pineLog',
+      quantity: 5
+    }, {
+      type: 'stone',
+      quantity: 2
+    }],
+    skill: 'handCrafting'
+  },
+  Flint: {
+    name: 'Flint',
+    resultType: 'flint',
+    baseDurability: null,
+    requirements: [{
+      type: 'stone',
+      quantity: 1
+    }],
+    skill: 'handCrafting'
+  },
+  Campfire: {
+    name: 'Campfire',
+    resultType: 'campfire',
+    baseDurability: null,
+    requirements: [{
+      type: 'pineLog',
+      quantity: 2
+    }, {
+      type: 'leaves',
+      quantity: 3
+    }],
+    skill: 'handCrafting'
+  }
+};
+const stationRecipes = {
+  BetterAxe: {
+    name: 'Better Axe',
+    resultType: 'axe',
+    baseDurability: 100,
+    requirements: [{
+      type: 'pineLog',
+      quantity: 10
+    }, {
+      type: 'stone',
+      quantity: 6
+    }],
+    skill: 'handCrafting'
+  },
+  Furnace: {
+    name: 'Furnace',
+    resultType: 'furnace',
+    baseDurability: null,
+    requirements: [{
+      type: 'stone',
+      quantity: 10
+    }, {
+      type: 'pineLog',
+      quantity: 5
+    }],
+    skill: 'handCrafting'
+  },
+  AdvancedCraftingTable: {
+    name: 'Advanced Crafting Table',
+    resultType: 'advancedCraftingTable',
+    baseDurability: null,
+    requirements: [{
+      type: 'pineLog',
+      quantity: 10
+    }, {
+      type: 'stone',
+      quantity: 10
+    }, {
+      type: 'ironBar',
+      quantity: 1
+    }],
+    skill: 'handCrafting'
+  },
+  ImprovedCampfire: {
+    name: 'Improved Campfire',
+    resultType: 'improvedCampfire',
+    baseDurability: null,
+    requirements: [{
+      type: 'stone',
+      quantity: 4
+    }, {
+      type: 'pineLog',
+      quantity: 2
+    }, {
+      type: 'leaves',
+      quantity: 5
+    }],
+    skill: 'handCrafting'
+  },
+  Sawmill: {
+    name: 'Sawmill',
+    resultType: 'sawmill',
+    baseDurability: null,
+    requirements: [{
+      type: 'ironBar',
+      quantity: 1
+    }, {
+      type: 'pineLog',
+      quantity: 10
+    }, {
+      type: 'leaves',
+      quantity: 5
+    }],
+    skill: 'handCrafting'
+  }
+};
+function openCraftingSelector(recipeData) {
+  craftingSelectorTitle.textContent = recipeData.name;
+  craftingSelectorComponents.innerHTML = '';
+  recipeData.tempSelection = [];
+  recipeData.requirements.forEach((req, index) => {
+    let li = document.createElement('li');
+    let info = document.createElement('div');
+    info.textContent = req.quantity + ' x ' + req.type;
+    li.appendChild(info);
+    let selectBtn = document.createElement('button');
+    selectBtn.textContent = 'Select Items';
+    selectBtn.addEventListener('click', () => {
+      selectItemForComponent(recipeData, index);
+    });
+    li.appendChild(selectBtn);
+    craftingSelectorComponents.appendChild(li);
+  });
+  craftingSelectorUI.style.display = 'block';
+  craftingSelectorConfirm.onclick = () => confirmCraftingSelection(recipeData);
+  craftingSelectorCancel.onclick = () => closeCraftingSelector();
+}
+function selectItemForComponent(recipeData, compIndex) {
+  let req = recipeData.requirements[compIndex];
+  let foundItems = inventory.filter(i => i.type === req.type && i.durability === undefined);
+  if (foundItems.length === 0) {
+    alert('No matching items in inventory.');
+    return;
+  }
+  let totalNeeded = req.quantity;
+  let chosen = [];
+  for (let item of foundItems) {
+    while (item.quantity > 0 && totalNeeded > 0) {
+      chosen.push({
+        item: item,
+        quality: item.quality
+      });
+      item.quantity--;
+      totalNeeded--;
+      if (item.quantity <= 0) {
+        let idx = inventory.indexOf(item);
+        if (idx >= 0) inventory.splice(idx, 1);
+      }
+      if (totalNeeded <= 0) break;
+    }
+    if (totalNeeded <= 0) break;
+  }
+  updateInventoryUI();
+  if (chosen.length < req.quantity) {
+    alert('Not enough items to fulfill requirement.');
+    for (let c of chosen) {
+      addItemObject({
+        type: c.item.type,
+        quantity: 1,
+        quality: c.quality
+      });
+    }
+    updateInventoryUI();
+    return;
+  }
+  let sumQuality = chosen.reduce((acc, c) => acc + (c.quality || 0), 0);
+  recipeData.tempSelection[compIndex] = {
+    chosen,
+    sumQuality
+  };
+  alert('Selected ' + chosen.length + ' ' + req.type + ' with total quality ' + sumQuality);
+}
+function confirmCraftingSelection(recipeData) {
+  for (let i = 0; i < recipeData.requirements.length; i++) {
+    if (!recipeData.tempSelection[i]) {
+      alert('Not all components selected.');
+      return;
+    }
+  }
+  let finalQuality = recipeData.tempSelection.reduce((acc, sel) => acc + sel.sumQuality, 0);
+  if (recipeData.baseDurability) {
+    let tool = {
+      type: recipeData.resultType,
+      quantity: 1,
+      durability: recipeData.baseDurability,
+      quality: finalQuality
+    };
+    addItemObject(tool);
+  } else {
+    let furniture = {
+      type: recipeData.resultType,
+      quantity: 1,
+      quality: finalQuality
+    };
+    addItemObject(furniture);
+  }
+  addXp(recipeData.skill, 1);
+  closeCraftingSelector();
+}
+function closeCraftingSelector() {
+  craftingSelectorUI.style.display = 'none';
+}
+function craftItem(key) {
+  openCraftingSelector(allRecipes[key]);
+}
+function craftStationItem(key) {
+  openCraftingSelector(stationRecipes[key]);
+}
+container.addEventListener('keydown', e => {
+  if (e.code === 'Tab') {
+    e.preventDefault();
+    toggleInventory();
+    hideContextMenu();
+    hideInventoryContextMenu();
+    return;
+  }
+  if (e.code === 'KeyP') {
+    e.preventDefault();
+    toggleOptionsPane();
+    return;
+  }
+  if (e.code === 'KeyG') {
+    e.preventDefault();
+    toggleTileItemsUI();
+    return;
+  }
+  if (e.code === 'Backquote') {
+    e.preventDefault();
+    toggleDebugMenu();
+    return;
+  }
+  if (e.code === 'KeyL') {
+    e.preventDefault();
+    shadeEnabled = !shadeEnabled;
+    return;
+  }
+  if (!debugSpawnMode) {
+    handleMovementKey(e.code);
+  }
+  hideContextMenu();
+  hideInventoryContextMenu();
+});
+container.addEventListener('mousedown', e => {
+  if (contextMenu.contains(e.target) || inventoryContextMenu.contains(e.target) || inventoryDiv.contains(e.target) || craftingUI.contains(e.target) || craftingStationUI.contains(e.target) || furnaceUI.contains(e.target) || sawmillUI.contains(e.target) || optionsPane.contains(e.target) || tileItemsUI.contains(e.target) || debugMenu.contains(e.target) || craftingSelectorUI.contains(e.target)) {
+    return;
+  }
+  if (e.button === 2) {
+    e.preventDefault();
+    hideInventoryContextMenu();
+    let coordsRelative = getRelativeCoords(e);
+    let coords = screenToTile(coordsRelative.x, coordsRelative.y);
+    let tile = null;
+    if (coords.tileY >= 0 && coords.tileY < WORLD_HEIGHT && coords.tileX >= 0 && coords.tileX < WORLD_WIDTH) {
+      tile = world[coords.tileY][coords.tileX];
+    }
+    showContextMenu(e.clientX, e.clientY, tile);
+  } else if (e.button === 0) {
+    if (debugSpawnMode) {
+      e.preventDefault();
+      let coordsRelative = getRelativeCoords(e);
+      let coords = screenToTile(coordsRelative.x, coordsRelative.y);
+      if (coords.tileY >= 0 && coords.tileY < WORLD_HEIGHT && coords.tileX >= 0 && coords.tileX < WORLD_WIDTH) {
+        let tile = world[coords.tileY][coords.tileX];
+        if (!tile.onGround) tile.onGround = [];
+        let existing = tile.onGround.find(it => it.type === debugSpawnData.itemType && it.quality === debugSpawnData.quality && it.durability === undefined);
+        if (existing) {
+          existing.quantity += debugSpawnData.quantity;
+        } else {
+          tile.onGround.push({
+            type: debugSpawnData.itemType,
+            quantity: debugSpawnData.quantity,
+            quality: debugSpawnData.quality
+          });
+        }
+        debugSpawnMode = false;
+      }
+      return;
+    }
+    hideContextMenu();
+    hideInventoryContextMenu();
+    let coordsRelative = getRelativeCoords(e);
+    let coords = screenToTile(coordsRelative.x, coordsRelative.y);
+    handleMovementPath(coords.tileX, coords.tileY);
+  }
+});
+container.addEventListener('dblclick', e => {
+  if (debugSpawnMode) return;
+  hideContextMenu();
+  hideInventoryContextMenu();
+  let coordsRelative = getRelativeCoords(e);
+  let coords = screenToTile(coordsRelative.x, coordsRelative.y);
+  handleMovementPath(coords.tileX, coords.tileY);
+});
+container.addEventListener('mousemove', e => {
+  let coordsRelative = getRelativeCoords(e);
+  let coords = screenToTile(coordsRelative.x, coordsRelative.y);
+  if (coords.tileX !== mouseTileX || coords.tileY !== mouseTileY) {
+    mouseTileX = coords.tileX;
+    mouseTileY = coords.tileY;
+    updateCursorTrail();
+  }
+});
+gatherOption.addEventListener('click', e => {
+  e.stopPropagation();
+  if (selectedTile) {
+    gatherResources(selectedTile);
+  }
+  hideContextMenu();
+});
+inspectOption.addEventListener('click', e => {
+  e.stopPropagation();
+  if (selectedTile) {
+    inspectTile(selectedTile);
+  }
+  hideContextMenu();
+});
+drinkOption.addEventListener('click', e => {
+  e.stopPropagation();
+  if (selectedTile) {
+    drinkWater(selectedTile);
+  }
+  hideContextMenu();
+});
+tillOption.addEventListener('click', e => {
+  e.stopPropagation();
+  if (selectedTile) {
+    tillSoil(selectedTile);
+  }
+  hideContextMenu();
+});
+openStationOption.addEventListener('click', e => {
+  e.stopPropagation();
+  if (selectedTile) {
+    let distX = Math.abs(selectedTile.x - player.x);
+    let distY = Math.abs(selectedTile.y - player.y);
+    if (distX > 2 || distY > 2) {
+      alert('Too far away to open the crafting station!');
+    } else {
+      showCraftingStationUI();
+    }
+  }
+  hideContextMenu();
+});
+openFurnaceOption.addEventListener('click', e => {
+  e.stopPropagation();
+  if (selectedTile) {
+    let distX = Math.abs(selectedTile.x - player.x);
+    let distY = Math.abs(selectedTile.y - player.y);
+    if (distX > 2 || distY > 2) {
+      alert('Too far away to open the furnace!');
+    } else {
+      openFurnaceTile = selectedTile;
+      showFurnaceUI();
+    }
+  }
+  hideContextMenu();
+});
+openSawmillOption.addEventListener('click', e => {
+  e.stopPropagation();
+  if (selectedTile) {
+    let distX = Math.abs(selectedTile.x - player.x);
+    let distY = Math.abs(selectedTile.y - player.y);
+    if (distX > 2 || distY > 2) {
+      alert('Too far away to open the sawmill!');
+    } else {
+      openSawmillTile = selectedTile;
+      showSawmillUI();
+    }
+  }
+  hideContextMenu();
+});
+refuelFurnaceOption.addEventListener('click', e => {
+  e.stopPropagation();
+  if (selectedTile && selectedTile.furnitureType === 'furnace') {
+    let distX = Math.abs(selectedTile.x - player.x);
+    let distY = Math.abs(selectedTile.y - player.y);
+    if (distX > 2 || distY > 2) {
+      alert('Too far away to refuel the furnace!');
+    } else {
+      refuelFurnace(selectedTile);
+    }
+  }
+  hideContextMenu();
+});
+igniteFurnaceOption.addEventListener('click', e => {
+  e.stopPropagation();
+  if (selectedTile && selectedTile.furnitureType === 'furnace') {
+    let distX = Math.abs(selectedTile.x - player.x);
+    let distY = Math.abs(selectedTile.y - player.y);
+    if (distX > 2 || distY > 2) {
+      alert('Too far away to ignite the furnace!');
+    } else {
+      igniteFurnace(selectedTile);
+    }
+  }
+  hideContextMenu();
+});
+placeFurnitureOption.addEventListener('click', e => {
+  e.stopPropagation();
+  if (selectedTile && mainHand && isFurniture(mainHand.type)) {
+    placeFurniture(mainHand.type, selectedTile);
+  }
+  hideContextMenu();
+});
+function refuelFurnace(tile) {
+  if (!tile.furnitureData) return;
+  let needed = tile.furnitureData.fuelMax - tile.furnitureData.fuel;
+  if (needed <= 0) {
+    alert('Furnace is already at max fuel!');
+    return;
+  }
+  let fuelAdded = false;
+  for (let i = 0; i < inventory.length; i++) {
+    let item = inventory[i];
+    if (fuelKindlingValues[item.type] && item.quantity > 0) {
+      while (item.quantity > 0 && tile.furnitureData.fuel < tile.furnitureData.fuelMax) {
+        tile.furnitureData.fuel += fuelKindlingValues[item.type];
+        item.quantity -= 1;
+        if (tile.furnitureData.fuel > tile.furnitureData.fuelMax) {
+          tile.furnitureData.fuel = tile.furnitureData.fuelMax;
+        }
+        needed = tile.furnitureData.fuelMax - tile.furnitureData.fuel;
+        fuelAdded = true;
+        if (needed <= 0) break;
+      }
+      if (item.quantity <= 0) {
+        inventory.splice(i, 1);
+        i--;
+      }
+      if (tile.furnitureData.fuel >= tile.furnitureData.fuelMax) {
+        break;
+      }
+    }
+  }
+  if (!fuelAdded) {
+    alert('No suitable fuel in inventory!');
+  } else {
+    alert('Furnace refueled. Fuel: ' + tile.furnitureData.fuel + '/' + tile.furnitureData.fuelMax);
+  }
+  updateInventoryUI();
+}
+function igniteFurnace(tile) {
+  if (tile.furnitureData.fuel <= 0) {
+    alert('No fuel! Refuel first.');
+    return;
+  }
+  let flintItem = inventory.find(it => it.type === 'flint' && it.quantity > 0);
+  if (!flintItem) {
+    alert('No flint in inventory!');
+    return;
+  }
+  tile.furnitureData.isIgnited = true;
+  alert('Furnace ignited!');
+}
+window.addEventListener('contextmenu', e => {
+  e.preventDefault();
+});
+window.addEventListener('resize', () => {
+  canvas.width = container.clientWidth;
+  canvas.height = container.clientHeight;
+});
+document.addEventListener('click', e => {
+  if (!inventoryContextMenu.contains(e.target)) {
+    hideInventoryContextMenu();
+  }
+});
+function showInventoryContextMenu(x, y, item, index) {
+  selectedInventoryItem = item;
+  selectedInventoryIndex = index;
+  inventoryContextActions.innerHTML = '';
+  if (item.durability !== undefined) {
+    let equipOption = document.createElement('li');
+    equipOption.textContent = 'Equip';
+    equipOption.addEventListener('click', e => {
+      e.preventDefault();
+      equipItem(item);
+      hideInventoryContextMenu();
+    });
+    inventoryContextActions.appendChild(equipOption);
+  }
+  if (isFurniture(item.type)) {
+    let placeOption = document.createElement('li');
+    placeOption.textContent = 'Place';
+    placeOption.addEventListener('click', e => {
+      e.preventDefault();
+      mainHand = item;
+      item.quantity--;
+      if (item.quantity <= 0) {
+        inventory.splice(selectedInventoryIndex, 1);
+      }
+      hideInventoryContextMenu();
+      updateInventoryUI();
+    });
+    inventoryContextActions.appendChild(placeOption);
+  }
+  let dropOption = document.createElement('li');
+  dropOption.textContent = 'Drop 1';
+  dropOption.addEventListener('click', e => {
+    e.preventDefault();
+    dropSelectedItem(item);
+    hideInventoryContextMenu();
+  });
+  inventoryContextActions.appendChild(dropOption);
+  let menuRect = inventoryContextMenu.getBoundingClientRect();
+  let vpWidth = window.innerWidth;
+  let vpHeight = window.innerHeight;
+  let left = x;
+  let top = y;
+  if (left + menuRect.width > vpWidth) {
+    left = vpWidth - menuRect.width;
+  }
+  if (top + menuRect.height > vpHeight) {
+    top = vpHeight - menuRect.height;
+  }
+  inventoryContextMenu.style.left = left + 'px';
+  inventoryContextMenu.style.top = top + 'px';
+  inventoryContextMenu.style.display = 'block';
+}
+openCraftingBtn.addEventListener('click', () => {
+  showCraftingUI();
+  layoutUI();
+});
+closeCraftingBtn.addEventListener('click', () => {
+  hideCraftingUI();
+  layoutUI();
+});
+closeInventoryBtn.addEventListener('click', () => {
+  inventoryDiv.style.display = 'none';
+  layoutUI();
+});
+closeCraftingStationBtn.addEventListener('click', () => {
+  craftingStationUI.style.display = 'none';
+  layoutUI();
+});
+function showCraftingUI() {
+  craftingUI.style.display = 'block';
+  updateCraftingUI();
+}
+function hideCraftingUI() {
+  craftingUI.style.display = 'none';
+}
+function showCraftingStationUI() {
+  craftingStationUI.style.display = 'block';
+  updateCraftingStationUI();
+  layoutUI();
+}
+function updateCraftingUI() {
+  craftingList.innerHTML = '';
+  let keys = Object.keys(allRecipes);
+  keys.forEach(k => {
+    let recipe = allRecipes[k];
+    let li = document.createElement('li');
+    let info = document.createElement('span');
+    info.textContent = recipe.name;
+    let tooltipText = 'Required:\n';
+    recipe.requirements.forEach(req => {
+      tooltipText += `${req.quantity}x ${req.type}\n`;
+    });
+    li.dataset.tooltip = tooltipText;
+    li.addEventListener('mouseover', showTooltip);
+    li.addEventListener('mouseout', hideTooltip);
+    li.addEventListener('click', e => {
+      e.preventDefault();
+      if (canCraftRecipe(recipe)) {
+        craftItem(k);
+      } else {
+        alert('Not enough resources!');
+      }
+    });
+    li.style.cursor = 'pointer';
+    li.appendChild(info);
+    craftingList.appendChild(li);
+  });
+}
+function updateCraftingStationUI() {
+  craftingStationList.innerHTML = '';
+  let keys = Object.keys(stationRecipes);
+  keys.forEach(k => {
+    let recipe = stationRecipes[k];
+    let li = document.createElement('li');
+    let info = document.createElement('span');
+    info.textContent = recipe.name;
+    let tooltipText = 'Required:\n';
+    recipe.requirements.forEach(req => {
+      tooltipText += `${req.quantity}x ${req.type}\n`;
+    });
+    li.dataset.tooltip = tooltipText;
+    li.addEventListener('mouseover', showTooltip);
+    li.addEventListener('mouseout', hideTooltip);
+    li.addEventListener('click', e => {
+      e.preventDefault();
+      if (canCraftRecipe(recipe)) {
+        craftStationItem(k);
+      } else {
+        alert('Not enough resources!');
+      }
+    });
+    li.style.cursor = 'pointer';
+    li.appendChild(info);
+    craftingStationList.appendChild(li);
+  });
+}
+mainHandSlot.addEventListener('contextmenu', e => {
+  e.preventDefault();
+  if (mainHand) {
+    showMainHandContextMenu(e.clientX, e.clientY);
+  }
+});
+function showMainHandContextMenu(x, y) {
+  inventoryContextMenu.style.left = x + 'px';
+  inventoryContextMenu.style.top = y + 'px';
+  inventoryContextMenu.style.display = 'block';
+  inventoryContextActions.innerHTML = '';
+  let unequipOption = document.createElement('li');
+  unequipOption.textContent = 'Unequip Tool';
+  unequipOption.addEventListener('click', e => {
+    e.stopPropagation();
+    e.preventDefault();
+    unequipItem();
+    hideInventoryContextMenu();
+  });
+  inventoryContextActions.appendChild(unequipOption);
+}
+function showFurnaceUI() {
+  furnaceUI.style.display = 'block';
+  updateFurnaceUI();
+  layoutUI();
+}
+function hideFurnaceUI() {
+  furnaceUI.style.display = 'none';
+  openFurnaceTile = null;
+  layoutUI();
+}
+function updateFurnaceUI() {
+  if (!openFurnaceTile) return;
+  let d = openFurnaceTile.furnitureData;
+  furnaceContents.textContent = 'Fuel: ' + Math.floor(d.fuel) + '/' + d.fuelMax + ', Iron Ore: ' + d.ironOre + ', Copper Ore: ' + d.copperOre + ', Iron Bars: ' + d.ironBar + ', Copper Bars: ' + d.copperBar + (d.isIgnited ? ' (Ignited)' : ' (Not Ignited)');
+}
+addIronOreBtn.addEventListener('click', () => {
+  if (!openFurnaceTile) return;
+  let ironOreItem = inventory.find(item => item.type === 'ironOre' && item.durability === undefined);
+  if (ironOreItem && ironOreItem.quantity > 0) {
+    openFurnaceTile.furnitureData.ironOre += 1;
+    removeItem('ironOre', 1, ironOreItem.quality);
+    updateFurnaceUI();
+  } else {
+    alert('No iron ore available in inventory!');
+  }
+});
+addCopperOreBtn.addEventListener('click', () => {
+  if (!openFurnaceTile) return;
+  let copperOreItem = inventory.find(item => item.type === 'copperOre' && item.durability === undefined);
+  if (copperOreItem && copperOreItem.quantity > 0) {
+    openFurnaceTile.furnitureData.copperOre += 1;
+    removeItem('copperOre', 1, copperOreItem.quality);
+    updateFurnaceUI();
+  } else {
+    alert('No copper ore available in inventory!');
+  }
+});
+collectBarsBtn.addEventListener('click', () => {
+  if (!openFurnaceTile) return;
+  let d = openFurnaceTile.furnitureData;
+  let totalBars = d.ironBar + d.copperBar;
+  if (totalBars > 0) {
+    if (d.ironBar > 0) {
+      let itemObj = {
+        type: 'ironBar',
+        quantity: d.ironBar
+      };
+      addItemObject(itemObj);
+      d.ironBar = 0;
+    }
+    if (d.copperBar > 0) {
+      let itemObj = {
+        type: 'copperBar',
+        quantity: d.copperBar
+      };
+      addItemObject(itemObj);
+      d.copperBar = 0;
+    }
+    addXp('metalsmithing', totalBars);
+  } else {
+    alert('No bars to collect!');
+  }
+  updateFurnaceUI();
+});
+closeFurnaceBtn.addEventListener('click', () => {
+  hideFurnaceUI();
+});
+function showSawmillUI() {
+  sawmillUI.style.display = 'block';
+  updateSawmillUI();
+  layoutUI();
+}
+function hideSawmillUI() {
+  sawmillUI.style.display = 'none';
+  openSawmillTile = null;
+  layoutUI();
+}
+function updateSawmillUI() {
+  if (!openSawmillTile) return;
+  let d = openSawmillTile.furnitureData;
+  sawmillContents.textContent = 'Pine Logs: ' + d.pineLog + ', Planks: ' + d.planks;
+}
+addPineLogBtn.addEventListener('click', () => {
+  if (!openSawmillTile) return;
+  let pineLogItem = inventory.find(item => item.type === 'pineLog' && item.durability === undefined);
+  if (pineLogItem && pineLogItem.quantity > 0) {
+    openSawmillTile.furnitureData.pineLog += 1;
+    removeItem('pineLog', 1, pineLogItem.quality);
+    updateSawmillUI();
+  } else {
+    alert('No pine logs available in inventory!');
+  }
+});
+collectPlanksBtn.addEventListener('click', () => {
+  if (!openSawmillTile) return;
+  let d = openSawmillTile.furnitureData;
+  if (d.planks > 0) {
+    let itemObj = {
+      type: 'plank',
+      quantity: d.planks
+    };
+    addItemObject(itemObj);
+    addXp('woodworking', d.planks);
+    d.planks = 0;
+  } else {
+    alert('No planks to collect!');
+  }
+  updateSawmillUI();
+});
+closeSawmillBtn.addEventListener('click', () => {
+  hideSawmillUI();
+});
+acceptWorldBtn.addEventListener('click', () => {
+  hidePreviewScreen();
+  initGame();
+});
+regenerateWorldBtn.addEventListener('click', () => {
+  hidePreviewScreen();
+  doGenerateWorld();
+});
+document.addEventListener('DOMContentLoaded', () => {
+  doGenerateWorld();
+});
+function layoutUI() {
+  let topOffset = 50;
+  if (inventoryDiv.style.display === 'block') {
+    inventoryDiv.style.top = topOffset + 'px';
+    topOffset += inventoryDiv.offsetHeight + 10;
+  }
+  if (craftingUI.style.display === 'block') {
+    craftingUI.style.top = topOffset + 'px';
+    topOffset += craftingUI.offsetHeight + 10;
+  }
+  if (craftingStationUI.style.display === 'block') {
+    craftingStationUI.style.top = topOffset + 'px';
+    topOffset += craftingStationUI.offsetHeight + 10;
+  }
+  if (furnaceUI.style.display === 'block') {
+    furnaceUI.style.top = topOffset + 'px';
+    topOffset += furnaceUI.offsetHeight + 10;
+  }
+  if (sawmillUI.style.display === 'block') {
+    sawmillUI.style.top = topOffset + 'px';
+    topOffset += sawmillUI.offsetHeight + 10;
+  }
+  if (tileItemsUI.style.display === 'block') {
+    tileItemsUI.style.top = topOffset + 'px';
+    topOffset += tileItemsUI.offsetHeight + 10;
+  }
+}
+function toggleOptionsPane() {
+  if (optionsPane.style.display === 'none' || optionsPane.style.display === '') {
+    optionsPane.style.display = 'block';
+  } else {
+    optionsPane.style.display = 'none';
+  }
+}
+closeOptionsBtn.addEventListener('click', () => {
+  optionsPane.style.display = 'none';
+});
+function toggleTileItemsUI() {
+  let tile = world[player.y][player.x];
+  if (tileItemsUI.style.display === 'none' || tileItemsUI.style.display === '') {
+    showTileItemsUI(tile);
+  } else {
+    tileItemsUI.style.display = 'none';
+  }
+}
+function showTileItemsUI(tile) {
+  tileItemsUI.style.display = 'block';
+  updateTileItemsUI(tile);
+}
+function updateTileItemsUI(tile) {
+  tileItemsList.innerHTML = '';
+  tile.onGround.forEach((item, index) => {
+    let li = document.createElement('li');
+    let displayText = item.type;
+    if (item.quality !== undefined && item.quality > 0) {
+      displayText += ' (Quality +' + item.quality + ')';
+    }
+    if (item.durability !== undefined) {
+      displayText += ' (Dur:' + item.durability + ')';
+    }
+    displayText += ' x' + item.quantity;
+    li.textContent = displayText;
+    let pickUpBtn = document.createElement('button');
+    pickUpBtn.textContent = 'Pick Up';
+    pickUpBtn.addEventListener('click', () => {
+      pickUpGroundItem(tile, item, 1);
+      updateTileItemsUI(tile);
+    });
+    li.appendChild(pickUpBtn);
+    tileItemsList.appendChild(li);
+  });
+}
+function pickUpGroundItem(tile, groundItem, quantity) {
+  if (quantity > groundItem.quantity) quantity = groundItem.quantity;
+  removeItemFromTile(tile, groundItem.type, quantity, groundItem.quality, groundItem.durability);
+  let toAdd = {
+    type: groundItem.type,
+    durability: groundItem.durability,
+    quality: groundItem.quality,
+    quantity: quantity
+  };
+  addItemObject(toAdd);
+  updateInventoryUI();
+}
+function removeItemFromTile(tile, type, quantity = 1, quality, durability = undefined) {
+  let groundItemIndex = tile.onGround.findIndex(i => i.type === type && i.durability === durability && (i.quality || 0) === (quality || 0));
+  if (groundItemIndex >= 0) {
+    let groundItem = tile.onGround[groundItemIndex];
+    if (quantity >= groundItem.quantity) {
+      tile.onGround.splice(groundItemIndex, 1);
+    } else {
+      groundItem.quantity -= quantity;
+    }
+  }
+}
+closeTileItemsBtn.addEventListener('click', () => {
+  tileItemsUI.style.display = 'none';
+});
+function toggleDebugMenu() {
+  if (debugMenu.style.display === 'none' || debugMenu.style.display === '') {
+    debugMenu.style.display = 'block';
+  } else {
+    debugMenu.style.display = 'none';
+  }
+}
+debugSpawnItemBtn.addEventListener('click', () => {
+  debugSpawnData.itemType = debugItemSelect.value;
+  debugSpawnData.quantity = parseInt(debugItemQuantity.value, 10) || 1;
+  debugSpawnData.quality = parseInt(debugItemQuality.value, 10) || 0;
+  debugSpawnMode = true;
+  debugMenu.style.display = 'none';
+});
+debugHealBtn.addEventListener('click', () => {
+  let amount = parseInt(debugHealAmount.value, 10) || 0;
+  player.health += amount;
+  if (player.health > player.maxHealth) player.health = player.maxHealth;
+  updateStatsUI();
+});
+debugHydrateBtn.addEventListener('click', () => {
+  let amount = parseInt(debugHydrateAmount.value, 10) || 0;
+  player.thirst += amount;
+  if (player.thirst > player.maxThirst) player.thirst = player.maxThirst;
+  updateStatsUI();
+});
+debugSatiateBtn.addEventListener('click', () => {
+  let amount = parseInt(debugSatiateAmount.value, 10) || 0;
+  player.hunger += amount;
+  if (player.hunger > player.maxHunger) player.hunger = player.maxHunger;
+  updateStatsUI();
+});
+debugSkillXPBtn.addEventListener('click', () => {
+  let skill = debugSkillSelect.value;
+  let amount = parseInt(debugSkillXP.value, 10) || 0;
+  addXp(skill, amount);
+});
+debugCloseBtn.addEventListener('click', () => {
+  debugMenu.style.display = 'none';
+});
+function alert(msg) {
+  let div = document.createElement('div');
+  div.style.position = 'fixed';
+  div.style.left = '50%';
+  div.style.top = '50%';
+  div.style.transform = 'translate(-50%, -50%)';
+  div.style.background = '#000';
+  div.style.border = '1px solid #fff';
+  div.style.color = '#fff';
+  div.style.padding = '10px';
+  div.style.fontFamily = '"Courier New", monospace';
+  div.style.zIndex = '10000';
+  div.style.maxWidth = '80%';
+  div.style.textAlign = 'center';
+  div.innerHTML = msg + '<br><br>[Press ENTER]';
+  document.body.appendChild(div);
+  function handleKeyPress(e) {
+    if (e.key === 'Enter') {
+      document.body.removeChild(div);
+      document.removeEventListener('keydown', handleKeyPress);
+    }
+  }
+  document.addEventListener('keydown', handleKeyPress);
+}
+let menuItemHovered = null;
+contextMenu.querySelectorAll('li').forEach(item => {
+  item.addEventListener('mouseenter', () => {
+    menuItemHovered = item;
+  });
+  item.addEventListener('mouseleave', () => {
+    menuItemHovered = null;
+  });
+});
+container.addEventListener('mouseup', e => {
+  if (e.button === 2 && menuItemHovered) {
+    menuItemHovered.click();
+  }
+});
+let invMenuItemHovered = null;
+inventoryContextMenu.addEventListener('mouseenter', e => {
+  if (e.target.tagName === 'LI') {
+    invMenuItemHovered = e.target;
+  }
+}, true);
+inventoryContextMenu.addEventListener('mouseleave', e => {
+  if (e.target.tagName === 'LI') {
+    invMenuItemHovered = null;
+  }
+}, true);
+document.addEventListener('mouseup', e => {
+  if (e.button === 2 && invMenuItemHovered) {
+    invMenuItemHovered.click();
+  }
+});
+let elevation = [];
+let shadeEnabled = false;
+function showTooltip(e) {
+  hideTooltip();
+  const tooltip = document.createElement('div');
+  tooltip.className = 'tooltip';
+  tooltip.textContent = e.target.dataset.tooltip;
+  document.body.appendChild(tooltip);
+  const rect = e.target.getBoundingClientRect();
+  tooltip.style.left = rect.right + 5 + 'px';
+  tooltip.style.top = rect.top + 'px';
+  const tooltipRect = tooltip.getBoundingClientRect();
+  if (tooltipRect.right > window.innerWidth) {
+    tooltip.style.left = rect.left - tooltipRect.width - 5 + 'px';
+  }
+  if (tooltipRect.bottom > window.innerHeight) {
+    tooltip.style.top = rect.bottom - tooltipRect.height + 'px';
+  }
+}
+function hideTooltip() {
+  const tooltip = document.querySelector('.tooltip');
+  if (tooltip) {
+    tooltip.remove();
+  }
+}
+function canCraftRecipe(recipe) {
+  return recipe.requirements.every(req => {
+    const items = inventory.filter(item => item.type === req.type && item.durability === undefined);
+    const total = items.reduce((sum, item) => sum + item.quantity, 0);
+    return total >= req.quantity;
+  });
+}</script>
+</body>
+</html>
