@@ -1,0 +1,341 @@
+<html><head><base href="." />
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>The Backrooms - Full Game</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<style>
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background: #000;
+  font-family: monospace;
+  color: #fff;
+  overflow: hidden;
+}
+
+#ui {
+  position: fixed;
+  top: 20px;
+  left: 20px;
+  z-index: 100;
+  font-size: 20px;
+  text-shadow: 2px 2px 2px rgba(0,0,0,0.5);
+}
+
+#sanity {
+  color: #0f0;
+}
+
+#menu {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  z-index: 200;
+  background: rgba(0,0,0,0.8);
+  padding: 20px;
+  border-radius: 10px;
+}
+
+.button {
+  display: inline-block;
+  padding: 10px 20px;
+  background: #333;
+  color: #fff;
+  text-decoration: none;
+  margin: 10px;
+  cursor: pointer;
+  border: 2px solid #555;
+}
+
+.button:hover {
+  background: #444;
+}
+
+#warning {
+  color: #f00;
+  margin-bottom: 20px;
+}
+
+canvas {
+  position: fixed;
+  top: 0;
+  left: 0;
+}
+</style>
+</head>
+<body>
+
+<div id="menu">
+  <h1>THE BACKROOMS</h1>
+  <p id="warning">Warning: This game contains flickering lights and may trigger seizures in people with photosensitive epilepsy.</p>
+  <div class="button" onclick="startGame()">ENTER</div>
+  <p>Use WASD to move, Mouse to look around</p>
+  <p>Find your way out... if you can.</p>
+</div>
+
+<div id="ui">
+  Sanity: <span id="sanity">100%</span>
+</div>
+
+<script>
+let scene, camera, renderer, player;
+let rooms = [];
+let gameRunning = false;
+let moveForward = false;
+let moveBackward = false;
+let moveLeft = false;
+let moveRight = false;
+let sanity = 100;
+let footstepSound, ambienceSound;
+let lastFootstepTime = 0;
+
+class Player {
+  constructor() {
+    this.speed = 0.2;
+    this.velocity = new THREE.Vector3();
+    this.direction = new THREE.Vector3();
+    this.rotation = new THREE.Euler(0, 0, 0, 'YXZ');
+  }
+}
+
+function initAudio() {
+  footstepSound = new Audio('loud-walking-on-carpet-99860.mp3');
+  footstepSound.volume = 0.3;
+  
+  ambienceSound = new Audio('back-rooms-ambience-made-with-Voicemod.mp3');
+  ambienceSound.loop = true;
+  ambienceSound.volume = 0.5;
+}
+
+function init() {
+  scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x000000);
+  
+  camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+  
+  renderer = new THREE.WebGLRenderer({ antialias: true });
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.shadowMap.enabled = true;
+  document.body.appendChild(renderer.domElement);
+
+  const ambientLight = new THREE.AmbientLight(0xffffff, 0.3);
+  scene.add(ambientLight);
+
+  createBackrooms();
+  
+  player = new Player();
+  camera.position.y = 1.7;
+  
+  window.addEventListener('resize', onWindowResize, false);
+  
+  initAudio();
+}
+
+function createBackrooms() {
+  const textureLoader = new THREE.TextureLoader();
+  const carpetTexture = textureLoader.load('cn40k99826b91.jpg');
+  const wallTexture = textureLoader.load('level-0-texture-v0-1ky60nq9nh091.png');
+  
+  carpetTexture.wrapS = carpetTexture.wrapT = THREE.RepeatWrapping;
+  carpetTexture.repeat.set(20, 20);
+  wallTexture.wrapS = wallTexture.wrapT = THREE.RepeatWrapping;
+  wallTexture.repeat.set(4, 2);
+
+  const floorGeometry = new THREE.PlaneGeometry(100, 100);
+  const floorMaterial = new THREE.MeshStandardMaterial({
+    map: carpetTexture,
+    roughness: 0.8
+  });
+  const floor = new THREE.Mesh(floorGeometry, floorMaterial);
+  floor.rotation.x = -Math.PI / 2;
+  floor.receiveShadow = true;
+  scene.add(floor);
+
+  const ceilingGeometry = new THREE.PlaneGeometry(100, 100);
+  const ceilingMaterial = new THREE.MeshStandardMaterial({
+    map: carpetTexture,
+    roughness: 0.8
+  });
+  const ceiling = new THREE.Mesh(ceilingGeometry, ceilingMaterial);
+  ceiling.rotation.x = Math.PI / 2;
+  ceiling.position.y = 3;
+  ceiling.receiveShadow = true;
+  scene.add(ceiling);
+
+  const wallMaterial = new THREE.MeshStandardMaterial({
+    map: wallTexture,
+    roughness: 0.5
+  });
+
+  for(let i = 0; i < 20; i++) {
+    const wallGeometry = new THREE.BoxGeometry(0.2, 3, 10);
+    const wall = new THREE.Mesh(wallGeometry, wallMaterial);
+    wall.position.set(
+      Math.random() * 80 - 40,
+      1.5,
+      Math.random() * 80 - 40
+    );
+    wall.rotation.y = Math.random() * Math.PI;
+    wall.castShadow = true;
+    wall.receiveShadow = true;
+    scene.add(wall);
+  }
+
+  for(let i = 0; i < 15; i++) {
+    const light = new THREE.PointLight(0xf7f7d4, 1, 15);
+    light.position.set(
+      Math.random() * 80 - 40,
+      2.9,
+      Math.random() * 80 - 40
+    );
+    light.castShadow = true;
+    scene.add(light);
+
+    setInterval(() => {
+      if(Math.random() < 0.1) {
+        light.intensity = Math.random() * 0.5;
+      } else {
+        light.intensity = 1;
+      }
+    }, 100);
+  }
+}
+
+function playFootstep() {
+  const now = Date.now();
+  if (now - lastFootstepTime > 500) {
+    footstepSound.currentTime = 0;
+    footstepSound.play();
+    lastFootstepTime = now;
+  }
+}
+
+function onWindowResize() {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+}
+
+function handleKeyDown(event) {
+  switch(event.code) {
+    case 'KeyW': moveForward = true; break;
+    case 'KeyS': moveBackward = true; break;
+    case 'KeyA': moveLeft = true; break;
+    case 'KeyD': moveRight = true; break;
+  }
+}
+
+function handleKeyUp(event) {
+  switch(event.code) {
+    case 'KeyW': moveForward = false; break;
+    case 'KeyS': moveBackward = false; break;
+    case 'KeyA': moveLeft = false; break;
+    case 'KeyD': moveRight = false; break;
+  }
+}
+
+function handleMouseMove(event) {
+  if(document.pointerLockElement) {
+    player.rotation.y -= event.movementX * 0.002;
+    player.rotation.x = Math.max(
+      -Math.PI/2,
+      Math.min(Math.PI/2, player.rotation.x - event.movementY * 0.002)
+    );
+    
+    camera.rotation.copy(player.rotation);
+  }
+}
+
+function updatePlayer() {
+  const delta = 0.016;
+
+  // Reset velocity
+  player.velocity.x = 0;
+  player.velocity.z = 0;
+
+  // Calculate movement direction vector based on input
+  const direction = new THREE.Vector3();
+  
+  if (moveForward) direction.z -= 1;
+  if (moveBackward) direction.z += 1;
+  if (moveLeft) direction.x -= 1;
+  if (moveRight) direction.x += 1;
+
+  if (direction.length() > 0) {
+    // Normalize direction vector
+    direction.normalize();
+    
+    // Create rotation matrix from player's Y rotation
+    const rotationMatrix = new THREE.Matrix4();
+    rotationMatrix.makeRotationY(player.rotation.y);
+    
+    // Apply rotation to direction vector
+    direction.applyMatrix4(rotationMatrix);
+    
+    // Apply speed
+    direction.multiplyScalar(player.speed);
+    
+    // Update position
+    camera.position.add(direction);
+    
+    playFootstep();
+  }
+
+  sanity = Math.max(0, sanity - 0.01);
+  document.getElementById('sanity').textContent = Math.round(sanity) + '%';
+
+  if(sanity <= 0) {
+    gameOver();
+  }
+}
+
+function animate() {
+  if(!gameRunning) return;
+  
+  requestAnimationFrame(animate);
+  updatePlayer();
+  renderer.render(scene, camera);
+}
+
+function startGame() {
+  init();
+  document.getElementById('menu').style.display = 'none';
+  gameRunning = true;
+  
+  ambienceSound.play();
+  
+  document.addEventListener('keydown', handleKeyDown);
+  document.addEventListener('keyup', handleKeyUp);
+  document.addEventListener('mousemove', handleMouseMove);
+  document.addEventListener('click', () => {
+    if(gameRunning && !document.pointerLockElement) {
+      document.body.requestPointerLock();
+    }
+  });
+
+  animate();
+}
+
+function gameOver() {
+  gameRunning = false;
+  document.exitPointerLock();
+  
+  ambienceSound.pause();
+  
+  const menu = document.getElementById('menu');
+  menu.innerHTML = `
+    <h1>YOU ARE LOST FOREVER</h1>
+    <p>Your sanity has been depleted</p>
+    <div class="button" onclick="location.reload()">TRY AGAIN</div>
+  `;
+  menu.style.display = 'block';
+}
+</script>
+
+</body></html>
