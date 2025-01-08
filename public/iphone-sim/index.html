@@ -1,0 +1,709 @@
+<html><head><base href="https://iphone.sim/">
+  <script src="https://websim.ai/ws.js"></script>
+  <style>
+    :root {
+      --notch-width: 200px;
+      --notch-height: 35px;
+      --iphone-width: 375px;
+      --iphone-height: 812px;
+      --iphone-border-radius: 40px;
+      --screen-ratio: calc(var(--iphone-height) / 812);
+      --retro-background: linear-gradient(45deg, #404040, #808080);
+      --retro-screen-color: #C0C0C0;
+      --retro-text-color: #000;
+      --retro-app-icon-background: #A0A0A0;
+    }
+
+    body {
+      margin: 0;
+      padding: 20px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      background: #f0f0f0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    .device-selector {
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      z-index: 1000;
+      padding: 8px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+    }
+
+    .iphone {
+      position: relative;
+      width: var(--iphone-width);
+      height: var(--iphone-height);
+      background: linear-gradient(45deg, #1a1a1a, #4a4a4a);
+      border-radius: var(--iphone-border-radius);
+      box-shadow: 0 0 50px rgba(0,0,0,0.2);
+      padding: 12px;
+      box-sizing: border-box;
+      transition: all 0.3s ease;
+    }
+
+    .iphone.retro-device {
+      box-shadow: 0 0 20px rgba(0,0,0,0.3);
+    }
+
+    .retro-device .side-button,
+    .retro-device .volume-button {
+      background: #606060;
+    }
+
+    .iphone:before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 150px;
+      height: 25px;
+      background: #000;
+      border-bottom-left-radius: 20px;
+      border-bottom-right-radius: 20px;
+    }
+
+    .side-button {
+      position: absolute;
+      right: -3px;
+      top: 100px;
+      width: 3px;
+      height: 30px;
+      background: #2a2a2a;
+      border-top-right-radius: 2px;
+      border-bottom-right-radius: 2px;
+    }
+
+    .volume-button {
+      position: absolute;
+      left: -3px;
+      width: 3px;
+      height: 30px;
+      background: #2a2a2a;
+      border-top-left-radius: 2px;
+      border-bottom-left-radius: 2px;
+    }
+
+    .volume-up {
+      top: 80px;
+    }
+
+    .volume-down {
+      top: 120px;
+    }
+
+    .screen {
+      width: 100%;
+      height: 100%;
+      background: #fff;
+      border-radius: calc(var(--iphone-border-radius) - 15px);
+      overflow: hidden;
+      position: relative;
+    }
+
+    .status-bar {
+      height: 44px;
+      background: rgba(0,0,0,0.3);
+      color: white;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 15px;
+      font-size: 14px;
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+      backdrop-filter: blur(10px);
+    }
+
+    .back-button {
+      color: #007AFF;
+      cursor: pointer;
+      display: none;
+      margin-right: 10px;
+    }
+
+    .back-button.visible {
+      display: block;
+    }
+
+    .home-screen {
+      height: calc(100% - 44px);
+      background-size: cover;
+      background-position: center;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      grid-gap: 20px;
+      padding: 20px;
+      padding-top: 64px;
+      overflow-y: auto;
+    }
+
+    .app {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+
+    .app:active {
+      transform: scale(0.9);
+    }
+
+    .app-icon {
+      width: calc(60px * var(--screen-ratio));
+      height: calc(60px * var(--screen-ratio));
+      background: rgba(255,255,255,0.9);
+      border-radius: 15px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin-bottom: 5px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+      font-size: calc(30px * var(--screen-ratio));
+    }
+
+    .app-name {
+      font-size: calc(12px * var(--screen-ratio));
+      color: white;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+    }
+
+    .app-window {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: white;
+      z-index: 10;
+      display: none;
+    }
+
+    .app-window.active {
+      display: block;
+    }
+
+    .messages {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      padding-top: 44px;
+    }
+
+    .chat-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 10px;
+    }
+
+    .message {
+      margin: 10px;
+      padding: 10px;
+      border-radius: 15px;
+      max-width: 70%;
+    }
+
+    .message.sent {
+      background: #007AFF;
+      color: white;
+      align-self: flex-end;
+    }
+
+    .message.received {
+      background: #E5E5EA;
+      color: black;
+      align-self: flex-start;
+    }
+
+    .message-input {
+      display: flex;
+      padding: 10px;
+      background: #f0f0f0;
+    }
+
+    .message-input input {
+      flex: 1;
+      padding: 10px;
+      border: none;
+      border-radius: 20px;
+      margin-right: 10px;
+    }
+
+    .message-input button {
+      background: #007AFF;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 20px;
+      cursor: pointer;
+    }
+
+    .youtube-video {
+      margin-bottom: 20px;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    #snapchat-camera {
+      width: 100%;
+      height: 60vh;
+      background: #000;
+      position: relative;
+    }
+
+    #snapchat-filters {
+      height: 20vh;
+      background: #333;
+      display: flex;
+      overflow-x: auto;
+      padding: 10px;
+    }
+
+    #youtube-feed {
+      height: calc(100vh - 150px);
+      overflow-y: auto;
+      padding: 10px;
+    }
+
+    .settings-menu {
+      padding: 20px;
+      padding-top: 64px;
+    }
+
+    .settings-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 15px;
+      border-bottom: 1px solid #eee;
+      cursor: pointer;
+    }
+
+    .settings-item:hover {
+      background: #f5f5f5;
+    }
+  </style>
+</head>
+<body>
+  <select class="device-selector" id="deviceSelector">
+    <option value="iphone2g">iPhone 2G (2007)</option>
+    <option value="iphone3g">iPhone 3G (2008)</option>
+    <option value="iphone4">iPhone 4 (2010)</option>
+    <option value="iphone5">iPhone 5 (2012)</option>
+    <option value="iphone6">iPhone 6 (2014)</option>
+    <option value="iphone7">iPhone 7 (2016)</option>
+    <option value="iphonex">iPhone X (2017)</option>
+    <option value="iphone11">iPhone 11 (2019)</option>
+    <option value="iphone12">iPhone 12 (2020)</option>
+    <option value="iphone13">iPhone 13 (2021)</option>
+    <option value="iphone14">iPhone 14 (2022)</option>
+    <option value="iphone15" selected>iPhone 15 (2023)</option>
+  </select>
+
+  <div class="iphone">
+    <div class="side-button"></div>
+    <div class="volume-button volume-up"></div>
+    <div class="volume-button volume-down"></div>
+    <div class="screen">
+      <div class="status-bar">
+        <div style="display: flex; align-items: center;">
+          <span class="back-button">&#x2190; Back</span>
+          <span class="time">9:41</span>
+        </div>
+        <span class="battery">100%</span>
+      </div>
+      <div class="home-screen">
+        <div class="app" onclick="openApp('messages')">
+          <div class="app-icon">&#x1f4ac;</div>
+          <div class="app-name">Messages</div>
+        </div>
+        <div class="app" onclick="openApp('safari')">
+          <div class="app-icon">&#x1f310;</div>
+          <div class="app-name">Safari</div>
+        </div>
+        <div class="app" onclick="openApp('music')">
+          <div class="app-icon">&#x1f3b5;</div>
+          <div class="app-name">Music</div>
+        </div>
+        <div class="app" onclick="openApp('appstore')">
+          <div class="app-icon">&#x1f3ae;</div>
+          <div class="app-name">App Store</div>
+        </div>
+        <div class="app" onclick="openApp('spotify')">
+          <div class="app-icon">&#x1f3b6;</div>
+          <div class="app-name">Spotify</div>
+        </div>
+        <div class="app" onclick="openApp('websim')">
+          <div class="app-icon">&#x1f310;</div>
+          <div class="app-name">Websim.ai</div>
+        </div>
+        <div class="app" onclick="openApp('snapchat')">
+          <div class="app-icon">&#x1f4f7;</div>
+          <div class="app-name">Snapchat</div>
+        </div>
+        <div class="app" onclick="openApp('tiktok')">
+          <div class="app-icon">&#x1f3ac;</div>
+          <div class="app-name">TikTok</div>
+        </div>
+        <div class="app" onclick="openApp('youtube')">
+          <div class="app-icon">&#x1f3ac;</div>
+          <div class="app-name">YouTube</div>
+        </div>
+        <div class="app" onclick="openApp('settings')">
+          <div class="app-icon">&#x2699;</div>
+          <div class="app-name">Settings</div>
+        </div>
+      </div>
+
+      <div class="app-window" id="messages">
+        <div class="messages">
+          <div class="chat-list" id="chatList"></div>
+          <div class="message-input">
+            <input type="text" id="messageInput" placeholder="iMessage">
+            <button onclick="sendMessage()">Send</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="app-window" id="safari">
+        <iframe src="https://duckduckgo.com" style="width:100%;height:100%;border:none;"></iframe>
+      </div>
+
+      <div class="app-window" id="music">
+        <div style="padding:20px;padding-top:64px">
+          <h2>Apple Music</h2>
+          <p>Connect your Apple ID to access your music library.</p>
+        </div>
+      </div>
+
+      <div class="app-window" id="appstore">
+        <div style="padding:20px;padding-top:64px">
+          <h2>App Store</h2>
+          <p>Sign in with your Apple ID to download apps.</p>
+        </div>
+      </div>
+
+      <div class="app-window" id="spotify">
+        <div style="padding:20px;padding-top:64px">
+          <iframe style="border-radius:12px" src="https://open.spotify.com/embed/playlist/37i9dQZEVXcJZyENOWUFo7" width="100%" height="80%" frameborder="0" allowfullscreen allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"></iframe>
+        </div>
+      </div>
+
+      <div class="app-window" id="websim">
+        <iframe src="https://websim.ai" style="width:100%;height:100%;border:none;"></iframe>
+      </div>
+
+      <div class="app-window" id="snapchat">
+        <div style="padding:20px;padding-top:64px">
+          <h2>Snapchat</h2>
+          <div id="snapchat-camera"></div>
+          <div id="snapchat-filters"></div>
+        </div>
+      </div>
+
+      <div class="app-window" id="tiktok">
+        <iframe src="https://www.tiktok.com/embed/v2/" style="width:100%;height:100%;border:none;" allowfullscreen></iframe>
+      </div>
+
+      <div class="app-window" id="youtube">
+        <div style="padding:20px;padding-top:64px">
+          <h2>YouTube</h2>
+          <div id="youtube-feed"></div>
+        </div>
+      </div>
+
+      <div class="app-window" id="settings">
+        <div class="settings-menu">
+          <h2>Settings</h2>
+          <div class="settings-item" onclick="toggleDarkMode()">
+            <span>Dark Mode</span>
+            <label class="switch">
+              <input type="checkbox" id="darkModeToggle">
+              <span class="slider round"></span>
+            </label>
+          </div>
+          <div class="settings-item">
+            <span>Notifications</span>
+            <label class="switch">
+              <input type="checkbox" id="notificationsToggle">
+              <span class="slider round"></span>
+            </label>
+          </div>
+          <div class="settings-item">
+            <span>Sound</span>
+            <label class="switch">
+              <input type="checkbox" id="soundToggle" checked>
+              <span class="slider round"></span>
+            </label>
+          </div>
+          <div class="settings-item">
+            <span>iCloud</span>
+            <div id="cloudStatus">Connected as <span id="cloudUsername"></span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>const YOUTUBE_API_KEY = '';
+const wallpapers = ['https://images.unsplash.com/photo-1506744038136-46273834b3fb', 'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf', 'https://images.unsplash.com/photo-1502481851512-e9e2529bfbf9', 'https://images.unsplash.com/photo-1579546929518-9e396f3cc809'];
+let currentApp = null;
+function getRandomWallpaper() {
+  return wallpapers[Math.floor(Math.random() * wallpapers.length)];
+}
+document.querySelector('.home-screen').style.backgroundImage = `url('${getRandomWallpaper()}')`;
+function updateTime() {
+  const now = new Date();
+  const hours = now.getHours().toString().padStart(2, '0');
+  const minutes = now.getMinutes().toString().padStart(2, '0');
+  document.querySelector('.time').textContent = `${hours}:${minutes}`;
+}
+setInterval(updateTime, 1000);
+updateTime();
+function openApp(appId) {
+  if (currentApp) {
+    document.getElementById(currentApp).classList.remove('active');
+    document.querySelector('.back-button').classList.remove('visible');
+  }
+  document.getElementById(appId).classList.add('active');
+  document.querySelector('.back-button').classList.add('visible');
+  currentApp = appId;
+  switch (appId) {
+    case 'snapchat':
+      initSnapchat();
+      break;
+    case 'youtube':
+      loadYouTubeFeed();
+      break;
+    case 'settings':
+      document.getElementById('cloudUsername').textContent = room.party.client.username;
+      break;
+    default:
+      break;
+  }
+}
+function goBack() {
+  if (currentApp) {
+    document.getElementById(currentApp).classList.remove('active');
+    document.querySelector('.back-button').classList.remove('visible');
+    currentApp = null;
+  }
+}
+document.querySelector('.back-button').addEventListener('click', goBack);
+function addMessage(text, isSent) {
+  const chatList = document.getElementById('chatList');
+  const messageDiv = document.createElement('div');
+  messageDiv.className = `message ${isSent ? 'sent' : 'received'}`;
+  messageDiv.textContent = text;
+  chatList.appendChild(messageDiv);
+  chatList.scrollTop = chatList.scrollHeight;
+}
+function sendMessage() {
+  const input = document.getElementById('messageInput');
+  const text = input.value.trim();
+  if (text) {
+    addMessage(text, true);
+    room.send({
+      type: 'chat',
+      message: text
+    });
+    input.value = '';
+  }
+}
+const room = new WebsimSocket();
+room.onmessage = event => {
+  const data = event.data;
+  if (data.type === 'chat') {
+    addMessage(data.message, false);
+  }
+};
+const deviceDimensions = {
+  iphone2g: {
+    width: 320,
+    height: 480,
+    radius: 30
+  },
+  iphone3g: {
+    width: 320,
+    height: 480,
+    radius: 30
+  },
+  iphone4: {
+    width: 320,
+    height: 480,
+    radius: 30
+  },
+  iphone5: {
+    width: 320,
+    height: 568,
+    radius: 30
+  },
+  iphone6: {
+    width: 375,
+    height: 667,
+    radius: 35
+  },
+  iphone7: {
+    width: 375,
+    height: 667,
+    radius: 35
+  },
+  iphonex: {
+    width: 375,
+    height: 812,
+    radius: 40
+  },
+  iphone11: {
+    width: 414,
+    height: 896,
+    radius: 40
+  },
+  iphone12: {
+    width: 390,
+    height: 844,
+    radius: 45
+  },
+  iphone13: {
+    width: 390,
+    height: 844,
+    radius: 45
+  },
+  iphone14: {
+    width: 393,
+    height: 852,
+    radius: 45
+  },
+  iphone15: {
+    width: 393,
+    height: 852,
+    radius: 45
+  }
+};
+document.getElementById('deviceSelector').addEventListener('change', e => {
+  const device = deviceDimensions[e.target.value];
+  const isOldDevice = ['iphone2g', 'iphone3g', 'iphone4', 'iphone5'].includes(e.target.value);
+  
+  document.documentElement.style.setProperty('--iphone-width', device.width + 'px');
+  document.documentElement.style.setProperty('--iphone-height', device.height + 'px');
+  document.documentElement.style.setProperty('--iphone-border-radius', device.radius + 'px');
+  
+  const iphone = document.querySelector('.iphone');
+  const screen = document.querySelector('.screen');
+  
+  if (isOldDevice) {
+    // Apply retro styling
+    iphone.style.background = 'var(--retro-background)';
+    screen.style.background = 'var(--retro-screen-color)';
+    
+    // Modify app icons
+    document.querySelectorAll('.app-icon').forEach(icon => {
+      icon.style.background = 'var(--retro-app-icon-background)';
+      icon.style.color = 'var(--retro-text-color)';
+    });
+    
+    // Modify status bar
+    document.querySelector('.status-bar').style.background = '#404040';
+    document.querySelector('.status-bar').style.color = '#000';
+    iphone.classList.add('retro-device');
+  } else {
+    // Reset to modern styling
+    iphone.style.background = 'linear-gradient(45deg, #1a1a1a, #4a4a4a)';
+    screen.style.background = '#fff';
+    
+    document.querySelectorAll('.app-icon').forEach(icon => {
+      icon.style.background = 'rgba(255,255,255,0.9)';
+      icon.style.color = 'inherit';
+    });
+    
+    document.querySelector('.status-bar').style.background = 'rgba(0,0,0,0.3)';
+    document.querySelector('.status-bar').style.color = 'white';
+    iphone.classList.remove('retro-device');
+  }
+});
+document.getElementById('messageInput').addEventListener('keypress', e => {
+  if (e.key === 'Enter') {
+    sendMessage();
+  }
+});
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && currentApp) {
+    goBack();
+  }
+});
+room.party.subscribe(peers => {
+  const username = room.party.client.username;
+  document.getElementById('cloudUsername').textContent = username;
+});
+function toggleDarkMode() {
+  const darkModeToggle = document.getElementById('darkModeToggle');
+  if (darkModeToggle.checked) {
+    document.documentElement.style.setProperty('--bg-color', '#000');
+    document.documentElement.style.setProperty('--text-color', '#fff');
+  } else {
+    document.documentElement.style.setProperty('--bg-color', '#fff');
+    document.documentElement.style.setProperty('--text-color', '#000');
+  }
+}
+document.getElementById('spotify').innerHTML = `
+  <div style="padding:20px;padding-top:64px">
+    <iframe style="border-radius:12px" 
+            src="https://open.spotify.com/embed/playlist/37i9dQZEVXcJZyENOWUFo7" 
+            width="100%" 
+            height="80%" 
+            frameborder="0" 
+            allowfullscreen>
+    </iframe>
+  </div>
+`;
+document.getElementById('websim').innerHTML = `
+  <iframe src="https://websim.ai" style="width:100%;height:100%;border:none;"></iframe>
+`;
+document.getElementById('tiktok').innerHTML = `
+  <iframe src="https://www.tiktok.com/embed/v2/" 
+          style="width:100%;height:100%;border:none;"
+          allowfullscreen>
+  </iframe>
+`;
+document.addEventListener('DOMContentLoaded', () => {
+  const youtubeScript = document.createElement('script');
+  youtubeScript.src = 'https://apis.google.com/js/api.js';
+  youtubeScript.onload = () => {
+    gapi.load('client', () => {
+    });
+  };
+  document.body.appendChild(youtubeScript);
+});
+async function initSnapchat() {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: true
+    });
+    const video = document.createElement('video');
+    video.srcObject = stream;
+    video.autoplay = true;
+    document.getElementById('snapchat-camera').appendChild(video);
+  } catch (err) {
+    console.error('Error accessing camera:', err);
+  }
+}
+async function loadYouTubeFeed() {
+  try {
+    const feed = document.getElementById('youtube-feed');
+    feed.innerHTML = '';
+  } catch (err) {
+    console.error('Error loading YouTube feed:', err);
+  }
+}
+</script>
+</body>
+</html>
