@@ -1,0 +1,783 @@
+<html><head><base href>
+<style>
+    body { margin: 0; overflow: hidden; }
+    #world { width: 100vw; height: 100vh; }
+    .instructions {
+        position: fixed;
+        top: 10px;
+        left: 10px;
+        background: rgba(0,0,0,0.7);
+        color: white;
+        padding: 10px;
+        border-radius: 5px;
+        font-family: Arial, sans-serif;
+    }
+    .hdri-selector {
+        position: fixed;
+        top: 60px;
+        left: 10px;
+        padding: 5px;
+        border-radius: 5px;
+        background: rgba(0,0,0,0.7);
+        color: white;
+        border: 1px solid white;
+        font-family: Arial, sans-serif;
+    }
+    #preloader {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: #000;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+        color: white;
+        font-family: Arial, sans-serif;
+    }
+
+    #loading-bar {
+        width: 200px;
+        height: 10px;
+        background: #333;
+        border-radius: 5px;
+        margin: 20px 0;
+        overflow: hidden;
+    }
+
+    #loading-progress {
+        width: 0%;
+        height: 100%;
+        background: #4CAF50;
+        transition: width 0.3s ease;
+    }
+
+    #credits {
+        position: fixed;
+        bottom: 40px;
+        right: 10px;
+        background: rgba(0,0,0,0.7);
+        color: white;
+        padding: 10px;
+        border-radius: 5px;
+        font-family: Arial, sans-serif;
+        z-index: 100;
+    }
+    .direction-indicator {
+        display: none;
+    }
+    canvas { 
+      image-rendering: optimizeSpeed;
+    }
+    #fps-counter {
+        position: fixed;
+        top: 10px;
+        right: 10px;
+        background: rgba(0,0,0,0.7);
+        color: white;
+        padding: 10px;
+        border-radius: 5px;
+        font-family: Arial, sans-serif;
+        z-index: 100;
+    }
+</style></head>
+<body>
+    <div class="instructions">
+        WASD to move | Mouse to look around | Space to jump | Shift to sprint<br>
+        Press + or - to change environment
+    </div>
+    <select id="hdriSelector" class="hdri-selector">
+        <option value="https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/1k/rural_landscape_1k.hdr">Rural Landscape</option>
+        <option value="https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/1k/forest_slope_1k.hdr">Forest Slope</option>
+        <option value="https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/1k/kloofendal_48d_partly_cloudy_1k.hdr">Partly Cloudy</option>
+        <option value="https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/1k/sunset_in_the_chalk_quarry_1k.hdr">Sunset Quarry</option>
+        <option value="https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/1k/meadow_1k.hdr">Meadow</option>
+        <option value="https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/1k/mountain_trail_1k.hdr">Mountain Trail</option>
+    </select>
+    <div id="preloader">
+        <h2>Loading Forest World...</h2>
+        <div id="loading-bar">
+            <div id="loading-progress"></div>
+        </div>
+        <p>Please wait while assets are loading...</p>
+    </div>
+    <div id="credits">
+        If you have experience with Three.js and 3D development, feel free to remix this project to improve it!
+    </div>
+    <div id="fps-counter">FPS: --</div>
+    <div id="world"></div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/RGBELoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/CopyShader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/LuminosityHighPassShader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/MaskPass.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/FXAAShader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/RGBShiftShader.js"></script>
+    <script>let assetsLoaded = 0;
+const totalAssets = 5;
+let bushModel;
+let firePitModel;
+let chairModel;
+const bushes = [];
+const firePits = [];
+const chairs = [];
+const firePitLocations = [{
+  x: 0,
+  z: 20
+}];
+function updateLoadingProgress() {
+  assetsLoaded++;
+  const progress = assetsLoaded / totalAssets * 100;
+  document.querySelector('#loading-progress').style.width = progress + '%';
+  if (assetsLoaded >= totalAssets) {
+    setTimeout(() => {
+      document.querySelector('#preloader').style.display = 'none';
+    }, 500);
+  }
+}
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+function findValidSpawnPosition() {
+  for (let attempts = 0; attempts < 100; attempts++) {
+    const x = Math.random() * 180 - 90;
+    const z = Math.random() * 180 - 90;
+    const y = getHeightAtPosition(x, z) + player.height;
+    const testPosition = new THREE.Vector3(x, y, z);
+    if (!checkObjectCollision(testPosition, player.radius * 2)) {
+      return testPosition;
+    }
+  }
+  return new THREE.Vector3(0, getHeightAtPosition(0, 0) + player.height, 0);
+}
+function initializePlayerPosition() {
+  const spawnPosition = findValidSpawnPosition();
+  camera.position.copy(spawnPosition);
+}
+const checkInitialization = setInterval(() => {
+  if (assetsLoaded >= totalAssets) {
+    initializePlayerPosition();
+    clearInterval(checkInitialization);
+  }
+}, 100);
+const renderer = new THREE.WebGLRenderer();
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+document.getElementById('world').appendChild(renderer.domElement);
+const pmremGenerator = new THREE.PMREMGenerator(renderer);
+pmremGenerator.compileEquirectangularShader();
+function loadHDRI(url) {
+  new THREE.RGBELoader().setDataType(THREE.UnsignedByteType).load(url, function (texture) {
+    const envMap = pmremGenerator.fromEquirectangular(texture).texture;
+    if (scene.environment) {
+      scene.environment.dispose();
+    }
+    if (scene.background) {
+      scene.background.dispose();
+    }
+    scene.environment = envMap;
+    scene.background = envMap;
+    texture.dispose();
+    pmremGenerator.dispose();
+  });
+}
+loadHDRI('https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/1k/rural_landscape_1k.hdr');
+const trees = [];
+const rocks = [];
+const hillGeometry = new THREE.PlaneBufferGeometry(200, 200, 100, 100);
+const positions = hillGeometry.attributes.position.array;
+for (let i = 0; i < positions.length; i += 3) {
+  const x = positions[i];
+  const y = positions[i + 1];
+  const frequency = 0.03;
+  const amplitude = 3;
+  positions[i + 2] = amplitude * Math.sin(x * frequency) * Math.cos(y * frequency) + amplitude * 0.5 * Math.sin(x * frequency * 2) * Math.cos(y * frequency * 2);
+}
+const textureLoader = new THREE.TextureLoader();
+const grassTexture = textureLoader.load('https://raw.githubusercontent.com/mrdoob/three.js/master/examples/textures/terrain/grasslight-big.jpg');
+grassTexture.wrapS = THREE.RepeatWrapping;
+grassTexture.wrapT = THREE.RepeatWrapping;
+grassTexture.repeat.set(20, 20);
+const hillMaterial = new THREE.MeshPhongMaterial({
+  map: grassTexture,
+  color: 0x90EE90,
+  shininess: 0,
+  specular: new THREE.Color(0x000000)
+});
+const hill = new THREE.Mesh(hillGeometry, hillMaterial);
+hill.rotation.x = -Math.PI / 2;
+hill.receiveShadow = true;
+scene.add(hill);
+function getHeightAtPosition(x, z) {
+  const localX = x + 100;
+  const localZ = z + 100;
+  const u = localX / 200;
+  const v = localZ / 200;
+  const cellsPerSide = 100;
+  const gridX = Math.floor(u * cellsPerSide);
+  const gridZ = Math.floor(v * cellsPerSide);
+  if (gridX < 0 || gridX >= cellsPerSide || gridZ < 0 || gridZ >= cellsPerSide) {
+    return 0;
+  }
+  const index = (gridZ * (cellsPerSide + 1) + gridX) * 3 + 2;
+  const height = positions[index];
+  return height;
+}
+function createRock(x, z) {
+  const rockGroup = new THREE.Group();
+  const height = getHeightAtPosition(x, z);
+  const placeholder = new THREE.Group();
+  rockGroup.add(placeholder);
+  const sinkDepth = Math.random() * 0.4;
+  rockGroup.position.set(x, height - 0.2 - sinkDepth, z);
+  if (rockModel) {
+    const rockInstance = rockModel.clone();
+    const scale = Math.random() * 0.4 + 0.1;
+    rockInstance.scale.set(scale, scale, scale);
+    rockInstance.rotation.y = Math.random() * Math.PI * 2;
+    rockInstance.traverse(child => {
+      if (child.isMesh) {
+        child.material.shininess = 50;
+        child.material.specular = new THREE.Color(0x444444);
+        child.castShadow = true;
+        child.receiveShadow = true;
+      }
+    });
+    rockGroup.add(rockInstance);
+    rockGroup.userData.radius = scale * 1.5;
+  }
+  return rockGroup;
+}
+let rockModel;
+const gltfLoader = new THREE.GLTFLoader();
+gltfLoader.load('/low_poly_sculpted_boulder.glb', gltf => {
+  rockModel = gltf.scene;
+  for (let i = 0; i < 150; i++) {
+    const x = Math.random() * 180 - 90;
+    const z = Math.random() * 180 - 90;
+    let tooCloseToFirePit = false;
+    for (const loc of firePitLocations) {
+      const dx = x - loc.x;
+      const dz = z - loc.z;
+      const distance = Math.sqrt(dx * dx + dz * dz);
+      if (distance < 4) {
+        tooCloseToFirePit = true;
+        break;
+      }
+    }
+    if (!tooCloseToFirePit) {
+      const rock = createRock(x, z);
+      rocks.push(rock);
+      scene.add(rock);
+    }
+  }
+  updateLoadingProgress();
+});
+gltfLoader.load('/fire_pit.glb', gltf => {
+  firePitModel = gltf.scene;
+  createFirePits();
+  updateLoadingProgress();
+});
+let treeModel;
+gltfLoader.load('/real_tree_models.glb', gltf => {
+  treeModel = gltf.scene;
+  createInitialTrees();
+  updateLoadingProgress();
+});
+gltfLoader.load('/plant_bush.glb', gltf => {
+  bushModel = gltf.scene;
+  createInitialBushes();
+  updateLoadingProgress();
+});
+gltfLoader.load('/chair.glb', gltf => {
+  chairModel = gltf.scene;
+  createChairs();
+  updateLoadingProgress();
+});
+function createInitialTrees() {
+  for (let i = 0; i < 300; i++) {
+    const x = Math.random() * 180 - 90;
+    const z = Math.random() * 180 - 90;
+    let tooCloseToFirePit = false;
+    for (const loc of firePitLocations) {
+      const dx = x - loc.x;
+      const dz = z - loc.z;
+      const distance = Math.sqrt(dx * dx + dz * dz);
+      if (distance < 5) {
+        tooCloseToFirePit = true;
+        break;
+      }
+    }
+    for (const chair of chairs) {
+      const dx = x - chair.position.x;
+      const dz = z - chair.position.z;
+      const distance = Math.sqrt(dx * dx + dz * dz);
+      if (distance < 3) {
+        tooCloseToFirePit = true;
+        break;
+      }
+    }
+    if (!tooCloseToFirePit) {
+      const tree = createTree(x, z);
+      trees.push(tree);
+      scene.add(tree);
+    }
+  }
+}
+function createTree(x, z) {
+  const treeGroup = new THREE.Group();
+  const height = getHeightAtPosition(x, z);
+  const treeInstance = treeModel.clone();
+  const scale = Math.random() * 0.5 + 0.75;
+  treeInstance.scale.set(scale, scale, scale);
+  treeInstance.rotation.y = Math.random() * Math.PI * 2;
+  const originalRotations = {
+    x: treeInstance.rotation.x,
+    y: treeInstance.rotation.y,
+    z: treeInstance.rotation.z
+  };
+  treeInstance.userData.originalRotations = originalRotations;
+  treeInstance.traverse(child => {
+    if (child.isMesh) {
+      child.material.shininess = 20;
+      child.material.specular = new THREE.Color(0x222222);
+      child.castShadow = true;
+      child.receiveShadow = true;
+    }
+  });
+  treeGroup.add(treeInstance);
+  treeGroup.position.set(x, height - 0.5, z);
+  treeGroup.userData.trunkRadius = 1 * scale;
+  treeGroup.userData.leavesRadius = 2 * scale;
+  treeGroup.userData.leavesHeight = 6.5 * scale;
+  return treeGroup;
+}
+function createBush(x, z) {
+  const bushGroup = new THREE.Group();
+  const height = getHeightAtPosition(x, z);
+  if (bushModel) {
+    const bushInstance = bushModel.clone();
+    const scale = (Math.random() * 0.2 + 0.2) / 162;
+    bushInstance.scale.set(scale, scale, scale);
+    bushInstance.rotation.y = Math.random() * Math.PI * 2;
+    bushInstance.rotation.x = Math.random() * Math.PI * 0.1 - 0.05;
+    bushInstance.rotation.z = Math.random() * Math.PI * 0.1 - 0.05;
+    bushInstance.traverse(child => {
+      if (child.isMesh) {
+        child.material.shininess = 20;
+        child.material.specular = new THREE.Color(0x222222);
+        child.castShadow = true;
+        child.receiveShadow = true;
+      }
+    });
+    bushGroup.add(bushInstance);
+  }
+  const sinkDepth = Math.random() * 0.1;
+  bushGroup.position.set(x, height - sinkDepth, z);
+  return bushGroup;
+}
+function createInitialBushes() {
+  for (let i = 0; i < 6000; i++) {
+    const x = Math.random() * 180 - 90;
+    const z = Math.random() * 180 - 90;
+    const position = new THREE.Vector3(x, 0, z);
+    let tooClose = false;
+    for (const loc of firePitLocations) {
+      const dx = x - loc.x;
+      const dz = z - loc.z;
+      const distance = Math.sqrt(dx * dx + dz * dz);
+      if (distance < 3) {
+        tooClose = true;
+        break;
+      }
+    }
+    for (const tree of trees) {
+      const dx = x - tree.position.x;
+      const dz = z - tree.position.z;
+      const distance = Math.sqrt(dx * dx + dz * dz);
+      if (distance < 2) {
+        tooClose = true;
+        break;
+      }
+    }
+    for (const rock of rocks) {
+      const dx = x - rock.position.x;
+      const dz = z - rock.position.z;
+      const distance = Math.sqrt(dx * dx + dz * dz);
+      if (distance < 1) {
+        tooClose = true;
+        break;
+      }
+    }
+    for (const chair of chairs) {
+      const dx = x - chair.position.x;
+      const dz = z - chair.position.z;
+      const distance = Math.sqrt(dx * dx + dz * dz);
+      if (distance < 1.5) {
+        tooClose = true;
+        break;
+      }
+    }
+    if (!tooClose) {
+      const bush = createBush(x, z);
+      bushes.push(bush);
+      scene.add(bush);
+    }
+  }
+}
+function createChair(x, z, angleFromFire) {
+  const chairGroup = new THREE.Group();
+  const height = getHeightAtPosition(x, z);
+  if (chairModel) {
+    const chairInstance = chairModel.clone();
+    const scale = 2;
+    chairInstance.scale.set(scale, scale, scale);
+    chairInstance.rotation.y = angleFromFire + Math.PI;
+    chairInstance.traverse(child => {
+      if (child.isMesh) {
+        child.castShadow = true;
+        child.receiveShadow = true;
+      }
+    });
+    chairGroup.add(chairInstance);
+  }
+  chairGroup.position.set(x, height, z);
+  chairGroup.userData.radius = 1;
+  return chairGroup;
+}
+function createChairs() {
+  firePitLocations.forEach(loc => {
+    const radius = 3;
+    for (let i = 0; i < 2; i++) {
+      const angle = i * Math.PI;
+      const x = loc.x + Math.cos(angle) * radius;
+      const z = loc.z + Math.sin(angle) * radius;
+      const chair = createChair(x, z, angle);
+      chairs.push(chair);
+      scene.add(chair);
+    }
+  });
+}
+function checkObjectCollision(position, radius = 1) {
+  for (const tree of trees) {
+    const dx = position.x - tree.position.x;
+    const dz = position.z - tree.position.z;
+    const horizontalDistance = Math.sqrt(dx * dx + dz * dz);
+    if (horizontalDistance < radius + tree.userData.trunkRadius) {
+      return true;
+    }
+    const playerHeight = position.y;
+    const leavesBaseHeight = tree.position.y + tree.userData.leavesHeight - 2.5;
+    const leavesTopHeight = tree.position.y + tree.userData.leavesHeight + 2.5;
+    if (playerHeight >= leavesBaseHeight && playerHeight <= leavesTopHeight) {
+      if (horizontalDistance < radius + tree.userData.leavesRadius) {
+        return true;
+      }
+    }
+  }
+  for (const rock of rocks) {
+    const dx = position.x - rock.position.x;
+    const dz = position.z - rock.position.z;
+    const horizontalDistance = Math.sqrt(dx * dx + dz * dz);
+    if (horizontalDistance < radius + rock.userData.radius) {
+      return true;
+    }
+  }
+  for (const firePit of firePits) {
+    const dx = position.x - firePit.position.x;
+    const dz = position.z - firePit.position.z;
+    const horizontalDistance = Math.sqrt(dx * dx + dz * dz);
+    if (horizontalDistance < radius + firePit.userData.radius) {
+      return true;
+    }
+  }
+  for (const chair of chairs) {
+    const dx = position.x - chair.position.x;
+    const dz = position.z - chair.position.z;
+    const horizontalDistance = Math.sqrt(dx * dx + dz * dz);
+    if (horizontalDistance < radius + chair.userData.radius) {
+      return true;
+    }
+  }
+  return false;
+}
+function createFirePit(x, z) {
+  const firePitGroup = new THREE.Group();
+  const height = getHeightAtPosition(x, z);
+  if (firePitModel) {
+    const firePitInstance = firePitModel.clone();
+    const scale = 4;
+    firePitInstance.scale.set(scale, scale, scale);
+    firePitInstance.rotation.y = Math.random() * Math.PI * 2;
+    firePitInstance.traverse(child => {
+      if (child.isMesh) {
+        child.castShadow = true;
+        child.receiveShadow = true;
+      }
+    });
+    const arrowGeometry = new THREE.ConeGeometry(1, 4, 8);
+    const arrowMaterial = new THREE.MeshBasicMaterial({
+      color: 0xff0000
+    });
+    const arrow = new THREE.Mesh(arrowGeometry, arrowMaterial);
+    arrow.position.set(0, 6, 0);
+    arrow.rotation.x = -Math.PI / 2;
+    firePitGroup.add(firePitInstance);
+    firePitGroup.add(arrow);
+  }
+  firePitGroup.position.set(x, height, z);
+  firePitGroup.userData.radius = 4;
+  return firePitGroup;
+}
+function createFirePits() {
+  for (const loc of firePitLocations) {
+    const firePit = createFirePit(loc.x, loc.z);
+    firePits.push(firePit);
+    scene.add(firePit);
+  }
+}
+const player = {
+  height: 2,
+  radius: 0.3,
+  speed: 0.1,
+  sprintMultiplier: 2.2,
+  turnSpeed: 0.005,
+  jumpForce: 0.15,
+  gravity: 0.0075,
+  velocity: new THREE.Vector3(),
+  canJump: false
+};
+const keys = {};
+let mouseX = 0,
+  mouseY = 0;
+let pitch = 0,
+  yaw = 0;
+const ambientLight = new THREE.AmbientLight(0x404040);
+scene.add(ambientLight);
+const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+directionalLight.position.copy(new THREE.Vector3(50, 100, -50));
+directionalLight.castShadow = true;
+directionalLight.shadow.mapSize.width = 2048;
+directionalLight.shadow.mapSize.height = 2048;
+directionalLight.shadow.camera.near = 0.5;
+directionalLight.shadow.camera.far = 500;
+directionalLight.shadow.camera.left = -100;
+directionalLight.shadow.camera.right = 100;
+directionalLight.shadow.camera.top = 100;
+directionalLight.shadow.camera.bottom = -100;
+scene.add(directionalLight);
+document.getElementById('hdriSelector').addEventListener('change', function (e) {
+  loadHDRI(e.target.value);
+});
+document.addEventListener('keydown', function (e) {
+  keys[e.key.toLowerCase()] = true;
+  const hdriSelect = document.getElementById('hdriSelector');
+  if (e.key === '+' || e.key === '=') {
+    let newIndex = hdriSelect.selectedIndex + 1;
+    if (newIndex >= hdriSelect.options.length) {
+      newIndex = 0;
+    }
+    hdriSelect.selectedIndex = newIndex;
+    loadHDRI(hdriSelect.value);
+  }
+  if (e.key === '-' || e.key === '_') {
+    let newIndex = hdriSelect.selectedIndex - 1;
+    if (newIndex < 0) {
+      newIndex = hdriSelect.options.length - 1;
+    }
+    hdriSelect.selectedIndex = newIndex;
+    loadHDRI(hdriSelect.value);
+  }
+});
+document.addEventListener('keyup', e => keys[e.key.toLowerCase()] = false);
+document.addEventListener('mousemove', e => {
+  mouseX = e.movementX || 0;
+  mouseY = e.movementY || 0;
+  yaw -= mouseX * player.turnSpeed;
+  pitch -= mouseY * player.turnSpeed;
+  pitch = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, pitch));
+  camera.rotation.order = 'YXZ';
+  camera.rotation.y = yaw;
+  camera.rotation.x = pitch;
+});
+document.addEventListener('click', () => {
+  renderer.domElement.requestPointerLock();
+});
+const composer = new THREE.EffectComposer(renderer);
+const renderPass = new THREE.RenderPass(scene, camera);
+composer.addPass(renderPass);
+const bloomPass = new THREE.UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 0.5, 0.4, 0.85);
+composer.addPass(bloomPass);
+const fxaaPass = new THREE.ShaderPass(THREE.FXAAShader);
+const pixelRatio = renderer.getPixelRatio();
+fxaaPass.material.uniforms['resolution'].value.x = 1 / (window.innerWidth * pixelRatio);
+fxaaPass.material.uniforms['resolution'].value.y = 1 / (window.innerHeight * pixelRatio);
+composer.addPass(fxaaPass);
+const rgbShiftPass = new THREE.ShaderPass(THREE.RGBShiftShader);
+rgbShiftPass.uniforms['amount'].value = 0.0008;
+composer.addPass(rgbShiftPass);
+const frustum = new THREE.Frustum();
+const projScreenMatrix = new THREE.Matrix4();
+for (let i = 0; i < 300; i++) {
+  const x = Math.random() * 180 - 90;
+  const z = Math.random() * 180 - 90;
+  let tooCloseToFirePit = false;
+}
+const rockInstancedMesh = new THREE.InstancedMesh(rockModel ? rockModel.geometry : new THREE.BufferGeometry(), rockModel ? rockModel.material : new THREE.MeshBasicMaterial(), 300);
+const bushInstancedMesh = new THREE.InstancedMesh(bushModel ? bushModel.geometry : new THREE.BufferGeometry(), bushModel ? bushModel.material : new THREE.MeshBasicMaterial(), 6000);
+let frameCount = 0;
+let lastTime = performance.now();
+const fpsElement = document.getElementById('fps-counter');
+function updateFPS() {
+  const currentTime = performance.now();
+  frameCount++;
+  if (currentTime - lastTime >= 1000) {
+    const fps = Math.round(frameCount * 1000 / (currentTime - lastTime));
+    fpsElement.textContent = `FPS: ${fps}`;
+    frameCount = 0;
+    lastTime = currentTime;
+  }
+}
+function animate() {
+  updateFPS();
+  let moveX = 0;
+  let moveZ = 0;
+  if (keys['w']) {
+    moveZ -= Math.cos(yaw);
+    moveX -= Math.sin(yaw);
+  }
+  if (keys['s']) {
+    moveZ += Math.cos(yaw);
+    moveX += Math.sin(yaw);
+  }
+  if (keys['a']) {
+    moveX -= Math.cos(yaw);
+    moveZ += Math.sin(yaw);
+  }
+  if (keys['d']) {
+    moveX += Math.cos(yaw);
+    moveZ -= Math.sin(yaw);
+  }
+  if (moveX !== 0 || moveZ !== 0) {
+    const angle = Math.atan2(moveZ, moveX) + Math.PI / 2;
+  } else {}
+  windNoise.time += windNoise.speed;
+  trees.forEach((tree, i) => {
+    if (tree.visible) {
+      const treeInstance = tree.children[0];
+      const offset = i * 0.5;
+      const noise = Math.sin(windNoise.time + offset) * windNoise.strength;
+      const origRot = treeInstance.userData.originalRotations;
+      treeInstance.rotation.x = origRot.x + noise * 0.3;
+      treeInstance.rotation.z = origRot.z + noise * 1.5;
+    }
+  });
+  requestAnimationFrame(animate);
+  if (moveX !== 0 || moveZ !== 0) {
+    const length = Math.sqrt(moveX * moveX + moveZ * moveZ);
+    const currentSpeed = keys['shift'] ? player.speed * player.sprintMultiplier : player.speed;
+    moveX = moveX / length * currentSpeed;
+    moveZ = moveZ / length * currentSpeed;
+    player.velocity.x = moveX;
+    player.velocity.z = moveZ;
+  } else {
+    player.velocity.x = 0;
+    player.velocity.z = 0;
+  }
+  if (keys[' '] && player.canJump) {
+    player.velocity.y = player.jumpForce;
+    player.canJump = false;
+  }
+  player.velocity.y -= player.gravity;
+  const nextX = camera.position.x + player.velocity.x;
+  const nextZ = camera.position.z + player.velocity.z;
+  const nextPosition = new THREE.Vector3(nextX, camera.position.y, nextZ);
+  if (!checkObjectCollision(nextPosition, player.radius)) {
+    camera.position.x = nextX;
+    camera.position.z = nextZ;
+  }
+  const terrainHeight = getHeightAtPosition(camera.position.x, camera.position.z);
+  const desiredHeight = terrainHeight + player.height;
+  camera.position.y += player.velocity.y;
+  if (camera.position.y <= desiredHeight) {
+    camera.position.y = desiredHeight;
+    player.velocity.y = 0;
+    player.canJump = true;
+  }
+  camera.updateMatrixWorld();
+  projScreenMatrix.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse);
+  frustum.setFromProjectionMatrix(projScreenMatrix);
+  const forward = new THREE.Vector3(0, 0, -1);
+  forward.applyQuaternion(camera.quaternion);
+  trees.forEach(tree => {
+    const dirToObject = new THREE.Vector3();
+    dirToObject.subVectors(tree.position, camera.position);
+    dirToObject.normalize();
+    const angle = forward.angleTo(dirToObject);
+    const distanceToCamera = camera.position.distanceTo(tree.position);
+    if (angle > Math.PI / 2 && distanceToCamera > 50) {
+      tree.visible = false;
+    } else {
+      tree.visible = true;
+    }
+  });
+  rocks.forEach(rock => {
+    const dirToObject = new THREE.Vector3();
+    dirToObject.subVectors(rock.position, camera.position);
+    dirToObject.normalize();
+    const angle = forward.angleTo(dirToObject);
+    const distanceToCamera = camera.position.distanceTo(rock.position);
+    if (angle > Math.PI / 2 && distanceToCamera > 50) {
+      rock.visible = false;
+    } else {
+      rock.visible = true;
+    }
+  });
+  bushes.forEach(bush => {
+    const dirToObject = new THREE.Vector3();
+    dirToObject.subVectors(bush.position, camera.position);
+    dirToObject.normalize();
+    const angle = forward.angleTo(dirToObject);
+    const distanceToCamera = camera.position.distanceTo(bush.position);
+    if (angle > Math.PI / 2 && distanceToCamera > 50) {
+      bush.visible = false;
+    } else {
+      bush.visible = true;
+    }
+  });
+  composer.render();
+  rgbShiftPass.uniforms['amount'].value = 0.0008 + Math.sin(Date.now() * 0.001) * 0.0003;
+  firePits.forEach(firePit => {
+    const arrow = firePit.children[1];
+    arrow.rotation.z += 0.01;
+  });
+}
+let resizeTimeout;
+window.addEventListener('resize', () => {
+  if (resizeTimeout) clearTimeout(resizeTimeout);
+  resizeTimeout = setTimeout(() => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    composer.setSize(window.innerWidth, window.innerHeight);
+    const pixelRatio = renderer.getPixelRatio();
+    fxaaPass.material.uniforms['resolution'].value.x = 1 / (window.innerWidth * pixelRatio);
+    fxaaPass.material.uniforms['resolution'].value.y = 1 / (window.innerHeight * pixelRatio);
+  }, 100);
+});
+const windNoise = {
+  time: 0,
+  speed: 0.003,
+  strength: 0.06
+};
+animate();</script>
+</body></html>
