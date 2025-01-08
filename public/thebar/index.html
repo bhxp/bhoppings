@@ -1,0 +1,1037 @@
+<html><head><base href=".">
+<title>3D Bar Explorer</title>
+<style>
+    body { margin: 0; overflow: hidden; }
+    #game { width: 100vw; height: 100vh; }
+    .loading {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-family: Arial, sans-serif;
+        font-size: 24px;
+        color: white;
+        background: rgba(0,0,0,0.8);
+        padding: 20px;
+        border-radius: 10px;
+        display: none;
+    }
+    #instructions {
+        position: fixed;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(0,0,0,0.7);
+        color: white;
+        padding: 15px;
+        border-radius: 5px;
+        font-family: Arial, sans-serif;
+        text-align: center;
+    }
+    .chat-container {
+        position: fixed;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 300px;
+        background: rgba(0,0,0,0.8);
+        border-radius: 5px;
+        padding: 10px;
+        display: none;
+    }
+
+    .chat-messages {
+        height: 200px;
+        overflow-y: auto;
+        margin-bottom: 10px;
+        color: white;
+        font-family: Arial, sans-serif;
+    }
+
+    .chat-input {
+        width: 100%;
+        display: flex;
+    }
+
+    .chat-input input {
+        flex: 1;
+        padding: 5px;
+        border: none;
+        border-radius: 3px;
+        margin-right: 5px;
+    }
+
+    .chat-input button {
+        padding: 5px 10px;
+        border: none;
+        border-radius: 3px;
+        background: #4CAF50;
+        color: white;
+        cursor: pointer;
+    }
+
+    .message {
+        margin: 5px 0;
+        padding: 5px;
+        border-radius: 3px;
+    }
+
+    .user-message {
+        background: rgba(76, 175, 80, 0.3);
+    }
+
+    .bartender-message {
+        background: rgba(33, 150, 243, 0.3);
+    }
+    .inventory-container .inventory-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 10px;
+    }
+    .inventory-item {
+        background: rgba(255,255,255,0.1);
+        border: 1px solid white;
+        padding: 10px;
+        text-align: center;
+        cursor: pointer;
+    }
+    /* Add crosshair styling */
+    .crosshair {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        width: 10px;
+        height: 10px;
+        border: 2px solid white;
+        border-radius: 50%;
+        transform: translate(-50%, -50%);
+        pointer-events: none;
+        z-index: 1000;
+    }
+    .money-display {
+        position: fixed;
+        top: 20px;
+        left: 20px;
+        color: white;
+        background: rgba(0,0,0,0.7);
+        padding: 10px;
+        font-family: Arial, sans-serif;
+        border-radius: 5px;
+    }
+    .drunk-effect {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        color: white;
+        background: rgba(128,0,0,0.7);
+        padding: 10px;
+        font-family: Arial, sans-serif;
+        border-radius: 5px;
+    }
+</style>
+</head>
+<body>
+<div id="instructions">Use WASD to move, Mouse to look around, Click to interact. Get close to the bartender to talk! Press Q to drink a bottle.</div>
+<div id="game"></div>
+<div class="chat-container">
+    <div class="chat-messages"></div>
+    <div class="chat-input">
+        <input type="text" placeholder="Type your message...">
+        <button>Send</button>
+    </div>
+</div>
+<div class="loading">Loading...</div>
+<div class="inventory-container" style="display:none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.8); width: 400px; height: 500px; color: white; padding: 20px; border-radius: 10px;">
+    <h2>Inventory</h2>
+    <div class="inventory-grid" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;"></div>
+</div>
+<div class="crosshair"></div>
+<div class="money-display">Money: &#x24;80</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://unpkg.com/three@0.128.0/examples/js/controls/PointerLockControls.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cannon.js/0.6.2/cannon.min.js"></script>
+
+<script>let camera, scene, renderer, controls;
+let moveForward = false;
+let moveBackward = false;
+let moveLeft = false;
+let moveRight = false;
+let canJump = false;
+let prevTime = performance.now();
+const velocity = new THREE.Vector3();
+const direction = new THREE.Vector3();
+let bartender;
+let dialogBox;
+let lastInteractionTime = 0;
+let chatContainer;
+let chatMessages;
+let chatInput;
+let chatButton;
+let isChatting = false;
+let bartenderTarget = new THREE.Vector3(0, 0, -6);
+const bartenderSpeed = 0.2;
+let bartenderWalkingTimeout;
+let chatCooldown = false;
+let inventory = [];
+let inventoryContainer;
+let inventoryGrid;
+let isInventoryOpen = false;
+let heldBottle = null;
+let mainLight;
+let world;
+let playerMoney = 80;
+let isDrunk = false;
+let drunkTimer = null;
+let keyMappings = {
+    'KeyW': 'KeyW',
+    'KeyA': 'KeyA', 
+    'KeyS': 'KeyS', 
+    'KeyD': 'KeyD'
+};
+function createBarStool(x, z) {
+  const group = new THREE.Group();
+  const seatGeometry = new THREE.CylinderGeometry(0.4, 0.4, 0.15, 16);
+  const seatMaterial = new THREE.MeshStandardMaterial({
+    color: 0x8B4513,
+    roughness: 0.6
+  });
+  const seat = new THREE.Mesh(seatGeometry, seatMaterial);
+  seat.position.y = 0.8;
+  group.add(seat);
+  const poleGeometry = new THREE.CylinderGeometry(0.05, 0.05, 0.8, 8);
+  const poleMaterial = new THREE.MeshStandardMaterial({
+    color: 0x696969,
+    metalness: 0.8,
+    roughness: 0.2
+  });
+  const pole = new THREE.Mesh(poleGeometry, poleMaterial);
+  pole.position.y = 0.4;
+  group.add(pole);
+  const baseGeometry = new THREE.CylinderGeometry(0.35, 0.35, 0.05, 16);
+  const baseMaterial = new THREE.MeshStandardMaterial({
+    color: 0x696969,
+    metalness: 0.8,
+    roughness: 0.2
+  });
+  const base = new THREE.Mesh(baseGeometry, baseMaterial);
+  base.position.y = 0.025;
+  group.add(base);
+  const ringGeometry = new THREE.TorusGeometry(0.3, 0.02, 8, 24);
+  const ringMaterial = new THREE.MeshStandardMaterial({
+    color: 0x696969,
+    metalness: 0.8,
+    roughness: 0.2
+  });
+  const ring = new THREE.Mesh(ringGeometry, ringMaterial);
+  ring.position.y = 0.3;
+  ring.rotation.x = Math.PI / 2;
+  group.add(ring);
+  group.position.set(x, 0, z);
+  return group;
+}
+function createBartender() {
+  const group = new THREE.Group();
+  const bodyGeometry = new THREE.CylinderGeometry(0.35, 0.35, 1.6, 8);
+  const bodyMaterial = new THREE.MeshStandardMaterial({
+    color: 0x000000
+  });
+  const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
+  body.position.y = 0.8;
+  group.add(body);
+  const headGeometry = new THREE.SphereGeometry(0.25, 8, 8);
+  const headMaterial = new THREE.MeshStandardMaterial({
+    color: 0xffe0bd
+  });
+  const head = new THREE.Mesh(headGeometry, headMaterial);
+  head.position.y = 1.8;
+  group.add(head);
+  const eyeGeometry = new THREE.SphereGeometry(0.04, 4, 4);
+  const eyeMaterial = new THREE.MeshStandardMaterial({
+    color: 0x000000
+  });
+  const leftEye = new THREE.Mesh(eyeGeometry, eyeMaterial);
+  leftEye.position.set(-0.1, 1.85, -0.2);
+  group.add(leftEye);
+  const rightEye = new THREE.Mesh(eyeGeometry, eyeMaterial);
+  rightEye.position.set(0.1, 1.85, -0.2);
+  group.add(rightEye);
+  group.position.set(0, 0, -6);
+  group.rotation.y = Math.PI;
+  group.breathingOffset = 0;
+  return group;
+}
+function checkBartenderInteraction() {
+  if (!bartender) return;
+  const distance = camera.position.distanceTo(bartender.position);
+  if (distance < 4) {
+    bartender.userData.isNearPlayer = true;
+  } else {
+    bartender.userData.isNearPlayer = false;
+  }
+}
+function init() {
+  scene = new THREE.Scene();
+  camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+  renderer = new THREE.WebGLRenderer();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  document.getElementById('game').appendChild(renderer.domElement);
+  const ambientLight = new THREE.AmbientLight(0x404040);
+  scene.add(ambientLight);
+  mainLight = new THREE.PointLight(0xffd700, 1.5, 20);
+  mainLight.position.set(0, 8, -2);
+  scene.add(mainLight);
+  const floorGeometry = new THREE.PlaneGeometry(20, 20);
+  const floorMaterial = new THREE.MeshStandardMaterial({
+    color: 0x4a3525,
+    roughness: 0.8
+  });
+  const floor = new THREE.Mesh(floorGeometry, floorMaterial);
+  floor.rotation.x = -Math.PI / 2;
+  scene.add(floor);
+  const ceiling = new THREE.Mesh(new THREE.PlaneGeometry(20, 20), new THREE.MeshStandardMaterial({
+    color: 0x8B4513
+  }));
+  ceiling.rotation.x = Math.PI / 2;
+  ceiling.position.y = 10;
+  scene.add(ceiling);
+  const wire = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 2, 8), new THREE.MeshStandardMaterial({
+    color: 0x696969
+  }));
+  wire.position.set(0, 9, -2);
+  scene.add(wire);
+  const fixture = new THREE.Mesh(new THREE.ConeGeometry(0.3, 0.5, 16), new THREE.MeshStandardMaterial({
+    color: 0xA0522D
+  }));
+  fixture.position.set(0, 8, -2);
+  scene.add(fixture);
+  const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.15, 16, 16), new THREE.MeshStandardMaterial({
+    color: 0xFFFF00,
+    emissive: 0xFFFF00,
+    emissiveIntensity: 0.5
+  }));
+  bulb.position.set(0, 7.8, -2);
+  scene.add(bulb);
+  const barGeometry = new THREE.BoxGeometry(10, 1, 2);
+  const barMaterial = new THREE.MeshStandardMaterial({
+    color: 0x8B4513,
+    roughness: 0.6
+  });
+  const bar = new THREE.Mesh(barGeometry, barMaterial);
+  bar.position.set(0, 0.5, -5);
+  scene.add(bar);
+  const shelfGeometry = new THREE.BoxGeometry(8, 7, 0.3);
+  const shelfMaterial = new THREE.MeshStandardMaterial({
+    color: 0x8B4513,
+    roughness: 0.6
+  });
+  const shelf = new THREE.Mesh(shelfGeometry, shelfMaterial);
+  shelf.position.set(0, 3.5, -9.85);
+  scene.add(shelf);
+  const dividerGeometry = new THREE.BoxGeometry(8, 0.1, 1.0);
+  const shelfPositions = [0.5, 1.5, 2.5, 3.5, 4.5, 5.5];
+  shelfPositions.forEach(height => {
+    const divider = new THREE.Mesh(dividerGeometry, shelfMaterial);
+    divider.position.set(0, height, -9.35);
+    scene.add(divider);
+  });
+  const bottlesPerRow = 16;
+  const shelfWidth = 7.5;
+  const bottleSpacing = shelfWidth / bottlesPerRow;
+  const rowsPerShelf = 3;
+  const startX = -shelfWidth / 2 + bottleSpacing / 2;
+  const bottleColors = [0xff0000, 0x00ff00, 0x0000ff, 0xff00ff, 0xffff00, 0x00ffff, 0xff8c00, 0x8b4513];
+  shelfPositions.forEach((shelfHeight, shelfIndex) => {
+    for (let row = 0; row < rowsPerShelf; row++) {
+      for (let i = 0; i < bottlesPerRow; i++) {
+        const bottle = createBottle(bottleColors[i % bottleColors.length]);
+        bottle.position.set(startX + i * bottleSpacing, shelfHeight + bottle.children[0].geometry.parameters.height / 2, -9.4 - row * 0.25 + 0.2 + 0.3 - 0.05);
+        if (shelfHeight === 0.5) {
+          bottle.scale.set(1.2, 1.2, 1.2);
+        }
+        scene.add(bottle);
+      }
+    }
+  });
+  for (let i = -4; i <= 4; i += 2) {
+    const stool = createBarStool(i, -3.5);
+    scene.add(stool);
+  }
+  const wallMaterial = new THREE.MeshStandardMaterial({
+    color: 0x8B4513
+  });
+  const wallPositions = [{
+    rotation: [0, 0, 0],
+    position: [0, 5, -10]
+  }, {
+    rotation: [0, Math.PI, 0],
+    position: [0, 5, 10]
+  }, {
+    rotation: [0, Math.PI / 2, 0],
+    position: [-10, 5, 0]
+  }, {
+    rotation: [0, -Math.PI / 2, 0],
+    position: [10, 5, 0]
+  }];
+  wallPositions.forEach(({
+    rotation,
+    position
+  }) => {
+    const wall = new THREE.Mesh(new THREE.PlaneGeometry(20, 10), wallMaterial);
+    wall.rotation.set(...rotation);
+    wall.position.set(...position);
+    scene.add(wall);
+  });
+  const elevatorGeometry = new THREE.BoxGeometry(2.2, 4.2, 0.5);
+  const elevatorMaterial = new THREE.MeshStandardMaterial({
+    color: 0x808080,
+    metalness: 0.2,  
+    roughness: 0.8   
+  });
+  const elevator = new THREE.Mesh(elevatorGeometry, elevatorMaterial);
+  elevator.position.set(0, 2, 9.9);
+  scene.add(elevator);
+
+  const elevatorPanelGeometry = new THREE.PlaneGeometry(1.5, 3);
+  const elevatorPanelMaterial = new THREE.MeshStandardMaterial({
+    color: 0x2C3E50,
+    roughness: 0.8
+  });
+  const elevatorPanel = new THREE.Mesh(elevatorPanelGeometry, elevatorPanelMaterial);
+  elevatorPanel.position.set(0.6, 2, 9.85);
+  scene.add(elevatorPanel);
+
+  const elevatorButtonGeometry = new THREE.CylinderGeometry(0.1, 0.1, 0.05, 16);
+  const elevatorButtonMaterial = new THREE.MeshStandardMaterial({
+    color: 0xFF0000,
+    emissive: 0xFF0000,
+    emissiveIntensity: 0.5
+  });
+  const elevatorButton = new THREE.Mesh(elevatorButtonGeometry, elevatorButtonMaterial);
+  elevatorButton.position.set(0.6, 1, 9.85);
+  elevatorButton.rotation.x = Math.PI / 2;
+  scene.add(elevatorButton);
+  
+  const handleGeometry = new THREE.CylinderGeometry(0.05, 0.05, 0.3, 16);
+  const handleMaterial = new THREE.MeshStandardMaterial({
+    color: 0x404040,
+    metalness: 0.6,
+    roughness: 0.3
+  });
+  const handle = new THREE.Mesh(handleGeometry, handleMaterial);
+  handle.rotation.z = Math.PI / 2;
+  handle.position.set(1, 2, 9.7);  
+  elevator.add(handle);
+  
+  bartender = createBartender();
+  bartender.userData.isNearPlayer = false;
+  bartender.userData.isFrozen = false;
+  scene.add(bartender);
+  setInterval(() => {
+    const x = (Math.random() - 0.5) * 4;
+    const z = -6 + (Math.random() - 0.5) * 2;
+    bartenderTarget.set(x, 0, z);
+  }, 5000);
+  dialogBox = document.getElementById('dialog');
+  chatContainer = document.querySelector('.chat-container');
+  chatMessages = document.querySelector('.chat-messages');
+  chatInput = document.querySelector('.chat-input input');
+  chatButton = document.querySelector('.chat-input button');
+  chatButton.addEventListener('click', sendMessage);
+  chatInput.addEventListener('keypress', e => {
+    if (e.key === 'Enter') sendMessage();
+  });
+  inventoryContainer = document.querySelector('.inventory-container');
+  inventoryGrid = document.querySelector('.inventory-grid');
+  const crosshair = document.createElement('div');
+  crosshair.classList.add('crosshair');
+  document.body.appendChild(crosshair);
+  controls = new THREE.PointerLockControls(camera, document.body);
+  document.addEventListener('click', function () {
+    controls.lock();
+  });
+  document.addEventListener('click', function (event) {
+    if (isChatting && !chatContainer.contains(event.target) && event.target !== bartender) {
+      chatContainer.style.display = 'none';
+      isChatting = false;
+      chatCooldown = true;
+      setTimeout(() => {
+        chatCooldown = false;
+      }, 5000);
+    }
+    if (event.button === 2) {
+      event.preventDefault();
+      const raycaster = new THREE.Raycaster();
+      const centerVector = new THREE.Vector2(0, 0);
+      raycaster.setFromCamera(centerVector, camera);
+      const intersects = raycaster.intersectObjects(scene.children, true);
+      const bottleIntersects = intersects.filter(intersect => {
+        return intersect.object.parent && intersect.object.parent.userData.isBottle && intersect.object.parent !== bartender;
+      });
+      if (bottleIntersects.length > 0) {
+        const closestBottle = bottleIntersects[0].object.parent;
+        if (!closestBottle.userData.physicsBody) {
+          createBottlePhysics(closestBottle);
+        }
+        const physicsBody = closestBottle.userData.physicsBody;
+        const pushForce = camera.getWorldDirection(new THREE.Vector3()).multiplyScalar(10);
+        physicsBody.velocity.copy(pushForce);
+        physicsBody.gravityScale = 1;
+      }
+    }
+  });
+  camera.position.y = 2;
+  camera.position.z = 5;
+  document.addEventListener('keydown', onKeyDown);
+  document.addEventListener('keyup', onKeyUp);
+  document.addEventListener('keydown', event => {
+    if (event.code === 'KeyI') {
+      toggleInventory();
+    }
+    if (isChatting) return;
+  });
+  scene.traverse(object => {
+    if (object.isGroup && object.children[0].geometry instanceof THREE.CylinderGeometry) {
+      object.userData.isBottle = true;
+      object.userData.originalPosition = object.position.clone();
+    }
+  });
+  world = new CANNON.World();
+  world.gravity.set(0, -9.82, 0);
+  document.addEventListener('click', function (event) {
+    if (isChatting || isInventoryOpen) return;
+    if (controls.isLocked) {
+      const raycaster = new THREE.Raycaster();
+      const centerVector = new THREE.Vector2(0, 0);
+      raycaster.setFromCamera(centerVector, camera);
+      const intersects = raycaster.intersectObjects(scene.children, true);
+      const bottleIntersects = intersects.filter(intersect => {
+        return intersect.object.parent && intersect.object.parent.userData.isBottle && intersect.object.parent !== bartender;
+      });
+      if (bottleIntersects.length > 0) {
+        const closestBottle = bottleIntersects[0].object.parent;
+        if (heldBottle) {
+          const dropOffset = camera.getWorldDirection(new THREE.Vector3()).multiplyScalar(1.5);
+          const dropPosition = camera.position.clone().add(dropOffset);
+          if (!heldBottle.userData.physicsBody) {
+            createBottlePhysics(heldBottle);
+          }
+          const physicsBody = heldBottle.userData.physicsBody;
+          physicsBody.position.copy(dropPosition);
+          physicsBody.velocity.copy(camera.getWorldDirection(new THREE.Vector3()).multiplyScalar(5));
+          physicsBody.gravityScale = 1;
+          heldBottle = null;
+        } else {
+          heldBottle = closestBottle;
+        }
+      }
+    }
+  });
+  const moneyDisplay = document.querySelector('.money-display');
+  updateMoneyDisplay();
+  function createTable(x, z, rotation) {
+    const group = new THREE.Group();
+    const tableTopGeometry = new THREE.BoxGeometry(3, 0.2, 1.5);
+    const tableTopMaterial = new THREE.MeshStandardMaterial({
+      color: 0x8B4513,
+      roughness: 0.7
+    });
+    const tableTop = new THREE.Mesh(tableTopGeometry, tableTopMaterial);
+    tableTop.position.y = 1;
+    group.add(tableTop);
+    const legGeometry = new THREE.CylinderGeometry(0.1, 0.1, 1, 8);
+    const legMaterial = new THREE.MeshStandardMaterial({
+      color: 0x5D4037,
+      roughness: 0.8
+    });
+    const legPositions = [{
+      x: -1.3,
+      z: -0.6
+    }, {
+      x: -1.3,
+      z: 0.6
+    }, {
+      x: 1.3,
+      z: -0.6
+    }, {
+      x: 1.3,
+      z: 0.6
+    }];
+    legPositions.forEach(pos => {
+      const leg = new THREE.Mesh(legGeometry, legMaterial);
+      leg.position.set(pos.x, 0.5, pos.z);
+      group.add(leg);
+    });
+    const chairGeometry = new THREE.BoxGeometry(0.5, 0.8, 0.5);
+    const chairMaterial = new THREE.MeshStandardMaterial({
+      color: 0x6D4C41,
+      roughness: 0.7
+    });
+    const chairPositions = [{
+      x: -2,
+      z: 0,
+      rotation: 0
+    }, {
+      x: 2,
+      z: 0,
+      rotation: Math.PI
+    }];
+    chairPositions.forEach(pos => {
+      const chair = new THREE.Mesh(chairGeometry, chairMaterial);
+      chair.position.set(pos.x, 0.4, pos.z);
+      chair.rotation.y = pos.rotation;
+      group.add(chair);
+    });
+    group.position.set(x, 0, z);
+    group.rotation.y = rotation;
+    return group;
+  }
+  const leftTable = createTable(-6, -2, Math.PI / 2);
+  scene.add(leftTable);
+  const rightTable = createTable(6, -2, -Math.PI / 2);
+  scene.add(rightTable);
+  const backLeftTable = createTable(-6, 2, Math.PI / 2);
+  scene.add(backLeftTable);
+  const backRightTable = createTable(6, 2, -Math.PI / 2);
+  scene.add(backRightTable);
+}
+function onKeyDown(event) {
+  if (isChatting) return;
+  if (isInventoryOpen) return;
+  if (isDrunk) {
+    keyMappings = {
+        'KeyW': ['KeyA', 'KeyS', 'KeyD'][Math.floor(Math.random() * 3)],
+        'KeyA': ['KeyW', 'KeyS', 'KeyD'][Math.floor(Math.random() * 3)],
+        'KeyS': ['KeyW', 'KeyA', 'KeyD'][Math.floor(Math.random() * 3)],
+        'KeyD': ['KeyW', 'KeyA', 'KeyS'][Math.floor(Math.random() * 3)]
+    };
+  }
+  switch (event.code) {
+    case keyMappings['KeyW']:
+      moveForward = true;
+      break;
+    case keyMappings['KeyA']:
+      moveLeft = true;
+      break;
+    case keyMappings['KeyS']:
+      moveBackward = true;
+      break;
+    case keyMappings['KeyD']:
+      moveRight = true;
+      break;
+  }
+}
+function onKeyUp(event) {
+  if (isChatting) return;
+  if (isInventoryOpen) return;
+  switch (event.code) {
+    case keyMappings['KeyW']:
+      moveForward = false;
+      break;
+    case keyMappings['KeyA']:
+      moveLeft = false;
+      break;
+    case keyMappings['KeyS']:
+      moveBackward = false;
+      break;
+    case keyMappings['KeyD']:
+      moveRight = false;
+      break;
+  }
+}
+function animate() {
+  requestAnimationFrame(animate);
+  if (controls.isLocked === true) {
+    const time = performance.now();
+    const delta = (time - prevTime) / 1000;
+    velocity.x -= velocity.x * 10.0 * delta;
+    velocity.z -= velocity.z * 10.0 * delta;
+    direction.z = Number(moveForward) - Number(moveBackward);
+    direction.x = Number(moveRight) - Number(moveLeft);
+    direction.normalize();
+    if (moveForward || moveBackward) velocity.z -= direction.z * 80.0 * delta;
+    if (moveLeft || moveRight) velocity.x -= direction.x * 80.0 * delta;
+    controls.moveRight(-velocity.x * delta);
+    controls.moveForward(-velocity.z * delta);
+    if (camera.position.x < -9) camera.position.x = -9;
+    if (camera.position.x > 9) camera.position.x = 9;
+    if (camera.position.z < -9) camera.position.z = -9;
+    if (camera.position.z > 9) camera.position.z = 9;
+    checkBartenderInteraction();
+    updateBartenderPosition();
+    prevTime = time;
+  }
+  if (heldBottle) {
+    heldBottle.position.copy(camera.position).add(camera.getWorldDirection(new THREE.Vector3()).multiplyScalar(1));
+    heldBottle.rotation.copy(camera.rotation);
+  }
+  world.step(1 / 60);
+  world.bodies.forEach(body => {
+    if (body.bottle && body.bottle !== heldBottle) {
+      body.bottle.position.copy(body.position);
+      body.bottle.quaternion.copy(body.quaternion);
+    }
+  });
+  if (isDrunk && controls.isLocked) {
+    const wobbleIntensity = 0.2; 
+    const randomWobbleX = (Math.random() - 0.5) * wobbleIntensity * 0.5;
+    const randomWobbleZ = (Math.random() - 0.5) * wobbleIntensity * 0.5;
+    
+    velocity.x *= 0.1; 
+    velocity.z *= 0.1;
+    
+    camera.position.x += randomWobbleX;
+    camera.position.z += randomWobbleZ;
+
+    scene.traverse(object => {
+        if (object.isMesh || object.isGroup) {
+            const breatheScale = 1 + Math.sin(performance.now() * 0.001) * 0.05; 
+            object.scale.set(breatheScale, breatheScale, breatheScale);
+        }
+    });
+  }
+  renderer.render(scene, camera);
+}
+function updateBartenderPosition() {
+  if (!bartender) return;
+  if (bartender.userData.isFrozen) return;
+  bartender.breathingOffset += 0.01;
+  const breathingScale = 1 + Math.sin(bartender.breathingOffset) * 0.02;
+  bartender.scale.y = breathingScale;
+  const direction = new THREE.Vector3().subVectors(bartenderTarget, bartender.position);
+  if (direction.length() > 0.1) {
+    direction.normalize();
+    const newPosition = bartender.position.clone().add(direction.multiplyScalar(bartenderSpeed * 0.016));
+    if (newPosition.z >= -6) {
+      newPosition.z = -6;
+    }
+    if (newPosition.z < -7) newPosition.z = -7;
+    if (newPosition.x < -4) newPosition.x = -4;
+    if (newPosition.x > 4) newPosition.x = 4;
+    bartender.position.copy(newPosition);
+    bartender.rotation.y = Math.atan2(direction.x, direction.z) + Math.PI;
+  } else {
+    const x = (Math.random() - 0.5) * 8;
+    const z = -6 + (Math.random() - 0.5) * 2;
+    bartenderTarget.set(x, 0, z);
+  }
+}
+function onWindowResize() {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+}
+function createBottle(color) {
+  const group = new THREE.Group();
+  const height = 0.3 + Math.random() * 0.2;
+  const radius = 0.04 + Math.random() * 0.06;
+  const radiusTop = radius * (0.7 + Math.random() * 0.6);
+  const radiusBottom = radius * (0.7 + Math.random() * 0.6);
+  const bodyGeometry = new THREE.CylinderGeometry(radiusTop, radiusBottom, height, 8);
+  const hue = Math.random();
+  const saturation = 0.5 + Math.random() * 0.5;
+  const lightness = 0.3 + Math.random() * 0.4;
+  const bottleColor = new THREE.Color().setHSL(hue, saturation, lightness);
+  const bottleMaterial = new THREE.MeshStandardMaterial({
+    color: bottleColor,
+    transparent: Math.random() < 0.2,
+    opacity: Math.random() < 0.2 ? 0.2 + Math.random() * 0.3 : 1,
+    metalness: 0.6 + Math.random() * 0.4,
+    roughness: Math.random() * 0.2,
+    envMap: scene.background,
+    reflectivity: 0.8
+  });
+  const body = new THREE.Mesh(bodyGeometry, bottleMaterial);
+  group.add(body);
+  const neckHeight = height * (0.2 + Math.random() * 0.3);
+  const neckRadiusTop = radius * (0.2 + Math.random() * 0.3);
+  const neckRadiusBottom = radius * (0.3 + Math.random() * 0.4);
+  const neckGeometry = new THREE.CylinderGeometry(neckRadiusTop, neckRadiusBottom, neckHeight, 8);
+  const neck = new THREE.Mesh(neckGeometry, bottleMaterial);
+  neck.position.y = height / 2 + neckHeight / 2;
+  group.add(neck);
+  const capHeight = height * (0.08 + Math.random() * 0.06);
+  const capRadius = radius * (0.3 + Math.random() * 0.2);
+  const capGeometry = new THREE.CylinderGeometry(capRadius, capRadius, capHeight, 8);
+  const capMaterial = new THREE.MeshStandardMaterial({
+    color: Math.random() > 0.5 ? 0x1a1a1a : 0xc0c0c0,
+    metalness: 0.6 + Math.random() * 0.4,
+    roughness: Math.random() * 0.3
+  });
+  const cap = new THREE.Mesh(capGeometry, capMaterial);
+  cap.position.y = height / 2 + neckHeight + capHeight / 2;
+  group.add(cap);
+  group.rotation.y = 0;
+  return group;
+}
+function createBottlePhysics(bottle) {
+  const height = bottle.children[0].geometry.parameters.height;
+  const radius = bottle.children[0].geometry.parameters.radiusBottom;
+  const bottleShape = new CANNON.Cylinder(radius, radius, height, 8);
+  const bottleBody = new CANNON.Body({
+    mass: 0.5,
+    shape: bottleShape,
+    material: new CANNON.Material({
+      friction: 0.5,
+      restitution: 0.3
+    })
+  });
+  bottleBody.collisionFilterGroup = 1;
+  bottleBody.collisionFilterMask = 1;
+  bottleBody.bottle = bottle;
+  bottleBody.gravityScale = 0;
+  world.addBody(bottleBody);
+  bottle.userData.physicsBody = bottleBody;
+  const bottleMaterial = new CANNON.Material();
+  const groundMaterial = new CANNON.Material();
+  const wallMaterial = new CANNON.Material();
+  const bottleGroundContact = new CANNON.ContactMaterial(bottleMaterial, groundMaterial, {
+    friction: 0.5,
+    restitution: 0.3
+  });
+  const bottleWallContact = new CANNON.ContactMaterial(bottleMaterial, wallMaterial, {
+    friction: 0.3,
+    restitution: 0.2
+  });
+  world.addContactMaterial(bottleGroundContact);
+  world.addContactMaterial(bottleWallContact);
+  return bottleBody;
+}
+async function getAIResponse(message) {
+  try {
+    const response = await fetch('/api/ai_completion', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify({
+        prompt: `You are a sarcastic, somewhat mean bartender in a virtual bar. 
+        Respond to the customer's message in character. Keep responses short and witty.
+        
+        interface Response {
+          reply: string;
+        }
+        
+        Examples:
+        {
+          "reply": "Fine, I'll change the mood lighting. Happy now?"
+        }
+        {
+          "reply": "Alright, let's get psychedelic..."
+        }`,
+        data: message
+      })
+    });
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error fetching AI response:', error);
+    return {
+      reply: "Sorry, I'm too busy being disappointed in humanity to respond right now."
+    };
+  }
+}
+async function sendMessage() {
+  if (!chatInput.value.trim()) return;
+  const message = chatInput.value.trim();
+  addMessage(message, 'user');
+  chatInput.value = '';
+  if (message.toLowerCase().includes('drink') || message.toLowerCase().includes('buy')) {
+    if (playerMoney < 10) {
+      addMessage("Sorry, you don't have enough money for a drink.", 'bartender');
+      return;
+    }
+    changeMoney(-10);
+    const bottleColors = [0xff0000, 0x00ff00, 0x0000ff, 0xff00ff, 0xffff00, 0x00ffff, 0xff8c00, 0x8b4513];
+    const randomColor = bottleColors[Math.floor(Math.random() * bottleColors.length)];
+    const newBottle = createBottle(randomColor);
+    addToInventory({
+      name: 'Random Liquor Bottle',
+      bottle: newBottle
+    });
+    addMessage(`Here's your drink. That'll be $10. Enjoy.`, 'bartender');
+  } else {
+    const messageData = await getAIResponse(message);
+    addMessage(messageData.reply, 'bartender');
+  }
+}
+function addMessage(text, sender) {
+  const messageDiv = document.createElement('div');
+  messageDiv.classList.add('message', `${sender}-message`);
+  messageDiv.textContent = text;
+  chatMessages.appendChild(messageDiv);
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+function addToInventory(item) {
+  inventory.push(item);
+  updateInventoryDisplay();
+}
+function updateInventoryDisplay() {
+  inventoryGrid.innerHTML = '';
+  inventory.forEach((item, index) => {
+    const itemElement = document.createElement('div');
+    itemElement.classList.add('inventory-item');
+    itemElement.textContent = item.name || `Item ${index + 1}`;
+    itemElement.addEventListener('click', () => {
+      if (item.bottle) {
+        const dropOffset = camera.getWorldDirection(new THREE.Vector3()).multiplyScalar(1.5);
+        const dropPosition = camera.position.clone().add(dropOffset);
+        
+        // Modify to match existing bottle physics and interaction
+        if (!item.bottle.userData.physicsBody) {
+          createBottlePhysics(item.bottle);
+        }
+        const physicsBody = item.bottle.userData.physicsBody;
+        physicsBody.position.copy(dropPosition);
+        physicsBody.velocity.copy(camera.getWorldDirection(new THREE.Vector3()).multiplyScalar(5));
+        physicsBody.gravityScale = 1;
+        
+        // Explicitly add to scene so it can be interacted with
+        scene.add(item.bottle);
+        
+        // Ensure it can be picked up, consumed, etc.
+        item.bottle.userData.isBottle = true;
+        
+        inventory = inventory.filter(invItem => invItem !== item);
+        updateInventoryDisplay();
+      }
+    });
+    inventoryGrid.appendChild(itemElement);
+  });
+}
+function toggleInventory() {
+  isInventoryOpen = !isInventoryOpen;
+  inventoryContainer.style.display = isInventoryOpen ? 'block' : 'none';
+  if (isInventoryOpen) {
+    moveForward = false;
+    moveBackward = false;
+    moveLeft = false;
+    moveRight = false;
+    controls.unlock();
+    if (heldBottle) {
+      heldBottle.position.copy(heldBottle.userData.originalPosition);
+      heldBottle = null;
+    }
+  } else {
+    controls.lock();
+  }
+}
+document.addEventListener('keydown', event => {
+  if (event.code === 'KeyE' && event.target !== chatInput && bartender.userData.isNearPlayer && !chatCooldown) {
+    event.preventDefault();
+    if (!isChatting) {
+      bartender.userData.isFrozen = true;
+      setTimeout(() => {
+        bartender.userData.isFrozen = false;
+      }, 5000);
+      chatContainer.style.display = 'block';
+      chatInput.focus();
+      isChatting = true;
+      moveForward = false;
+      moveBackward = false;
+      moveLeft = false;
+      moveRight = false;
+      addMessage("Well, well, well... look who decided to grace us with their presence. What do you want?", 'bartender');
+    }
+  }
+});
+document.addEventListener('keydown', event => {
+  if (event.code === 'KeyQ' && controls.isLocked) {
+    const raycaster = new THREE.Raycaster();
+    const centerVector = new THREE.Vector2(0, 0);
+    raycaster.setFromCamera(centerVector, camera);
+    const intersects = raycaster.intersectObjects(scene.children, true);
+    const bottleIntersects = intersects.filter(intersect => {
+      return intersect.object.parent && intersect.object.parent.userData.isBottle && intersect.object.parent !== bartender;
+    });
+    
+    if (bottleIntersects.length > 0) {
+      const closestBottle = bottleIntersects[0].object.parent;
+      scene.remove(closestBottle);
+      
+      // Remove from inventory if it's an inventory item
+      inventory = inventory.filter(item => item.bottle !== closestBottle);
+      updateInventoryDisplay();
+      
+      // Apply drunk effect
+      if (!isDrunk) {
+        isDrunk = true;
+        const drunkDisplay = document.createElement('div');
+        drunkDisplay.classList.add('drunk-effect');
+        drunkDisplay.textContent = 'Drunk';
+        document.body.appendChild(drunkDisplay);
+        
+        // Reset drunk status after 30 seconds
+        drunkTimer = setTimeout(() => {
+          isDrunk = false;
+          document.body.removeChild(drunkDisplay);
+          keyMappings = {
+            'KeyW': 'KeyW',
+            'KeyA': 'KeyA', 
+            'KeyS': 'KeyS', 
+            'KeyD': 'KeyD'
+          };
+          scene.traverse(object => {
+            if (object.isMesh || object.isGroup) {
+              object.scale.set(1, 1, 1);
+            }
+          });
+        }, 30000);
+      }
+    }
+  }
+});
+document.addEventListener('contextmenu', function (event) {
+  event.preventDefault();
+});
+function updateMoneyDisplay() {
+  const moneyDisplay = document.querySelector('.money-display');
+  moneyDisplay.textContent = `Money: $${playerMoney}`;
+}
+function changeMoney(amount) {
+  playerMoney += amount;
+  updateMoneyDisplay();
+}
+init();
+scene.background = new THREE.Color(0x8B4513); 
+const groundShape = new CANNON.Plane();
+const groundBody = new CANNON.Body({
+  mass: 0
+});
+groundBody.addShape(groundShape);
+groundBody.quaternion.setFromAxisAngle(new CANNON.Vec3(1, 0, 0), -Math.PI / 2);
+world.addBody(groundBody);
+const wallMaterials = [{
+  position: [0, 5, -10],
+  rotation: [0, 0, 0]
+}, {
+  position: [0, 5, 10],
+  rotation: [0, Math.PI, 0]
+}, {
+  position: [-10, 5, 0],
+  rotation: [0, Math.PI / 2, 0]
+}, {
+  position: [10, 5, 0],
+  rotation: [0, -Math.PI / 2, 0]
+}];
+wallMaterials.forEach(({
+  position,
+  rotation
+}) => {
+  const wallShape = new CANNON.Plane();
+  const wallBody = new CANNON.Body({
+    mass: 0
+  });
+  wallBody.addShape(wallShape);
+  wallBody.position.set(...position);
+  wallBody.quaternion.setFromEuler(...rotation);
+  wallBody.collisionFilterGroup = 1;
+  wallBody.collisionFilterMask = 1;
+  world.addBody(wallBody);
+});
+animate();
+window.addEventListener('resize', onWindowResize, false);
+</script>
+</body>
+</html>
