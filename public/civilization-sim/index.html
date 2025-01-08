@@ -1,0 +1,1521 @@
+<html><head><base href=".">
+<style>
+  /* Keeping all existing styles */
+  body {
+    margin: 0;
+    padding: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: #000;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  #stats-panel {
+    position: fixed;
+    top: 10px;
+    left: 10px;
+    background: rgba(0, 0, 0, 0.7);
+    padding: 15px;
+    border-radius: 8px;
+    color: white;
+    font-family: Arial, sans-serif;
+    z-index: 1000;
+    border: 1px solid #444;
+  }
+
+  .stat {
+    margin: 5px 0;
+    font-size: 16px;
+  }
+
+  .dot {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    background: rgba(255,255,255,0.1);
+    animation: float 20s linear infinite;
+  }
+
+  .tile-grid {
+    position: absolute;
+    top: 0;
+    left: 0;
+    display: grid;
+    z-index: -1;
+  }
+
+  .tile {
+    background-image: url('GrassTile (1).png');
+    background-size: 100% 100%; 
+    background-repeat: no-repeat;
+    position: relative;
+  }
+
+  .tree {
+    position: absolute;
+    width: 64px;
+    height: 64px;
+    background-image: url('gifmaker_me (4).gif');
+    background-size: contain;
+    background-repeat: no-repeat;
+    z-index: 4;
+    transform-origin: bottom center;
+    animation: treeFloat 3s ease-in-out infinite;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+
+  .campfire {
+    position: absolute;
+    width: 48px;
+    height: 48px;
+    background-image: url('gifmaker_me (6).gif');
+    background-size: contain;
+    background-repeat: no-repeat;
+    z-index: 2;
+    bottom: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+    animation: fireLight 2s ease-in-out infinite;
+  }
+
+  .human {
+    position: absolute;
+    width: 32px;
+    height: 32px;
+    background-image: url('Human 1.png');
+    background-size: contain;
+    background-repeat: no-repeat;
+    z-index: 3;
+    transition: all 0.5s ease;
+  }
+
+  .human-swim {
+    background-image: url('Human Swim.png') !important;
+    width: 32px !important;  
+    height: 32px !important;
+  }
+
+  .log {
+    position: absolute;
+    width: 32px;
+    height: 32px;
+    background-image: url('Log.png');
+    background-size: contain;
+    background-repeat: no-repeat;
+    z-index: 2;
+  }
+
+  .house {
+    position: absolute; 
+    width: 64px;
+    height: 64px;
+    background-image: url('House.png');
+    background-size: contain;
+    background-repeat: no-repeat;
+    z-index: 2;
+    bottom: 0;
+  }
+
+  .rock {
+    position: absolute;
+    width: 48px;
+    height: 48px; 
+    background-image: url('gifmaker_me (5).gif');
+    background-size: contain;
+    background-repeat: no-repeat;
+    z-index: 2;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+
+  .rock-item {
+    position: absolute;
+    width: 32px;
+    height: 32px;
+    background-image: url('Rock Item.png');
+    background-size: contain;
+    background-repeat: no-repeat;
+    z-index: 2;
+  }
+
+  .farm-tile {
+    width: 100%;
+    height: 100%;
+    background-image: url('FarmTile.png');
+    background-size: cover;
+    background-repeat: no-repeat;
+    position: relative;
+  }
+
+  .farm-tile-cabbage {
+    width: 100%;
+    height: 100%;
+    background-image: url('FarmTileCabbage.png');
+    background-size: cover;
+    background-repeat: no-repeat;
+    position: relative;
+  }
+
+  .cabbage {
+    position: absolute;
+    width: 32px;
+    height: 32px;
+    background-image: url('Cabbage (1).png');
+    background-size: contain; 
+    background-repeat: no-repeat;
+    z-index: 2;
+  }
+
+  .water-tile {
+    background-image: url('WaterTile.png');
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+    position: relative;
+  }
+
+  .fishing-dock {
+    position: absolute;
+    width: 64px;
+    height: 64px;
+    background-image: url('FishingDock.png');
+    background-size: contain;
+    background-repeat: no-repeat;
+    z-index: 3;
+    bottom: 0;
+  }
+
+  .fish {
+    position: absolute;
+    width: 32px;
+    height: 32px;
+    background-image: url('costume1 (5).png');
+    background-size: contain;
+    background-repeat: no-repeat;
+    z-index: 2;
+  }
+
+  .windmill {
+    position: absolute;
+    width: 64px;
+    height: 64px;
+    background-image: url('gifmaker_me (7).gif');
+    background-size: contain;
+    background-repeat: no-repeat;
+    z-index: 4;
+    bottom: 0;
+  }
+
+  .iron-deposit {
+    position: absolute;
+    width: 48px;
+    height: 48px;
+    background-image: url('Iron deposit.png');
+    background-size: contain;
+    background-repeat: no-repeat;
+    z-index: 2;
+    bottom: 0;
+  }
+
+  .cabbage-powder {
+    position: absolute;
+    width: 32px;
+    height: 32px;
+    background-image: url('Cabbage Powder.png');
+    background-size: contain;
+    background-repeat: no-repeat;
+    z-index: 2;
+  }
+
+  .iron-item {
+    position: absolute;
+    width: 32px;
+    height: 32px;
+    background-image: url('Iron Item.png');
+    background-size: contain;
+    background-repeat: no-repeat;
+    z-index: 2;
+  }
+
+  .stone-house {
+    position: absolute; 
+    width: 64px;
+    height: 64px;
+    background-image: url('Stone House (1).png');
+    background-size: contain;
+    background-repeat: no-repeat;
+    z-index: 2;
+    bottom: 0;
+  }
+
+  .blast-furnace {
+    position: absolute;
+    width: 64px;
+    height: 64px;
+    background-image: url('Blast Furnace.png');
+    background-size: contain;
+    background-repeat: no-repeat;
+    z-index: 2;
+    bottom: 0;
+  }
+
+  .charcoal {
+    position: absolute;
+    width: 32px;
+    height: 32px;
+    background-image: url('Charcoal.png');
+    background-size: contain;
+    background-repeat: no-repeat;
+    z-index: 2;
+  }
+
+  .sulfur-deposit {
+    position: absolute;
+    width: 48px;
+    height: 48px;
+    background-image: url('SulfurDeposit.png');
+    background-size: contain;
+    background-repeat: no-repeat;
+    z-index: 2;
+    bottom: 0;
+  }
+
+  .sulfur-item {
+    position: absolute;
+    width: 32px;
+    height: 32px;
+    background-image: url('Sulfur Item.png'); 
+    background-size: contain;
+    background-repeat: no-repeat;
+    z-index: 2;
+  }
+
+  .crafting-table {
+    position: absolute;
+    width: 48px;
+    height: 48px;
+    background-image: url('Crafting Table.png');
+    background-size: contain;
+    background-repeat: no-repeat;
+    z-index: 2;
+    bottom: 0;
+  }
+
+  .gunpowder {
+    position: absolute;
+    width: 32px;
+    height: 32px;
+    background-image: url('Gunpowder.png');
+    background-size: contain;
+    background-repeat: no-repeat;
+    z-index: 2;
+  }
+
+  .musket {
+    position: absolute;
+    width: 32px;
+    height: 32px;
+    background-image: url('Musket.png');
+    background-size: contain;
+    background-repeat: no-repeat;
+    z-index: 2;
+  }
+
+  .hunter {
+    position: absolute;
+    width: 32px;
+    height: 32px;
+    background-image: url('Hunter.png');
+    background-size: contain;
+    background-repeat: no-repeat;
+    z-index: 3;
+    transition: all 0.5s ease;
+  }
+
+  .cow {
+    position: absolute;
+    width: 48px;
+    height: 48px;
+    background-image: url('costume2 (4).png');
+    background-size: contain;
+    background-repeat: no-repeat;
+    z-index: 2;
+    transition: none;
+  }
+
+  .raw-beef {
+    position: absolute;
+    width: 32px;
+    height: 32px;
+    background-image: url('Raw Beef.png');
+    background-size: contain;
+    background-repeat: no-repeat;
+    z-index: 2;
+  }
+
+  @keyframes float {
+    0% {
+      transform: translateY(100vh) scale(0);
+      opacity: 0;
+    }
+    50% {
+      opacity: 0.3;
+    }
+    100% {
+      transform: translateY(-100vh) scale(1);
+      opacity: 0;
+    }
+  }
+
+  @keyframes treeFloat {
+    0%, 100% {
+      transform: translateX(-50%) rotate(0deg);
+    }
+    50% {
+      transform: translateX(-50%) rotate(2deg);
+    }
+  }
+
+  @keyframes fireLight {
+    0%, 100% {
+      filter: brightness(1);
+    }
+    50% {
+      filter: brightness(1.2);
+    }
+  }
+</style>
+</head>
+<body>
+<div id="stats-panel">
+  <div class="stat" id="wood-stat">Wood: 0</div>
+  <div class="stat" id="stone-stat">Stone: 0</div>
+  <div class="stat" id="humans-stat">Humans: 0</div>
+  <div class="stat" id="houses-stat">Houses: 0</div>
+  <div class="stat" id="cabbage-stat">Cabbage: 0</div>
+  <div class="stat" id="docks-stat">Fishing Docks: 0</div>
+  <div class="stat" id="fish-stat">Fish: 0</div>
+  <div class="stat" id="cabbage-powder-stat">Cabbage Powder: 0</div> 
+  <div class="stat" id="iron-stat">Iron: 0</div>
+  <div class="stat" id="windmills-stat">Windmills: 0</div>
+  <div class="stat" id="furnaces-stat">Blast Furnaces: 0</div>
+  <div class="stat" id="charcoal-stat">Charcoal: 0</div>
+  <div class="stat" id="sulfur-stat">Sulfur: 0</div>
+  <div class="stat" id="gunpowder-stat">Gunpowder: 0</div>
+  <div class="stat" id="muskets-stat">Muskets: 0</div>
+  <div class="stat" id="cows-stat">Cows: 0</div>
+  <div class="stat" id="raw-beef-stat">Raw Beef: 0</div>
+</div>
+<div class="tile-grid"></div>
+
+<script>let totalLogs = 0;
+const LOGS_NEEDED_FOR_HOUSE = 3;
+const FARM_SIZE = 3;
+const houses = new Set();
+let humanCount = 0;
+let totalStone = 0;
+const STONE_NEEDED_FOR_FURNACE = 5;
+let totalCabbage = 0;
+const CABBAGE_GROW_TIME = 10000;
+let totalDocks = 0;
+const LOGS_NEEDED_FOR_DOCK = 2;
+const docks = new Set();
+const HUMANS_PER_HOUSE = 2;
+let totalFish = 0;
+const LOGS_NEEDED_FOR_WINDMILL = 3;
+const STONE_NEEDED_FOR_WINDMILL = 1;
+let totalCabbagePowder = 0;
+const windmills = new Set();
+let totalIron = 0;
+const STONE_NEEDED_FOR_UPGRADE = 3;
+const HUMANS_PER_STONE_HOUSE = 6;
+const TREE_REGROW_TIME = 30000;
+const furnaces = new Set();
+let totalFurnaces = 0;
+let totalCharcoal = 0;
+let totalSulfur = 0;
+const WOOD_NEEDED_FOR_CRAFTING_TABLE = 5;
+let totalGunpowder = 0;
+let totalMuskets = 0;
+const WOOD_FOR_MUSKET = 3;
+const GUNPOWDER_FOR_MUSKET = 2;
+const SPAWN_COW_CHANCE = 0.02;
+const COW_MOVE_INTERVAL = 5000;
+let totalCows = 0;
+let totalMeat = 0;
+const ROCK_REGROW_TIME = 30000;
+function updateStats() {
+  document.getElementById('stats-panel').innerHTML = `
+    <div class="stat" id="wood-stat">Wood: ${totalLogs}</div>
+    <div class="stat" id="stone-stat">Stone: ${totalStone}</div>
+    <div class="stat" id="humans-stat">Humans: ${humanCount}</div>
+    <div class="stat" id="houses-stat">Houses: ${houses.size}</div>
+    <div class="stat" id="cabbage-stat">Cabbage: ${totalCabbage}</div>
+    <div class="stat" id="docks-stat">Fishing Docks: ${docks.size}</div>
+    <div class="stat" id="fish-stat">Fish: ${totalFish}</div>
+    <div class="stat" id="cabbage-powder-stat">Cabbage Powder: ${totalCabbagePowder}</div>
+    <div class="stat" id="iron-stat">Iron: ${totalIron}</div>
+    <div class="stat" id="windmills-stat">Windmills: ${windmills.size}</div>
+    <div class="stat" id="furnaces-stat">Blast Furnaces: ${furnaces.size}</div>
+    <div class="stat" id="charcoal-stat">Charcoal: ${totalCharcoal}</div>
+    <div class="stat" id="sulfur-stat">Sulfur: ${totalSulfur}</div>
+    <div class="stat" id="gunpowder-stat">Gunpowder: ${totalGunpowder}</div>
+    <div class="stat" id="muskets-stat">Muskets: ${totalMuskets}</div>
+    <div class="stat" id="cows-stat">Cows: ${totalCows}</div>
+    <div class="stat" id="meat-stat">Meat: ${totalMeat}</div>
+  `;
+}
+for (let i = 0; i < 50; i++) {
+  const dot = document.createElement('div');
+  dot.className = 'dot';
+  dot.style.left = `${Math.random() * 100}vw`;
+  dot.style.animationDelay = `${Math.random() * 20}s`;
+  document.body.appendChild(dot);
+}
+class Human {
+  constructor(grid, startX, startY) {
+    this.element = document.createElement('div');
+    this.isHunter = false;
+    this.hasMusket = false;
+    if (this.isHunter) {
+      this.element.className = 'hunter';
+    } else {
+      this.element.className = 'human';
+    }
+    document.body.appendChild(this.element);
+    this.element.classList.remove('human-swim');
+    this.x = startX;
+    this.y = startY;
+    this.grid = grid;
+    this.targetX = startX;
+    this.targetY = startY;
+    this.speed = 4;
+    this.task = 'wander';
+    this.hasLog = false;
+    this.hasRock = false;
+    this.farmingProgress = 0;
+    this.hasCabbage = false;
+    this.currentCabbage = null;
+    this.buildingDock = false;
+    this.fishingProgress = 0;
+    this.hasFish = false;
+    this.currentFish = null;
+    this.hasCabbagePowder = false;
+    this.currentCabbagePowder = null;
+    this.hasIron = false;
+    this.currentIron = null;
+    this.hasSulfur = false;
+    this.currentSulfur = null;
+    this.hasGunpowder = false;
+    this.currentGunpowder = null;
+    this.hasMusket = false;
+    this.updatePosition();
+    humanCount++;
+    updateStats();
+    this.think();
+  }
+  updatePosition() {
+    this.element.style.left = `${this.x}px`;
+    this.element.style.top = `${this.y}px`;
+    const tileSize = 64;
+    const col = Math.floor(this.x / tileSize);
+    const row = Math.floor(this.y / tileSize);
+    const tileGrid = document.querySelector('.tile-grid');
+    const gridCols = getComputedStyle(tileGrid).gridTemplateColumns.split(' ').length;
+    const tile = tileGrid.children[row * gridCols + col];
+    if (tile && tile.classList.contains('water-tile')) {
+      this.element.classList.add('human-swim');
+    } else {
+      this.element.classList.remove('human-swim');
+    }
+  }
+  moveTowards(targetX, targetY) {
+    const dx = targetX - this.x;
+    const dy = targetY - this.y;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    if (distance > this.speed) {
+      this.x += dx / distance * this.speed;
+      this.y += dy / distance * this.speed;
+      this.updatePosition();
+      return false;
+    }
+    return true;
+  }
+  findNearestTree() {
+    const trees = document.querySelectorAll('.tree');
+    let nearest = null;
+    let minDist = Infinity;
+    trees.forEach(tree => {
+      const rect = tree.getBoundingClientRect();
+      const dx = rect.left - this.x;
+      const dy = rect.top - this.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist < minDist) {
+        minDist = dist;
+        nearest = tree;
+      }
+    });
+    return nearest;
+  }
+  findBuildingLocation() {
+    const buildings = [...houses, this.findCampfire()].filter(b => b);
+    const randomBuilding = buildings[Math.floor(Math.random() * buildings.length)];
+    if (!randomBuilding) return null;
+    const buildingRect = randomBuilding.getBoundingClientRect();
+    let attempts = 0;
+    while (attempts < 10) {
+      const angle = Math.random() * Math.PI * 2;
+      const distance = 100 + Math.random() * 100;
+      const x = buildingRect.left + Math.cos(angle) * distance;
+      const y = buildingRect.top + Math.sin(angle) * distance;
+      const tileSize = 64;
+      const col = Math.floor(x / tileSize);
+      const row = Math.floor(y / tileSize);
+      const tileGrid = document.querySelector('.tile-grid');
+      const gridCols = getComputedStyle(tileGrid).gridTemplateColumns.split(' ').length;
+      const tile = tileGrid.children[row * gridCols + col];
+      if (tile && !tile.querySelector('.tree, .rock, .house, .campfire, .farm-tile, .farm-tile-cabbage, .windmill, .fishing-dock, .iron-deposit, .crafting-table')) {
+        if (this.buildingDock) {
+          if (tile.classList.contains('water-tile')) {
+            return {
+              x,
+              y
+            };
+          }
+        } else {
+          if (!tile.classList.contains('water-tile')) {
+            return {
+              x,
+              y
+            };
+          }
+        }
+      }
+      attempts++;
+    }
+    return null;
+  }
+  createHouse(x, y) {
+    const tileSize = 64;
+    const col = Math.floor(x / tileSize);
+    const row = Math.floor(y / tileSize);
+    const tileGrid = document.querySelector('.tile-grid');
+    const gridCols = getComputedStyle(tileGrid).gridTemplateColumns.split(' ').length;
+    const tile = tileGrid.children[row * gridCols + col];
+    if (tile) {
+      const house = document.createElement('div');
+      house.className = 'house';
+      tile.appendChild(house);
+      houses.add(house);
+      updateStats();
+      return house;
+    }
+    return null;
+  }
+  findCampfire() {
+    return document.querySelector('.campfire');
+  }
+  createLog(x, y) {
+    const log = document.createElement('div');
+    log.className = 'log';
+    log.style.left = `${x}px`;
+    log.style.top = `${y}px`;
+    document.body.appendChild(log);
+    return log;
+  }
+  findNearestRock() {
+    const rocks = document.querySelectorAll('.rock');
+    let nearest = null;
+    let minDist = Infinity;
+    rocks.forEach(rock => {
+      const rect = rock.getBoundingClientRect();
+      const dx = rect.left - this.x;
+      const dy = rect.top - this.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist < minDist) {
+        minDist = dist;
+        nearest = rock;
+      }
+    });
+    return nearest;
+  }
+  createRockItem(x, y) {
+    const rockItem = document.createElement('div');
+    rockItem.className = 'rock-item';
+    rockItem.style.left = `${x}px`;
+    rockItem.style.top = `${y}px`;
+    document.body.appendChild(rockItem);
+    return rockItem;
+  }
+  findFarmLocation() {
+    const tileGrid = this.grid;
+    const tiles = Array.from(tileGrid.children);
+    const gridCols = getComputedStyle(tileGrid).gridTemplateColumns.split(' ').length;
+    for (let i = 0; i < tiles.length - FARM_SIZE * gridCols; i++) {
+      let valid = true;
+      const row = Math.floor(i / gridCols);
+      const col = i % gridCols;
+      if (col > gridCols - FARM_SIZE) continue;
+      for (let dy = 0; dy < FARM_SIZE; dy++) {
+        for (let dx = 0; dx < FARM_SIZE; dx++) {
+          const tile = tiles[i + dy * gridCols + dx];
+          if (!tile || tile.querySelector('.tree, .rock, .house, .campfire') || tile.firstChild?.classList.contains('farm-tile') || tile.classList.contains('water-tile')) {
+            valid = false;
+            break;
+          }
+        }
+        if (!valid) break;
+      }
+      if (valid) {
+        const tile = tiles[i];
+        const rect = tile.getBoundingClientRect();
+        return {
+          x: rect.left,
+          y: rect.top,
+          tileIndex: i,
+          gridCols
+        };
+      }
+    }
+    return null;
+  }
+  createFarmPlot(location) {
+    const tiles = Array.from(this.grid.children);
+    const {
+      tileIndex,
+      gridCols
+    } = location;
+    for (let dy = 0; dy < FARM_SIZE; dy++) {
+      for (let dx = 0; dx < FARM_SIZE; dx++) {
+        const tile = tiles[tileIndex + dy * gridCols + dx];
+        if (tile) {
+          tile.firstChild?.remove();
+          const farmTile = document.createElement('div');
+          farmTile.className = 'farm-tile';
+          tile.appendChild(farmTile);
+          setTimeout(() => {
+            if (farmTile.parentNode) {
+              farmTile.className = 'farm-tile-cabbage';
+              const cabbage = document.createElement('div');
+              cabbage.className = 'cabbage';
+              farmTile.appendChild(cabbage);
+            }
+          }, CABBAGE_GROW_TIME);
+        }
+      }
+    }
+  }
+  createCabbage(x, y) {
+    const cabbage = document.createElement('div');
+    cabbage.className = 'cabbage';
+    cabbage.style.left = `${x}px`;
+    cabbage.style.top = `${y}px`;
+    document.body.appendChild(cabbage);
+    return cabbage;
+  }
+  async think() {
+    while (true) {
+      if (this.task === 'wander') {
+        this.targetX = Math.random() * window.innerWidth;
+        this.targetY = Math.random() * window.innerHeight;
+        while (!this.moveTowards(this.targetX, this.targetY)) {
+          await new Promise(resolve => setTimeout(resolve, 50));
+        }
+        if (houses.size >= 7) {
+          const tasks = ['cutTree', 'mineRock', 'farm', 'fish', 'makeCabbagePowder', 'mineIron', 'mineSulfur', 'makeGunpowder', 'makeMusket'];
+          if (this.isHunter) {
+            tasks.push('huntCow');
+          }
+          if (furnaces.size === 0 && totalStone >= STONE_NEEDED_FOR_FURNACE) {
+            tasks.push('buildFurnace');
+          }
+          if (totalLogs >= LOGS_NEEDED_FOR_HOUSE) {
+            tasks.push('buildHouse');
+          }
+          if (totalLogs >= LOGS_NEEDED_FOR_DOCK) {
+            tasks.push('buildDock');
+          }
+          if (totalLogs >= LOGS_NEEDED_FOR_WINDMILL && totalStone >= STONE_NEEDED_FOR_WINDMILL) {
+            tasks.push('buildWindmill');
+          }
+          if (totalStone >= STONE_NEEDED_FOR_UPGRADE) {
+            tasks.push('upgradeHouse');
+          }
+          if (totalLogs > 0 && furnaces.size > 0) {
+            tasks.push('makeCharcoal');
+          }
+          if (totalLogs >= WOOD_NEEDED_FOR_CRAFTING_TABLE) {
+            tasks.push('buildCraftingTable');
+          }
+          this.task = tasks[Math.floor(Math.random() * tasks.length)];
+        } else {
+          if (furnaces.size === 0 && totalStone >= STONE_NEEDED_FOR_FURNACE) {
+            this.task = 'buildFurnace';
+          } else if (totalLogs >= LOGS_NEEDED_FOR_HOUSE) {
+            this.task = 'buildHouse';
+          } else if (totalStone >= STONE_NEEDED_FOR_UPGRADE) {
+            const woodHouses = Array.from(houses).filter(h => !h.classList.contains('stone-house'));
+            if (woodHouses.length > 0) {
+              this.task = 'upgradeHouse';
+            } else {
+              this.task = 'cutTree';
+            }
+          } else {
+            this.task = 'cutTree';
+          }
+        }
+        await new Promise(resolve => setTimeout(resolve, 2000));
+      } else if (this.task === 'cutTree') {
+        const tree = this.findNearestTree();
+        if (tree) {
+          const rect = tree.getBoundingClientRect();
+          while (!this.moveTowards(rect.left, rect.top)) {
+            await new Promise(resolve => setTimeout(resolve, 50));
+          }
+          await new Promise(resolve => setTimeout(resolve, 2000));
+          const treePos = {
+            x: rect.left,
+            y: rect.top
+          };
+          tree.remove();
+          const tileSize = 64;
+          const col = Math.floor(rect.left / tileSize);
+          const row = Math.floor(rect.top / tileSize);
+          const tile = this.grid.children[row * getComputedStyle(this.grid).gridTemplateColumns.split(' ').length + col];
+          setTimeout(() => {
+            if (tile && !tile.querySelector('.tree, .rock, .house, .campfire, .farm-tile, .farm-tile-cabbage, .windmill, .fishing-dock, .iron-deposit')) {
+              const newTree = document.createElement('div');
+              newTree.className = 'tree';
+              newTree.style.animationDelay = `${Math.random() * 2}s`;
+              tile.appendChild(newTree);
+            }
+          }, TREE_REGROW_TIME);
+          this.currentLog = this.createLog(treePos.x, treePos.y);
+          this.hasLog = true;
+          this.task = 'deliverLog';
+        } else {
+          this.task = 'wander';
+        }
+      } else if (this.task === 'deliverLog') {
+        const campfire = this.findCampfire();
+        if (campfire && this.currentLog) {
+          const rect = campfire.getBoundingClientRect();
+          while (!this.moveTowards(rect.left, rect.top)) {
+            this.currentLog.style.left = `${this.x}px`;
+            this.currentLog.style.top = `${this.y}px`;
+            await new Promise(resolve => setTimeout(resolve, 50));
+          }
+          this.currentLog.remove();
+          this.currentLog = null;
+          this.hasLog = false;
+          totalLogs++;
+          updateStats();
+          this.task = 'wander';
+        } else {
+          this.task = 'wander';
+        }
+      } else if (this.task === 'mineRock') {
+        const rock = this.findNearestRock();
+        if (rock) {
+          const rect = rock.getBoundingClientRect();
+          while (!this.moveTowards(rect.left, rect.top)) {
+            await new Promise(resolve => setTimeout(resolve, 50));
+          }
+          await new Promise(resolve => setTimeout(resolve, 2000));
+          const rockPos = {
+            x: rect.left,
+            y: rect.top
+          };
+          rock.remove();
+          this.currentRockItem = this.createRockItem(rockPos.x, rockPos.y);
+          this.hasRock = true;
+          this.task = 'deliverRock';
+        } else {
+          this.task = 'wander';
+        }
+      } else if (this.task === 'deliverRock') {
+        const campfire = this.findCampfire();
+        if (campfire && this.currentRockItem) {
+          const rect = campfire.getBoundingClientRect();
+          while (!this.moveTowards(rect.left, rect.top)) {
+            this.currentRockItem.style.left = `${this.x}px`;
+            this.currentRockItem.style.top = `${this.y}px`;
+            await new Promise(resolve => setTimeout(resolve, 50));
+          }
+          this.currentRockItem.remove();
+          this.currentRockItem = null;
+          this.hasRock = false;
+          totalStone++;
+          updateStats();
+          this.task = 'wander';
+        } else {
+          this.task = 'wander';
+        }
+      } else if (this.task === 'buildHouse') {
+        if (totalLogs >= LOGS_NEEDED_FOR_HOUSE) {
+          const buildLocation = this.findBuildingLocation();
+          if (buildLocation) {
+            while (!this.moveTowards(buildLocation.x, buildLocation.y)) {
+              await new Promise(resolve => setTimeout(resolve, 50));
+            }
+            await new Promise(resolve => setTimeout(resolve, 3000));
+            if (totalLogs >= LOGS_NEEDED_FOR_HOUSE) {
+              this.createHouse(buildLocation.x, buildLocation.y);
+              totalLogs -= LOGS_NEEDED_FOR_HOUSE;
+              updateStats();
+              const availableSpace = houses.size * HUMANS_PER_HOUSE - humanCount;
+              for (let i = 0; i < Math.min(2, availableSpace); i++) {
+                new Human(this.grid, buildLocation.x, buildLocation.y);
+              }
+            }
+          }
+        }
+        this.task = 'wander';
+      } else if (this.task === 'buildDock') {
+        this.buildingDock = true;
+        if (totalLogs >= LOGS_NEEDED_FOR_DOCK) {
+          const buildLocation = this.findBuildingLocation();
+          if (buildLocation) {
+            while (!this.moveTowards(buildLocation.x, buildLocation.y)) {
+              await new Promise(resolve => setTimeout(resolve, 50));
+            }
+            await new Promise(resolve => setTimeout(resolve, 3000));
+            if (totalLogs >= LOGS_NEEDED_FOR_DOCK) {
+              const dock = document.createElement('div');
+              dock.className = 'fishing-dock';
+              const tileSize = 64;
+              const col = Math.floor(buildLocation.x / tileSize);
+              const row = Math.floor(buildLocation.y / tileSize);
+              const tile = this.grid.children[row * getComputedStyle(this.grid).gridTemplateColumns.split(' ').length + col];
+              if (tile) {
+                tile.appendChild(dock);
+                docks.add(dock);
+                totalLogs -= LOGS_NEEDED_FOR_DOCK;
+                updateStats();
+              }
+            }
+          }
+        }
+        this.buildingDock = false;
+        this.task = 'wander';
+      } else if (this.task === 'farm') {
+        const farmLocation = this.findFarmLocation();
+        if (farmLocation) {
+          const tiles = Array.from(this.grid.children);
+          const nearbyTiles = tiles.filter(tile => {
+            const rect = tile.getBoundingClientRect();
+            const dx = rect.left - this.x;
+            const dy = rect.top - this.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            return dist < 100 && tile.querySelector('.cabbage');
+          });
+          if (nearbyTiles.length > 0) {
+            const targetTile = nearbyTiles[0];
+            const rect = targetTile.getBoundingClientRect();
+            while (!this.moveTowards(rect.left, rect.top)) {
+              await new Promise(resolve => setTimeout(resolve, 50));
+            }
+            const cabbage = targetTile.querySelector('.cabbage');
+            if (cabbage) {
+              cabbage.remove();
+              this.currentCabbage = this.createCabbage(rect.left, rect.top);
+              this.hasCabbage = true;
+              targetTile.firstChild.className = 'farm-tile';
+              const campfire = this.findCampfire();
+              if (campfire) {
+                const campfireRect = campfire.getBoundingClientRect();
+                while (!this.moveTowards(campfireRect.left, campfireRect.top)) {
+                  this.currentCabbage.style.left = `${this.x}px`;
+                  this.currentCabbage.style.top = `${this.y}px`;
+                  await new Promise(resolve => setTimeout(resolve, 50));
+                }
+                if (this.currentCabbage) {
+                  this.currentCabbage.remove();
+                  this.currentCabbage = null;
+                  this.hasCabbage = false;
+                  totalCabbage++;
+                  updateStats();
+                }
+              }
+              setTimeout(() => {
+                if (targetTile.firstChild) {
+                  targetTile.firstChild.className = 'farm-tile-cabbage';
+                  const newCabbage = document.createElement('div');
+                  newCabbage.className = 'cabbage';
+                  targetTile.firstChild.appendChild(newCabbage);
+                }
+              }, CABBAGE_GROW_TIME);
+            }
+          }
+          while (!this.moveTowards(farmLocation.x, farmLocation.y)) {
+            await new Promise(resolve => setTimeout(resolve, 50));
+          }
+          this.farmingProgress += 0.1;
+          if (this.farmingProgress >= 1) {
+            this.farmingProgress = 0;
+            this.createFarmPlot(farmLocation);
+            this.task = 'wander';
+          }
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        } else {
+          this.task = 'wander';
+        }
+      } else if (this.task === 'fish') {
+        const allDocks = Array.from(docks);
+        if (allDocks.length > 0) {
+          const randomDock = allDocks[Math.floor(Math.random() * allDocks.length)];
+          const rect = randomDock.getBoundingClientRect();
+          while (!this.moveTowards(rect.left, rect.top)) {
+            await new Promise(resolve => setTimeout(resolve, 50));
+          }
+          this.fishingProgress += 0.1;
+          if (this.fishingProgress >= 1) {
+            this.fishingProgress = 0;
+            const fish = document.createElement('div');
+            fish.className = 'fish';
+            fish.style.left = `${this.x}px`;
+            fish.style.top = `${this.y}px`;
+            document.body.appendChild(fish);
+            this.currentFish = fish;
+            this.hasFish = true;
+            const campfire = this.findCampfire();
+            if (campfire) {
+              const campfireRect = campfire.getBoundingClientRect();
+              while (!this.moveTowards(campfireRect.left, campfireRect.top)) {
+                this.currentFish.style.left = `${this.x}px`;
+                this.currentFish.style.top = `${this.y}px`;
+                await new Promise(resolve => setTimeout(resolve, 50));
+              }
+              if (this.currentFish) {
+                this.currentFish.remove();
+                this.currentFish = null;
+                this.hasFish = false;
+                totalFish++;
+                updateStats();
+              }
+            }
+            this.task = 'wander';
+          }
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        } else {
+          this.task = 'wander';
+        }
+      } else if (this.task === 'buildWindmill') {
+        if (totalLogs >= LOGS_NEEDED_FOR_WINDMILL && totalStone >= STONE_NEEDED_FOR_WINDMILL) {
+          const buildLocation = this.findBuildingLocation();
+          if (buildLocation) {
+            while (!this.moveTowards(buildLocation.x, buildLocation.y)) {
+              await new Promise(resolve => setTimeout(resolve, 50));
+            }
+            await new Promise(resolve => setTimeout(resolve, 3000));
+            if (totalLogs >= LOGS_NEEDED_FOR_WINDMILL && totalStone >= STONE_NEEDED_FOR_WINDMILL) {
+              const windmill = document.createElement('div');
+              windmill.className = 'windmill';
+              const tile = this.grid.children[Math.floor(buildLocation.y / 64) * getComputedStyle(this.grid).gridTemplateColumns.split(' ').length + Math.floor(buildLocation.x / 64)];
+              if (tile) {
+                tile.appendChild(windmill);
+                windmills.add(windmill);
+                totalLogs -= LOGS_NEEDED_FOR_WINDMILL;
+                totalStone -= STONE_NEEDED_FOR_WINDMILL;
+                updateStats();
+              }
+            }
+          }
+        }
+        this.task = 'wander';
+      } else if (this.task === 'makeCabbagePowder') {
+        if (totalCabbage > 0) {
+          const windmill = Array.from(windmills)[Math.floor(Math.random() * windmills.size)];
+          if (windmill) {
+            const rect = windmill.getBoundingClientRect();
+            while (!this.moveTowards(rect.left, rect.top)) {
+              await new Promise(resolve => setTimeout(resolve, 50));
+            }
+            totalCabbage--;
+            this.currentCabbagePowder = document.createElement('div');
+            this.currentCabbagePowder.className = 'cabbage-powder';
+            this.currentCabbagePowder.style.left = `${this.x}px`;
+            this.currentCabbagePowder.style.top = `${this.y}px`;
+            document.body.appendChild(this.currentCabbagePowder);
+            this.hasCabbagePowder = true;
+            const campfire = this.findCampfire();
+            if (campfire) {
+              const campfireRect = campfire.getBoundingClientRect();
+              while (!this.moveTowards(campfireRect.left, campfireRect.top)) {
+                this.currentCabbagePowder.style.left = `${this.x}px`;
+                this.currentCabbagePowder.style.top = `${this.y}px`;
+                await new Promise(resolve => setTimeout(resolve, 50));
+              }
+              if (this.currentCabbagePowder) {
+                this.currentCabbagePowder.remove();
+                this.currentCabbagePowder = null;
+                this.hasCabbagePowder = false;
+                totalCabbagePowder++;
+                updateStats();
+              }
+            }
+          }
+        }
+        this.task = 'wander';
+      } else if (this.task === 'mineIron') {
+        const ironDeposits = Array.from(document.querySelectorAll('.iron-deposit'));
+        if (ironDeposits.length > 0) {
+          const deposit = ironDeposits[Math.floor(Math.random() * ironDeposits.length)];
+          const rect = deposit.getBoundingClientRect();
+          while (!this.moveTowards(rect.left, rect.top)) {
+            await new Promise(resolve => setTimeout(resolve, 50));
+          }
+          await new Promise(resolve => setTimeout(resolve, 2000));
+          deposit.remove();
+          this.currentIron = document.createElement('div');
+          this.currentIron.className = 'iron-item';
+          this.currentIron.style.left = `${this.x}px`;
+          this.currentIron.style.top = `${this.y}px`;
+          document.body.appendChild(this.currentIron);
+          this.hasIron = true;
+          const campfire = this.findCampfire();
+          if (campfire) {
+            const campfireRect = campfire.getBoundingClientRect();
+            while (!this.moveTowards(campfireRect.left, campfireRect.top)) {
+              this.currentIron.style.left = `${this.x}px`;
+              this.currentIron.style.top = `${this.y}px`;
+              await new Promise(resolve => setTimeout(resolve, 50));
+            }
+            if (this.currentIron) {
+              this.currentIron.remove();
+              this.currentIron = null;
+              this.hasIron = false;
+              totalIron++;
+              updateStats();
+            }
+          }
+        }
+        this.task = 'wander';
+      } else if (this.task === 'mineSulfur') {
+        const sulfurDeposits = Array.from(document.querySelectorAll('.sulfur-deposit'));
+        if (sulfurDeposits.length > 0) {
+          const deposit = sulfurDeposits[Math.floor(Math.random() * sulfurDeposits.length)];
+          const rect = deposit.getBoundingClientRect();
+          while (!this.moveTowards(rect.left, rect.top)) {
+            await new Promise(resolve => setTimeout(resolve, 50));
+          }
+          await new Promise(resolve => setTimeout(resolve, 2000));
+          deposit.remove();
+          this.currentSulfur = document.createElement('div');
+          this.currentSulfur.className = 'sulfur-item';
+          this.currentSulfur.style.left = `${this.x}px`;
+          this.currentSulfur.style.top = `${this.y}px`;
+          document.body.appendChild(this.currentSulfur);
+          this.hasSulfur = true;
+          const campfire = this.findCampfire();
+          if (campfire) {
+            const campfireRect = campfire.getBoundingClientRect();
+            while (!this.moveTowards(campfireRect.left, campfireRect.top)) {
+              this.currentSulfur.style.left = `${this.x}px`;
+              this.currentSulfur.style.top = `${this.y}px`;
+              await new Promise(resolve => setTimeout(resolve, 50));
+            }
+            if (this.currentSulfur) {
+              this.currentSulfur.remove();
+              this.currentSulfur = null;
+              this.hasSulfur = false;
+              totalSulfur++;
+              updateStats();
+            }
+          }
+        }
+        this.task = 'wander';
+      } else if (this.task === 'buildFurnace') {
+        if (totalStone >= STONE_NEEDED_FOR_FURNACE) {
+          const buildLocation = this.findBuildingLocation();
+          if (buildLocation) {
+            while (!this.moveTowards(buildLocation.x, buildLocation.y)) {
+              await new Promise(resolve => setTimeout(resolve, 50));
+            }
+            await new Promise(resolve => setTimeout(resolve, 3000));
+            if (totalStone >= STONE_NEEDED_FOR_FURNACE) {
+              const furnace = document.createElement('div');
+              furnace.className = 'blast-furnace';
+              const tile = this.grid.children[Math.floor(buildLocation.y / 64) * getComputedStyle(this.grid).gridTemplateColumns.split(' ').length + Math.floor(buildLocation.x / 64)];
+              if (tile) {
+                tile.appendChild(furnace);
+                furnaces.add(furnace);
+                totalStone -= STONE_NEEDED_FOR_FURNACE;
+                updateStats();
+              }
+            }
+          }
+        }
+        this.task = 'wander';
+      } else if (this.task === 'upgradeHouse') {
+        if (totalStone >= STONE_NEEDED_FOR_UPGRADE) {
+          const woodHouses = Array.from(houses).filter(h => !h.classList.contains('stone-house'));
+          if (woodHouses.length > 0) {
+            const targetHouse = woodHouses[0];
+            const rect = targetHouse.getBoundingClientRect();
+            while (!this.moveTowards(rect.left, rect.top)) {
+              await new Promise(resolve => setTimeout(resolve, 50));
+            }
+            await new Promise(resolve => setTimeout(resolve, 3000));
+            if (totalStone >= STONE_NEEDED_FOR_UPGRADE) {
+              targetHouse.className = 'stone-house';
+              totalStone -= STONE_NEEDED_FOR_UPGRADE;
+              updateStats();
+              const currentHumans = Array.from(document.querySelectorAll('.human')).length;
+              const availableSpace = HUMANS_PER_STONE_HOUSE - 2;
+              for (let i = 0; i < availableSpace; i++) {
+                new Human(this.grid, rect.left, rect.top);
+              }
+            }
+          }
+        }
+        this.task = 'wander';
+      } else if (this.task === 'makeCharcoal') {
+        if (totalLogs > 0 && furnaces.size > 0) {
+          const furnace = Array.from(furnaces)[Math.floor(Math.random() * furnaces.size)];
+          if (furnace) {
+            const rect = furnace.getBoundingClientRect();
+            while (!this.moveTowards(rect.left, rect.top)) {
+              await new Promise(resolve => setTimeout(resolve, 50));
+            }
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            totalLogs--;
+            const charcoal = document.createElement('div');
+            charcoal.className = 'charcoal';
+            charcoal.style.left = `${this.x}px`;
+            charcoal.style.top = `${this.y}px`;
+            document.body.appendChild(charcoal);
+            const campfire = this.findCampfire();
+            if (campfire) {
+              const campfireRect = campfire.getBoundingClientRect();
+              while (!this.moveTowards(campfireRect.left, campfireRect.top)) {
+                charcoal.style.left = `${this.x}px`;
+                charcoal.style.top = `${this.y}px`;
+                await new Promise(resolve => setTimeout(resolve, 50));
+              }
+              charcoal.remove();
+              totalCharcoal++;
+              updateStats();
+            }
+          }
+        }
+        this.task = 'wander';
+      } else if (this.task === 'buildCraftingTable') {
+        if (totalLogs >= WOOD_NEEDED_FOR_CRAFTING_TABLE) {
+          const buildLocation = this.findBuildingLocation();
+          if (buildLocation) {
+            while (!this.moveTowards(buildLocation.x, buildLocation.y)) {
+              await new Promise(resolve => setTimeout(resolve, 50));
+            }
+            await new Promise(resolve => setTimeout(resolve, 3000));
+            if (totalLogs >= WOOD_NEEDED_FOR_CRAFTING_TABLE) {
+              const craftingTable = document.createElement('div');
+              craftingTable.className = 'crafting-table';
+              const tile = this.grid.children[Math.floor(buildLocation.y / 64) * getComputedStyle(this.grid).gridTemplateColumns.split(' ').length + Math.floor(buildLocation.x / 64)];
+              if (tile) {
+                tile.appendChild(craftingTable);
+                totalLogs -= WOOD_NEEDED_FOR_CRAFTING_TABLE;
+                updateStats();
+              }
+            }
+          }
+        }
+        this.task = 'wander';
+      } else if (this.task === 'makeGunpowder') {
+        if (totalCharcoal > 0 && totalSulfur > 0) {
+          const craftingTables = Array.from(document.querySelectorAll('.crafting-table'));
+          if (craftingTables.length > 0) {
+            const table = craftingTables[Math.floor(Math.random() * craftingTables.length)];
+            const rect = table.getBoundingClientRect();
+            while (!this.moveTowards(rect.left, rect.top)) {
+              await new Promise(resolve => setTimeout(resolve, 50));
+            }
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            totalCharcoal--;
+            totalSulfur--;
+            this.currentGunpowder = document.createElement('div');
+            this.currentGunpowder.className = 'gunpowder';
+            this.currentGunpowder.style.left = `${this.x}px`;
+            this.currentGunpowder.style.top = `${this.y}px`;
+            document.body.appendChild(this.currentGunpowder);
+            this.hasGunpowder = true;
+            const campfire = this.findCampfire();
+            if (campfire) {
+              const campfireRect = campfire.getBoundingClientRect();
+              while (!this.moveTowards(campfireRect.left, campfireRect.top)) {
+                this.currentGunpowder.style.left = `${this.x}px`;
+                this.currentGunpowder.style.top = `${this.y}px`;
+                await new Promise(resolve => setTimeout(resolve, 50));
+              }
+              if (this.currentGunpowder) {
+                this.currentGunpowder.remove();
+                this.currentGunpowder = null;
+                this.hasGunpowder = false;
+                totalGunpowder++;
+                updateStats();
+              }
+            }
+          }
+        }
+        this.task = 'wander';
+      } else if (this.task === 'makeMusket') {
+        if (totalLogs >= WOOD_FOR_MUSKET && totalGunpowder >= GUNPOWDER_FOR_MUSKET) {
+          const craftingTables = Array.from(document.querySelectorAll('.crafting-table'));
+          if (craftingTables.length > 0) {
+            const table = craftingTables[Math.floor(Math.random() * craftingTables.length)];
+            const rect = table.getBoundingClientRect();
+            while (!this.moveTowards(rect.left, rect.top)) {
+              await new Promise(resolve => setTimeout(resolve, 50));
+            }
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            totalLogs -= WOOD_FOR_MUSKET;
+            totalGunpowder -= GUNPOWDER_FOR_MUSKET;
+            totalMuskets++;
+            this.hasMusket = true;
+            updateStats();
+          }
+        }
+        this.task = 'wander';
+      } else if (this.task === 'huntCow') {
+        const cows = document.querySelectorAll('.cow');
+        if (cows.length > 0) {
+          const nearestCow = Array.from(cows).reduce((nearest, cow) => {
+            const rect = cow.getBoundingClientRect();
+            const dx = rect.left - this.x;
+            const dy = rect.top - this.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            if (!nearest || dist < nearest.dist) {
+              return {
+                cow,
+                dist
+              };
+            }
+            return nearest;
+          }, null);
+          if (nearestCow) {
+            const rect = nearestCow.cow.getBoundingClientRect();
+            while (!this.moveTowards(rect.left, rect.top)) {
+              await new Promise(resolve => setTimeout(resolve, 50));
+            }
+            nearestCow.cow.remove();
+            totalCows--;
+            const meat = document.createElement('div');
+            meat.className = 'raw-beef';
+            meat.style.left = `${rect.left}px`;
+            meat.style.top = `${rect.top}px`;
+            document.body.appendChild(meat);
+            totalMeat++;
+            updateStats();
+          }
+        }
+        this.task = 'wander';
+      }
+    }
+  }
+}
+function createTileGrid() {
+  const tileGrid = document.querySelector('.tile-grid');
+  const tileSize = 64;
+  const cols = Math.ceil(window.innerWidth / tileSize) + 1;
+  const rows = Math.ceil(window.innerHeight / tileSize) + 1;
+  tileGrid.style.left = '0';
+  tileGrid.style.top = '0';
+  tileGrid.style.gridTemplateColumns = `repeat(${cols}, ${tileSize}px)`;
+  tileGrid.style.gridTemplateRows = `repeat(${rows}, ${tileSize}px)`;
+  const centerCol = Math.floor(cols / 2);
+  const centerRow = Math.floor(rows / 2);
+  const centerIndex = centerRow * cols + centerCol;
+  const totalTiles = cols * rows;
+  const riverPaths = [];
+  const numRivers = Math.floor(Math.random() * 2) + 2;
+  let path = [];
+  let currentCol = Math.floor(Math.random() * cols);
+  let currentRow = 0;
+  while (currentRow < rows) {
+    path.push(currentRow * cols + currentCol);
+    currentRow++;
+    if (Math.random() < 0.4) {
+      const shift = Math.random() < 0.5 ? 1 : -1;
+      currentCol += shift;
+      if (Math.random() < 0.3) {
+        path.push(currentRow * cols + (currentCol - shift));
+      }
+      currentCol = Math.max(0, Math.min(cols - 1, currentCol));
+    }
+  }
+  riverPaths.push(path);
+  for (let r = 1; r < numRivers; r++) {
+    path = [];
+    const targetRiver = riverPaths[0];
+    const connectionPoint = targetRiver[Math.floor(Math.random() * targetRiver.length)];
+    const targetRow = Math.floor(connectionPoint / cols);
+    const targetCol = connectionPoint % cols;
+    currentCol = Math.random() < 0.5 ? 0 : cols - 1;
+    currentRow = Math.floor(Math.random() * rows);
+    while (currentCol !== targetCol || currentRow !== targetRow) {
+      path.push(currentRow * cols + currentCol);
+      if (currentCol < targetCol) currentCol++;
+      if (currentCol > targetCol) currentCol--;
+      if (currentRow < targetRow) currentRow++;
+      if (currentRow > targetRow) currentRow--;
+      if (Math.random() < 0.2) {
+        if (Math.random() < 0.5) {
+          path.push(currentRow * cols + (currentCol + 1));
+        } else {
+          path.push(currentRow * cols + (currentCol - 1));
+        }
+      }
+    }
+    riverPaths.push(path);
+  }
+  const allRiverTiles = new Set();
+  for (const path of riverPaths) {
+    for (let i = 0; i < path.length - 1; i++) {
+      const current = path[i];
+      const next = path[i + 1];
+      const currentCol = current % cols;
+      const currentRow = Math.floor(current / cols);
+      const nextCol = next % cols;
+      const nextRow = Math.floor(next / cols);
+      if (currentCol !== nextCol && currentRow !== nextRow) {
+        allRiverTiles.add(currentRow * cols + nextCol);
+        allRiverTiles.add(nextRow * cols + currentCol);
+      }
+      allRiverTiles.add(current);
+      allRiverTiles.add(next);
+    }
+    allRiverTiles.add(path[path.length - 1]);
+  }
+  for (let i = 0; i < totalTiles; i++) {
+    const tile = document.createElement('div');
+    if (allRiverTiles.has(i)) {
+      tile.className = 'water-tile';
+    } else {
+      tile.className = 'tile';
+      if (i === centerIndex) {
+        const campfire = document.createElement('div');
+        campfire.className = 'campfire';
+        tile.appendChild(campfire);
+      } else if (Math.random() < 0.2 && !allRiverTiles.has(i)) {
+        if (Math.random() < 0.6) {
+          const tree = document.createElement('div');
+          tree.className = 'tree';
+          tree.style.animationDelay = `${Math.random() * 2}s`;
+          tile.appendChild(tree);
+        } else if (Math.random() < 0.5) {
+          const rock = document.createElement('div');
+          rock.className = 'rock';
+          tile.appendChild(rock);
+          setTimeout(() => {
+            if (tile && !tile.querySelector('.tree, .rock, .house, .campfire, .farm-tile, .farm-tile-cabbage, .windmill, .fishing-dock, .iron-deposit')) {
+              const newRock = document.createElement('div');
+              newRock.className = 'rock';
+              tile.appendChild(newRock);
+            }
+          }, ROCK_REGROW_TIME);
+        } else if (Math.random() < 0.5) {
+          const ironDeposit = document.createElement('div');
+          ironDeposit.className = 'iron-deposit';
+          tile.appendChild(ironDeposit);
+        } else {
+          const sulfurDeposit = document.createElement('div');
+          sulfurDeposit.className = 'sulfur-deposit';
+          tile.appendChild(sulfurDeposit);
+        }
+      } else if (!allRiverTiles.has(i) && Math.random() < SPAWN_COW_CHANCE && totalCows < 5) {
+        const rect = tile.getBoundingClientRect();
+        new Cow(tileGrid, rect.left, rect.top);
+        totalCows++;
+      }
+    }
+    tileGrid.appendChild(tile);
+  }
+  for (let i = 0; i < 5; i++) {
+    const human = new Human(tileGrid, Math.random() * window.innerWidth, Math.random() * window.innerHeight);
+    if (houses.size < 5) {
+      if (totalLogs >= LOGS_NEEDED_FOR_HOUSE) {
+        human.task = 'buildHouse';
+      } else {
+        human.task = 'cutTree';
+      }
+    } else {
+      const woodHouses = Array.from(houses).filter(h => !h.classList.contains('stone-house'));
+      const stoneHouses = Array.from(houses).filter(h => h.classList.contains('stone-house'));
+      const availableHouseSpace = woodHouses.length * HUMANS_PER_HOUSE + stoneHouses.length * HUMANS_PER_STONE_HOUSE - humanCount;
+    }
+  }
+  for (let i = 0; i < Math.min(totalMuskets, humanCount); i++) {
+    const humans = document.querySelectorAll('.human');
+    const randomHuman = humans[Math.floor(Math.random() * humans.length)];
+    if (randomHuman) {
+      const humanInstance = Array.from(humans).find(h => h === randomHuman);
+      if (humanInstance) {
+        const instance = Array.from(humans).find(h => h.element === randomHuman);
+        if (instance) {
+          instance.isHunter = true;
+          instance.element.className = 'hunter';
+        }
+      }
+    }
+  }
+}
+class Cow {
+  constructor(grid, startX, startY) {
+    this.element = document.createElement('div');
+    this.element.className = 'cow';
+    document.body.appendChild(this.element);
+    this.x = startX;
+    this.y = startY;
+    this.grid = grid;
+    this.targetX = startX;
+    this.targetY = startY;
+    this.speed = 2;
+    this.updatePosition();
+    this.think();
+  }
+  updatePosition() {
+    this.element.style.left = `${this.x}px`;
+    this.element.style.top = `${this.y}px`;
+  }
+  moveTowards(targetX, targetY) {
+    const dx = targetX - this.x;
+    const dy = targetY - this.y;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    const tileSize = 64;
+    const targetCol = Math.floor(targetX / tileSize);
+    const targetRow = Math.floor(targetY / tileSize);
+    const tileGrid = document.querySelector('.tile-grid');
+    const gridCols = getComputedStyle(tileGrid).gridTemplateColumns.split(' ').length;
+    const targetTile = tileGrid.children[targetRow * gridCols + targetCol];
+    if (targetTile && targetTile.classList.contains('water-tile')) {
+      this.targetX = this.x;
+      this.targetY = this.y;
+      return true;
+    }
+    if (distance > this.speed) {
+      this.x += dx / distance * this.speed;
+      this.y += dy / distance * this.speed;
+      this.updatePosition();
+      return false;
+    }
+    return true;
+  }
+  async think() {
+    while (true) {
+      this.targetX = Math.random() * window.innerWidth;
+      this.targetY = Math.random() * window.innerHeight;
+      while (!this.moveTowards(this.targetX, this.targetY)) {
+        await new Promise(resolve => setTimeout(resolve, 50));
+      }
+      await new Promise(resolve => setTimeout(resolve, 2000));
+    }
+  }
+}
+createTileGrid();
+updateStats();</script>
+</body></html>
