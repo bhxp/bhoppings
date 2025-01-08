@@ -1,0 +1,217 @@
+<html><head><base href="." /><script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script><style>
+:root {
+  --ground-color: #8b4513;
+  --dirt-color: #654321;
+  --sky-color: #87ceeb;
+}
+
+body {
+  margin: 0;
+  overflow: hidden;
+  background: var(--sky-color);
+  font-family: Arial, sans-serif;
+}
+
+.ground {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  height: 60vh;
+  background: var(--ground-color);
+}
+
+.person {
+  position: absolute;
+  bottom: 60vh;
+  left: 30%;
+  width: 60px;
+  height: 120px;
+}
+
+.head {
+  position: absolute;
+  width: 40px;
+  height: 40px;
+  background: #ffdbac;
+  border-radius: 50%;
+  top: 0;
+  left: 10px;
+}
+
+.body {
+  position: absolute;
+  width: 40px;
+  height: 60px;
+  background: #ff0000;
+  top: 40px;
+  left: 10px;
+}
+
+.speech-bubble {
+  position: absolute;
+  background: white;
+  border-radius: 10px;
+  padding: 10px;
+  left: 70px;
+  top: 0;
+  opacity: 0;
+  white-space: nowrap;
+}
+
+.speech-bubble::after {
+  content: '';
+  position: absolute;
+  left: -10px;
+  top: 50%;
+  border: 10px solid transparent;
+  border-right-color: white;
+  transform: translateY(-50%);
+}
+
+.shoe {
+  position: absolute;
+  width: 40px;
+  height: 20px;
+  background: #000;
+  bottom: 60vh;
+  right: 30%;
+  border-radius: 5px;
+  transform-origin: center;
+}
+
+.drill-bit {
+  position: absolute;
+  width: 20px;
+  height: 30px;
+  background: #696969;
+  bottom: -30px;
+  left: 10px;
+  clip-path: polygon(50% 100%, 0 0, 100% 0);
+}
+
+.hole {
+  position: absolute;
+  width: 60px;
+  height: 30px;
+  background: #2d1810;
+  border-radius: 50%;
+  right: 30%;
+  transform: translateX(50%) scale(0);
+}
+
+.dirt {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  background: var(--dirt-color);
+  border-radius: 50%;
+  opacity: 0;
+}
+
+</style></head><body>
+<div class="ground"></div>
+<div class="person">
+  <div class="head"></div>
+  <div class="body"></div>
+  <div class="speech-bubble">Hey, what's that shoe doing?</div>
+</div>
+<div class="shoe">
+  <div class="drill-bit"></div>
+</div>
+<div id="particles"></div>
+
+<script>
+const dialogues = [
+  "Hey, what's that shoe doing?",
+  "Oh no! It's starting to spin!",
+  "It's drilling into the ground!",
+  "Someone stop that shoe!",
+  "It's going deeper and deeper..."
+];
+
+function createParticles() {
+  const particles = document.getElementById('particles');
+  const shoe = document.querySelector('.shoe');
+  const shoeRect = shoe.getBoundingClientRect();
+  
+  for(let i = 0; i < 20; i++) {
+    const dirt = document.createElement('div');
+    dirt.className = 'dirt';
+    dirt.style.right = (30 + Math.random() * 5) + '%';
+    dirt.style.bottom = (60 - Math.random() * 5) + 'vh';
+    particles.appendChild(dirt);
+    
+    gsap.to(dirt, {
+      y: -100 - Math.random() * 100,
+      x: Math.random() * 200 - 100,
+      opacity: 1,
+      duration: 1,
+      delay: Math.random(),
+      repeat: -1
+    });
+  }
+}
+
+function createHoles() {
+  const ground = document.querySelector('.ground');
+  let depth = 0;
+  
+  const createHole = () => {
+    const hole = document.createElement('div');
+    hole.className = 'hole';
+    hole.style.bottom = (60 - depth) + 'vh';
+    ground.appendChild(hole);
+    
+    gsap.to(hole, {
+      scale: 1,
+      duration: 0.3
+    });
+    
+    depth += 2;
+  };
+  
+  return setInterval(createHole, 300);
+}
+
+// Animate speech bubbles
+let dialogueIndex = 0;
+const speechBubble = document.querySelector('.speech-bubble');
+
+function updateDialogue() {
+  if(dialogueIndex < dialogues.length) {
+    gsap.to(speechBubble, {
+      opacity: 0,
+      duration: 0.3,
+      onComplete: () => {
+        speechBubble.textContent = dialogues[dialogueIndex];
+        gsap.to(speechBubble, {
+          opacity: 1,
+          duration: 0.3
+        });
+        dialogueIndex++;
+      }
+    });
+  }
+}
+
+// Initial animations
+gsap.timeline()
+  .to('.shoe', {
+    rotation: 360,
+    duration: 1,
+    repeat: -1,
+    ease: 'none'
+  })
+  .to('.shoe', {
+    bottom: '-100vh',
+    duration: 10,
+    ease: 'power1.in'
+  }, 0);
+
+// Start the sequence
+createParticles();
+createHoles();
+setInterval(updateDialogue, 2000);
+
+</script>
+</body></html>
