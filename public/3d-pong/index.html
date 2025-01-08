@@ -1,0 +1,322 @@
+<html><head><base href=".">
+<style>
+    body {
+        margin: 0;
+        overflow: hidden;
+        background: #000;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        perspective: 2000px; 
+    }
+
+    .cube-container {
+        width: 600px;
+        height: 600px;
+        position: relative;
+        transform-style: preserve-3d;
+        animation: rotate 20s infinite linear;
+        animation-play-state: paused;
+        transform: scale3d(0.7, 0.7, 0.7); 
+    }
+
+    @keyframes rotate {
+        from { transform: scale3d(0.7, 0.7, 0.7) rotateX(0) rotateY(0); }
+        to { transform: scale3d(0.7, 0.7, 0.7) rotateX(360deg) rotateY(360deg); }
+    }
+
+    .cube-face {
+        position: absolute;
+        width: 600px;
+        height: 600px;
+        background: rgba(0, 0, 0, 0.08);
+        border: 2px solid #0ff;
+        box-sizing: border-box;
+    }
+
+    .front { transform: translateZ(300px); }
+    .back { transform: translateZ(-300px) rotateY(180deg); }
+    .right { transform: translateX(300px) rotateY(90deg); }
+    .left { transform: translateX(-300px) rotateY(-90deg); }
+    .top { transform: translateY(-300px) rotateX(90deg); }
+    .bottom { transform: translateY(300px) rotateX(-90deg); }
+
+    canvas {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: transparent;
+        border: 2px solid #0ff;
+    }
+
+    #pongCanvas1 { transform: translate(-50%, -50%) translateZ(300px); }
+    #pongCanvas2 { transform: translate(-50%, -50%) translateZ(-300px) rotateY(180deg); }
+    #pongCanvas3 { transform: translate(-50%, -50%) translateX(300px) rotateY(90deg); }
+    #pongCanvas4 { transform: translate(-50%, -50%) translateX(-300px) rotateY(-90deg); }
+    #pongCanvas5 { transform: translate(-50%, -50%) translateY(-300px) rotateX(90deg); }
+    #pongCanvas6 { transform: translate(-50%, -50%) translateY(300px) rotateX(-90deg); }
+    #pongCanvas7 { transform: translate(-50%, -50%); }
+    #pongCanvas8 { transform: translate(-50%, -50%) rotateY(90deg); }
+    #pongCanvas9 { transform: translate(-50%, -50%) rotateY(45deg); }
+    #pongCanvas10 { transform: translate(-50%, -50%) rotateY(-45deg); }
+    #pongCanvas11 { transform: translate(-50%, -50%) translateX(300px) rotateY(90deg); }
+
+    #pauseButton {
+        position: fixed;
+        top: 20px;
+        left: 20px;
+        padding: 10px 20px;
+        background: #0ff;
+        color: black;
+        border: none;
+        cursor: pointer;
+        z-index: 1000;
+        font-family: Arial, sans-serif;
+        border-radius: 5px;
+    }
+
+    #pauseButton:hover {
+        background: #00cccc;
+    }
+</style>
+</head>
+<body>
+    <button id="pauseButton">Play</button>
+    <div class="cube-container">
+        <div class="cube-face front"><canvas id="pongCanvas1" width="500" height="500"></canvas></div>
+        <div class="cube-face back"><canvas id="pongCanvas2" width="500" height="500"></canvas></div>
+        <div class="cube-face right">
+            <canvas id="pongCanvas3" width="500" height="500"></canvas>
+            <canvas id="pongCanvas11" width="500" height="500"></canvas>
+        </div>
+        <div class="cube-face left"><canvas id="pongCanvas4" width="500" height="500"></canvas></div>
+        <div class="cube-face top"><canvas id="pongCanvas5" width="500" height="500"></canvas></div>
+        <div class="cube-face bottom"><canvas id="pongCanvas6" width="500" height="500"></canvas></div>
+        <canvas id="pongCanvas7" width="500" height="500"></canvas>
+        <canvas id="pongCanvas8" width="500" height="500"></canvas>
+        <div style="position: absolute; transform: translate(-50%, -50%) rotateY(45deg);">
+            <canvas id="pongCanvas9" width="500" height="500"></canvas>
+        </div>
+        <div style="position: absolute; transform: translate(-50%, -50%) rotateY(-45deg);">
+            <canvas id="pongCanvas10" width="500" height="500"></canvas>
+        </div>
+    </div>
+
+<script>class Paddle {
+  constructor(x, canvas, color, personality) {
+    this.x = x;
+    this.canvas = canvas;
+    this.y = canvas.height / 2 - paddleHeight / 2;
+    this.height = paddleHeight;
+    this.width = paddleWidth;
+    this.speed = 4 + Math.random() * 2;
+    this.color = color;
+    this.personality = personality;
+    this.reactionDelay = Math.random() * 10;
+    this.predictionError = Math.random() * 20;
+  }
+  draw(ctx) {
+    ctx.fillStyle = this.color;
+    ctx.fillRect(this.x, this.y, this.width, this.height);
+  }
+  ai(balls) {
+    if (isPaused) return;
+    let closestBall = null;
+    let minDistance = Infinity;
+    balls.forEach(ball => {
+      const distance = Math.abs(this.x - ball.x);
+      if (distance < minDistance) {
+        minDistance = distance;
+        closestBall = ball;
+      }
+    });
+    if (!closestBall) return;
+    const middlePaddle = this.y + this.height / 2;
+    let targetY = closestBall.y;
+    switch (this.personality) {
+      case 'aggressive':
+        targetY = closestBall.y + (Math.random() * 30 - 15);
+        break;
+      case 'defensive':
+        targetY = closestBall.y + (Math.random() * 10 - 5);
+        break;
+      case 'erratic':
+        if (Math.random() < 0.05) {
+          targetY = Math.random() * this.canvas.height;
+        }
+        break;
+    }
+    targetY += Math.sin(Date.now() / 1000) * this.predictionError;
+    if (middlePaddle < targetY - this.reactionDelay) {
+      this.y += this.speed;
+    }
+    if (middlePaddle > targetY + this.reactionDelay) {
+      this.y -= this.speed;
+    }
+    this.y = Math.max(0, Math.min(this.canvas.height - this.height, this.y));
+  }
+}
+class Ball {
+  constructor(canvas, color = '#ffa500', angle = null) {
+    this.canvas = canvas;
+    this.trail = [];
+    this.maxTrailLength = 10;
+    this.color = color;
+    this.currentFace = 0;
+    this.reset(angle);
+  }
+  reset(angle = null) {
+    this.x = this.canvas.width / 2;
+    this.y = this.canvas.height / 2;
+    this.speed = 5 + Math.random() * 3;
+    if (angle !== null) {
+      const radians = angle * Math.PI / 180;
+      this.dx = Math.cos(radians) * this.speed;
+      this.dy = Math.sin(radians) * this.speed;
+    } else {
+      this.dx = Math.random() > 0.5 ? this.speed : -this.speed;
+      this.dy = (Math.random() * 2 - 1) * this.speed;
+    }
+    this.trail = [];
+  }
+  draw(ctx) {
+    for (let i = 0; i < this.trail.length; i++) {
+      const alpha = i / this.trail.length;
+      ctx.beginPath();
+      ctx.arc(this.trail[i].x, this.trail[i].y, ballSize / 4, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(255, 165, 0, ${alpha * 0.3})`;
+      ctx.fill();
+    }
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, ballSize / 2, 0, Math.PI * 2);
+    ctx.fillStyle = this.color;
+    ctx.fill();
+  }
+  update(leftPaddle, rightPaddle, gameIndex) {
+    if (isPaused) return;
+    this.trail.push({
+      x: this.x,
+      y: this.y
+    });
+    if (this.trail.length > this.maxTrailLength) {
+      this.trail.shift();
+    }
+    this.x += this.dx;
+    this.y += this.dy;
+    if (this.y < 0 || this.y > this.canvas.height) {
+      this.dy *= -1;
+    }
+    if (this.dx < 0 && this.x <= leftPaddle.x + paddleWidth && this.y >= leftPaddle.y && this.y <= leftPaddle.y + paddleHeight) {
+      this.dx = this.speed;
+      this.dy = (this.y - (leftPaddle.y + paddleHeight / 2)) * 0.3;
+    }
+    if (this.dx > 0 && this.x >= rightPaddle.x - paddleWidth && this.y >= rightPaddle.y && this.y <= rightPaddle.y + paddleHeight) {
+      this.dx = -this.speed;
+      this.dy = (this.y - (rightPaddle.y + paddleHeight / 2)) * 0.3;
+    }
+    if (this.x < 0 || this.x > this.canvas.width) {
+      const nextFace = this.determineNextFace(this.currentFace);
+      if (nextFace !== null) {
+        this.transitToFace(nextFace);
+      } else {
+        this.reset();
+      }
+    }
+  }
+  determineNextFace(currentFace) {
+    const transitionMap = {
+      0: [1, 2, 3, 4, 5, 8, 9, 10],
+      1: [0, 2, 3, 4, 5, 8, 9, 10],
+      2: [0, 1, 4, 5, 6, 8, 9, 10],
+      3: [0, 1, 4, 5, 6, 8, 9, 10],
+      4: [0, 1, 2, 3, 7, 8, 9, 10],
+      5: [0, 1, 2, 3, 7, 8, 9, 10],
+      6: [2, 3, 7, 8, 9, 10],
+      7: [4, 5, 6, 8, 9, 10],
+      8: [0, 1, 2, 3, 4, 5, 6, 7, 9, 10],
+      9: [0, 1, 2, 3, 4, 5, 6, 7, 8, 10],
+      10: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+    };
+    const possibleFaces = transitionMap[currentFace];
+    return possibleFaces[Math.floor(Math.random() * possibleFaces.length)];
+  }
+  transitToFace(newFace) {
+    this.currentFace = newFace;
+    if (this.x < 0) {
+      this.x = this.canvas.width;
+    } else {
+      this.x = 0;
+    }
+    this.dx *= -1;
+  }
+}
+const paddleHeight = 80;
+const paddleWidth = 3;
+const ballSize = 4;
+const personalities = ['aggressive', 'defensive', 'erratic'];
+let isPaused = true;
+const pauseButton = document.getElementById('pauseButton');
+const cubeContainer = document.querySelector('.cube-container');
+pauseButton.addEventListener('click', () => {
+  isPaused = !isPaused;
+  pauseButton.textContent = isPaused ? 'Play' : 'Pause';
+  cubeContainer.style.animationPlayState = isPaused ? 'paused' : 'running';
+});
+const games = [];
+for (let i = 1; i <= 11; i++) {
+  const canvas = document.getElementById(`pongCanvas${i}`);
+  const ctx = canvas.getContext('2d');
+  ctx.imageSmoothingEnabled = true;
+  games.push({
+    canvas: canvas,
+    ctx: ctx,
+    leftPaddle: new Paddle(50, canvas, '#00ff00', personalities[Math.floor(Math.random() * personalities.length)]),
+    rightPaddle: new Paddle(canvas.width - 50 - paddleWidth, canvas, '#ff00ff', personalities[Math.floor(Math.random() * personalities.length)]),
+    balls: [new Ball(canvas)]
+  });
+}
+setTimeout(() => {
+  const randomGame = games[Math.floor(Math.random() * games.length)];
+  randomGame.balls.push(new Ball(randomGame.canvas, 'rgb(0, 255, 0)', 55));
+}, 5000);
+setTimeout(() => {
+  const randomGame = games[Math.floor(Math.random() * games.length)];
+  [30, 66, 99].forEach(angle => {
+    randomGame.balls.push(new Ball(randomGame.canvas, 'rgb(0, 255, 255)', angle));
+  });
+}, 7000);
+function drawGame(game) {
+  const {
+    ctx,
+    canvas,
+    leftPaddle,
+    rightPaddle,
+    balls
+  } = game;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.strokeStyle = '#0ff';
+  ctx.setLineDash([5, 15]);
+  ctx.beginPath();
+  ctx.moveTo(canvas.width / 2, 0);
+  ctx.lineTo(canvas.width / 2, canvas.height);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  leftPaddle.ai(balls);
+  rightPaddle.ai(balls);
+  balls.forEach(ball => {
+    ball.update(leftPaddle, rightPaddle, games.indexOf(game));
+    ball.draw(ctx);
+  });
+  leftPaddle.draw(ctx);
+  rightPaddle.draw(ctx);
+  ctx.strokeStyle = '#0ff';
+  ctx.strokeRect(0, 0, canvas.width, canvas.height);
+}
+function gameLoop() {
+  games.forEach(game => drawGame(game));
+  requestAnimationFrame(gameLoop);
+}
+gameLoop();</script>
+</body></html>
