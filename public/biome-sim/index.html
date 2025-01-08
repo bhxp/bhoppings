@@ -1,0 +1,951 @@
+<html><head><base href=".">
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      background: #111;
+      font-family: monospace;
+    }
+
+    #gameCanvas {
+      width: 100vw;
+      height: 100vh;
+      display: block;
+      cursor: move;
+    }
+
+    .stats {
+      position: fixed;
+      top: 10px;
+      left: 10px;
+      color: white;
+      background: rgba(0,0,0,0.7);
+      padding: 10px;
+      border-radius: 5px;
+    }
+
+    .overlay-editor {
+      position: fixed;
+      top: 10px;
+      right: 10px;
+      background: rgba(0,0,0,0.8);
+      color: white;
+      padding: 15px;
+      border-radius: 8px;
+    }
+
+    .overlay-editor textarea,
+    .overlay-editor select,
+    .overlay-editor button,
+    .overlay-editor input {
+      width: 200px;
+      margin: 5px 0;
+      background: #333;
+      color: white;
+      border: 1px solid #555;
+      border-radius: 4px;
+      padding: 5px;
+      cursor: pointer;
+    }
+
+    .overlay-editor button {
+      transition: background-color 0.3s;
+    }
+
+    .overlay-editor button:hover {
+      background: #666;
+    }
+
+    .overlay-editor button:active {
+      background: #555;
+      transform: translateY(1px);
+    }
+
+    .drawing-tools {
+      position: fixed;
+      top: 50%;
+      left: 10px;
+      transform: translateY(-50%);
+      background: rgba(0,0,0,0.8);
+      padding: 10px;
+      border-radius: 8px;
+    }
+
+    .drawing-tools button {
+      display: block;
+      width: 40px;
+      height: 40px;
+      margin: 5px;
+      border-radius: 4px;
+      border: 1px solid #555;
+      background: #333;
+      color: white;
+      cursor: pointer;
+    }
+
+    .drawing-tools button.active {
+      background: #666;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="gameCanvas"></canvas>
+  <div class="stats">
+    Cycles: <span id="cycles">0</span><br>
+    Active Tiles: <span id="tiles">0</span><br>
+    Biome: <span id="biome">None</span>
+  </div>
+
+  <div class="overlay-editor">
+    <input type="number" id="mapSize" min="10" max="100" value="25" placeholder="Map Size">
+    <button onclick="regenerateWorld()">Regenerate World</button>
+    <select id="biomeSelect">
+      <option value="DESERT">Desert</option>
+      <option value="FOREST">Forest</option>
+      <option value="WATER">Water</option>
+      <option value="TUNDRA">Tundra</option>
+      <option value="SWAMP">Swamp</option>
+      <option value="SAVANNA">Savanna</option>
+      <option value="OASIS">Oasis</option>
+      <option value="TAIGA">Taiga</option>
+      <option value="ICE">Ice</option>
+      <option value="BADLANDS">Badlands</option>
+      <option value="ENERGY_SOURCE">Energy Source</option>
+      <option value="ENERGY_SINK">Energy Sink</option>
+    </select>
+    <textarea id="overlayCode" placeholder="Enter SVG overlay code here..."></textarea>
+    <button onclick="applyOverlay()">Apply Overlay</button>
+  </div>
+
+  <div class="drawing-tools">
+    <button id="drawBtn" title="Draw Mode">&#x1f58c;&#xfe0f;</button>
+    <button id="eraseBtn" title="Erase">&#x232b;</button>
+    <button id="patternBtn" title="Generate Pattern">&#x1f3a8;</button>
+  </div>
+
+  <script>class NLM {
+  constructor() {
+    this.tiles = [];
+    this.cycles = 0;
+    this.overlays = {};
+    this.TILE_TYPES = {
+      DESERT: 'DESERT',
+      FOREST: 'FOREST',
+      WATER: 'WATER',
+      TUNDRA: 'TUNDRA',
+      SWAMP: 'SWAMP',
+      SAVANNA: 'SAVANNA',
+      OASIS: 'OASIS',
+      TAIGA: 'TAIGA',
+      ICE: 'ICE',
+      BADLANDS: 'BADLANDS',
+      ENERGY_SOURCE: 'ENERGY_SOURCE',
+      ENERGY_SINK: 'ENERGY_SINK'
+    };
+    this.rules = {
+      DESERT: {
+        spread: true,
+        flowRate: 0.02,
+        interactions: {
+          FOREST: 'SAVANNA',
+          WATER: 'OASIS',
+          TUNDRA: 'BADLANDS'
+        },
+        temperature: 40,
+        rainfall: 10,
+        energyAbsorption: 0.4,
+        energyTransferRate: 0.05
+      },
+      FOREST: {
+        spread: true,
+        growthRate: 0.03,
+        interactions: {
+          DESERT: 'SAVANNA',
+          WATER: 'SWAMP',
+          TUNDRA: 'TAIGA'
+        },
+        temperature: 20,
+        rainfall: 100,
+        energyAbsorption: 0.6,
+        energyTransferRate: 0.1
+      },
+      WATER: {
+        spread: true,
+        flowRate: 0.08,
+        interactions: {
+          DESERT: 'OASIS',
+          FOREST: 'SWAMP',
+          TUNDRA: 'ICE'
+        },
+        temperature: 15,
+        rainfall: 200,
+        energyAbsorption: 0.2,
+        energyTransferRate: 0.03
+      },
+      TUNDRA: {
+        spread: true,
+        flowRate: 0.01,
+        interactions: {
+          DESERT: 'BADLANDS',
+          FOREST: 'TAIGA',
+          WATER: 'ICE'
+        },
+        temperature: -10,
+        rainfall: 25,
+        energyAbsorption: 0.3,
+        energyTransferRate: 0.04
+      },
+      SWAMP: {
+        spread: true,
+        growthRate: 0.02,
+        temperature: 25,
+        rainfall: 150,
+        energyAbsorption: 0.7,
+        energyTransferRate: 0.12
+      },
+      SAVANNA: {
+        spread: true,
+        growthRate: 0.015,
+        temperature: 30,
+        rainfall: 50,
+        energyAbsorption: 0.5,
+        energyTransferRate: 0.08
+      },
+      OASIS: {
+        spread: false,
+        growthRate: 0.01,
+        temperature: 35,
+        rainfall: 30,
+        energyAbsorption: 0.6,
+        energyTransferRate: 0.1
+      },
+      TAIGA: {
+        spread: true,
+        growthRate: 0.01,
+        temperature: 0,
+        rainfall: 40,
+        energyAbsorption: 0.4,
+        energyTransferRate: 0.06
+      },
+      ICE: {
+        spread: true,
+        flowRate: 0.005,
+        temperature: -20,
+        rainfall: 15,
+        energyAbsorption: 0.1,
+        energyTransferRate: 0.02
+      },
+      BADLANDS: {
+        spread: true,
+        flowRate: 0.01,
+        temperature: 35,
+        rainfall: 5,
+        energyAbsorption: 0.3,
+        energyTransferRate: 0.05
+      },
+      ENERGY_SOURCE: {
+        spread: false,
+        energyOutput: 0.2,
+        temperature: 50,
+        rainfall: 0,
+        energyAbsorption: 1.0,
+        energyTransferRate: 0.2
+      },
+      ENERGY_SINK: {
+        spread: false,
+        energyDrain: 0.1,
+        temperature: -20,
+        rainfall: 0,
+        energyAbsorption: 0.0,
+        energyTransferRate: 0.3
+      }
+    };
+    this.energySources = [];
+    this.spatialIndex = null;
+    this.drawMode = false;
+  }
+  setOverlay(biomeType, svgContent) {
+    this.overlays[biomeType] = svgContent;
+  }
+  createTile(type, x, y) {
+    const rule = this.rules[type];
+    return {
+      type,
+      x,
+      y,
+      energy: 1,
+      age: 0,
+      active: true,
+      temperature: rule ? rule.temperature : 20,
+      rainfall: rule ? rule.rainfall : 50,
+      energyAbsorption: rule ? rule.energyAbsorption : 0.5,
+      energyTransferRate: rule ? rule.energyTransferRate : 0.1,
+      stabilityFactor: 1.0
+    };
+  }
+  addEnergySource(x, y, strength, radius) {
+    this.energySources.push({
+      x,
+      y,
+      strength,
+      radius
+    });
+  }
+  update() {
+    this.cycles++;
+    for (let tile of this.tiles) {
+      if (!tile.active) continue;
+      tile.energy = Math.max(0.5, Math.min(2.0, tile.energy));
+      if (tile.type === this.TILE_TYPES.ENERGY_SOURCE) {
+        tile.energy = Math.min(tile.energy + this.rules.ENERGY_SOURCE.energyOutput, 1.5);
+        const neighbors = this.getNeighbors(tile);
+        for (let neighbor of neighbors) {
+          if (neighbor && neighbor.active) {
+            neighbor.energy += this.rules.ENERGY_SOURCE.energyOutput * 0.25;
+          }
+        }
+      }
+      if (tile.type === this.TILE_TYPES.ENERGY_SINK) {
+        tile.energy = Math.max(tile.energy - this.rules.ENERGY_SINK.energyDrain, 0.1);
+        const neighbors = this.getNeighbors(tile);
+        for (let neighbor of neighbors) {
+          if (neighbor && neighbor.active) {
+            neighbor.energy = Math.max(neighbor.energy - this.rules.ENERGY_SINK.energyDrain * 0.25, 0.1);
+          }
+        }
+      }
+      this.branchTile(tile);
+      const rule = this.rules[tile.type];
+      if (!rule) continue;
+      const neighbors = this.getNeighbors(tile);
+      for (let neighbor of neighbors) {
+        if (!neighbor || !this.rules[neighbor.type]) continue;
+        neighbor.temperature = neighbor.temperature * 0.8 + tile.temperature * 0.2;
+        neighbor.rainfall = neighbor.rainfall * 0.8 + tile.rainfall * 0.2;
+        if (rule.interactions && rule.interactions[neighbor.type]) {
+          if (Math.random() < 0.01) {
+            neighbor.type = rule.interactions[neighbor.type];
+            neighbor.energy = 1;
+          }
+        }
+        if (rule.spread && Math.random() < (rule.flowRate || rule.growthRate || 0.01)) {
+          if (Math.random() < 0.1) {
+            neighbor.type = tile.type;
+            neighbor.energy = tile.energy * 0.9;
+          }
+        }
+      }
+      tile.age++;
+      tile.energy = rule.growthRate ? tile.energy + rule.growthRate : tile.energy * 0.995;
+      if (tile.energy < 0.1) {
+        tile.active = false;
+      }
+    }
+    for (const source of this.energySources) {
+      for (let tile of this.tiles) {
+        const dist = Math.sqrt(Math.pow(tile.x - source.x, 2) + Math.pow(tile.y - source.y, 2));
+        if (dist <= source.radius) {
+          const influence = (source.radius - dist) / source.radius;
+          tile.energy += source.strength * influence * tile.energyAbsorption;
+        }
+      }
+    }
+    for (let tile of this.tiles) {
+      if (!tile.active) continue;
+      const neighbors = this.getNeighbors(tile);
+      for (let neighbor of neighbors) {
+        if (!neighbor || !neighbor.active) continue;
+        const energyDiff = tile.energy - neighbor.energy;
+        const transferAmount = energyDiff * tile.energyTransferRate * neighbor.energyTransferRate;
+        tile.energy -= transferAmount;
+        neighbor.energy += transferAmount;
+        tile.stabilityFactor = Math.max(0.1, tile.stabilityFactor * (1 - Math.abs(transferAmount)));
+        tile.energy *= tile.stabilityFactor;
+      }
+    }
+    document.getElementById('cycles').textContent = this.cycles;
+    document.getElementById('tiles').textContent = this.tiles.filter(t => t.active).length;
+  }
+  getNeighbors(tile) {
+    if (!tile || typeof tile.x !== 'number' || typeof tile.y !== 'number') return [];
+    const neighbors = [];
+    const directions = [[-1, 0], [1, 0], [0, -1], [0, 1], [-1, -1], [1, 1], [-1, 1], [1, -1]];
+    for (let [dx, dy] of directions) {
+      const neighbor = this.tiles.find(t => t && t.x === tile.x + dx && t.y === tile.y + dy);
+      if (neighbor) neighbors.push(neighbor);
+    }
+    return neighbors;
+  }
+  addBranching(tile) {
+    const rule = this.rules[tile.type];
+    if (!rule) return;
+    const neighbors = this.getNeighbors(tile);
+    const avgTemp = neighbors.reduce((sum, n) => sum + n.temperature, 0) / neighbors.length;
+    const avgRain = neighbors.reduce((sum, n) => sum + n.rainfall, 0) / neighbors.length;
+    if (avgTemp > 30 && avgRain < 20) {
+      return 'DESERT';
+    } else if (avgTemp < 0) {
+      return 'TUNDRA';
+    } else if (avgRain > 150) {
+      return 'SWAMP';
+    } else if (avgTemp > 25 && avgRain > 50) {
+      return 'FOREST';
+    }
+    return tile.type;
+  }
+  branchTile(tile) {
+    const newType = this.addBranching(tile);
+    if (newType !== tile.type) {
+      tile.type = newType;
+      tile.energy = 1;
+      tile.active = true;
+    }
+  }
+}
+class Renderer {
+  constructor(canvas) {
+    this.canvas = canvas;
+    this.ctx = canvas.getContext('2d');
+    this.zoom = 1;
+    this.drawMode = false;
+    this.drawingPattern = null;
+    this.assetManager = new AssetManager();
+    this.spatialGrid = new SpatialHashGrid(10000, 10000, 200);
+    this.tileSize = 20;
+    this.objectPool = new ObjectPool(() => ({
+      type: null,
+      x: 0,
+      y: 0,
+      energy: null,
+      stabilityFactor: null
+    }));
+    this.resolutionScale = 1.0;
+    this.frustum = {
+      left: 0,
+      right: 0,
+      top: 0,
+      bottom: 0
+    };
+    this.updateFrustum();
+    window.addEventListener('resize', () => this.resize());
+    this.resize();
+  }
+  updateFrustum() {
+    const centerX = this.canvas.width / 2;
+    const centerY = this.canvas.height / 2;
+    this.frustum = {
+      left: -centerX / this.tileSize,
+      right: centerX / this.tileSize,
+      top: -centerY / this.tileSize,
+      bottom: centerY / this.tileSize
+    };
+  }
+  isInFrustum(x, y) {
+    return x >= this.frustum.left && x <= this.frustum.right && y >= this.frustum.top && y <= this.frustum.bottom;
+  }
+  setResolutionScale(scale) {
+    this.resolutionScale = scale;
+    this.canvas.width = window.innerWidth * scale;
+    this.canvas.height = window.innerHeight * scale;
+    this.canvas.style.width = window.innerWidth + 'px';
+    this.canvas.style.height = window.innerHeight + 'px';
+    this.updateFrustum();
+  }
+  resize() {
+    this.setResolutionScale(this.resolutionScale);
+    this.tileSize = Math.max(20, Math.floor(window.innerWidth / 40)) * this.zoom;
+    this.tileSize = Math.min(this.tileSize, 100);
+  }
+  render(nlm) {
+    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    this.ctx.save();
+    const centerX = this.canvas.width / 2;
+    const centerY = this.canvas.height / 2;
+    this.spatialGrid.clear();
+    if (!nlm || !nlm.tiles) return;
+    for (const tile of nlm.tiles) {
+      if (!tile || !this.isInFrustum(tile.x, tile.y)) continue;
+      try {
+        const x = centerX + tile.x * this.tileSize;
+        const y = centerY + tile.y * this.tileSize;
+        if (x >= 0 && x < 10000 && y >= 0 && y < 10000) {
+          this.spatialGrid.insert({
+            type: tile.type,
+            x: x,
+            y: y,
+            energy: tile.energy,
+            stabilityFactor: tile.stabilityFactor
+          }, x, y);
+        }
+        this.drawTile({
+          type: tile.type,
+          x: x,
+          y: y,
+          energy: tile.energy,
+          stabilityFactor: tile.stabilityFactor
+        });
+      } catch (err) {
+        console.warn('Error rendering tile:', err);
+      }
+    }
+    for (const source of nlm.energySources) {
+      const x = centerX + source.x * this.tileSize;
+      const y = centerY + source.y * this.tileSize;
+      const gradient = this.ctx.createRadialGradient(x, y, 0, x, y, source.radius * this.tileSize);
+      gradient.addColorStop(0, 'rgba(255,255,255,0.2)');
+      gradient.addColorStop(1, 'rgba(255,255,255,0)');
+      this.ctx.fillStyle = gradient;
+      this.ctx.beginPath();
+      this.ctx.arc(x, y, source.radius * this.tileSize, 0, Math.PI * 2);
+      this.ctx.fill();
+    }
+    this.ctx.restore();
+  }
+  drawTile(renderObj) {
+    const size = this.getLODSize(renderObj);
+    const offsetX = (this.tileSize - size) / 2;
+    const offsetY = (this.tileSize - size) / 2;
+    this.ctx.fillStyle = this.getTileColor(renderObj);
+    this.ctx.fillRect(renderObj.x + offsetX, renderObj.y + offsetY, size - 1, size - 1);
+    if (renderObj.stabilityFactor < 0.5) {
+      this.ctx.fillStyle = `rgba(255,0,0,${0.5 - renderObj.stabilityFactor})`;
+      this.ctx.fillRect(renderObj.x + offsetX, renderObj.y + offsetY, size - 1, size - 1);
+    }
+    if (nlm.overlays[renderObj.type]) {
+      this.drawOverlay(nlm, renderObj, renderObj.x + offsetX, renderObj.y + offsetY);
+    }
+  }
+  drawOverlay(nlm, tile, x, y) {
+    const svgData = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(nlm.overlays[tile.type])}`;
+    const img = new Image();
+    img.src = svgData;
+    img.onload = () => {
+      this.ctx.drawImage(img, x, y, this.tileSize - 1, this.tileSize - 1);
+    };
+  }
+  getLODSize(renderObj) {
+    const dist = Math.sqrt(renderObj.x * renderObj.x + renderObj.y * renderObj.y);
+    const lodLevel = Math.floor(dist / 1000);
+    const baseTileSize = this.tileSize * (renderObj.energy || 1);
+    let size = baseTileSize / (lodLevel + 1);
+    if (renderObj.type === 'ENERGY_SOURCE') {
+      size *= 1.5;
+    } else if (renderObj.type === 'ENERGY_SINK') {
+      size *= 0.75;
+    }
+    return Math.max(size, this.tileSize / 4);
+  }
+  getTileColor(tile) {
+    const colors = {
+      DESERT: `rgba(255,223,139,${tile.energy})`,
+      FOREST: `rgba(34,139,34,${tile.energy})`,
+      WATER: `rgba(0,105,148,${tile.energy})`,
+      TUNDRA: `rgba(224,255,255,${tile.energy})`,
+      SWAMP: `rgba(47,79,79,${tile.energy})`,
+      SAVANNA: `rgba(238,232,170,${tile.energy})`,
+      OASIS: `rgba(65,105,225,${tile.energy})`,
+      TAIGA: `rgba(85,107,47,${tile.energy})`,
+      ICE: `rgba(240,248,255,${tile.energy})`,
+      BADLANDS: `rgba(139,69,19,${tile.energy})`,
+      ENERGY_SOURCE: `rgba(255,255,0,${tile.energy})`,
+      ENERGY_SINK: `rgba(0,0,0,${tile.energy})`
+    };
+    return colors[tile.type] || 'white';
+  }
+}
+class AIController {
+  constructor(nlm) {
+    this.nlm = nlm;
+    this.initAI();
+  }
+  async initAI() {
+    try {
+      const response = await fetch('/api/ai_completion', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify({
+          prompt: `Analyze the current world state and suggest terrain modifications.
+              
+              <typescript-interface>
+              interface Response {
+                modifications: Array<{
+                  x: number;
+                  y: number;
+                  newType: string;
+                  reason: string;
+                }>;
+                environmentalEvent?: {
+                  type: string;
+                  intensity: number;
+                  duration: number;
+                };
+              }
+              </typescript-interface>
+              
+              <example>
+              {
+                "modifications": [
+                  {
+                    "x": 5,
+                    "y": 3,
+                    "newType": "OASIS",
+                    "reason": "Creating desert oasis due to water proximity"
+                  }
+                ],
+                "environmentalEvent": {
+                  "type": "rainfall",
+                  "intensity": 0.7,
+                  "duration": 10
+                }
+              }
+              </example>`,
+          data: {
+            currentState: this.getWorldState()
+          }
+        })
+      });
+      const data = await response.json();
+      this.applyAIModifications(data);
+    } catch (error) {
+      console.error('Error in AI processing:', error);
+    }
+  }
+  getWorldState() {
+    return {
+      tiles: this.nlm.tiles.map(tile => ({
+        type: tile.type,
+        x: tile.x,
+        y: tile.y,
+        energy: tile.energy,
+        temperature: tile.temperature,
+        rainfall: tile.rainfall
+      })),
+      cycles: this.nlm.cycles
+    };
+  }
+  applyAIModifications(data) {
+    if (data.modifications) {
+      data.modifications.forEach(mod => {
+        const tile = this.nlm.tiles.find(t => t.x === mod.x && t.y === mod.y);
+        if (tile) {
+          tile.type = mod.newType;
+          tile.energy = 1;
+          tile.active = true;
+        }
+      });
+    }
+    if (data.environmentalEvent) {
+      this.applyEnvironmentalEvent(data.environmentalEvent);
+    }
+  }
+  applyEnvironmentalEvent(event) {
+    switch (event.type) {
+      case 'rainfall':
+        this.nlm.tiles.forEach(tile => {
+          tile.rainfall += event.intensity * 10;
+        });
+        break;
+      case 'temperature':
+        this.nlm.tiles.forEach(tile => {
+          tile.temperature += event.intensity * 5;
+        });
+        break;
+    }
+  }
+  async generateOverlay(biomeType) {
+    try {
+      const response = await fetch('/api/ai_completion', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify({
+          prompt: `Generate an SVG overlay for the ${biomeType} biome that reflects its characteristics.
+              
+              <typescript-interface>
+              interface Response {
+                svg: string;
+              }
+              </typescript-interface>
+              
+              <example>
+              {
+                "svg": "<svg viewBox='0 0 100 100'><circle cx='50' cy='50' r='25' fill='rgba(255,255,255,0.2)'/></svg>"
+              }
+              </example>`,
+          data: {
+            biomeType,
+            rules: this.nlm.rules[biomeType]
+          }
+        })
+      });
+      const data = await response.json();
+      if (data.svg) {
+        this.nlm.setOverlay(biomeType, data.svg);
+      }
+    } catch (error) {
+      console.error('Error generating overlay:', error);
+    }
+  }
+}
+class AssetManager {
+  constructor() {
+    this.assets = new Map();
+    this.loadingPromises = new Map();
+  }
+  async loadAsset(key, url) {
+    if (this.loadingPromises.has(key)) {
+      return this.loadingPromises.get(key);
+    }
+    const promise = new Promise((resolve, reject) => {
+      const img = new Image();
+      img.src = url;
+      img.onload = () => {
+        this.assets.set(key, img);
+        resolve(img);
+      };
+      img.onerror = reject;
+    });
+    this.loadingPromises.set(key, promise);
+    return promise;
+  }
+  getAsset(key) {
+    return this.assets.get(key);
+  }
+  unloadAsset(key) {
+    this.assets.delete(key);
+    this.loadingPromises.delete(key);
+  }
+}
+class ObjectPool {
+  constructor(createFn, initialSize = 100) {
+    this.createFn = createFn;
+    this.pool = Array(initialSize).fill(null).map(() => ({
+      type: null,
+      x: 0,
+      y: 0,
+      energy: 1,
+      stabilityFactor: 1
+    }));
+  }
+  get() {
+    return this.pool.pop() || this.createFn();
+  }
+  release(obj) {
+    this.pool.push(obj);
+  }
+}
+class SpatialHashGrid {
+  constructor(width, height, cellSize) {
+    this.cellSize = cellSize;
+    this.width = Math.ceil(width / cellSize);
+    this.height = Math.ceil(height / cellSize);
+    this.grid = new Array(this.width * this.height).fill().map(() => []);
+  }
+  getCell(x, y) {
+    if (typeof x !== 'number' || typeof y !== 'number') return [];
+    const cellX = Math.max(0, Math.min(this.width - 1, Math.floor(x / this.cellSize)));
+    const cellY = Math.max(0, Math.min(this.height - 1, Math.floor(y / this.cellSize)));
+    const index = cellY * this.width + cellX;
+    return this.grid[index] || [];
+  }
+  insert(obj, x, y) {
+    if (!obj || typeof x !== 'number' || typeof y !== 'number') return;
+    const cellX = Math.max(0, Math.min(this.width - 1, Math.floor(x / this.cellSize)));
+    const cellY = Math.max(0, Math.min(this.height - 1, Math.floor(y / this.cellSize)));
+    const index = cellY * this.width + cellX;
+    if (!this.grid[index]) {
+      this.grid[index] = [];
+    }
+    this.grid[index].push(obj);
+  }
+  getNearby(x, y, radius) {
+    const nearby = new Set();
+    const startX = Math.floor((x - radius) / this.cellSize);
+    const startY = Math.floor((y - radius) / this.cellSize);
+    const endX = Math.floor((x + radius) / this.cellSize);
+    const endY = Math.floor((y + radius) / this.cellSize);
+    for (let cellY = startY; cellY <= endY; cellY++) {
+      for (let cellX = startX; cellX <= endX; cellX++) {
+        const idx = cellY * this.width + cellX;
+        if (idx >= 0 && idx < this.grid.length) {
+          this.grid[idx].forEach(obj => nearby.add(obj));
+        }
+      }
+    }
+    return Array.from(nearby);
+  }
+  clear() {
+    this.grid.forEach(cell => cell.length = 0);
+  }
+}
+const nlm = new NLM();
+const renderer = new Renderer(document.getElementById('gameCanvas'));
+const aiController = new AIController(nlm);
+function initWorld(size = 25) {
+  nlm.tiles = [];
+  for (let x = -size; x <= size; x++) {
+    for (let y = -size; y <= size; y++) {
+      const dist = Math.sqrt(x * x + y * y);
+      const angle = Math.atan2(y, x);
+      let type = 'FOREST';
+      if (dist < size * 0.2) {
+        type = 'WATER';
+      } else if (dist > size * 0.8) {
+        type = 'TUNDRA';
+      } else if (angle < -Math.PI / 2) {
+        type = 'DESERT';
+      } else if (angle > Math.PI / 2) {
+        type = Math.random() < 0.5 ? 'FOREST' : 'SWAMP';
+      } else if (x > 0) {
+        type = Math.random() < 0.8 ? 'SAVANNA' : 'OASIS';
+      } else {
+        type = Math.random() < 0.7 ? 'FOREST' : 'WATER';
+      }
+      nlm.tiles.push(nlm.createTile(type, x, y));
+    }
+  }
+}
+function regenerateWorld() {
+  const size = parseInt(document.getElementById('mapSize').value) || 25;
+  initWorld(Math.min(100, Math.max(10, size)));
+}
+async function applyOverlay() {
+  const biomeType = document.getElementById('biomeSelect').value;
+  const overlayCode = document.getElementById('overlayCode').value;
+  if (overlayCode.trim()) {
+    nlm.setOverlay(biomeType, overlayCode);
+  } else {
+    await aiController.generateOverlay(biomeType);
+  }
+}
+initWorld();
+let lastFrameTime = performance.now();
+let frameCount = 0;
+const FRAME_SAMPLE = 60;
+function gameLoop() {
+  const currentTime = performance.now();
+  const deltaTime = currentTime - lastFrameTime;
+  lastFrameTime = currentTime;
+  frameCount++;
+  if (frameCount >= FRAME_SAMPLE) {
+    const fps = 1000 / deltaTime;
+    if (fps < 30) {
+      renderer.setResolutionScale(Math.max(0.5, renderer.resolutionScale - 0.1));
+    } else if (fps > 55) {
+      renderer.setResolutionScale(Math.min(1.0, renderer.resolutionScale + 0.1));
+    }
+    frameCount = 0;
+  }
+  nlm.update();
+  renderer.render(nlm);
+  if (nlm.cycles % 100 === 0) {
+    aiController.initAI();
+  }
+  requestAnimationFrame(gameLoop);
+}
+gameLoop();
+const gameCanvas = document.getElementById('gameCanvas');
+let lastMouseMoveTime = 0;
+document.getElementById('drawBtn').addEventListener('click', () => {
+  renderer.drawMode = !renderer.drawMode;
+  document.getElementById('drawBtn').classList.toggle('active');
+});
+document.getElementById('eraseBtn').addEventListener('click', () => {
+  if (renderer.drawMode) {
+    renderer.drawingPattern = 'erase';
+  }
+});
+document.getElementById('patternBtn').addEventListener('click', async () => {
+  try {
+    const response = await fetch('/api/ai_completion', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        prompt: 'Generate an interesting biome pattern',
+        data: {
+          currentState: nlm.getWorldState()
+        }
+      })
+    });
+    const data = await response.json();
+    if (data.pattern) {
+      renderer.drawingPattern = data.pattern;
+    }
+  } catch (error) {
+    console.error('Error generating pattern:', error);
+  }
+});
+function applyPattern(centerX, centerY, pattern) {
+  pattern.forEach(({
+    dx,
+    dy,
+    type
+  }) => {
+    const x = centerX + dx;
+    const y = centerY + dy;
+    const tile = nlm.tiles.find(t => t.x === x && t.y === y);
+    if (tile) {
+      tile.type = type;
+      tile.energy = 1;
+      tile.active = true;
+    } else {
+      nlm.tiles.push(nlm.createTile(type, x, y));
+    }
+  });
+}
+gameCanvas.addEventListener('mousemove', e => {
+  const now = Date.now();
+  if (now - lastMouseMoveTime < 100) return;
+  const rect = gameCanvas.getBoundingClientRect();
+  const x = e.clientX - rect.left;
+  const y = e.clientY - rect.top;
+  const centerX = gameCanvas.width / 2;
+  const centerY = gameCanvas.height / 2;
+  const tileX = Math.floor((x - centerX) / renderer.tileSize);
+  const tileY = Math.floor((y - centerY) / renderer.tileSize);
+  const tile = nlm.tiles.find(t => t && t.x === tileX && t.y === tileY);
+  if (tile) {
+    document.getElementById('biome').textContent = `${tile.type} (Temp: ${Math.round(tile.temperature)}°C, Rain: ${Math.round(tile.rainfall)}mm)`;
+  }
+  lastMouseMoveTime = now;
+});
+gameCanvas.addEventListener('click', e => {
+  const rect = gameCanvas.getBoundingClientRect();
+  const x = e.clientX - rect.left;
+  const y = e.clientY - rect.top;
+  const centerX = gameCanvas.width / 2;
+  const centerY = gameCanvas.height / 2;
+  const tileX = Math.floor((x - centerX) / renderer.tileSize);
+  const tileY = Math.floor((y - centerY) / renderer.tileSize);
+  if (renderer.drawMode) {
+    if (renderer.drawingPattern === 'erase') {
+      nlm.tiles = nlm.tiles.filter(t => t.x !== tileX || t.y !== tileY);
+    } else if (renderer.drawingPattern) {
+      applyPattern(tileX, tileY, renderer.drawingPattern);
+    } else {
+      const tile = nlm.tiles.find(t => t.x === tileX && t.y === tileY);
+      if (tile) {
+        tile.type = document.getElementById('biomeSelect').value;
+        tile.energy = 1;
+        tile.active = true;
+      } else {
+        nlm.tiles.push(nlm.createTile(document.getElementById('biomeSelect').value, tileX, tileY));
+      }
+    }
+  }
+});
+gameCanvas.addEventListener('wheel', e => {
+  e.preventDefault();
+  const zoomAmount = -e.deltaY * 0.001;
+  renderer.zoom = Math.max(0.1, Math.min(5, renderer.zoom + zoomAmount));
+  renderer.resize();
+});</script>
+</body>
+</html>
