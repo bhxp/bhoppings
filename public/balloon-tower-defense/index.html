@@ -1,0 +1,320 @@
+<html><head><base href="https://gf3.geo.gfsrv.net"><title>Balloon Tower Defense</title><style>
+    body {
+        margin: 0;
+        padding: 0;
+        background: #9fd3c7;
+    }
+    .navbar {
+        width: 100%;
+        padding: 10px 0;
+        background: #333333;
+        color: white;
+        display: flex;
+        justify-content: space-around;
+        align-items: center;
+    }
+    .board {
+        margin: 20px auto;
+        width: 800px;
+        height: 500px;
+        background: #88c93a;
+        border-radius: 10px;
+        position: relative;
+        overflow: hidden;
+        cursor: crosshair;
+    }
+    .track {
+        position: absolute;
+        width: 60px;
+        height: 100%;
+        background: #b38b6d;
+    }
+    .track-horizontal {
+        position: absolute;
+        height: 60px;
+        background: #b38b6d;
+    }
+    .track-vertical {
+        position: absolute;
+        width: 60px;
+        background: #b38b6d;
+    }
+    .tower {
+        width: 40px;
+        height: 40px;
+        background-size: contain;
+        background-repeat: no-repeat;
+        background-position: center;
+        position: absolute;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        cursor: pointer;
+        box-shadow: 0 3px 6px rgba(0,0,0,0.16);
+        z-index: 2;
+    }
+    .tower.dart-monkey { 
+        background-image: url('IMG_2496.png');
+    }
+    .tower.tack-shooter { 
+        background-image: url('IMG_2499.jpeg');
+    }
+    .tower.bomb-shooter { background: #000000; }
+    .tower.ninja-monkey { background: #4B0082; }
+    .balloon {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        position: absolute;
+        background-size: contain;
+        background-repeat: no-repeat;
+        background-position: center;
+        z-index: 1;
+    }
+    .red-balloon {
+        background-image: url('IMG_1713.png');
+    }
+    .projectile {
+        width: 10px;
+        height: 10px;
+        background: yellow;
+        border-radius: 50%;
+        position: absolute;
+        z-index: 3;
+    }
+    .projectile.dart { background: brown; }
+    .projectile.tack { background: orange; }
+    .projectile.bomb { background: black; }
+    .projectile.ninja-star { 
+        background: purple;
+        clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+    }
+    .selected-tower {
+        box-shadow: 0 0 10px #fff;
+    }
+</style></head><body>
+    <div class="navbar">
+        <div>Money: <span id="money">650</span></div>
+        <div>Lives: <span id="lives">20</span></div>
+        <div>Wave: <span id="wave">1</span></div>
+        <button onclick="selectTower('dart-monkey')">Dart Monkey (Free)</button>
+        <button onclick="selectTower('tack-shooter')">Tack Shooter ($180)</button>
+        <button onclick="selectTower('bomb-shooter')">Bomb Shooter ($220)</button>
+        <button onclick="selectTower('ninja-monkey')">Ninja Monkey ($300)</button>
+    </div>
+    <div id="board" class="board">
+        <div class="track-horizontal" style="top: 50px; left: 0; width: 300px;"></div>
+        <div class="track-vertical" style="top: 50px; left: 300px; height: 300px;"></div>
+        <div class="track-horizontal" style="top: 290px; left: 300px; width: 300px;"></div>
+        <div class="track-vertical" style="top: 290px; left: 600px; height: 160px;"></div>
+    </div>
+
+<script>
+let money = 650;
+let lives = 20;
+let wave = 1;
+let towers = [];
+let balloons = [];
+let projectiles = [];
+let selectedTowerType = null;
+
+const path = [
+    { x: -30, y: 65 },
+    { x: 300, y: 65 },
+    { x: 300, y: 305 },
+    { x: 600, y: 305 },
+    { x: 600, y: 450 },
+    { x: 800, y: 450 }
+];
+
+const towerTypes = {
+    'dart-monkey': { cost: 0, damage: 1, range: 150, projectileType: 'dart' },
+    'tack-shooter': { cost: 180, damage: 1, range: 100, projectileType: 'tack' },
+    'bomb-shooter': { cost: 220, damage: 3, range: 200, projectileType: 'bomb' },
+    'ninja-monkey': { cost: 300, damage: 2, range: 250, projectileType: 'ninja-star' }
+};
+
+function selectTower(type) {
+    selectedTowerType = type;
+}
+
+document.getElementById('board').addEventListener('click', (e) => {
+    if (selectedTowerType) {
+        const board = document.getElementById('board');
+        const rect = board.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        
+        const towerConfig = towerTypes[selectedTowerType];
+        if (money >= towerConfig.cost) {
+            const tower = document.createElement('div');
+            tower.className = `tower ${selectedTowerType}`;
+            tower.dataset.type = selectedTowerType;
+            tower.style.left = (x - 20) + 'px';
+            tower.style.top = (y - 20) + 'px';
+            
+            board.appendChild(tower);
+            towers.push(tower);
+            money -= towerConfig.cost;
+            updateDisplay();
+        }
+    }
+});
+
+function moveAlongPath(balloon) {
+    let currentPoint = 0;
+    let progress = 0;
+    
+    function animate() {
+        if (currentPoint >= path.length - 1) {
+            lives--;
+            updateDisplay();
+            balloon.remove();
+            balloons = balloons.filter(b => b !== balloon);
+            if (lives <= 0) {
+                alert('Game Over!');
+                location.reload();
+            }
+            return;
+        }
+        
+        const start = path[currentPoint];
+        const end = path[currentPoint + 1];
+        
+        const dx = end.x - start.x;
+        const dy = end.y - start.y;
+        
+        progress += 0.002;
+        
+        if (progress >= 1) {
+            currentPoint++;
+            progress = 0;
+            if (currentPoint >= path.length - 1) {
+                lives--;
+                updateDisplay();
+                balloon.remove();
+                balloons = balloons.filter(b => b !== balloon);
+                if (lives <= 0) {
+                    alert('Game Over!');
+                    location.reload();
+                }
+                return;
+            }
+        }
+        
+        const x = start.x + dx * progress;
+        const y = start.y + dy * progress;
+        
+        balloon.style.left = x + 'px';
+        balloon.style.top = y + 'px';
+        
+        requestAnimationFrame(animate);
+    }
+    
+    animate();
+}
+
+function spawnBalloon() {
+    const balloon = document.createElement('div');
+    balloon.className = 'balloon red-balloon';
+    balloon.style.left = '-30px';
+    balloon.style.top = '65px';
+    balloon.health = 1;
+    document.getElementById('board').appendChild(balloon);
+    balloons.push(balloon);
+    moveAlongPath(balloon);
+}
+
+function shoot(tower, balloon) {
+    const towerType = tower.dataset.type;
+    const towerConfig = towerTypes[towerType];
+    
+    const projectile = document.createElement('div');
+    projectile.className = `projectile ${towerConfig.projectileType}`;
+    projectile.dataset.damage = towerConfig.damage;
+    
+    const towerRect = tower.getBoundingClientRect();
+    const balloonRect = balloon.getBoundingClientRect();
+    
+    projectile.style.left = (towerRect.left - balloonRect.left + 20) + 'px';
+    projectile.style.top = (towerRect.top - balloonRect.top + 20) + 'px';
+    
+    document.getElementById('board').appendChild(projectile);
+    projectiles.push(projectile);
+    
+    const dx = balloonRect.left - towerRect.left;
+    const dy = balloonRect.top - towerRect.top;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    const speed = 10;
+    
+    const vx = (dx / distance) * speed;
+    const vy = (dy / distance) * speed;
+    
+    const animate = () => {
+        const x = parseFloat(projectile.style.left) + vx;
+        const y = parseFloat(projectile.style.top) + vy;
+        
+        projectile.style.left = x + 'px';
+        projectile.style.top = y + 'px';
+        
+        const projectileRect = projectile.getBoundingClientRect();
+        if (isColliding(projectileRect, balloonRect)) {
+            balloon.health -= parseInt(projectile.dataset.damage);
+            if (balloon.health <= 0) {
+                balloon.remove();
+                balloons = balloons.filter(b => b !== balloon);
+                money += 25;
+                updateDisplay();
+            }
+            projectile.remove();
+            projectiles = projectiles.filter(p => p !== projectile);
+            return;
+        }
+        
+        if (x < -10 || x > 810 || y < -10 || y > 510) {
+            projectile.remove();
+            projectiles = projectiles.filter(p => p !== projectile);
+            return;
+        }
+        
+        requestAnimationFrame(animate);
+    };
+    
+    requestAnimationFrame(animate);
+}
+
+function isColliding(rect1, rect2) {
+    return !(rect1.right < rect2.left || 
+             rect1.left > rect2.right || 
+             rect1.bottom < rect2.top || 
+             rect1.top > rect2.bottom);
+}
+
+function updateDisplay() {
+    document.getElementById('money').textContent = money;
+    document.getElementById('lives').textContent = lives;
+    document.getElementById('wave').textContent = wave;
+}
+
+setInterval(() => {
+    spawnBalloon();
+}, 2000);
+
+setInterval(() => {
+    towers.forEach(tower => {
+        const towerConfig = towerTypes[tower.dataset.type];
+        balloons.forEach(balloon => {
+            const towerRect = tower.getBoundingClientRect();
+            const balloonRect = balloon.getBoundingClientRect();
+            const dx = balloonRect.left - towerRect.left;
+            const dy = balloonRect.top - towerRect.top;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            
+            if (distance < towerConfig.range) {
+                shoot(tower, balloon);
+            }
+        });
+    });
+}, 1000);
+
+</script></body></html>
