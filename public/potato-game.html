@@ -1,0 +1,442 @@
+<html><head><base href=".">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<style>
+  body {
+    margin: 0;
+    overflow: hidden;
+  }
+
+  .health {
+    position: absolute;
+    background: rgba(0,0,0,0.5);
+    color: white;
+    padding: 2px 6px;
+    border-radius: 10px;
+    font-family: Arial, sans-serif;
+    font-size: 12px;
+    transform: translate(-50%, -30px);
+    white-space: nowrap;
+  }
+
+  .message {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: white;
+    font-size: 20px;
+    text-align: center;
+    background: rgba(0,0,0,0.7);
+    padding: 10px;
+    border-radius: 10px;
+    z-index: 10;
+    display: none;
+    font-family: Arial, sans-serif;
+  }
+
+  .game-over {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: white;
+    font-size: 40px;
+    font-family: Arial, sans-serif;
+    display: none;
+    text-align: center;
+    background: rgba(0,0,0,0.8);
+    padding: 20px;
+    border-radius: 15px;
+  }
+
+  .has-potato::after {
+    content: '🥔';
+    position: absolute;
+    font-size: 20px;
+    top: -25px;
+    right: -10px;
+  }
+
+  #resetClouds {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 10px 20px;
+    background: rgba(0,0,0,0.7);
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-family: Arial, sans-serif;
+  }
+
+  #resetClouds:hover {
+    background: rgba(0,0,0,0.9);
+  }
+
+  #emoteButton {
+    position: fixed;
+    bottom: 60px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 10px 20px;
+    background: rgba(0,0,0,0.7);
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-family: Arial, sans-serif;
+    z-index: 100;
+  }
+
+  .emote-panel {
+    display: none;
+    position: fixed;
+    bottom: 100px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0,0,0,0.8);
+    padding: 10px;
+    border-radius: 10px;
+    z-index: 100;
+  }
+
+  .emote-option {
+    width: 50px;
+    height: 50px;
+    margin: 5px;
+    cursor: pointer;
+    border-radius: 5px;
+    object-fit: cover;
+  }
+
+  .emote-display {
+    position: absolute;
+    width: 50px;
+    height: 50px;
+    transform: translate(-50%, -80px);
+    object-fit: cover;
+    border-radius: 5px;
+    display: none;
+  }
+</style>
+</head>
+<body>
+<div class="message" id="message">You have the potato! Tap an enemy to throw!</div>
+<div class="game-over" id="gameOver"></div>
+<button id="resetClouds">Reset Clouds</button>
+<button id="emoteButton">Emotes</button>
+<div id="emotePanel" class="emote-panel">
+  <img src="fire.gif" class="emote-option" data-emote="fire">
+  <img src="nerd.gif" class="emote-option" data-emote="nerd">
+  <img src="Chill_guy_original_artwork.jpg" class="emote-option" data-emote="chill">
+  <img src="cat.png" class="emote-option" data-emote="cat">
+  <img src="download (11).jpeg" class="emote-option" data-emote="nugget">
+  <img src="IMG_0637.jpeg" class="emote-option" data-emote="scream">
+  <img src="images.jpg" class="emote-option" data-emote="orange">
+  <img src="angry.jpg" class="emote-option" data-emote="angry">
+  <img src="Normal.png" class="emote-option" data-emote="smiley">
+  <img src="miao.jpeg" class="emote-option" data-emote="miao">
+  <img src="insane-face-fixed-v0-z28s8n4mebaa1.jpg" class="emote-option" data-emote="insane">
+  <img src="Cactus.png" class="emote-option" data-emote="cactus">
+  <img src="happi.gif" class="emote-option" data-emote="happy">
+  <img src="Evil_Leafy_Front.webp" class="emote-option" data-emote="evil-leaf">
+  <img src="pngtree-3d-illustration-cheese-burger-png-image_10245728.png" class="emote-option" data-emote="burger">
+  <img src="Angry.png" class="emote-option" data-emote="angry-face">
+</div>
+
+<script>const throwSound = new Audio('minecraft-fireworks---launch-1-made-with-Voicemod.mp3');
+class GameObject {
+  constructor(position, health = 10) {
+    this.position = position;
+    this.health = health;
+    this.hasPotato = false;
+    this.canEmote = true;
+    this.emoteTimeout = null;
+    const geometry = new THREE.SphereGeometry(1, 32, 32);
+    const material = new THREE.MeshPhongMaterial({
+      color: 0x00ff00
+    });
+    this.mesh = new THREE.Mesh(geometry, material);
+    this.mesh.position.copy(position);
+    this.healthLabel = document.createElement('div');
+    this.healthLabel.className = 'health';
+    document.body.appendChild(this.healthLabel);
+    this.emoteDisplay = document.createElement('img');
+    this.emoteDisplay.className = 'emote-display';
+    document.body.appendChild(this.emoteDisplay);
+    this.updateHealth();
+  }
+  showEmote(emoteSrc) {
+    if (!this.canEmote) return;
+    this.canEmote = false;
+    this.emoteDisplay.src = emoteSrc;
+    this.emoteDisplay.style.display = 'block';
+    clearTimeout(this.emoteTimeout);
+    this.emoteTimeout = setTimeout(() => {
+      this.emoteDisplay.style.display = 'none';
+      setTimeout(() => {
+        this.canEmote = true;
+      }, 3000);
+    }, 3000);
+  }
+  updateHealth() {
+    this.healthLabel.textContent = `HP: ${this.health}`;
+  }
+  update() {
+    const vector = this.mesh.position.clone();
+    vector.project(camera);
+    const x = (vector.x * .5 + .5) * window.innerWidth;
+    const y = (-(vector.y * .5) + .5) * window.innerHeight;
+    this.healthLabel.style.left = x + 'px';
+    this.healthLabel.style.top = y + 'px';
+    this.emoteDisplay.style.left = x + 'px';
+    this.emoteDisplay.style.top = y + 'px';
+  }
+  takeDamage() {
+    this.health--;
+    this.updateHealth();
+    if (this.health <= 0) {
+      document.body.removeChild(this.healthLabel);
+      scene.remove(this.mesh);
+      return true;
+    }
+    return false;
+  }
+  setPotato(has) {
+    this.hasPotato = has;
+    if (has) {
+      this.healthLabel.classList.add('has-potato');
+    } else {
+      this.healthLabel.classList.remove('has-potato');
+    }
+  }
+}
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+const renderer = new THREE.WebGLRenderer();
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setClearColor(0x87CEEB);
+document.body.appendChild(renderer.domElement);
+const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+scene.add(ambientLight);
+const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
+directionalLight.position.set(10, 10, 10);
+scene.add(directionalLight);
+const groundGeometry = new THREE.PlaneGeometry(100, 100);
+const groundMaterial = new THREE.MeshPhongMaterial({
+  color: 0x33aa33
+});
+const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+ground.rotation.x = -Math.PI / 2;
+ground.position.y = -2;
+scene.add(ground);
+let clouds = new THREE.Group();
+scene.add(clouds);
+function createCloud() {
+  const cloud = new THREE.Group();
+  const cloudMaterial = new THREE.MeshPhongMaterial({
+    color: 0xffffff
+  });
+  for (let i = 0; i < 5; i++) {
+    const size = 1 + Math.random() * 0.5;
+    const cloudPiece = new THREE.Mesh(new THREE.SphereGeometry(size, 16, 16), cloudMaterial);
+    cloudPiece.position.x = i * 2;
+    cloudPiece.position.y = Math.random();
+    cloud.add(cloudPiece);
+  }
+  cloud.position.y = 15 + Math.random() * 5;
+  cloud.position.x = -25 + Math.random() * 50;
+  cloud.position.z = -25 + Math.random() * 50;
+  clouds.add(cloud);
+}
+function resetClouds() {
+  scene.remove(clouds);
+  clouds = new THREE.Group();
+  scene.add(clouds);
+  for (let i = 0; i < 10; i++) {
+    createCloud();
+  }
+}
+document.getElementById('resetClouds').addEventListener('click', resetClouds);
+resetClouds();
+camera.position.set(0, 20, 30);
+camera.lookAt(0, 0, 0);
+class Game {
+  constructor() {
+    this.messageElement = document.getElementById('message');
+    this.player = new GameObject(new THREE.Vector3(0, 0, 0));
+    this.player.mesh.material.color.setHex(0x00ff00);
+    scene.add(this.player.mesh);
+    this.bots = [];
+    for (let i = 0; i < 10; i++) {
+      const angle = i / 10 * Math.PI * 2;
+      const x = Math.cos(angle) * 10;
+      const z = Math.sin(angle) * 10;
+      const bot = new GameObject(new THREE.Vector3(x, 0, z));
+      bot.mesh.material.color.setHex(0xff0000);
+      scene.add(bot.mesh);
+      this.bots.push(bot);
+    }
+    this.hasPotato = null;
+    this.gameOver = false;
+    this.isThrowingPotato = false;
+    this.setupEventListeners();
+    this.setupEmoteSystem();
+    this.startGame();
+    this.animate();
+  }
+  setupEventListeners() {
+    const raycaster = new THREE.Raycaster();
+    const mouse = new THREE.Vector2();
+    renderer.domElement.addEventListener('click', event => {
+      if (this.hasPotato === this.player && !this.isThrowingPotato) {
+        mouse.x = event.clientX / window.innerWidth * 2 - 1;
+        mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+        raycaster.setFromCamera(mouse, camera);
+        const intersects = raycaster.intersectObjects(this.bots.map(bot => bot.mesh));
+        if (intersects.length > 0) {
+          const targetBot = this.bots.find(bot => bot.mesh === intersects[0].object);
+          if (targetBot) {
+            throwSound.currentTime = 0;
+            throwSound.play();
+            this.throwPotato(this.player, targetBot);
+            this.messageElement.style.display = 'none';
+          }
+        }
+      }
+    });
+  }
+  setupEmoteSystem() {
+    const emoteButton = document.getElementById('emoteButton');
+    const emotePanel = document.getElementById('emotePanel');
+    const emoteOptions = document.querySelectorAll('.emote-option');
+    emoteButton.addEventListener('click', () => {
+      emotePanel.style.display = emotePanel.style.display === 'none' ? 'block' : 'none';
+    });
+    emoteOptions.forEach(option => {
+      option.addEventListener('click', () => {
+        if (this.player.canEmote) {
+          this.player.showEmote(option.src);
+          emotePanel.style.display = 'none';
+        }
+      });
+    });
+    setInterval(() => {
+      this.bots.forEach(bot => {
+        if (bot.canEmote && Math.random() < 0.1) {
+          const emotes = Array.from(emoteOptions);
+          const randomEmote = emotes[Math.floor(Math.random() * emotes.length)];
+          bot.showEmote(randomEmote.src);
+        }
+      });
+    }, 2000);
+  }
+  throwPotato(from, to) {
+    if (this.isThrowingPotato) return;
+    this.isThrowingPotato = true;
+    throwSound.currentTime = 0;
+    throwSound.play();
+    if (from) from.setPotato(false);
+    const potato = new THREE.Mesh(new THREE.SphereGeometry(0.5, 16, 16), new THREE.MeshPhongMaterial({
+      color: 0x8B4513
+    }));
+    potato.position.copy(from.mesh.position);
+    scene.add(potato);
+    const startPos = from.mesh.position.clone();
+    const endPos = to.mesh.position.clone();
+    const startTime = Date.now();
+    const duration = 500;
+    const animatePotato = () => {
+      const elapsed = Date.now() - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      potato.position.lerpVectors(startPos, endPos, progress);
+      potato.position.y = Math.sin(progress * Math.PI) * 5;
+      if (progress < 1) {
+        requestAnimationFrame(animatePotato);
+      } else {
+        scene.remove(potato);
+        if (to.takeDamage()) {
+          if (to === this.player) {
+            this.endGame('Game Over - You Lost!');
+          } else {
+            this.bots = this.bots.filter(b => b !== to);
+            if (this.bots.length === 0) {
+              this.endGame('Congratulations - You Won!');
+            }
+          }
+        }
+        this.hasPotato = to;
+        if (!this.gameOver) {
+          to.setPotato(true);
+          this.continuePotato();
+        }
+        this.isThrowingPotato = false;
+      }
+    };
+    animatePotato();
+  }
+  continuePotato() {
+    if (this.hasPotato === this.player) {
+      this.messageElement.style.display = 'block';
+      return;
+    }
+    setTimeout(() => {
+      if (this.gameOver || this.isThrowingPotato) return;
+      const from = this.hasPotato;
+      if (!from) return;
+      let targets = [...this.bots, this.player].filter(t => t !== from && t.health > 0);
+      if (targets.length === 0) return;
+      targets.sort((a, b) => b.health - a.health);
+      const maxHealth = targets[0].health;
+      const highHealthTargets = targets.filter(t => t.health >= maxHealth - 2);
+      const lowHealthTargets = targets.filter(t => t.health <= 4);
+      if (targets.every(t => t.health <= 4)) {
+        const target = targets[0];
+        this.throwPotato(from, target);
+      } else if (Math.random() < 0.8) {
+        if (highHealthTargets.length > 0) {
+          const target = highHealthTargets[Math.floor(Math.random() * highHealthTargets.length)];
+          this.throwPotato(from, target);
+        } else {
+          const target = targets[Math.floor(Math.random() * targets.length)];
+          this.throwPotato(from, target);
+        }
+      } else {
+        if (lowHealthTargets.length > 0) {
+          const target = lowHealthTargets[Math.floor(Math.random() * lowHealthTargets.length)];
+          this.throwPotato(from, target);
+        } else {
+          const target = targets[Math.floor(Math.random() * targets.length)];
+          this.throwPotato(from, target);
+        }
+      }
+    }, 1000);
+  }
+  startGame() {
+    this.hasPotato = this.bots[0];
+    this.bots[0].setPotato(true);
+    this.continuePotato();
+  }
+  endGame(message) {
+    this.gameOver = true;
+    const gameOver = document.getElementById('gameOver');
+    gameOver.textContent = message;
+    gameOver.style.display = 'block';
+    this.messageElement.style.display = 'none';
+  }
+  animate() {
+    requestAnimationFrame(() => this.animate());
+    this.player.update();
+    this.bots.forEach(bot => bot.update());
+    renderer.render(scene, camera);
+  }
+}
+const game = new Game();
+window.addEventListener('resize', () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});</script>
+</body></html>
