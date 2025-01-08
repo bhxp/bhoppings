@@ -1,0 +1,228 @@
+<html><head><base href="." />
+<title>Block World</title>
+<style>
+body {
+    margin: 0;
+    overflow: hidden;
+    background: #87CEEB;
+    font-family: Arial, sans-serif;
+}
+
+#game {
+    width: 100vw;
+    height: 100vh;
+    perspective: 1000px;
+}
+
+.world {
+    position: relative;
+    transform-style: preserve-3d;
+    transform: rotateX(60deg);
+}
+
+.block {
+    position: absolute;
+    width: 50px;
+    height: 50px;
+    transform-style: preserve-3d;
+    cursor: pointer;
+}
+
+.face {
+    position: absolute;
+    width: 50px;
+    height: 50px;
+    border: 1px solid rgba(0,0,0,0.2);
+}
+
+.grass {
+    background: #567d46;
+}
+
+.dirt {
+    background: #8B4513;
+}
+
+.stone {
+    background: #808080;
+}
+
+.inventory {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 10px;
+    padding: 10px;
+    background: rgba(0,0,0,0.5);
+    border-radius: 10px;
+}
+
+.inventory-item {
+    width: 50px;
+    height: 50px;
+    border: 2px solid #fff;
+    cursor: pointer;
+}
+
+.inventory-item.selected {
+    border-color: #ffff00;
+}
+
+#controls {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    color: white;
+    background: rgba(0,0,0,0.5);
+    padding: 10px;
+    border-radius: 5px;
+}
+</style>
+</head>
+<body>
+<div id="game">
+    <div class="world" id="world"></div>
+    <div class="inventory" id="inventory">
+        <div class="inventory-item grass selected" data-type="grass"></div>
+        <div class="inventory-item dirt" data-type="dirt"></div>
+        <div class="inventory-item stone" data-type="stone"></div>
+    </div>
+    <div id="controls">
+        Left Click: Place Block<br>
+        Right Click: Remove Block<br>
+        WASD: Move Camera
+    </div>
+</div>
+
+<script>
+const world = document.getElementById('world');
+const inventory = document.getElementById('inventory');
+let selectedBlock = 'grass';
+let cameraX = 0;
+let cameraZ = 0;
+
+// Create initial world
+function createWorld() {
+    // Create ground layer
+    for(let x = -5; x < 5; x++) {
+        for(let z = -5; z < 5; z++) {
+            createBlock(x, 0, z, 'grass');
+            createBlock(x, -1, z, 'dirt');
+        }
+    }
+}
+
+function createBlock(x, y, z, type) {
+    const block = document.createElement('div');
+    block.className = 'block';
+    block.dataset.x = x;
+    block.dataset.y = y;
+    block.dataset.z = z;
+    block.dataset.type = type;
+    
+    // Create faces
+    const faces = ['front', 'back', 'left', 'right', 'top', 'bottom'];
+    faces.forEach(face => {
+        const faceEl = document.createElement('div');
+        faceEl.className = `face ${type}`;
+        
+        // Position faces
+        switch(face) {
+            case 'front':
+                faceEl.style.transform = 'rotateY(0deg) translateZ(25px)';
+                break;
+            case 'back':
+                faceEl.style.transform = 'rotateY(180deg) translateZ(25px)';
+                break;
+            case 'left':
+                faceEl.style.transform = 'rotateY(-90deg) translateZ(25px)';
+                break;
+            case 'right':
+                faceEl.style.transform = 'rotateY(90deg) translateZ(25px)';
+                break;
+            case 'top':
+                faceEl.style.transform = 'rotateX(90deg) translateZ(25px)';
+                break;
+            case 'bottom':
+                faceEl.style.transform = 'rotateX(-90deg) translateZ(25px)';
+                break;
+        }
+        
+        block.appendChild(faceEl);
+    });
+    
+    block.style.transform = `translate3d(${x * 50}px, ${y * -50}px, ${z * 50}px)`;
+    world.appendChild(block);
+}
+
+// Handle block placement
+world.addEventListener('click', (e) => {
+    if(e.target.classList.contains('face')) {
+        const block = e.target.parentElement;
+        const x = parseInt(block.dataset.x);
+        const y = parseInt(block.dataset.y);
+        const z = parseInt(block.dataset.z);
+        
+        // Determine which face was clicked and place block accordingly
+        const face = Array.from(block.children).indexOf(e.target);
+        let newX = x, newY = y, newZ = z;
+        
+        switch(face) {
+            case 0: newZ++; break; // front
+            case 1: newZ--; break; // back
+            case 2: newX--; break; // left
+            case 3: newX++; break; // right
+            case 4: newY++; break; // top
+            case 5: newY--; break; // bottom
+        }
+        
+        createBlock(newX, newY, newZ, selectedBlock);
+    }
+});
+
+// Handle block removal
+world.addEventListener('contextmenu', (e) => {
+    e.preventDefault();
+    if(e.target.classList.contains('face')) {
+        const block = e.target.parentElement;
+        if(block.dataset.y !== "0") { // Don't remove ground level
+            block.remove();
+        }
+    }
+});
+
+// Handle inventory selection
+inventory.addEventListener('click', (e) => {
+    if(e.target.classList.contains('inventory-item')) {
+        document.querySelector('.selected').classList.remove('selected');
+        e.target.classList.add('selected');
+        selectedBlock = e.target.dataset.type;
+    }
+});
+
+// Handle camera movement
+document.addEventListener('keydown', (e) => {
+    const speed = 10;
+    switch(e.key.toLowerCase()) {
+        case 'w':
+            cameraZ += speed;
+            break;
+        case 's':
+            cameraZ -= speed;
+            break;
+        case 'a':
+            cameraX += speed;
+            break;
+        case 'd':
+            cameraX -= speed;
+            break;
+    }
+    world.style.transform = `rotateX(60deg) translate3d(${cameraX}px, 0, ${cameraZ}px)`;
+});
+
+createWorld();
+</script>
+</body>
+</html>
