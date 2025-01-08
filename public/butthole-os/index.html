@@ -1,0 +1,752 @@
+<html><head><base href="."></head><body>
+<style>
+  body {
+    margin: 0;
+    padding: 0;
+    background: #1a1a1a;
+    color: #fff;
+    font-family: 'Segoe UI', sans-serif;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+  }
+
+  .container {
+    text-align: center;
+    position: relative;
+    padding: 40px;
+    background: #1a1a1a;
+  }
+
+  .logo {
+    margin-bottom: 20px;
+    animation: spin 4s infinite linear;
+  }
+
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+
+  .title {
+    font-size: 24px;
+    font-weight: bold;
+    margin-bottom: 30px;
+    font-family: 'Segoe UI', sans-serif;
+    letter-spacing: 2px;
+  }
+
+  .progress {
+    width: 300px;
+    height: 4px;
+    background: #333;
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .progress-bar {
+    height: 100%;
+    background: #fff;
+    animation: load 3s forwards;
+    transform-origin: left;
+  }
+
+  @keyframes load {
+    0% { transform: scaleX(0); }
+    50% { transform: scaleX(0.7); }
+    100% { transform: scaleX(1); }
+  }
+
+  .background-art {
+    position: absolute;
+    opacity: 0.1;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    z-index: -1;
+  }
+
+  .login-screen {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: #1a1a1a;
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+  }
+
+  .login-box {
+    background: #2a2a2a;
+    padding: 40px;
+    border-radius: 10px;
+    text-align: center;
+  }
+
+  .login-input {
+    background: #333;
+    border: none;
+    padding: 10px;
+    margin: 10px 0;
+    color: white;
+    width: 200px;
+    border-radius: 5px;
+  }
+
+  .login-button {
+    background: #444;
+    border: none;
+    padding: 10px 20px;
+    color: white;
+    margin-top: 20px;
+    cursor: pointer;
+    border-radius: 5px;
+    transition: background 0.3s;
+  }
+
+  .login-button:hover {
+    background: #555;
+  }
+
+  .desktop {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: #003366; 
+    z-index: 2000;
+  }
+
+  .taskbar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 40px;
+    background: #ffffff;
+    z-index: 2001;
+    display: flex;
+    align-items: center;
+    padding: 0 10px;
+  }
+
+  .start-button {
+    background: #333;
+    border: none;
+    padding: 5px 15px;
+    color: white;
+    cursor: pointer;
+    margin-right: 10px;
+    border-radius: 3px;
+  }
+
+  .start-button:hover {
+    background: #444;
+  }
+
+  .program-window {
+    position: absolute;
+    background: #444;
+    border: 2px solid #666;
+    border-radius: 5px;
+    min-width: 500px;
+    min-height: 400px;
+    display: none;
+  }
+
+  .window-header {
+    background: #333;
+    padding: 5px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: move;
+  }
+
+  .close-button {
+    background: none;
+    border: none;
+    color: white;
+    cursor: pointer;
+    padding: 0 5px;
+  }
+
+  .window-content {
+    padding: 10px;
+  }
+
+  .program-icon {
+    width: 60px;
+    height: 60px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 5px;
+    margin: 10px;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 12px;
+    text-align: center;
+  }
+
+  .start-menu {
+    position: fixed;
+    bottom: 40px; /* Above taskbar */
+    left: 0;
+    width: 250px;
+    background: #333;
+    border: 1px solid #555;
+    border-radius: 5px;
+    padding: 10px;
+    display: none;
+    z-index: 3000;
+  }
+
+  .start-menu-item {
+    padding: 8px 15px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .start-menu-item:hover {
+    background: #444;
+  }
+
+  .start-submenu {
+    position: fixed;
+    background: #333;
+    border: 1px solid #555;
+    border-radius: 5px;
+    padding: 10px;
+    display: none;
+    z-index: 3001;
+  }
+
+  .programs-menu {
+    left: 250px;
+    bottom: 40px;
+    width: 200px;
+  }
+
+  .power-menu {
+    left: 0px;
+    bottom: 40px;
+    width: 200px;
+  }
+</style>
+
+<div class="container">
+  <div class="logo">
+    <svg width="200" height="200" viewBox="0 0 200 200">
+      <path fill="#fff" d="M20,20 L180,20 L180,180 L20,180 Z" stroke="#000" stroke-width="4"/>
+      <path fill="#fff" d="M20,70 L180,70" stroke="#000" stroke-width="4"/>
+      <path fill="#fff" d="M140,20 L140,180" stroke="#000" stroke-width="4"/>
+    </svg>
+  </div>
+
+  <div class="title">WINDOWS 10000 BC</div>
+
+  <div class="progress">
+    <div class="progress-bar"></div>
+  </div>
+
+  <svg class="background-art" viewBox="0 0 400 400">
+    <path d="M100,200 Q150,100 200,200 T300,200" stroke="#fff" fill="none" stroke-width="2"/>
+    <circle cx="150" cy="150" r="20" stroke="#fff" fill="none" stroke-width="2"/>
+    <path d="M250,150 L270,130 L290,150 L270,170 Z" stroke="#fff" fill="none" stroke-width="2"/>
+    <path d="M100,300 C150,250 250,250 300,300" stroke="#fff" fill="none" stroke-width="2"/>
+  </svg>
+</div>
+
+<div class="login-screen">
+  <div class="login-box">
+    <svg width="100" height="100" viewBox="0 0 200 200">
+      <path fill="#fff" d="M20,20 L180,20 L180,180 L20,180 Z" stroke="#000" stroke-width="4"/>
+      <path fill="#fff" d="M20,70 L180,70" stroke="#000" stroke-width="4"/>
+      <path fill="#fff" d="M140,20 L140,180" stroke="#000" stroke-width="4"/>
+    </svg>
+    <h2>Welcome to Windows 10000 BC</h2>
+    <input type="text" placeholder="Username" class="login-input">
+    <input type="password" placeholder="Password" class="login-input">
+    <button class="login-button">Login</button>
+  </div>
+</div>
+
+<div class="desktop">
+  <div class="program-icon" onclick="openProgram(&apos;rockpad&apos;)">
+    <svg width="30" height="30" viewBox="0 0 100 100">
+      <rect x="10" y="10" width="80" height="80" fill="none" stroke="white" stroke-width="4"/>
+      <line x1="20" y1="30" x2="80" y2="30" stroke="white" stroke-width="4"/>
+      <line x1="20" y1="50" x2="60" y2="50" stroke="white" stroke-width="4"/>
+    </svg>
+    Letterpad
+  </div>
+  
+  <div class="program-icon" onclick="openProgram(&apos;paint&apos;)">
+    <svg width="30" height="30" viewBox="0 0 100 100">
+      <circle cx="50" cy="50" r="40" fill="none" stroke="white" stroke-width="4"/>
+      <path d="M30,50 Q50,20 70,50" fill="none" stroke="white" stroke-width="4"/>
+    </svg>
+    Paint
+  </div>
+
+  <div class="program-icon" onclick="openProgram(&apos;browsernet&apos;)">
+    <svg width="30" height="30" viewBox="0 0 100 100">
+      <circle cx="50" cy="50" r="35" fill="none" stroke="white" stroke-width="4"/>
+      <path d="M50,15 L50,85" stroke="white" stroke-width="4"/>
+      <path d="M15,50 L85,50" stroke="white" stroke-width="4"/>
+      <circle cx="50" cy="50" r="20" fill="none" stroke="white" stroke-width="4"/>
+    </svg>
+    Browsernet
+  </div>
+
+  <div class="program-icon" onclick="openProgram(&apos;messenger&apos;)">
+    <svg width="30" height="30" viewBox="0 0 100 100">
+      <path d="M20,30 L80,30 L80,70 L60,70 L50,85 L40,70 L20,70 Z" fill="none" stroke="white" stroke-width="4"/>
+      <circle cx="40" cy="50" r="4" fill="white"/>
+      <circle cx="50" cy="50" r="4" fill="white"/>
+      <circle cx="60" cy="50" r="4" fill="white"/>
+    </svg>
+    Messenger
+  </div>
+
+  <div class="program-icon" onclick="openProgram(&apos;terminal&apos;)">
+    <svg width="30" height="30" viewBox="0 0 100 100">
+      <rect x="10" y="10" width="80" height="80" fill="none" stroke="white" stroke-width="4"/>
+      <path d="M20,30 L40,50 L20,70" fill="none" stroke="white" stroke-width="4"/>
+      <line x1="45" y1="70" x2="75" y2="70" stroke="white" stroke-width="4"/>
+    </svg>
+    Terminal
+  </div>
+
+  <div class="program-icon" onclick="openProgram(&apos;calculator&apos;)">
+    <svg width="30" height="30" viewBox="0 0 100 100">
+      <rect x="10" y="10" width="80" height="80" fill="none" stroke="white" stroke-width="4"/>
+      <line x1="25" y1="30" x2="75" y2="30" stroke="white" stroke-width="4"/>
+      <line x1="25" y1="50" x2="75" y2="50" stroke="white" stroke-width="4"/>
+      <line x1="25" y1="70" x2="75" y2="70" stroke="white" stroke-width="4"/>
+    </svg>
+    Calculator
+  </div>
+  
+  <div class="taskbar">
+    <button class="start-button">Start</button>
+  </div>
+
+  <div id="rockpad" class="program-window">
+    <div class="window-header">
+      <span>Letterpad</span>
+      <button class="close-button" onclick="closeProgram(&apos;rockpad&apos;)">&#xd7;</button>
+    </div>
+    <div class="window-content">
+      <textarea style="width: 100%; height: 350px; background: #555; color: white; border: none; padding: 10px;" placeholder="Carve your thoughts here..."></textarea>
+    </div>
+  </div>
+
+  <div id="paint" class="program-window">
+    <div class="window-header">
+      <span>Paint</span>
+      <button class="close-button" onclick="closeProgram(&apos;paint&apos;)">&#xd7;</button>
+    </div>
+    <div class="window-content">
+      <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+        <input type="color" id="paintColor" value="#ffffff">
+      </div>
+      <canvas id="paintCanvas" width="480" height="350" style="background: #555; cursor: crosshair;"></canvas>
+    </div>
+  </div>
+
+  <div id="browsernet" class="program-window">
+    <div class="window-header">
+      <span>Browsernet</span>
+      <button class="close-button" onclick="closeProgram(&apos;browsernet&apos;)">&#xd7;</button>
+    </div>
+    <div class="window-content" style="background: #555; color: white; padding: 20px;">
+      <div style="background: #444; padding: 10px; margin-bottom: 10px;">
+        <input type="text" placeholder="Enter address..." style="width: 90%; background: #333; border: none; color: white; padding: 5px;">
+      </div>
+      <div style="text-align: center; padding: 40px;">
+        <h2>Welcome to Browsernet</h2>
+        <p>The prehistoric internet is still under construction.</p>
+        <p>Try searching for: paintings, prehistoric recipes, or mammoth tracking</p>
+      </div>
+      <div style="display: flex; gap: 10px; margin-top: 20px;">
+        <button style="flex: 1; background: #444; border: none; color: white; padding: 10px;" onclick="openBrowserPage(&apos;news&apos;)">News</button>
+        <button style="flex: 1; background: #444; border: none; color: white; padding: 10px;" onclick="openBrowserPage(&apos;about&apos;)">About Windows 10000 BC</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="messenger" class="program-window">
+    <div class="window-header">
+      <span>Messenger</span>
+      <button class="close-button" onclick="closeProgram(&apos;messenger&apos;)">&#xd7;</button>
+    </div>
+    <div class="window-content" style="background: #555; color: white; padding: 20px;">
+      <div style="height: 300px; background: #444; padding: 10px; margin-bottom: 10px; overflow-y: auto;">
+        <div style="margin-bottom: 10px;">&#x1f995; Dino: Anyone up for mammoth hunting?</div>
+        <div style="margin-bottom: 10px;">&#x1f9a3; Mammoth: I&apos;m busy.</div>
+      </div>
+      <div style="display: flex;">
+        <input type="text" id="message-input" placeholder="Send a message..." style="flex: 1; background: #333; border: none; color: white; padding: 5px;">
+        <button onclick="sendMessage()" style="background: #666; border: none; color: white; padding: 5px 10px; margin-left: 5px;">Send</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="terminal" class="program-window">
+    <div class="window-header">
+      <span>Terminal</span>
+      <button class="close-button" onclick="closeProgram(&apos;terminal&apos;)">&#xd7;</button>
+    </div>
+    <div class="window-content" style="background: #000; color: #0f0; padding: 20px; font-family: monospace;">
+      <div id="terminal-output" style="height: 300px; overflow-y: auto;">
+        Welcome to Prehistoric Terminal v0.1<br>
+        Type &apos;help&apos; for available commands<br>
+        &gt; _
+      </div>
+    </div>
+  </div>
+
+  <div id="calculator" class="program-window">
+    <div class="window-header">
+      <span>Calculator</span>
+      <button class="close-button" onclick="closeProgram(&apos;calculator&apos;)">&#xd7;</button>
+    </div>
+    <div class="window-content" style="background: #555; padding: 20px;">
+      <input type="text" readonly style="width: 100%; background: #333; color: white; padding: 10px; margin-bottom: 10px; text-align: right;">
+      <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px;">
+        <button style="background: #444; border: none; color: white; padding: 10px;">7</button>
+        <button style="background: #444; border: none; color: white; padding: 10px;">8</button>
+        <button style="background: #444; border: none; color: white; padding: 10px;">9</button>
+        <button style="background: #444; border: none; color: white; padding: 10px;">/</button>
+        <button style="background: #444; border: none; color: white; padding: 10px;">4</button>
+        <button style="background: #444; border: none; color: white; padding: 10px;">5</button>
+        <button style="background: #444; border: none; color: white; padding: 10px;">6</button>
+        <button style="background: #444; border: none; color: white; padding: 10px;">*</button>
+        <button style="background: #444; border: none; color: white; padding: 10px;">1</button>
+        <button style="background: #444; border: none; color: white; padding: 10px;">2</button>
+        <button style="background: #444; border: none; color: white; padding: 10px;">3</button>
+        <button style="background: #444; border: none; color: white; padding: 10px;">-</button>
+        <button style="background: #444; border: none; color: white; padding: 10px;">0</button>
+        <button style="background: #444; border: none; color: white; padding: 10px;">.</button>
+        <button style="background: #444; border: none; color: white; padding: 10px;">=</button>
+        <button style="background: #444; border: none; color: white; padding: 10px;">+</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="settings" class="program-window">
+    <div class="window-header">
+      <span>Settings</span>
+      <button class="close-button" onclick="closeProgram(&apos;settings&apos;)">&#xd7;</button>
+    </div>
+    <div class="window-content" style="background: #555; color: white; padding: 20px;">
+      <h2>System Settings</h2>
+      <div style="margin: 20px 0;">
+        <h3>Display</h3>
+        <label>
+          Background Color:
+          <input type="color" value="#0055aa">
+        </label>
+      </div>
+      <div style="margin: 20px 0;">
+        <h3>Sound</h3>
+        <label>
+          Volume:
+          <input type="range" min="0" max="100" value="50">
+        </label>
+      </div>
+    </div>
+  </div>
+
+  <div class="start-menu">
+    <div class="start-menu-item">
+      <svg width="20" height="20" viewBox="0 0 100 100">
+        <rect x="10" y="10" width="80" height="80" fill="none" stroke="white" stroke-width="4"/>
+      </svg>
+      Programs
+    </div>
+    <div class="start-menu-item">
+      <svg width="20" height="20" viewBox="0 0 100 100">
+        <circle cx="50" cy="50" r="40" fill="none" stroke="white" stroke-width="4"/>
+      </svg>
+      Settings
+    </div>
+    <div class="start-menu-item">
+      <svg width="20" height="20" viewBox="0 0 100 100">
+        <path d="M20,50 L80,50 M50,20 L50,80" stroke="white" stroke-width="4"/>
+      </svg>
+      Power
+    </div>
+  </div>
+
+  <div class="programs-menu start-submenu">
+    <div class="start-menu-item" onclick="openProgram(&apos;rockpad&apos;)">Letterpad</div>
+    <div class="start-menu-item" onclick="openProgram(&apos;paint&apos;)">Paint</div>
+    <div class="start-menu-item" onclick="openProgram(&apos;browsernet&apos;)">Browsernet</div>
+    <div class="start-menu-item" onclick="openProgram(&apos;messenger&apos;)">Messenger</div>
+    <div class="start-menu-item" onclick="openProgram(&apos;terminal&apos;)">Terminal</div>
+    <div class="start-menu-item" onclick="openProgram(&apos;calculator&apos;)">Calculator</div>
+  </div>
+
+  <div class="power-menu start-submenu">
+    <div class="start-menu-item" onclick="shutDown()">Shut Down</div>
+    <div class="start-menu-item">Restart</div>
+    <div class="start-menu-item">Sleep</div>
+  </div>
+</div>
+
+<script>document.addEventListener('DOMContentLoaded', function () {
+  const loadingContainer = document.querySelector('.container');
+  const loginScreen = document.querySelector('.login-screen');
+  const loginButton = document.querySelector('.login-button');
+  const desktop = document.querySelector('.desktop');
+  const startButton = document.querySelector('.start-button');
+  const startMenu = document.querySelector('.start-menu');
+  setTimeout(function () {
+    loadingContainer.style.display = 'none';
+    loginScreen.style.display = 'flex';
+  }, 3000);
+  loginButton.addEventListener('click', function () {
+    loginScreen.style.display = 'none';
+    desktop.style.display = 'block';
+  });
+  startButton.addEventListener('click', function () {
+    startMenu.style.display = startMenu.style.display === 'none' ? 'block' : 'none';
+  });
+  document.addEventListener('click', function (e) {
+    if (!startButton.contains(e.target) && !startMenu.contains(e.target)) {
+      startMenu.style.display = 'none';
+    }
+  });
+  const windows = document.querySelectorAll('.program-window');
+  const settingsWindow = document.getElementById('settings');
+  const backgroundColorPicker = settingsWindow.querySelector('input[type="color"]');
+  const volumeSlider = settingsWindow.querySelector('input[type="range"]');
+  backgroundColorPicker.addEventListener('change', function (e) {
+    document.querySelector('.desktop').style.background = e.target.value;
+  });
+  volumeSlider.addEventListener('change', function (e) {
+    console.log('Volume changed to: ' + e.target.value);
+  });
+  windows.forEach(makeWindowDraggable);
+  const terminalWindow = document.getElementById('terminal');
+  const calculatorWindow = document.getElementById('calculator');
+  makeWindowDraggable(terminalWindow);
+  makeWindowDraggable(calculatorWindow);
+  const programsMenuItem = document.querySelector('.start-menu-item:nth-child(1)');
+  const settingsMenuItem = document.querySelector('.start-menu-item:nth-child(2)');
+  const powerMenuItem = document.querySelector('.start-menu-item:nth-child(3)');
+  const programsMenu = document.querySelector('.programs-menu');
+  const powerMenu = document.querySelector('.power-menu');
+  programsMenuItem.addEventListener('mouseover', function () {
+    programsMenu.style.display = 'block';
+    powerMenu.style.display = 'none';
+  });
+  powerMenuItem.addEventListener('mouseover', function () {
+    const rect = powerMenuItem.getBoundingClientRect();
+    powerMenu.style.left = rect.left + rect.width + 'px';
+    powerMenu.style.bottom = '40px';
+    powerMenu.style.display = 'block';
+    programsMenu.style.display = 'none';
+  });
+  settingsMenuItem.addEventListener('click', function () {
+    openProgram('settings');
+    startMenu.style.display = 'none';
+  });
+  document.addEventListener('click', function (e) {
+    if (!programsMenuItem.contains(e.target) && !programsMenu.contains(e.target) && !powerMenuItem.contains(e.target) && !powerMenu.contains(e.target)) {
+      programsMenu.style.display = 'none';
+      powerMenu.style.display = 'none';
+    }
+  });
+  startMenu.addEventListener('mouseleave', function (e) {
+    if (!programsMenu.contains(e.relatedTarget) && !powerMenu.contains(e.relatedTarget)) {
+      programsMenu.style.display = 'none';
+      powerMenu.style.display = 'none';
+      startMenu.style.display = 'none';
+    }
+  });
+  programsMenu.addEventListener('mouseleave', function (e) {
+    if (!startMenu.contains(e.relatedTarget)) {
+      programsMenu.style.display = 'none';
+    }
+  });
+  powerMenu.addEventListener('mouseleave', function (e) {
+    if (!startMenu.contains(e.relatedTarget)) {
+      powerMenu.style.display = 'none';
+    }
+  });
+  initPaint();
+});
+let isDrawing = false;
+let currentX = 0;
+let currentY = 0;
+let paintContext = null;
+function initPaint() {
+  const canvas = document.getElementById('paintCanvas');
+  paintContext = canvas.getContext('2d');
+  canvas.addEventListener('mousedown', startDrawing);
+  canvas.addEventListener('mousemove', draw);
+  canvas.addEventListener('mouseup', stopDrawing);
+  canvas.addEventListener('mouseout', stopDrawing);
+  document.getElementById('paintColor').addEventListener('input', updateColor);
+}
+function startDrawing(e) {
+  isDrawing = true;
+  const rect = e.target.getBoundingClientRect();
+  currentX = e.clientX - rect.left;
+  currentY = e.clientY - rect.top;
+}
+function draw(e) {
+  if (!isDrawing) return;
+  const rect = e.target.getBoundingClientRect();
+  const x = e.clientX - rect.left;
+  const y = e.clientY - rect.top;
+  paintContext.beginPath();
+  paintContext.strokeStyle = document.getElementById('paintColor').value;
+  paintContext.lineWidth = 2;
+  paintContext.lineCap = 'round';
+  paintContext.moveTo(currentX, currentY);
+  paintContext.lineTo(x, y);
+  paintContext.stroke();
+  currentX = x;
+  currentY = y;
+}
+function stopDrawing() {
+  isDrawing = false;
+}
+function updateColor(e) {
+  paintContext.strokeStyle = e.target.value;
+}
+function makeWindowDraggable(element) {
+  const header = element.querySelector('.window-header');
+  let pos1 = 0,
+    pos2 = 0,
+    pos3 = 0,
+    pos4 = 0;
+  header.onmousedown = dragMouseDown;
+  function dragMouseDown(e) {
+    e.preventDefault();
+    pos3 = e.clientX;
+    pos4 = e.clientY;
+    document.onmouseup = closeDragElement;
+    document.onmousemove = elementDrag;
+  }
+  function elementDrag(e) {
+    e.preventDefault();
+    pos1 = pos3 - e.clientX;
+    pos2 = pos4 - e.clientY;
+    pos3 = e.clientX;
+    pos4 = e.clientY;
+    element.style.top = element.offsetTop - pos2 + "px";
+    element.style.left = element.offsetLeft - pos1 + "px";
+  }
+  function closeDragElement() {
+    document.onmouseup = null;
+    document.onmousemove = null;
+  }
+}
+function openProgram(id) {
+  if (id === 'paint') {
+    const canvas = document.getElementById('paintCanvas');
+    if (!paintContext) {
+      paintContext = canvas.getContext('2d');
+    }
+  }
+  const program = document.getElementById(id);
+  program.style.display = 'block';
+  if (!program.style.top) {
+    program.style.top = '100px';
+    program.style.left = '100px';
+  }
+}
+function closeProgram(id) {
+  document.getElementById(id).style.display = 'none';
+}
+function shutDown() {
+  location.reload();
+}
+function openBrowserPage(page) {
+  const browserContent = document.querySelector('#browsernet .window-content > div:nth-child(2)');
+  if (page === 'news') {
+    browserContent.innerHTML = `
+      <h2>Prehistoric News</h2>
+      <p>- No news is good news in 10000 BC</p>
+    `;
+  } else if (page === 'about') {
+    browserContent.innerHTML = `
+      <h2>Windows 10000 BC Updates</h2>
+      <ul style="list-style-type: none; padding: 0;">
+        <li>Changed background</li>
+        <li>Added Power button</li>
+        <li>New things to Start menu</li>
+        <li>Added Messenger</li>
+        <li>Renamed Every Program</li>
+        <li>New Fancy Taskbar</li>
+      </ul>
+    `;
+  }
+}
+function sendMessage() {
+  const input = document.getElementById('message-input');
+  const messageText = input.value.trim();
+  if (messageText) {
+    const chatArea = document.querySelector('#messenger .window-content > div:first-child');
+    const newMessage = document.createElement('div');
+    newMessage.style.marginBottom = '10px';
+    newMessage.innerHTML = `&#x1f600; You: ${messageText}`;
+    chatArea.appendChild(newMessage);
+    chatArea.scrollTop = chatArea.scrollHeight;
+    input.value = '';
+    setTimeout(() => {
+      const response = responses[Math.floor(Math.random() * responses.length)];
+      const responseDiv = document.createElement('div');
+      responseDiv.style.marginBottom = '10px';
+      responseDiv.innerHTML = `${response.emoji} Dino: ${response.text}`;
+      chatArea.appendChild(responseDiv);
+      chatArea.scrollTop = chatArea.scrollHeight;
+    }, 1000 + Math.random() * 2000);
+  }
+}
+const responses = [{
+  text: "Interesting point!",
+  emoji: "🦖"
+}, {
+  text: "Anyone want to go paint some cave art?",
+  emoji: "🦕"
+}, {
+  text: "I found some great berries!",
+  emoji: "🦖"
+}, {
+  text: "*grunt*",
+  emoji: "🦕"
+}, {
+  text: "BRB, running from a sabertooth",
+  emoji: "🦖"
+}, {
+  text: "Has anyone seen my club?",
+  emoji: "🦕"
+}];
+document.getElementById('message-input').addEventListener('keypress', function (e) {
+  if (e.key === 'Enter') {
+    sendMessage();
+  }
+});</script>
+
+</body></html>
