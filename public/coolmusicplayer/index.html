@@ -1,0 +1,450 @@
+<html><head><base href="http://localhost/">
+<style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-family: 'Arial', sans-serif;
+    color: white;
+    position: relative;
+    overflow: hidden;
+}
+
+#background-video {
+    position: fixed;
+    right: 0;
+    bottom: 0;
+    min-width: 100%;
+    min-height: 100%;
+    width: auto;
+    height: auto;
+    z-index: -1;
+    object-fit: cover;
+    filter: brightness(1.3) contrast(1.1);
+}
+
+.overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(255,255,255,0.1);
+    z-index: -1;
+}
+
+.player-container {
+    position: relative;
+    width: 500px;
+    height: 500px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.glass-effect {
+    background: rgba(255, 255, 255, 0.25);
+    backdrop-filter: blur(10px);
+    border-radius: 50%;
+    width: 80px;
+    height: 80px;
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0 0 20px rgba(255,255,255,0.4), 
+                inset 0 0 15px rgba(255,255,255,0.3),
+                0 4px 6px rgba(0,0,0,0.3);
+    border: 1px solid rgba(255, 255, 255, 0.8);
+    animation: pulse 2s infinite;
+    transition: all 0.5s ease-out;
+    overflow: hidden;
+}
+
+.glass-pattern {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: 
+        radial-gradient(circle at 30% 30%, rgba(255,255,255,0.1) 1px, transparent 3px) 0 0 / 15px 15px,
+        radial-gradient(circle at 70% 70%, rgba(255,255,255,0.1) 1px, transparent 3px) 0 0 / 15px 15px,
+        linear-gradient(45deg, transparent 48%, rgba(255,255,255,0.1) 49%, rgba(255,255,255,0.1) 51%, transparent 52%) 0 0 / 20px 20px,
+        linear-gradient(-45deg, transparent 48%, rgba(255,255,255,0.1) 49%, rgba(255,255,255,0.1) 51%, transparent 52%) 0 0 / 20px 20px;
+    border-radius: 50%;
+    opacity: 0.7;
+    animation: none;
+}
+
+.glass-effect.expanded {
+    width: 300px;
+    height: 300px;
+}
+
+.control-button {
+    position: absolute;
+    width: 40px;
+    height: 40px;
+    background: rgba(255,255,255,0.3);
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    transition: all 0.3s;
+    opacity: 0;
+    transform: scale(0);
+    border: 1px solid rgba(255, 255, 255, 0.8);
+    box-shadow: 0 0 8px rgba(255,255,255,0.3),
+                inset 0 0 6px rgba(255,255,255,0.2),
+                0 2px 4px rgba(0,0,0,0.2);
+}
+
+.glass-effect.expanded .control-button {
+    opacity: 1;
+    transform: scale(1);
+}
+
+#prevBtn {
+    left: 30px;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+#nextBtn {
+    right: 30px;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.control-button:hover {
+    background: rgba(255,255,255,0.5);
+    transform: scale(1.1);
+}
+
+.visualizer {
+    position: absolute;
+    width: 200%;
+    height: 200%;
+    border-radius: 50%;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.5s;
+    left: -50%;
+    top: -50%;
+    z-index: -1;
+    transform: rotate(0deg);
+}
+
+.visualizer.active {
+    opacity: 1;
+    animation: rotateVisualizer 20s linear infinite;
+}
+
+.audio-bar {
+    position: absolute;
+    background: linear-gradient(to top, rgba(255,255,255,0.3), rgba(255,255,255,0.8));
+    bottom: 50%;
+    left: 50%;
+    transform-origin: bottom;
+    border-radius: 8px;
+    width: 3px;
+    filter: drop-shadow(0 0 8px rgba(255,255,255,0.4));
+}
+
+.play-button {
+    width: 50px;
+    height: 50px;
+    background: rgba(255,255,255,0.3);
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    transition: all 0.3s;
+    z-index: 2;
+    border: 1px solid rgba(255, 255, 255, 0.8);
+    box-shadow: 0 0 10px rgba(255,255,255,0.3),
+                inset 0 0 8px rgba(255,255,255,0.2),
+                0 3px 5px rgba(0,0,0,0.25);
+}
+
+.glass-effect.expanded .play-button {
+    width: 100px;
+    height: 100px;
+}
+
+.play-button:hover {
+    transform: scale(1.1);
+}
+
+.play-icon {
+    width: 0;
+    height: 0;
+    border-style: solid;
+    border-width: 12px 0 12px 20px;
+    border-color: transparent transparent transparent #ffffff;
+    transition: all 0.3s;
+}
+
+.glass-effect.expanded .play-icon {
+    border-width: 20px 0 20px 40px;
+}
+
+.track-list {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    animation: rotate 20s linear infinite;
+    animation-play-state: paused;
+    opacity: 0;
+    transform: scale(0);
+    transition: all 0.5s ease-out;
+}
+
+.track-list.visible {
+    opacity: 1;
+    transform: scale(1);
+}
+
+.track {
+    position: absolute;
+    width: 200px;
+    padding: 10px;
+    background: rgba(255,255,255,0.25);
+    border-radius: 20px;
+    text-align: center;
+    transform-origin: 250px 250px;
+    backdrop-filter: blur(5px);
+    transition: all 0.3s;
+    opacity: 0;
+    transform: translateY(20px);
+    cursor: pointer;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+    border: 1px solid rgba(255, 255, 255, 0.8);
+    box-shadow: 0 0 15px rgba(255,255,255,0.2),
+                inset 0 0 8px rgba(255,255,255,0.1),
+                0 3px 5px rgba(0,0,0,0.2);
+}
+
+.track.visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.track:hover {
+    background: rgba(255,255,255,0.4);
+    transform: scale(1.1);
+}
+
+@keyframes rotate {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+@keyframes pulse {
+    0% { 
+        box-shadow: 0 0 20px rgba(255,255,255,0.4),
+                    inset 0 0 15px rgba(255,255,255,0.3),
+                    0 4px 6px rgba(0,0,0,0.3); 
+    }
+    50% { 
+        box-shadow: 0 0 40px rgba(255,255,255,0.6),
+                    inset 0 0 25px rgba(255,255,255,0.5),
+                    0 4px 8px rgba(0,0,0,0.4); 
+    }
+    100% { 
+        box-shadow: 0 0 20px rgba(255,255,255,0.4),
+                    inset 0 0 15px rgba(255,255,255,0.3),
+                    0 4px 6px rgba(0,0,0,0.3); 
+    }
+}
+
+@keyframes rotateVisualizer {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+</style>
+</head>
+<body>
+    <video autoplay muted loop id="background-video">
+        <source src="/330455011314958344.mp4" type="video/mp4">
+    </video>
+    <div class="overlay"></div>
+    <audio id="audioPlayer" src="/&#x611b;&#x306e;&#x7269;&#x8a9e; (Ai no Monogatari) (1).mp3"></audio>
+    <div class="player-container">
+        <div class="track-list">
+            <div class="track" style="transform: rotate(0deg)" data-song="/&#x611b;&#x306e;&#x7269;&#x8a9e; (Ai no Monogatari) (1).mp3">Ai no Monogatari</div>
+            <div class="track" style="transform: rotate(51.42857142857143deg)" data-song="/4c442f30-5472-4c53-aa8b-22c54e5b0968.mp3">Love Stories Universe</div>
+            <div class="track" style="transform: rotate(102.85714285714286deg)">Ocean Waves</div>
+            <div class="track" style="transform: rotate(154.2857142857143deg)">Mountain Echo</div>
+            <div class="track" style="transform: rotate(205.71428571428572deg)">City Lights</div>
+            <div class="track" style="transform: rotate(257.14285714285716deg)" data-song="/&#x611b;&#x306e;&#x7269;&#x8a9e; (1).mp3">&#x611b;&#x306e;&#x7269;&#x8a9e; I</div>
+            <div class="track" style="transform: rotate(308.5714285714286deg)" data-song="/&#x611b;&#x306e;&#x7269;&#x8a9e; (Ai no Monogatari).mp3">&#x611b;&#x306e;&#x7269;&#x8a9e; II</div>
+        </div>
+        <div class="glass-effect">
+            <div class="visualizer"></div>
+            <div class="glass-pattern"></div>
+            <div class="control-button" id="prevBtn">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="#ffffff">
+                    <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/>
+                </svg>
+            </div>
+            <div class="play-button" id="playBtn">
+                <div class="play-icon"></div>
+            </div>
+            <div class="control-button" id="nextBtn">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="#ffffff">
+                    <path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/>
+                </svg>
+            </div>
+        </div>
+    </div>
+
+<script>let isExpanded = false;
+let isPlaying = false;
+let currentTrackIndex = 0;
+const playBtn = document.getElementById('playBtn');
+const prevBtn = document.getElementById('prevBtn');
+const nextBtn = document.getElementById('nextBtn');
+const glassEffect = document.querySelector('.glass-effect');
+const trackList = document.querySelector('.track-list');
+const visualizer = document.querySelector('.visualizer');
+const tracks = document.querySelectorAll('.track');
+const audioPlayer = document.getElementById('audioPlayer');
+let audioContext;
+let analyser;
+let source;
+let animationFrame;
+function initAudioContext() {
+  audioContext = new (window.AudioContext || window.webkitAudioContext)();
+  analyser = audioContext.createAnalyser();
+  source = audioContext.createMediaElementSource(audioPlayer);
+  source.connect(analyser);
+  analyser.connect(audioContext.destination);
+  analyser.fftSize = 256;
+}
+function playTrack(index) {
+  currentTrackIndex = index;
+  const track = tracks[index];
+  if (track.dataset.song) {
+    audioPlayer.src = track.dataset.song;
+    if (isPlaying) {
+      audioPlayer.play();
+    }
+  }
+  tracks.forEach(t => t.style.background = 'rgba(255,255,255,0.25)');
+  track.style.background = 'rgba(255,255,255,0.4)';
+}
+function nextTrack() {
+  currentTrackIndex = (currentTrackIndex + 1) % tracks.length;
+  playTrack(currentTrackIndex);
+}
+function previousTrack() {
+  currentTrackIndex = (currentTrackIndex - 1 + tracks.length) % tracks.length;
+  playTrack(currentTrackIndex);
+}
+nextBtn.addEventListener('click', nextTrack);
+prevBtn.addEventListener('click', previousTrack);
+function createVisualizer() {
+  const bufferLength = analyser.frequencyBinCount;
+  const dataArray = new Uint8Array(bufferLength);
+  const bars = 120;
+  visualizer.innerHTML = '';
+  for (let i = 0; i < bars; i++) {
+    const bar = document.createElement('div');
+    bar.className = 'audio-bar';
+    bar.style.transform = `rotate(${i * (360 / bars)}deg)`;
+    visualizer.appendChild(bar);
+  }
+  function animate() {
+    if (!isPlaying) return;
+    analyser.getByteFrequencyData(dataArray);
+    const audioBars = document.querySelectorAll('.audio-bar');
+    audioBars.forEach((bar, index) => {
+      const barIndex = Math.floor(index * bufferLength / bars);
+      let barHeight = dataArray[barIndex] / 255 * 150;
+      const frequencyFactor = 1 + Math.sin(index / bars * Math.PI) * 0.5;
+      barHeight *= frequencyFactor;
+      barHeight = Math.max(barHeight, 15);
+      bar.style.transition = 'height 0.1s ease';
+      bar.style.height = `${barHeight}px`;
+      const hue = index / bars * 360;
+      const alpha = 0.6 + dataArray[barIndex] / 255 * 0.4;
+      bar.style.background = `linear-gradient(to top, 
+                rgba(255,255,255,${alpha * 0.3}), 
+                rgba(255,255,255,${alpha}))`;
+    });
+    animationFrame = requestAnimationFrame(animate);
+  }
+  return animate;
+}
+playBtn.addEventListener('click', () => {
+  if (!audioContext) {
+    initAudioContext();
+  }
+  if (!isExpanded) {
+    glassEffect.classList.add('expanded');
+    setTimeout(() => {
+      trackList.classList.add('visible');
+      tracks.forEach((track, index) => {
+        setTimeout(() => {
+          track.classList.add('visible');
+        }, index * 100);
+      });
+    }, 500);
+    isExpanded = true;
+  } else {
+    isPlaying = !isPlaying;
+    if (isPlaying) {
+      playBtn.innerHTML = `
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="#ffffff">
+                    <rect x="6" y="4" width="4" height="16"/>
+                    <rect x="14" y="4" width="4" height="16"/>
+                </svg>
+            `;
+      trackList.style.animationPlayState = 'running';
+      visualizer.classList.add('active');
+      audioPlayer.play();
+      const animate = createVisualizer();
+      animate();
+    } else {
+      playBtn.innerHTML = '<div class="play-icon"></div>';
+      trackList.style.animationPlayState = 'paused';
+      visualizer.classList.remove('active');
+      audioPlayer.pause();
+      if (animationFrame) {
+        cancelAnimationFrame(animationFrame);
+      }
+    }
+  }
+  playBtn.style.transform = 'scale(0.9)';
+  setTimeout(() => {
+    playBtn.style.transform = 'scale(1)';
+  }, 100);
+});
+tracks.forEach((track, index) => {
+  track.addEventListener('click', () => {
+    playTrack(index);
+    glassEffect.style.transform = 'scale(1.1)';
+    setTimeout(() => {
+      glassEffect.style.transform = 'scale(1)';
+    }, 200);
+  });
+  track.addEventListener('mouseover', () => {
+    const currentRotate = track.style.transform.match(/rotate\(([^)]+)\)/)[1];
+    track.style.transform = `rotate(${currentRotate}) scale(1.1)`;
+  });
+  track.addEventListener('mouseout', () => {
+    const currentRotate = track.style.transform.match(/rotate\(([^)]+)\)/)[1];
+    track.style.transform = `rotate(${currentRotate})`;
+  });
+});</script>
+</body>
+</html>
