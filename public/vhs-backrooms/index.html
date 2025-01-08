@@ -1,0 +1,607 @@
+<html><head><base href="." /><title>Backrooms Level 0 - VHS Effect (Optimized)</title>
+<style>
+body{margin:0;}
+canvas{width:100vw;height:100vh;filter: grayscale(40%) brightness(0.9);}
+#effectOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    opacity: 0.45;
+    mix-blend-mode: screen;
+    z-index: 999;
+}
+#grayOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: #404040;
+    opacity: 0.4;
+    pointer-events: none;
+    z-index: 998;
+}
+#blendModeText {
+    position: fixed; 
+    bottom: 10px; 
+    left: 10px; 
+    color: white; 
+    background: rgba(0,0,0,0.5); 
+    padding: 5px; 
+    z-index: 9999;
+}
+</style>
+</head><body>
+<img id="effectOverlay" src="effect-video.gif" alt="VHS Effect">
+<div id="grayOverlay"></div>
+<div id="blendModeText"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+const renderer = new THREE.WebGLRenderer();
+renderer.setSize(window.innerWidth, window.innerHeight);
+
+// Add post-processing for more liminal atmosphere
+renderer.outputEncoding = THREE.sRGBEncoding;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 0.6; // Reduced from 0.8 for darker feel
+scene.fog = new THREE.Fog(0x111111, 8, 20); // Darker, denser fog
+scene.background = new THREE.Color(0x111111); // Darker background
+document.body.appendChild(renderer.domElement);
+
+// Create VHS effect overlay with added grain
+const vhsOverlay = document.createElement('div');
+vhsOverlay.style.cssText = `
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    mix-blend-mode: screen;
+    animation: vhsFlicker 0.1s infinite;
+    background: linear-gradient(transparent 50%, rgba(0, 0, 0, 0.25) 50%),
+                linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+    z-index: 1000;
+`;
+
+// Add VHS animation with enhanced effects
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes vhsFlicker {
+        0% { opacity: 0.95; transform: translateY(0); }
+        50% { opacity: 0.96; transform: translateY(-1px); }
+        100% { opacity: 0.95; transform: translateY(0); }
+    }
+    @keyframes scanline {
+        0% { transform: translateY(-100%); }
+        100% { transform: translateY(100%); }
+    }
+    body::after {
+        content: "";
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 2px;
+        background: rgba(255, 255, 255, 0.1);
+        animation: scanline 4s linear infinite;
+        pointer-events: none;
+        z-index: 1001;
+    }
+`;
+document.head.appendChild(style);
+document.body.appendChild(vhsOverlay);
+
+// Cache DOM elements and frequently used values
+const effectOverlay = document.getElementById('effectOverlay');
+const grayOverlay = document.getElementById('grayOverlay');
+const rendererDomElement = renderer.domElement;
+const PLAYER_HEIGHT = 2;
+const HALF_PLAYER_HEIGHT = PLAYER_HEIGHT / 2;
+const RAD_TO_DEG = Math.PI / 180;
+
+// Load textures
+const textureLoader = new THREE.TextureLoader();
+const wallTexture = textureLoader.load('pixil-frame-0 (4).png');
+const floorCeilingTexture = textureLoader.load('pixil-frame-0 (5).png');
+
+wallTexture.wrapS = THREE.RepeatWrapping;
+wallTexture.wrapT = THREE.RepeatWrapping;
+floorCeilingTexture.wrapS = THREE.RepeatWrapping;
+floorCeilingTexture.wrapT = THREE.RepeatWrapping;
+
+// Player settings
+const moveSpeed = 0.1;
+const jumpForce = 0.15;
+let velocity = 0;
+const gravity = -0.005;
+let canJump = false;
+
+// Collision detection helper
+const raycaster = new THREE.Raycaster();
+const direction = new THREE.Vector3();
+
+// Player
+const player = new THREE.Object3D();
+let spawnPos = {x: 0, y: 2, z: 0};
+player.position.set(spawnPos.x, spawnPos.y, spawnPos.z);
+scene.add(player);
+
+let bobTimer = 0;
+const bobFrequency = 5; 
+const bobAmplitude = 0.02; 
+let isMoving = false;
+
+// Updated Materials with textures
+const floorMaterial = new THREE.MeshPhongMaterial({
+    map: floorCeilingTexture,  
+    roughness: 0.9,
+    metalness: 0.1,
+    color: 0x666666
+});
+
+const wallMaterial = new THREE.MeshPhongMaterial({
+    map: wallTexture,
+    roughness: 0.95,
+    metalness: 0.05,
+    color: 0x777777
+});
+
+const ceilingMaterial = new THREE.MeshPhongMaterial({
+    map: floorCeilingTexture,
+    roughness: 0.9,
+    metalness: 0.1,
+    color: 0x666666
+});
+
+// Chunk management variables
+const chunks = new Map();  
+const chunkSize = 20;
+const renderDistance = 40;
+const environmentObjects = [];
+
+// Add new function to find valid spawn position
+function findValidSpawnPosition() {
+    const startX = 0;
+    const startZ = 0;
+    
+    // Try positions in an expanding spiral until we find a valid spot
+    for(let radius = 0; radius < 50; radius++) {
+        for(let angle = 0; angle < Math.PI * 2; angle += Math.PI/8) {
+            const testX = startX + Math.cos(angle) * radius;
+            const testZ = startZ + Math.sin(angle) * radius;
+            
+            // Create temporary raycaster for collision detection
+            const tempRaycaster = new THREE.Raycaster();
+            const testPosition = new THREE.Vector3(testX, 2, testZ);
+            
+            // Check for collisions in all directions
+            const directions = [
+                new THREE.Vector3(1, 0, 0),
+                new THREE.Vector3(-1, 0, 0),
+                new THREE.Vector3(0, 0, 1),
+                new THREE.Vector3(0, 0, -1)
+            ];
+            
+            let isValidPosition = true;
+            for(const dir of directions) {
+                tempRaycaster.set(testPosition, dir);
+                const intersects = tempRaycaster.intersectObjects(environmentObjects);
+                if(intersects.length > 0 && intersects[0].distance < 1) {
+                    isValidPosition = false;
+                    break;
+                }
+            }
+            
+            if(isValidPosition) {
+                return {x: testX, y: 2, z: testZ};
+            }
+        }
+    }
+    
+    // Fallback to default position if no valid spot found
+    return {x: 0, y: 2, z: 0};
+}
+
+// Update visible chunks with object pooling
+function updateVisibleChunks() {
+    // Use object pooling for chunk objects
+    const objectPool = [];
+    environmentObjects.forEach(obj => {
+        scene.remove(obj);
+        objectPool.push(obj);
+    });
+    environmentObjects.length = 0;
+
+    const playerChunkX = Math.floor(player.position.x / chunkSize);
+    const playerChunkZ = Math.floor(player.position.z / chunkSize);
+
+    const chunksToRender = 2;
+    const minX = playerChunkX - chunksToRender;
+    const maxX = playerChunkX + chunksToRender;
+    const minZ = playerChunkZ - chunksToRender;
+    const maxZ = playerChunkZ + chunksToRender;
+
+    for(let x = minX; x <= maxX; x++) {
+        for(let z = minZ; z <= maxZ; z++) {
+            const chunkObjects = createChunk(x, z, objectPool);
+            chunkObjects.forEach(obj => {
+                scene.add(obj);
+                environmentObjects.push(obj);
+            });
+        }
+    }
+
+    // Only check spawn position if needed
+    if(environmentObjects.length > 0 && 
+       player.position.x === 0 && 
+       player.position.y === 2 && 
+       player.position.z === 0) {
+        const spawnPos = findValidSpawnPosition();
+        player.position.set(spawnPos.x, spawnPos.y, spawnPos.z);
+    }
+}
+
+// Create chunk with reused geometries and object pooling
+function createChunk(chunkX, chunkZ, objectPool) {
+    const chunkKey = `${chunkX},${chunkZ}`;
+    if (chunks.has(chunkKey)) return chunks.get(chunkKey);
+
+    const chunkObjects = [];
+    const startX = chunkX * chunkSize;
+    const startZ = chunkZ * chunkSize;
+
+    // Reuse geometries
+    const floorGeometry = new THREE.PlaneGeometry(chunkSize, chunkSize);
+    const wallGeometry = new THREE.BoxGeometry(0.3, 4, 5);
+    const crossWallGeometry = new THREE.BoxGeometry(5, 4, 0.3);
+
+    // Scale UVs once
+    const floorUVs = floorGeometry.attributes.uv.array;
+    for(let i = 0; i < floorUVs.length; i++) {
+        floorUVs[i] *= 4;
+    }
+
+    const wallUVs = wallGeometry.attributes.uv.array;
+    const crossWallUVs = crossWallGeometry.attributes.uv.array;
+    for(let i = 0; i < wallUVs.length; i++) {
+        wallUVs[i] *= 2;
+    }
+    for(let i = 0; i < crossWallUVs.length; i++) {
+        crossWallUVs[i] *= 2;
+    }
+
+    function createWall(geometry, position) {
+        const wall = new THREE.Mesh(geometry, wallMaterial);
+        wall.position.copy(position);
+        wall.userData.isWall = true;
+        return wall;
+    }
+
+    // Floor and ceiling for this chunk
+    const floor = new THREE.Mesh(floorGeometry, floorMaterial);
+    floor.rotation.x = -Math.PI / 2;
+    floor.position.set(startX + chunkSize/2, 0, startZ + chunkSize/2);
+    floor.userData.isFloor = true;
+    chunkObjects.push(floor);
+
+    const ceiling = new THREE.Mesh(floorGeometry, ceilingMaterial);
+    ceiling.rotation.x = Math.PI / 2;
+    ceiling.position.set(startX + chunkSize/2, 4, startZ + chunkSize/2);
+    ceiling.userData.isCeiling = true;
+    chunkObjects.push(ceiling);
+
+    // Generate maze using recursive backtracking
+    const gridSize = 4;
+    const grid = Array(gridSize).fill().map(() => Array(gridSize).fill(false));
+    const stack = [{x: 0, z: 0}];
+    grid[0][0] = true;
+
+    while (stack.length > 0) {
+        const current = stack[stack.length - 1];
+        const neighbors = [
+            {x: current.x + 1, z: current.z},
+            {x: current.x - 1, z: current.z},
+            {x: current.x, z: current.z + 1},
+            {x: current.x, z: current.z - 1}
+        ].filter(n => 
+            n.x >= 0 && n.x < gridSize && 
+            n.z >= 0 && n.z < gridSize && 
+            !grid[n.x][n.z]
+        );
+
+        if (neighbors.length > 0) {
+            const next = neighbors[Math.floor(Math.random() * neighbors.length)];
+            grid[next.x][next.z] = true;
+            stack.push(next);
+
+            // Add walls between cells
+            const wallX = startX + (current.x * 5);
+            const wallZ = startZ + (current.z * 5);
+            
+            if (Math.random() > 0.3) {
+                const wall = createWall(wallGeometry, new THREE.Vector3(wallX, 2, wallZ));
+                chunkObjects.push(wall);
+            }
+
+            if (Math.random() > 0.5) {
+                const crossWall = createWall(crossWallGeometry, new THREE.Vector3(wallX + 2.5, 2, wallZ));
+                chunkObjects.push(crossWall);
+            }
+        } else {
+            stack.pop();
+        }
+    }
+
+    chunks.set(chunkKey, chunkObjects);
+    return chunkObjects;
+}
+
+// Move with collision detection
+function moveWithCollision(direction) {
+    const COLLISION_MARGIN = 0.2;
+    
+    // Cast rays in movement direction and slightly to sides to handle corners
+    const rays = [
+        direction,
+        direction.clone().applyAxisAngle(new THREE.Vector3(0,1,0), Math.PI/8),
+        direction.clone().applyAxisAngle(new THREE.Vector3(0,1,0), -Math.PI/8)
+    ];
+
+    let collision = false;
+    
+    for(const rayDir of rays) {
+        raycaster.ray.origin.copy(player.position);
+        raycaster.ray.origin.y += HALF_PLAYER_HEIGHT;
+        raycaster.ray.direction.copy(rayDir);
+        
+        const intersects = raycaster.intersectObjects(environmentObjects);
+        const wallIntersect = intersects.find(i => i.object.userData.isWall);
+        
+        if(wallIntersect && wallIntersect.distance <= moveSpeed + COLLISION_MARGIN) {
+            collision = true;
+            break;
+        }
+    }
+
+    if(!collision) {
+        player.position.addScaledVector(direction, moveSpeed);
+    }
+}
+
+// Animate function with optimized calculations
+function animate() {
+    requestAnimationFrame(animate);
+
+    const oldX = player.position.x;
+    const oldZ = player.position.z;
+    
+    // Pre-calculate sin/cos of rotation
+    const sinY = Math.sin(player.rotation.y);
+    const cosY = Math.cos(player.rotation.y);
+
+    if(keys['w'] || keys['s'] || keys['a'] || keys['d']) {
+        // Calculate direction once
+        if(keys['w']) {
+            direction.set(-sinY, 0, -cosY);
+        } else if(keys['s']) {
+            direction.set(sinY, 0, cosY);
+        } else if(keys['a']) {
+            direction.set(-cosY, 0, sinY);
+        } else if(keys['d']) {
+            direction.set(cosY, 0, -sinY);
+        }
+        moveWithCollision(direction);
+    }
+
+    // Only check for chunk updates if position changed significantly
+    const newChunkX = Math.floor(player.position.x / chunkSize);
+    const newChunkZ = Math.floor(player.position.z / chunkSize);
+    const oldChunkX = Math.floor(oldX / chunkSize);
+    const oldChunkZ = Math.floor(oldZ / chunkSize);
+
+    if (newChunkX !== oldChunkX || newChunkZ !== oldChunkZ) {
+        chunkUpdateNeeded = true;
+    }
+
+    isMoving = keys['w'] || keys['s'] || keys['a'] || keys['d'];
+
+    if (isMoving && canJump) { // Only bob when moving and on ground
+        bobTimer += 0.05; 
+        camera.position.y = 1.6 + Math.sin(bobTimer * bobFrequency) * bobAmplitude;
+        camera.position.x = Math.cos(bobTimer * bobFrequency/2) * bobAmplitude * 0.3; 
+    } else {
+        // Smoother return to default position when not moving
+        camera.position.y += (1.6 - camera.position.y) * 0.05; 
+        camera.position.x += (0 - camera.position.x) * 0.05; 
+        bobTimer = 0;
+    }
+
+    // Add slighter tilt based on movement
+    if (isMoving && canJump) {
+        camera.rotation.z = Math.sin(bobTimer * bobFrequency) * 0.005; 
+    } else {
+        camera.rotation.z += (0 - camera.rotation.z) * 0.05; 
+    }
+
+    if (Math.floor(oldX / chunkSize) !== Math.floor(player.position.x / chunkSize) ||
+        Math.floor(oldZ / chunkSize) !== Math.floor(player.position.z / chunkSize)) {
+        chunkUpdateNeeded = true;
+    }
+
+    velocity += gravity;
+    player.position.y += velocity;
+
+    // Vertical collision detection
+    raycaster.ray.origin.copy(player.position);
+    raycaster.ray.origin.y += HALF_PLAYER_HEIGHT;
+    raycaster.ray.direction.set(0, -1, 0);
+    
+    const intersects = raycaster.intersectObjects(environmentObjects);
+    const groundIntersect = intersects.find(i => i.object.userData.isFloor);
+    
+    if(groundIntersect) {
+        if(player.position.y < groundIntersect.point.y + HALF_PLAYER_HEIGHT) {
+            player.position.y = groundIntersect.point.y + HALF_PLAYER_HEIGHT;
+            velocity = 0;
+            canJump = true;
+        }
+    }
+
+    // Ceiling collision
+    raycaster.ray.origin.copy(player.position);
+    raycaster.ray.direction.set(0, 1, 0);
+    const ceilingIntersects = raycaster.intersectObjects(environmentObjects);
+    const ceilingIntersect = ceilingIntersects.find(i => i.object.userData.isCeiling);
+    
+    if(ceilingIntersect && player.position.y + PLAYER_HEIGHT > ceilingIntersect.point.y) {
+        player.position.y = ceilingIntersect.point.y - PLAYER_HEIGHT;
+        velocity = 0;
+    }
+
+    if(Math.random() < 0.01) {
+        effectOverlay.style.transform = `translateX(${Math.random() * 10 - 5}px)`;
+        setTimeout(() => {
+            effectOverlay.style.transform = 'translateX(0)';
+        }, 50);
+    }
+
+    if(Math.random() < 0.03) { 
+        lights.forEach(light => {
+            light.intensity = light.intensity * (0.8 + Math.random() * 0.4);
+        });
+    }
+    
+    renderer.render(scene, camera);
+}
+
+// Update lights function with pre-calculated parameters
+function updateLights() {
+    lights.forEach(light => scene.remove(light));
+    lights.clear();
+
+    const playerX = Math.floor(player.position.x);
+    const playerZ = Math.floor(player.position.z);
+    const lightDistance = 15; 
+    const lightSpacing = 15; 
+    
+    // Reduced light intensity and distance
+    const intensity = 0.3; 
+    const distance = 12; 
+    const y = 3.9;
+
+    // Add slight color variation to lights
+    const lightColors = [0xffffcc, 0xffeecc, 0xffeedd];
+    
+    for(let x = playerX - lightDistance; x <= playerX + lightDistance; x += lightSpacing) {
+        for(let z = playerZ - lightDistance; z <= playerZ + lightDistance; z += lightSpacing) {
+            // Add random flicker effect
+            const flickerIntensity = intensity * (0.9 + Math.random() * 0.2);
+            const light = new THREE.PointLight(
+                lightColors[Math.floor(Math.random() * lightColors.length)], 
+                flickerIntensity, 
+                distance
+            );
+            light.position.set(x, y, z);
+            scene.add(light);
+            lights.set(`${x},${z}`, light);
+        }
+    }
+}
+
+let chunkUpdateNeeded = false;
+const CHUNK_UPDATE_INTERVAL = 500; 
+
+const blendModes = [
+    'normal', 
+    'multiply', 
+    'screen', 
+    'overlay', 
+    'darken', 
+    'lighten', 
+    'color-dodge', 
+    'color-burn', 
+    'hard-light', 
+    'soft-light', 
+    'difference', 
+    'exclusion', 
+    'hue', 
+    'saturation', 
+    'color', 
+    'luminosity'
+];
+
+let currentBlendModeIndex = 2; // Start with 'screen' as default
+
+function updateBlendModeDisplay() {
+    const blendModeText = document.getElementById('blendModeText');
+    blendModeText.textContent = `Blend Mode: ${blendModes[currentBlendModeIndex]} (Num ${currentBlendModeIndex + 1})`;
+    effectOverlay.style.mixBlendMode = blendModes[currentBlendModeIndex];
+}
+
+setInterval(() => {
+    if (chunkUpdateNeeded) {
+        updateVisibleChunks();
+        updateLights(); 
+        chunkUpdateNeeded = false;
+    }
+}, CHUNK_UPDATE_INTERVAL);
+
+let keys = {};
+document.addEventListener('keydown', (e) => {
+    if (e.key >= '1' && e.key <= '9') {
+        const index = parseInt(e.key) - 1;
+        if (index < blendModes.length) {
+            currentBlendModeIndex = index;
+            updateBlendModeDisplay();
+        }
+    }
+    keys[e.key.toLowerCase()] = true;
+});
+document.addEventListener('keyup', (e) => keys[e.key.toLowerCase()] = false);
+
+let mouseEnabled = false;
+rendererDomElement.addEventListener('click', () => {
+    rendererDomElement.requestPointerLock();
+    mouseEnabled = true;
+});
+
+document.addEventListener('pointerlockchange', () => {
+    mouseEnabled = document.pointerLockElement === rendererDomElement;
+});
+
+document.addEventListener('mousemove', (e) => {
+    if(!mouseEnabled) return;
+    player.rotation.y -= e.movementX * 0.001;
+    camera.rotation.x = Math.max(-Math.PI/2, Math.min(Math.PI/2, 
+        camera.rotation.x - e.movementY * 0.001));
+});
+
+camera.position.set(0, 1.6, 0);
+camera.rotation.z = 0;
+player.add(camera);
+
+updateVisibleChunks();
+const lights = new Map();
+updateLights();
+animate();
+
+const blendModeText = document.getElementById('blendModeText');
+updateBlendModeDisplay();
+
+setInterval(() => {
+    grayOverlay.style.opacity = 0.4 + Math.random() * 0.1;
+}, 1000);
+
+window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+});
+</script>
+</body></html>
