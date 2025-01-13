@@ -1,17 +1,12 @@
 {
-    "test": {
+    "updates-panel": {
       "type": "success",
-      "title": "Added Content",
-      "description": "Check the App Store for new added Content!"
+      "title": "New Updates Panel",
+      "description": "This is the new updates panel. Announcements will be posted here"
     },
-    "test1": {
-      "type": "warn",
-      "title": "Bugs Were Found!",
-      "description": "We are sorry, but a few bugs have been found. Pages may not work as expected."
-    },
-    "test2": {
-      "type": "error",
-      "title": "Website is Under Maintenance",
-      "description": "Some features may be temporarily disabled."
+    "tangini-delay": {
+      "type": "warning",
+      "title": "Tangini is Incomplete",
+      "description": "Sadly, work on Tangini will be delayed for the time being. Please be patient, as work on it will continue soon."
     }
 }
