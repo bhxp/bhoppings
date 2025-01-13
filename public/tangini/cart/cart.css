@@ -1,77 +1,251 @@
 #back-button {
-    position: absolute;
-    top: 24px;
-    left: 24px;
-    background: transparent;
-    border: none !important;
-    aspect-ratio: 1;
-    padding: 12px;
-    padding-left: 0px;
-    display: flex;
-    flex-direction: row;
-    height: 48px;
-    align-items: center;
-  }
-  
-  #back-button * {
-    position: relative;
-    z-index: 9999;
-    cursor: pointer;
-    font-size: 24px;
-    color: #1E1E1E;
-    font-weight: 700;
-    transition: filter 0.4s ease-in-out;
-    filter: brightness(100%);
-  }
-  
-  #back-button:hover * {
-    filter: brightness(1000%);
-  }
-  
-  button::before {
-    content: "";
-    position: absolute;
-    left: 50%;
-    top: 50%;
-    transform: translate(-50%, -50%);
-    height: 0px;
-    width: 0px;
-    transition: width 0.2s ease-in-out, height 0.2s ease-in-out, opacity 0.2s ease-in-out;
-    background-color: #651FFF;
-    border-radius: 16px;
-    cursor: pointer;
-    opacity: 0.5;
-  }
-  
-  button:hover::before {
-    width: calc(100% + 2px);
-    height: calc(100% + 2px);
-    opacity: 1;
-  }
-  
-  #separator {
-    border: none;
-    border-top: solid 2px rgba(100, 100, 100, 0.2);
-    width: 50%;
-    border-radius: 9999px;
-    position: absolute;
-    left: 36px;
-    top: 84px;
-  }
-  
-  #item-count-container {
-    position: absolute;
-    left: 36px;
-    top: 120px;
-    display: flex;
-    flex-direction: column;
-  }
-  
-  #item-count-container div {
-    margin-bottom: 12px;
-  }
-  
-  #item-count-container>span {
-    font-size: 12px;
-    font-weight: 500;
-  }
+  position: absolute;
+  top: 24px;
+  left: 24px;
+  background: transparent;
+  border: none !important;
+  aspect-ratio: 1;
+  padding: 12px;
+  padding-left: 0px;
+  display: flex;
+  flex-direction: row;
+  height: 48px;
+  align-items: center;
+}
+
+#back-button * {
+  position: relative;
+  z-index: 9999;
+  cursor: pointer;
+  font-size: 24px;
+  color: #1E1E1E;
+  font-weight: 700;
+  transition: filter 0.4s ease-in-out;
+  filter: brightness(100%);
+}
+
+#back-button:hover * {
+  filter: brightness(1000%);
+}
+
+button::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  height: 0px;
+  width: 0px;
+  transition: width 0.2s ease-in-out, height 0.2s ease-in-out, opacity 0.2s ease-in-out;
+  background-color: #651FFF;
+  border-radius: 16px;
+  cursor: pointer;
+  opacity: 0.5;
+}
+
+button:hover::before {
+  width: calc(100% + 2px);
+  height: calc(100% + 2px);
+  opacity: 1;
+}
+
+#separator {
+  border: none;
+  border-top: solid 2px rgba(100, 100, 100, 0.2);
+  width: 50%;
+  border-radius: 9999px;
+  position: absolute;
+  left: 36px;
+  top: 84px;
+}
+
+#item-count-container {
+  position: absolute;
+  left: 36px;
+  top: 120px;
+  display: flex;
+  flex-direction: column;
+}
+
+#item-count-container div {
+  margin-bottom: 12px;
+}
+
+#item-count-container>span {
+  font-size: 12px;
+  font-weight: 500;
+}
+
+#cart-items {
+  height: 80vh;
+  position: absolute;
+  bottom: 0px;
+  left: 96px;
+  display: flex;
+  flex-direction: column;
+  width: calc(70vw - 96px);
+  overflow-y: scroll;
+  overflow-x: hidden;
+  padding: none !important;
+}
+
+#cart-items::-webkit-scrollbar {
+  display: none !important;
+}
+
+.item {
+  display: flex;
+  flex-direction: row;
+  background-color: #fff;
+  border-radius: 16px;
+  padding: 12px;
+  height: calc(25% - 56px);
+  width: calc(100% - 8px);
+  box-shadow: 0px 2px 8px 0px rgba(100, 100, 100, 0.4);
+  margin: 0px 0px 48px 0px;
+  transform: none !important;
+  align-items: center;
+  position: relative;
+}
+
+.item-img {
+  height: 100%;
+  aspect-ratio: 1;
+  width: auto !important;
+}
+
+#bottom-fade {
+  position: absolute;
+  bottom: 0px;
+  left: 0px;
+  width: calc(70vw - 8px);
+  height: 10vh;
+  background: linear-gradient(to bottom, rgba(255, 255, 255, 0), #fff);
+}
+
+.item-delete {
+  height: calc(100% - 48px);
+  aspect-ratio: 1;
+  border-radius: 9999px;
+  position: absolute;
+  right: 24px;
+  top: 50%;
+  transform: TranslateY(-50%);
+}
+
+.item-delete img {
+  height: 50%;
+  width: auto;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  filter: brightness(-100%);
+  transition: filter 0.4s ease-in-out;
+}
+
+.item-delete::before {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  height: 100%;
+  width: 100%;
+  transform: translate(-50%, -50%) scale(0);
+  border-radius: 9999px;
+  transition: transform 0.4s ease-in-out;
+  background: linear-gradient(135deg, #453737, #AB8787);
+  z-index: 0;
+  content: "";
+}
+
+.item-delete:hover>img {
+  filter: brightness(100%);
+}
+
+.item-delete:hover::before {
+  transform: translate(-50%, -50%) scale(1);
+}
+
+.item-price {
+  position: absolute;
+  top: 50%;
+  right: 15vh;
+  transform: translateY(-50%);
+  font-size: 24px;
+}
+
+.item-name {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  margin-top: 0px;
+  margin-left: 24px;
+  font-size: 36px;
+  font-weight: 500;
+}
+
+.item-quantity-container {
+  position: absolute;
+  right: 27%;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.item-quantity {
+  font-size: 36px;
+  font-weight: 600;
+  font-family: "Raleway", sans-serif;
+}
+
+#info-input {
+  width: 24vw;
+  height: fit-content;
+  position: absolute;
+  right: 15vw;
+  top: 50vh;
+  transform: translate(+50%, -50%);
+}
+
+#info-input img {
+  width: 100%;
+  height: auto;
+}
+
+#name-input {
+  position: absolute;
+  bottom: 13%;
+  left: 7%;
+  height: 10%;
+  width: 50%;
+  font-family: "Montserrat", sans-serif;
+  font-size: 24px;
+  color: #fff !important;
+  background-color: transparent;
+  border: none !important;
+  outline: none !important;
+  font-weight: 400;
+}
+
+#name-input::placeholder {
+  color: #fff;
+}
+
+#card-input {
+  position: absolute;
+  top: 40%;
+  left: 7%;
+  height: 10%;
+  width: 60%;
+  font-family: "Montserrat", sans-serif;
+  font-size: 24px;
+  color: #fff !important;
+  background-color: transparent;
+  border: none !important;
+  outline: none !important;
+  font-weight: 400;
+}
+
+#card-input::placeholder {
+  color: #fff;
+}

@@ -1,28 +1,34 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width" />
+    <link rel="icon" type="image/x-icon" href="/images/favicon.ico" />
+    <title>Tango Shop - Bhoppings</title>
+    <link rel="stylesheet" href="../tango.css" />
+    <link rel="stylesheet" href="cart.css" />
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+  </head>
 
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width">
-  <link rel="icon" type="image/x-icon" href="/images/favicon.ico">
-  <title>Tango Shop - Bhoppings</title>
-  <link rel="stylesheet" href="../tango.css" />
-  <link rel="stylesheet" href="cart.css" />
-  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
-</head>
+  <body>
+    <button id="back-button" onclick="window.open('../', '_self')">
+      <img src="/images/tango-arrow-left.svg" /><span>Back</span>
+    </button>
+    <hr id="separator" />
+    <div id="item-count-container">
+      <div>Shopping Cart</div>
+      <span id="item-count">You have 3 item(s) in your shopping cart.</span>
+    </div>
+    <div id="cart-items" class="list-view"></div>
+    <div id="bottom-fade"></div>
 
-<body>
-  <button id="back-button" onclick="window.open('../', '_self')"><img src="/images/tango-arrow-left.svg" /><span>Back</span></button>
-  <hr id="separator" />
-  <div id="item-count-container">
-    <div>Shopping Cart</div>
-    <span>You have 3 item(s) in your shopping cart.</span>
-  </div>
-  <div id="cart-items"></div>
-  <script src="cart.js"></script>
+    <div id="info-input">
+      <img src="/images/visa-card.svg" />
+      <input id="card-input" placeholder="Card number..." />
+      <input id="name-input" placeholder="Enter name here..." />
+    </div>
+    <script src="cart.js"></script>
 
-  <script type="text/javascript" src="/script/cursor.js"></script>
-
-</body>
-
+    <script type="text/javascript" src="/script/cursor.js"></script>
+  </body>
 </html>

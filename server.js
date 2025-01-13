@@ -1,6 +1,5 @@
 const express = require('express');
 const path = require('path');
-const fetch = require('node-fetch'); // Make sure node-fetch is installed
 const admin = require('firebase-admin');
 
 // Initialize Firebase Admin SDK
