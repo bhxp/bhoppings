@@ -426,3 +426,107 @@ body {
 .toast-hidden {
     transform: translateX(calc(-100% - 24px));
 }
+
+#carousel {
+    position: absolute;
+    right: 96px;
+    top: 50vh;
+    transform: translateY(-50%);
+    height: 50vh;
+    width: 80vh;
+    z-index: 1;
+    overflow: hidden;
+    border-radius: 3vh;
+}
+
+.carousel-img {
+    height: calc(100% + 1vh);
+    width: calc(100% + 1vh);
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    z-index: -1;
+    transform: translate(-50%, -50%);
+    transition: filter 0.5s ease-in-out;
+    border-radius: 24px;
+}
+
+#carousel:hover .carousel-img {
+    filter: blur(0.5vh) brightness(80%);
+}
+
+.carousel-img-animated {
+    transition: transform 1s ease, filter 0.5s ease-in-out !important;
+}
+
+#carousel-dots {
+    position: absolute;
+    left: 0px;
+    bottom: 24px;
+    height: 24px;
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+}
+
+.carousel-dot {
+    background-color: #fff;
+    height: 100%;
+    aspect-ratio: 1;
+    margin: 0px 10px;
+    border-radius: 9999px;
+    opacity: 0.4;
+    transition: opacity 0.5s ease;
+}
+
+.carousel-dot-active {
+    opacity: 1;
+}
+
+#carousel-button {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    opacity: 0;
+    transition: opacity 0.5s ease, transform 0.5s ease-in-out;
+    width: 33%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    align-content: center;
+    flex-direction: row;
+    aspect-ratio: 3.5;
+    background-color: rgba(0, 0, 0, 0.2);
+    border-radius: 3vh;
+    border: solid 6px rgba(0, 0, 0, 0.13);
+    backdrop-filter: blur(2vh);
+}
+
+#carousel:hover #carousel-button {
+    opacity: 1;
+}
+
+#carousel-button:hover {
+    transform: translate(-50%, -50%) scale(1.03);
+}
+
+#carousel-button span {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 3vh;
+    font-family: "Instrument Sans", sans-serif;
+    font-weight: 600;
+}
+
+#carousel-button img {
+    height: 3vh;
+    position: absolute;
+    top: 50%;
+    right: 4.714285714%;
+    transform: translate(-50%, -50%);
+}
