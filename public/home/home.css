@@ -29,6 +29,12 @@ body {
     top: 0px;
     border-bottom: solid 2px rgb(64, 64, 64);
     z-index: 2;
+    transition: transform 1s ease;
+    transform: translateY(+0%);
+}
+
+.navbar-preload {
+    transform: translateY(-120%) !important;
 }
 
 .gradient-text {
@@ -57,6 +63,7 @@ body {
     text-shadow: none;
     transform: TranslateY(-2.5px);
 }
+
 
 .navbar-item-top {
     font-family: 'Instrument Sans';
@@ -130,6 +137,8 @@ body {
     font-size: 72px;
     font-weight: 700;
     margin-bottom: 12px;
+    transform: translateX(+0%);
+    transition: transform 1s ease;
 }
 
 .dropdown.hidden {
@@ -144,6 +153,12 @@ body {
     font-size: 24px;
     color: #fff;
     display: block;
+    transform: translateX(+0%);
+    transition: transform 1s ease 0.3s;
+}
+
+.title-preload {
+    transform: translateX(-130%) !important;
 }
 
 .dropdown .notch {
@@ -431,12 +446,14 @@ body {
     position: absolute;
     right: 96px;
     top: 50vh;
-    transform: translateY(-50%);
+    transform: translateY(-50%) scale(1);
     height: 50vh;
     width: 80vh;
     z-index: 1;
     overflow: hidden;
     border-radius: 3vh;
+    border: solid 0.6vh rgba(0, 0, 0, 0.5);
+    transition: transform 1s ease;
 }
 
 .carousel-img {
@@ -479,6 +496,7 @@ body {
     border-radius: 9999px;
     opacity: 0.4;
     transition: opacity 0.5s ease;
+    box-shadow: 0px 0px 48px 2px rgba(255, 255, 255, 1);
 }
 
 .carousel-dot-active {
@@ -529,4 +547,8 @@ body {
     top: 50%;
     right: 4.714285714%;
     transform: translate(-50%, -50%);
+}
+
+.carousel-preload {
+    transform: translateY(-50%) scale(0) !important;
 }

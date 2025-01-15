@@ -4,11 +4,12 @@ const carousel = $("#carousel");
 const carouselDots = $("#carousel-dots");
 var carouselData = [];
 var carouselIndex = 0;
+var carouselHovered = false;
 
 function moveCarousel() {
   const items = carousel.find(".carousel-img");
   items.each((index, item) => {
-    item.style.transform = `translate(-50%, -50%) translateX(${(index - 1) * -101}%)`;
+    item.style.transform = `translate(-50%, -50%) translateX(${(index - 1) * -100}%)`;
   });
   $("#carousel-dots .carousel-dot").removeClass("carousel-dot-active");
   const activeDotIndex =
@@ -70,7 +71,16 @@ $(document).ready((e) => {
     carouselData = data;
     carouselInit();
     setInterval(() => {
-      carouselLeft();
+      if (!carouselHovered) {
+        carouselLeft();
+      }
     }, 6000);
   });
+  $("#carousel")
+    .on("mouseenter", function () {
+      carouselHovered = true;
+    })
+    .on("mouseleave", function () {
+      carouselHovered = false;
+    });
 });

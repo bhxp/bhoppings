@@ -91,6 +91,11 @@ $(document).ready((e) => {
                 }
                 i++;
             });
+
+            navbar.removeClass("navbar-preload");
+
+            $("#center *").removeClass("title-preload");
+            $("#carousel").removeClass("carousel-preload");
         })
         .catch((error) => {
             console.error(error);
