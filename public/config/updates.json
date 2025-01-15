@@ -1,12 +1,1 @@
-{
-    "updates-panel": {
-      "type": "success",
-      "title": "New Updates Panel",
-      "description": "This is the new updates panel. Announcements will be posted here"
-    },
-    "tangini-delay": {
-      "type": "warn",
-      "title": "Tangini is Incomplete",
-      "description": "Work is currently being done on Tangini."
-    }
-}
+{}
