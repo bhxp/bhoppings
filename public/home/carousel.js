@@ -5,6 +5,7 @@ const carouselDots = $("#carousel-dots");
 var carouselData = [];
 var carouselIndex = 0;
 var carouselHovered = false;
+var skipThis = false;
 
 function moveCarousel() {
   const items = carousel.find(".carousel-img");
@@ -44,7 +45,7 @@ function carouselInit() {
   });
   carouselData.forEach((item, index) => {
     const elem = $(
-      `<img class="carousel-img" src="/config/carousel-img/${carouselData.length - index - 1}.png" />`,
+      `<img class="carousel-img" src="/config/carousel-img/${carouselData[carouselData.length - index - 1].img}" />`,
     ).data("index", index);
     if (carouselData.length - index - 1 == 1) {
       console.log(elem, "poo");
@@ -60,10 +61,25 @@ function carouselInit() {
     carousel.find(".carousel-img").addClass("carousel-img-animated");
   }, 20);
   $("#carousel-button").data("url", carouselData[0].link);
-  carouselIndex = 0;
   for (let i = 0; i < carouselData.length; i++) {
     carouselLeft();
   }
+
+  $(".carousel-dot").click(function (e) {
+    const times =
+      ($(this).index() + carouselData.length - carouselIndex) %
+      carouselData.length;
+    console.log(times);
+    for (let i = 0; i < times; i++) {
+      setTimeout(function () {
+        skipThis = true;
+        carouselLeft();
+      }, 1000 * i);
+    }
+    setTimeout(() => {
+      skipThis = false;
+    }, 1000 * times);
+  });
 }
 
 $(document).ready((e) => {
@@ -71,7 +87,7 @@ $(document).ready((e) => {
     carouselData = data;
     carouselInit();
     setInterval(() => {
-      if (!carouselHovered) {
+      if (!carouselHovered && !skipThis && document.hasFocus()) {
         carouselLeft();
       }
     }, 6000);

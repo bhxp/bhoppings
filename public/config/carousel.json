@@ -1,17 +1,14 @@
 [
   {
-    "link": "/tangini"
+    "link": "/tangini",
+    "img": "tangini.png"
   },
   {
-    "link": "/poop"
+    "link": "/poop",
+    "img": "poop.png"
   },
   {
-    "link": "forest"
-  },
-  {
-    "link": "rainbow"
-  },
-  {
-    "link": "sparkles"
+    "link": "/supermonkeyroll",
+    "img": "monkey.png"
   }
 ]
