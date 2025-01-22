@@ -1,85 +1,136 @@
 #sidebar {
-    position: absolute;
-    left: 15vw;
-    top: 50vh;
-    transform: translate(-50%, -50%);
-    background-color: #fff;
-    width: 5vw;
-  }
-  
-  #settings-container {
-    height: calc(100vh - 96px);
-    width: 70vw;
-    position: absolute;
-    right: 0px;
-    bottom: 0px;
-    background-color: transparent;
-    display: flex;
-    flex-direction: row;
-    overflow-y: scroll;
-    overflow-x: hidden;
-    flex-wrap: wrap;
-  }
-  
-  #settings-container::-webkit-scrollbar {
-    background-color: transparent;
-    width: 6px;
-  }
-  
-  #settings-container::-webkit-scrollbar-thumb {
-    background-color: rgba(255, 255, 255, 0.1);
-    margin: 6px;
-    border-right: solid 6px transparent;
-    width: 7px;
-    border-radius: 9999px;
-  }
-  
-  .option {
-    width: calc(25% - 2.3vw);
-    height: 15.5vw;
-    margin: 1vw;
-    background-color: rgba(0, 0, 0, 0.5);
-    display: flex;
-    position: relative;
-    border-radius: 2vw;
-    overflow: hidden;
-    border: solid 2px rgba(255, 255, 255, 0.2);
-  }
-  
-  .option img {
-    width: 100%;
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-  }
-  
-  .option .cursor-img {
-  
-    transform: translate(-33%, -40%);
-  }
-  
-  .option button {
-    width: calc(100% - 1vw);
-    height: 3vw;
-    position: absolute;
-    left: 50%;
-    bottom: 0.5vw;
-    transform: translateX(-50%);
-    border-radius: 9999px;
-    background-color: rgba(0, 0, 0, 0.25);
-    border: solid 2px rgba(255, 255, 255, 0.2);
-    outline: none;
-    transition: background-color 0.5s ease-in-out, color 0.5s ease-in-out;
-    font-size: 1vw;
-  }
-  
-  .option button:hover {
-    background-color: #fff;
-    color: #000;
-  }
-  img:not([data-ia-status="ignore:small"]) {
-    -webkit-filter: none !important;
-    filter: none !important;
-    opacity: 1 !important;
-  }
+  position: absolute;
+  left: 15vw;
+  top: 50vh;
+  transform: translate(-50%, -50%);
+  background-color: rgba(0, 0, 0, 0.25);
+  width: 5vw;
+  height: fit-content;
+  border: solid 2px rgba(0, 0, 0, 0.6);
+  border-radius: 1.25vw;
+}
+
+#sidebar button {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  position: relative;
+  overflow: hidden;
+  background-color: transparent;
+  border: transparent;
+  outline: transparent;
+}
+
+#sidebar button img {
+  height: 50%;
+  width: 50%;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+}
+
+#sidebar button#cursor-sidebar-button img {
+  height: 100%;
+  width: 100%;
+  left: 50%;
+  top: 50%;
+  transform: translate(-30%, -30%);
+}
+
+#sidebar button::before {
+  content: "";
+  height: 0px;
+  width: 5%;
+  background-color: #fff;
+  position: absolute;
+  left: 12%;
+  top: 50%;
+  transform: translateY(-50%);
+  border-radius: 9999px;
+  opacity: 0;
+  transition: all 0.3s ease-in-out;
+}
+
+#sidebar button:hover::before,
+#sidebar .active-sidebar-button::before {
+  height: 25%;
+  opacity: 1;
+}
+
+#settings-container {
+  height: calc(100vh - 96px);
+  width: 70vw;
+  position: absolute;
+  right: 0px;
+  bottom: 0px;
+  background-color: transparent;
+  display: flex;
+  flex-direction: row;
+  overflow-y: scroll;
+  overflow-x: hidden;
+  flex-wrap: wrap;
+}
+
+#settings-container::-webkit-scrollbar {
+  background-color: transparent;
+  width: 6px;
+}
+
+#settings-container::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.1);
+  margin: 6px;
+  border-right: solid 6px transparent;
+  width: 7px;
+  border-radius: 9999px;
+}
+
+.option {
+  width: calc(25% - 2.3vw);
+  height: 15.5vw;
+  margin: 1vw;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  position: relative;
+  border-radius: 2vw;
+  overflow: hidden;
+  border: solid 2px rgba(255, 255, 255, 0.2);
+}
+
+.option img {
+  width: 100%;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.option .cursor-img {
+
+  transform: translate(-33%, -40%);
+}
+
+.option button {
+  width: calc(100% - 1vw);
+  height: 3vw;
+  position: absolute;
+  left: 50%;
+  bottom: 0.5vw;
+  transform: translateX(-50%);
+  border-radius: 9999px;
+  background-color: rgba(0, 0, 0, 0.25);
+  border: solid 2px rgba(255, 255, 255, 0.2);
+  outline: none;
+  transition: background-color 0.5s ease-in-out, color 0.5s ease-in-out;
+  font-size: 1vw;
+}
+
+.option button:hover {
+  background-color: #fff;
+  color: #000;
+}
+
+img:not([data-ia-status="ignore:small"]) {
+  -webkit-filter: none !important;
+  filter: none !important;
+  opacity: 1 !important;
+}

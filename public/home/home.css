@@ -170,8 +170,8 @@ body {
 .dropdown .notch {
     position: absolute;
     left: -28px;
-    top: -38px;
-    height: 61px;
+    top: -45.3px;
+    height: 72.4px;
     pointer-events: none !important;
 }
 
@@ -575,7 +575,7 @@ body {
 }
 
 #settings-icon:hover {
-    transform: rotate(360deg);
+    transform: rotate(-360deg);
 }
 
 #settings-icon div {
