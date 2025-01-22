@@ -62,6 +62,12 @@ body {
     margin-left: 24px;
     text-shadow: none;
     transform: TranslateY(-2.5px);
+    transition: transform 0.2s ease-in-out;
+}
+
+#navbar .gradient-text:hover {
+    cursor: pointer;
+    transform: TranslateY(-2.5px) scale(1.1);
 }
 
 
@@ -552,4 +558,54 @@ body {
 
 .carousel-preload {
     transform: translateY(-50%) scale(0) !important;
+}
+
+#bhop-spacer {
+    opacity: 0;
+}
+
+#settings-icon {
+    position: absolute;
+    right: 13%;
+    top: 9%;
+    height: 100%;
+    aspect-ratio: 1;
+    transition: transform 1s ease-in-out, background-image 0s linear 0.5s;
+    transform: rotate(0deg);
+}
+
+#settings-icon:hover {
+    transform: rotate(360deg);
+}
+
+#settings-icon div {
+    height: 100%;
+    width: 100%;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    transition: opacity 0.5s ease-in-out;
+    background-size: cover;
+}
+
+
+
+#settings-icon div:not(.gradient-o) {
+    opacity: 0 !important;
+
+    background-image: url("/images/gradient-settings.svg");
+}
+
+#settings-icon div.gradient-o {
+    opacity: 1 !important;
+    background-image: url("/images/gradient-o.svg");
+}
+
+#settings-icon:hover div:not(.gradient-o) {
+    opacity: 1 !important;
+}
+
+#settings-icon:hover div.gradient-o {
+    opacity: 0 !important;
 }

@@ -7,17 +7,27 @@
     <title>Home - Bhop</title>
     <link rel="stylesheet" href="home.css" />
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+
+    <link rel="preload" href="/images/gradient-o.svg" as="image" />
+    <link rel="preload" href="/images/gradient-settings.svg" as="image" />
   </head>
 
   <body>
     <canvas id="waveCanvas" width="800" height="800"></canvas>
+    <img src="/images/gradient-settings.svg" style="display: none" />
 
     <div id="navbar" class="navbar-preload">
       <div class="gradient-text">bhop</div>
     </div>
 
     <div id="center">
-      <div class="gradient-text title-preload">bhop</div>
+      <div class="gradient-text title-preload">
+        bh<span id="bhop-spacer">o</span>p
+        <div id="settings-icon" onclick="window.open('/settings', '_self');">
+          <div class="gradient-o"></div>
+          <div></div>
+        </div>
+      </div>
       <div class="text title-preload">
         a silly website where a silly person makes silly stuff
       </div>
