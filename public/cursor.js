@@ -20,7 +20,6 @@ styleElem.innerHTML = `* {
   width: 48px;
   height: 48px;
   pointer-events: none;
-  transform: translate(-50%, -50%);
   z-index: 9999;
   display: block;
 }
