@@ -3,6 +3,9 @@ var navbarItems = null;
 var cancelNavbarHide = true;
 var hideTimeout = null; // track the hide timeout
 var dropdownIndexes = [];
+var settingsButtonHovered = false;
+var settingsRotateCycle = 0;
+var settingsRotateSpeed = 0.1;
 
 $(document).on("mousedown", (e) => {
     if (hideTimeout) {
@@ -16,6 +19,22 @@ $(document).on("mousedown", (e) => {
         }
     }, 50);
 });
+
+function settingsRotate() {
+    if (!settingsButtonHovered) {
+        $("#settings-icon").css("transform", `rotate(${0}deg)`);
+        settingsRotateCycle = 0;
+        return;
+    }
+    console.log(`Rotate Cycle: ${settingsRotateCycle}`);
+    $("#settings-icon").css("transform", `rotate(${settingsRotateCycle}deg)`);
+    $("#settings-icon div").css(
+        "background",
+        `linear-gradient(${90 - settingsRotateCycle}deg, rgba(157, 161, 255, 1) 20%, rgba(117, 183, 255, 1) 80%`,
+    );
+    settingsRotateCycle = (settingsRotateCycle + settingsRotateSpeed) % 360;
+    requestAnimationFrame(settingsRotate);
+}
 
 function openDropdown(index) {
     const dropdown = $("#navbar .navbar-item-top")
@@ -103,4 +122,27 @@ $(document).ready((e) => {
     $("#navbar .gradient-text").click(function () {
         window.open("/home", "_self");
     });
+    $("#settings-icon").hover(
+        function (e) {
+            settingsButtonHovered = true;
+            $("#settings-icon").css(
+                "animation",
+                "settings-rotate-short 0.8s ease forwards",
+            );
+
+            $("#settings-icon").css("transform", `rotate(${0}deg)`);
+            setTimeout(function () {
+                $("#settings-icon").css("animation", "none");
+                requestAnimationFrame(settingsRotate);
+            }, 400);
+        },
+        function (e) {
+            settingsButtonHovered = false;
+            $("#settings-icon").css("animation", "none");
+            $("#settings-icon").css("transition", "transform 0.4s ease-in-out");
+            setTimeout(() => {
+                $("#settings-icon").css("transition", "none");
+            }, 400);
+        },
+    );
 });
