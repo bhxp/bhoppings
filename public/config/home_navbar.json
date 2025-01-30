@@ -1,162 +1,19 @@
 [
     {
         "multiple": true,
-        "text": "bio",
+        "text": "Bio",
         "pages": [
-            { "text": "bhop", "url": "/" },
-            { "text": "chezlinkz", "url": "/chezlinkz" },
-            { "text": "tangini (temporarily in bio cuz no where else to put)", "url": "/tangini" }
+            { "text": "Bhop", "url": "/" },
+            { "text": "ChezLinkZ", "url": "/chezlinkz" }
         ]
     },
+    { "text": "Tangini", "url": "/tangini" },
     {
         "multiple": true,
-        "text": "games",
+        "text": "Downloads",
         "pages": [
-            { "text": "tic tac unbound", "url": "/tic-tac-unbound" },
-            { "text": "poop game", "url": "/poop" },
-            { "text": "poop shooter 3d", "url": "/poopshooter3d" },
-            { "text": "damyan run", "url": "/damyan-run" },
-            { "text": "devil shooter", "url": "/devilshooter" },
-            { "text": "drug tycoon", "url": "/drugtycoon" },
-            { "text": "physics sandbox", "url": "/physic-sandbox" },
-            { "text": "ball game", "url": "/ballgame" },
-            { "text": "the backrooms", "url": "/backrooms" },
-            { "text": "the backrooms 2", "url": "/backrooms2" },
-            { "text": "bedroom", "url": "/bedroom" },
-            { "text": "bhopcraft", "url": "/bhopcraft" }
+            { "text": "Tango Clicker", "url": "/downloads/tangoclicker" }
         ]
     },
-    {
-        "multiple": true,
-        "text": "more games",
-        "pages": [
-            { "text": "chicken farm", "url": "/chickefarmn" },
-            { "text": "cosmic", "url": "/cosmicclicker" },
-            { "text": "crazy cars", "url": "/crazycars" },
-            { "text": "destroy earth", "url": "/earthdestroy" },
-            { "text": "endless boss battle", "url": "/endlessbossbattle" },
-            { "text": "fart 3d", "url": "/fart3d" },
-            { "text": "griller tag", "url": "/griller-tag" },
-            { "text": "heart clicker", "url": "/heartclicker" },
-            { "text": "piss clicker", "url": "/pissclicker" },
-            { "text": "cat clicker", "url": "/catclicker" },
-            { "text": "hydro hop", "url": "/hydrohop" },
-            { "text": "inflation fetish", "url": "/inflation-fetish" }
-        ]
-    },
-    {
-        "multiple": true,
-        "text": "other games",
-        "pages": [
-            { "text": "minecraft babies", "url": "/minecraftbabies" },
-            { "text": "minecraft clicker", "url": "/minecraftclicker" },
-            { "text": "minecraft world explore", "url": "/minecraftworldexplore" },
-            { "text": "offroad", "url": "/offroad" },
-            { "text": "ping pong", "url": "/pingpong" },
-            { "text": "poo burger", "url": "/pooburger" },
-            { "text": "poo clicker", "url": "/pooclicker" },
-            { "text": "portal", "url": "/portal" },
-            { "text": "rocket runner", "url": "/rocketrunner" },
-            { "text": "rooms explorer", "url": "/roomsexplorer" },
-            { "text": "shitcraft", "url": "/shitcraft" },
-            { "text": "sla p3d", "url": "/slap3d" },
-            { "text": "slot wars", "url": "/slotwars" },
-            { "text": "spherical minecraft", "url": "/sphericalminecraft" },
-            { "text": "sun", "url": "/sun" },
-            { "text": "super monkey roll", "url": "/supermonkeyroll" },
-            { "text": "wtd jl", "url": "/wtdjl" }
-        ]
-    },
-    {
-        "multiple": true,
-        "text": "tools",
-        "pages": [
-            { "text": "glass", "url": "/glass" },
-            { "text": "time from now", "url": "/timefromnow" },
-            { "text": "lightroom renderer", "url": "/lightroom-renderer" },
-            { "text": "scrollbar", "url": "/scrollbar" },
-            { "text": "particle", "url": "/particle" },
-            { "text": "loading animations", "url": "/loadinganimations" },
-            { "text": "internet speed test", "url": "/internetspeedtest" },
-            { "text": "is anyone on the website?", "url": "/isanyoneonthewebsite" },
-            { "text": "meme maker", "url": "/mememaker" },
-            { "text": "shitty mp3", "url": "/shittymp3" },
-            { "text": "tango clicker", "url": "/tangoclicker" }
-        ]
-    },
-    {
-        "multiple": true,
-        "text": "creative",
-        "pages": [
-            { "text": "floral fractal test", "url": "/floralfractaltest" },
-            { "text": "fractal land", "url": "/fractalland" },
-            { "text": "hyper realistic fractal shader", "url": "/hyperrealisticfractalshader" },
-            { "text": "galaxy gen", "url": "/galaxygen" },
-            { "text": "maze generator", "url": "/mazegenerator" },
-            { "text": "terrain generator", "url": "/terraingen" },
-            { "text": "retro grid", "url": "/retrogrid" },
-            { "text": "creature builder", "url": "/creaturebuilder" },
-            { "text": "particle", "url": "/particle" },
-            { "text": "paint", "url": "/paint" },
-            { "text": "townscaper", "url": "/townscaper" }
-        ]
-    },
-    {
-        "multiple": true,
-        "text": "simulations",
-        "pages": [
-            { "text": "airplane simulator", "url": "/airplanesim" },
-            { "text": "city builder", "url": "/citybuilder" },
-            { "text": "car playground", "url": "/carplayground" },
-            { "text": "motorcycle playground", "url": "/motorcycleplayground" },
-            { "text": "dream maze", "url": "/dreammaze" },
-            { "text": "planet gen 2", "url": "/planetgen2" },
-            { "text": "bhorizon", "url": "/bhorizon" },
-            { "text": "civilsim 3d", "url": "/civilsim3d" },
-            { "text": "cuberoll 3d", "url": "/cuberoll3d" },
-            { "text": "earth", "url": "/earth" },
-            { "text": "macos", "url": "/macos" },
-            { "text": "magma", "url": "/magma" },
-            { "text": "molten cheese drinking simulator", "url": "/moltencheesedrinkingsim" },
-            { "text": "real life", "url": "/real-life" },
-            { "text": "snow globe", "url": "/snowglobe" },
-            { "text": "toilet simulation", "url": "/toiletsim" }
-        ]
-    },
-    {
-        "multiple": true,
-        "text": "funny/misc",
-        "pages": [
-            { "text": "autism buttons", "url": "/autismbuttons" },
-            { "text": "happy imessage", "url": "/happyimessage" },
-            { "text": "bird with balls", "url": "/birdwithballs" },
-            { "text": "bmovie planet", "url": "/bmovie-planet" },
-            { "text": "fart 3d", "url": "/fart3d" },
-            { "text": "poogle", "url": "/poogle" },
-            { "text": "poogle photos", "url": "/pooglephotos" },
-            { "text": "poopstagram", "url": "/poopstagram" },
-            { "text": "don't poop your pants", "url": "/dontpooyourpants" },
-            { "text": "lost", "url": "/lost" },
-            { "text": "mcdonalds", "url": "/mcdonalds" },
-            { "text": "meme kingdom", "url": "/memekingdom" },
-            { "text": "px fun", "url": "/pxfun" },
-            { "text": "tesseract", "url": "/tesseract" },
-            { "text": "weird walk", "url": "/weirdwalk" }
-        ]
-    },
-    {
-        "multiple": true,
-        "text": "experimental",
-        "pages": [
-            { "text": "protocol 533", "url": "/protocol_533" },
-            { "text": "quantum", "url": "/quantum" },
-            { "text": "shader test", "url": "/shadertest" },
-            { "text": "spixe", "url": "/spixe" },
-            { "text": "dreamland", "url": "/dreamland" },
-            { "text": "cosmic", "url": "/cosmic" },
-            { "text": "crt emulation", "url": "/crtemulation" },
-            { "text": "multicolored shader", "url": "/multicoloredshader" }
-        ]
-    },
-    { "text": "app store", "url": "/store", "image": "shop.svg" }
+    { "text": "App Ptore", "url": "/store", "image": "shop.svg" }
 ]
