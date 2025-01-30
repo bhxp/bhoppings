@@ -128,7 +128,7 @@
   background-color: #fff;
   color: #000;
 }
-
+/* linewize blur bypass */
 img:not([data-ia-status="ignore:small"]) {
   -webkit-filter: none !important;
   filter: none !important;
