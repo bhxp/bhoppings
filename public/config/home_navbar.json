@@ -15,5 +15,5 @@
             { "text": "Tango Clicker", "url": "/downloads/tangoclicker" }
         ]
     },
-    { "text": "App Ptore", "url": "/store", "image": "shop.svg" }
+    { "text": "App Store", "url": "/store", "image": "shop.svg" }
 ]
