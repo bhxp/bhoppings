@@ -9,17 +9,15 @@ var mouseY = 0;
 var mouseXMiddle = 0;
 var catX = 0;
 
-$(document).on("mousemove", e => {
+$(document).on("mousemove", (e) => {
   mouseX = e.pageX;
   mouseY = e.pageY;
-  mouseXMiddle = mouseX - (canvas.width / 2);
+  mouseXMiddle = mouseX - canvas.width / 2;
 });
 
 var localStorage = window.localStorage;
 
-$(document).ready(function() {
-
-
+$(document).ready(function () {
   var text = "Click to enter...";
   var textLength = text.length;
   var currentIndex = 0;
@@ -27,16 +25,16 @@ $(document).ready(function() {
 
   function animateText() {
     // Clear previous text
-    $('#animatedText').empty();
+    $("#animatedText").empty();
 
     // Loop through each letter
     for (var i = 0; i < textLength; i++) {
-      var letter = $('<span>').addClass('char').text(text.charAt(i));
+      var letter = $("<span>").addClass("char").text(text.charAt(i));
       if (i === currentIndex) {
         // Apply CSS for the current character
-        letter.css('text-shadow', '0px 0px 8px rgba(255, 255, 255, 1)');
+        letter.css("text-shadow", "0px 0px 8px rgba(255, 255, 255, 1)");
       }
-      $('#animatedText').append(letter);
+      $("#animatedText").append(letter);
     }
 
     // Move to the next letter sequence
@@ -50,11 +48,7 @@ $(document).ready(function() {
   animateText();
 });
 
-
-
-
-
-document.addEventListener("keydown", e => {
+document.addEventListener("keydown", (e) => {
   if (e.key == " ") {
     catX = 0;
   }
@@ -63,31 +57,31 @@ document.addEventListener("keydown", e => {
   }
 });
 
-
-
-$("#cover").click(function() {
+$("#cover").click(function () {
   $(this).fadeOut(500);
-  $("container").css("animation", "slideInFromTop 0.5s ease-in-out")
-})
-
+  $("container").css("animation", "slideInFromTop 0.5s ease-in-out");
+});
 
 class Particle {
   constructor() {
     this.y = Math.random() * canvas.height;
-    this.x = Math.random() * canvas.width
-    this.dir = randomAngleDownwards()
+    this.x = Math.random() * canvas.width;
+    this.dir = randomAngleDownwards();
     this.size = Math.random() * 3 + 1;
   }
 
   reset() {
     //const random = (Math.random() * (canvas.width + canvas.height)) + (canvas.height / canvas.width * mouseXMiddle)
-    const random = (Math.random() * (canvas.width + canvas.height * 2))
+    const random = Math.random() * (canvas.width + canvas.height * 2);
     let x;
     let y;
     if (random <= canvas.height) {
       x = 0;
       y = random;
-    } else if (random >= canvas.height && random <= canvas.width + canvas.height) {
+    } else if (
+      random >= canvas.height &&
+      random <= canvas.width + canvas.height
+    ) {
       x = random - canvas.height;
       y = 0;
     } else if (random >= canvas.width + canvas.height) {
@@ -96,7 +90,9 @@ class Particle {
     } else {
       x = 0;
       y = 0;
-      console.warn("Conditions for snow particle reset failed; Defaulting to top left (0, 0).")
+      console.warn(
+        "Conditions for snow particle reset failed; Defaulting to top left (0, 0).",
+      );
     }
     this.x = x;
     this.y = y;
@@ -106,7 +102,7 @@ class Particle {
   move() {
     this.x += Math.cos(this.dir) * 2;
     this.y += Math.sin(this.dir) * 2;
-    this.x += mouseXMiddle / canvas.width * 10;
+    this.x += (mouseXMiddle / canvas.width) * 10;
   }
 }
 function randomAngleDownwards() {
@@ -114,14 +110,9 @@ function randomAngleDownwards() {
   return Math.random() * (Math.PI * 0.4) + Math.PI * 0.35;
 }
 
-
-
-
 function createParticle() {
   return new Particle();
 }
-
-
 
 var tango = new Image("tango.png");
 
@@ -137,7 +128,11 @@ function render() {
     ctx.fillStyle = "#fff";
     ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
     ctx.fill();
-    if (particle.y > canvas.height || particle.x < 0 || particle.x > canvas.width) {
+    if (
+      particle.y > canvas.height ||
+      particle.x < 0 ||
+      particle.x > canvas.width
+    ) {
       particle.reset();
     }
   }
@@ -147,38 +142,71 @@ function render() {
   requestAnimationFrame(render);
 }
 
-
 $(document).ready((e) => {
   for (let i = 0; i < particleCount; i++) {
     let particle = createParticle();
     particle.reset();
     particles.push(particle);
   }
-  requestAnimationFrame(render)
-
-})
+  requestAnimationFrame(render);
+});
 
 document.addEventListener("keydown", (e) => {
   if (e.key === " ") {
     window.open("/home", "_self");
   }
 });
-    async function updateCounter() {
-      try {
-        // Fetch current count from JSONBin
-        const response = await fetch(`https://api.jsonbin.io/v3/b/${binId}/latest`, {
-          headers: {
-            'X-Master-Key': apiKey,
-          }
-        });
-        const data = await response.json();
-        let count = data.record.visitCount;
-        // Display current count
+async function updateCounter() {
+  try {
+    // Fetch current count from JSONBin
+    const response = await fetch(
+      `https://api.jsonbin.io/v3/b/${binId}/latest`,
+      {
+        headers: {
+          "X-Master-Key": apiKey,
+        },
+      },
+    );
+    const data = await response.json();
+    let count = data.record.visitCount;
+    // Display current count
+  } catch (error) {
+    console.error("Error updating counter:", error);
+    document.getElementById("count").innerText = "Error";
+  }
+}
 
-      } catch (error) {
-        console.error('Error updating counter:', error);
-        document.getElementById('count').innerText = 'Error';
-      }
-    }
+updateCounter();
 
-    updateCounter();
+$(document).ready(function () {
+  const effectManager = new EffectManager(particleCanvas);
+
+  const explodeEffect = new Effect({
+    particleCount: 10,
+    particleSize: { min: 1, max: 3 },
+    particleSpeed: { min: 2, max: 3 },
+    particleColor: "#ffffff",
+    effectBounds: {
+      type: "circle",
+      centerX: -100,
+      centerY: -100,
+      radius: 150,
+    },
+    overrideBounds: true,
+    behaviors: { explode: true, fall: false },
+    opacityFade: true, // Enable fade-out effect
+    loop: false,
+  });
+
+  // Add effects to the manager
+  effectManager.addEffect(explodeEffect);
+
+  // Start the particle effect rendering
+  effectManager.start();
+  window.e = explodeEffect;
+  // Set up interactivity: trigger the explode effect when a button is hovered
+  $(".link-button").on("mouseenter", function () {
+    explodeEffect.reset();
+    effectManager.triggerEffectOnElement(explodeEffect, this);
+  });
+});
