@@ -1,0 +1,109 @@
+:root {
+  --bg-color: #121212;
+  --card-bg: #1e1e1e;
+  --card-hover: #2d2d2d;
+  --text-color: #ffffff;
+  --text-secondary: #b3b3b3;
+  --accent-color: #2196f3;
+  --accent-hover: #1976d2;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 
+               'Helvetica Neue', Arial, sans-serif;
+  min-height: 100vh;
+}
+
+header {
+  padding: 2rem;
+  background-color: var(--card-bg);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+h1 {
+  margin-bottom: 1.5rem;
+  font-size: 2rem;
+}
+
+.search-container {
+  max-width: 600px;
+}
+
+#searchInput {
+  width: 100%;
+  padding: 0.8rem 1.2rem;
+  border: none;
+  border-radius: 8px;
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  font-size: 1rem;
+}
+
+#searchInput:focus {
+  outline: 2px solid var(--accent-color);
+}
+
+main {
+  padding: 2rem;
+}
+
+.apps-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 2rem;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.app-card {
+  background-color: var(--card-bg);
+  border-radius: 12px;
+  padding: 1.5rem;
+  transition: transform 0.2s, background-color 0.2s;
+}
+
+.app-card:hover {
+  transform: translateY(-4px);
+  background-color: var(--card-hover);
+}
+
+.app-icon {
+  width: 80px;
+  height: 80px;
+  margin-bottom: 1rem;
+}
+
+.app-name {
+  font-size: 1.25rem;
+  margin-bottom: 0.5rem;
+}
+
+.app-description {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  margin-bottom: 1.5rem;
+  line-height: 1.4;
+}
+
+.play-button {
+  display: inline-block;
+  padding: 0.6rem 2rem;
+  background-color: var(--accent-color);
+  color: white;
+  text-decoration: none;
+  border-radius: 6px;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+
+.play-button:hover {
+  background-color: var(--accent-hover);
+}
