@@ -1,0 +1,40 @@
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Apps Store</title>
+  <link rel="stylesheet" href="styles.css">
+  <script type="module" src="app.js"></script>
+</head>
+<body>
+  <header>
+    <h1>AI Apps Store</h1>
+    <div class="search-container">
+      <input type="text" id="searchInput" placeholder="Search apps...">
+    </div>
+  </header>
+  
+  <main>
+    <div class="apps-grid" id="appsGrid">
+      <!-- Apps will be dynamically loaded here -->
+    </div>
+  </main>
+
+  <template id="app-card-template">
+    <div class="app-card">
+      <div class="app-icon">
+        <svg viewBox="0 0 100 100">
+          <rect width="100" height="100" rx="20" fill="var(--card-bg)"/>
+          <text x="50" y="50" text-anchor="middle" dominant-baseline="middle" 
+                fill="var(--text-color)" font-size="40" class="icon-text"></text>
+        </svg>
+      </div>
+      <h2 class="app-name"></h2>
+      <p class="app-description"></p>
+      <div class="app-actions">
+        <a class="play-button" target="_blank">Play</a>
+      </div>
+    </div>
+  </template>
+</body>
+</html>
