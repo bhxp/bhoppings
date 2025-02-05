@@ -6,7 +6,7 @@
   background-color: rgba(0, 0, 0, 0.25);
   width: 5vw;
   height: fit-content;
-  border: solid 2px rgba(0, 0, 0, 0.6);
+  border: solid 1px rgba(0, 0, 0, 0.6);
   border-radius: 1.25vw;
 }
 
@@ -61,7 +61,7 @@
   height: calc(100vh - 96px);
   width: 70vw;
   position: absolute;
-  right: 0px;
+  right: 6px;
   bottom: 0px;
   background-color: transparent;
   display: flex;
@@ -74,6 +74,7 @@
 #settings-container::-webkit-scrollbar {
   background-color: transparent;
   width: 6px;
+  margin-bottom: 6px;
 }
 
 #settings-container::-webkit-scrollbar-thumb {
@@ -85,7 +86,7 @@
 }
 
 .option {
-  width: calc(25% - 2.3vw);
+  aspect-ratio: 1;
   height: 15.5vw;
   margin: 1vw;
   background-color: rgba(0, 0, 0, 0.5);
@@ -93,7 +94,8 @@
   position: relative;
   border-radius: 2vw;
   overflow: hidden;
-  border: solid 2px rgba(255, 255, 255, 0.2);
+  border: solid 1px rgba(255, 255, 255, 0.2);
+  flex: 0 0 14.5vw;
 }
 
 .option img {
@@ -118,7 +120,7 @@
   transform: translateX(-50%);
   border-radius: 9999px;
   background-color: rgba(0, 0, 0, 0.25);
-  border: solid 2px rgba(255, 255, 255, 0.2);
+  border: solid 1px rgba(255, 255, 255, 0.2);
   outline: none;
   transition: background-color 0.5s ease-in-out, color 0.5s ease-in-out;
   font-size: 1vw;
@@ -128,9 +130,82 @@
   background-color: #fff;
   color: #000;
 }
+
+.option .gradient-text {
+  position: absolute;
+  top: 20%;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 60px;
+  background-clip: text;
+  font-weight: 800;
+}
+
 /* linewize blur bypass */
 img:not([data-ia-status="ignore:small"]) {
   -webkit-filter: none !important;
   filter: none !important;
   opacity: 1 !important;
+}
+
+.settings-container-row {
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  height: fit-content;
+  flex-wrap: wrap;
+  margin-bottom: 48px;
+  position: relative;
+}
+
+#sidebar .gradient-text {
+  font-size: 2vh;
+  background-clip: text;
+  font-weight: 800;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.option.active-option::after {
+  height: 3vh;
+  width: 3vh;
+  position: absolute;
+  right: 3vh;
+  top: 3vh;
+  content: "";
+  background-image: url("/images/check.svg");
+  background-size: cover;
+}
+
+.bucket {
+  height: 14vh;
+  -webkit-mask-image: url("/images/bucket.svg");
+  mask-image: url("/images/bucket.svg");
+  -webkit-mask-size: cover;
+  mask-size: cover;
+  width: 15vh;
+  position: absolute;
+  left: 50%;
+  top: 42%;
+  transform: translate(-50%, -50%);
+  background: linear-gradient(to right, var(--bg1), var(--bg2));
+}
+
+.bucket::after {
+  content: "";
+  height: 100%;
+  width: 100%;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0))
+}
+
+body #sidebar .bucket {
+  height: 50%;
+  width: 51%;
+  top: 50%;
 }

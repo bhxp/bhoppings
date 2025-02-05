@@ -1,5 +1,15 @@
 @import url('https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@0,400..700;1,400..700&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,200..1000;1,200..1000&display=swap');
+
+:root {
+    --primary: #fff;
+    --dark-background: #12151c;
+    --color1: #D185FF;
+    --color2: #00ffff;
+    --bg1: #000;
+    --bg2: #000;
+}
 
 * {
     user-select: none;
@@ -12,11 +22,20 @@ body {
     height: 100vh;
     width: 100vw;
     margin: 0px !important;
-    background: rgb(34, 34, 34);
-    background: linear-gradient(0deg, #12151c 0%, rgba(0, 0, 0, 1) 100%);
+    background: rgb(0, 0, 0);
+    background: linear-gradient(90deg, var(--bg1) 0%, var(--bg2) 100%);
     cursor: default !important;
     overflow: hidden;
 }
+
+#waveCanvas {
+    background: rgb(0, 0, 0);
+    background: linear-gradient(180deg, rgba(0, 0, 0, 1) 0%, rgba(0, 0, 0, 0.8) 76%, rgba(0, 0, 0, 0.8) 100%);
+    left: -10vw;
+    top: -10vh;
+}
+
+
 
 #navbar {
     display: flex;
@@ -38,8 +57,7 @@ body {
 }
 
 .gradient-text {
-    background: #D185FF;
-    background: linear-gradient(to right, #D185FF 0%, #51CBFF 100%);
+    background: linear-gradient(to right, var(--color1) 0%, var(--color2) 100%);
     background-clip: text;
     color: transparent;
     font-family: 'Instrument Sans';
@@ -76,7 +94,7 @@ body {
     display: flex;
     font-weight: 400;
     font-size: 24px;
-    color: #fff;
+    color: var(--primary);
     display: inline-flex;
     align-content: flex-start;
     flex-direction: row;
@@ -105,7 +123,7 @@ body {
     backdrop-filter: blur(3px);
     background-color: rgba(0, 0, 0, 0.2);
     opacity: 1;
-    border: solid 1px #2F2F2F;
+    border: solid 1px rgba(255, 255, 255, 0.2);
     width: max-content;
     min-width: 120px;
     z-index: 2;
@@ -129,6 +147,25 @@ body {
 .dropdown .navbar-item:not(.navbar-item-top):hover {
     background-color: rgba(255, 255, 255, 1);
     color: #000;
+}
+
+
+.navbar-item::after {
+    opacity: 0;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: -1;
+    content: '';
+    height: 0px;
+    width: 0px;
+    box-shadow: 0px 0px 64px 16px rgba(255, 255, 255, 0.8);
+    transition: opacity 0.5s ease-in-out;
+}
+
+.navbar-item:hover::after {
+    opacity: 1;
 }
 
 #center {
@@ -197,7 +234,6 @@ body {
 #navbar .navbar-item:last-of-type.navbar-item-top {
     position: absolute;
     right: 0px;
-    top: 0px;
     transition: all 0.2s ease-in-out;
     height: 32px;
     line-height: 32px;
@@ -220,6 +256,8 @@ body {
     color: #000;
 }
 
+#navbar .navbar-item span {}
+
 #navbar .navbar-item:last-of-type.navbar-item-top img {
     height: 24px;
     aspect-ratio: 1;
@@ -232,6 +270,30 @@ body {
 
 #navbar .navbar-item:last-of-type.navbar-item-top:hover {
     transform: translate(0%, calc(-50% - 6px)) scale(1);
+}
+
+#navbar .navbar-item:has(.dropdown)::before {
+    content: "";
+    height: 27%;
+    aspect-ratio: 1 / 1;
+    background-image: url("/images/navbar-arrow.svg");
+    background-size: cover;
+    background-repeat: no-repeat;
+    position: absolute;
+    top: 50.2%;
+    right: -8px;
+    transform: TranslateY(-50%) rotate(0deg);
+    transition: transform 0.2s ease-in-out;
+}
+
+#navbar .navbar-item:has(.dropdown) {
+    padding-right: 24px;
+    margin-right: 24px;
+}
+
+
+#navbar .navbar-item:has(.dropdown:not(.hidden))::before {
+    transform: TranslateY(-50%) rotate(-90deg) !important;
 }
 
 .loader-6 {
@@ -599,7 +661,9 @@ body {
     left: 50%;
     transform: translate(-50%, -50%) scale(1.3);
     transition: opacity 0.3s ease-in-out;
-    background: linear-gradient(90deg, rgba(157, 161, 255, 1) 20%, rgba(117, 183, 255, 1) 80%);
+    background: linear-gradient(90deg, var(--color1) 20%, var(--color2) 80%);
+    background-size: 178px;
+    background-position-x: 50%;
     mask-size: cover;
     -webkit-mask-size: cover;
 }

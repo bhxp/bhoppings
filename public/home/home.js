@@ -30,7 +30,7 @@ function settingsRotate() {
     $("#settings-icon").css("transform", `rotate(${settingsRotateCycle}deg)`);
     $("#settings-icon div").css(
         "background",
-        `linear-gradient(${90 - settingsRotateCycle}deg, rgba(157, 161, 255, 1) 20%, rgba(117, 183, 255, 1) 80%`,
+        `linear-gradient(${90 - settingsRotateCycle}deg, var(--color1) 20%, var(--color2) 80%`,
     );
     settingsRotateCycle = (settingsRotateCycle + settingsRotateSpeed) % 360;
     requestAnimationFrame(settingsRotate);
@@ -58,64 +58,59 @@ function openDropdown(index) {
     }, 100); // Slightly longer than the hide delay to avoid conflicts
 }
 
+function displayNavbar(items) {
+    navbarItems = items;
+    let i = 0;
+    items.forEach((item) => {
+        let hr = $("<hr />");
+        if (item.multiple) {
+            console.log("multiple items");
+            let element = $("<div class='navbar-item navbar-item-top'></div>");
+            element.text(item.text);
+            element.attr("onclick", `openDropdown(${items.indexOf(item)})`);
+            let dropdown = $(
+                "<div class='dropdown hidden'><img class='notch' src='/images/dropdown-notch.svg' /></div>",
+            );
+            item.pages.forEach((page) => {
+                let elem = $("<div>");
+                elem.addClass("navbar-item");
+                elem.text(page.text);
+                elem.attr("onclick", `window.open("${page.url}");`);
+                dropdown.append(elem);
+            });
+            element.append(dropdown);
+            element.append(hr);
+            navbar.append(element);
+            dropdownIndexes.push(i);
+        } else {
+            let element = $(`<div class='navbar-item navbar-item-top'></div>`);
+
+            const elementText = $(`<span>${item.text}</span>`);
+            if (item.image) {
+                console.log("image");
+                const imageElement = $("<img>")
+                    .attr("src", `/images/${item.image}`)
+                    .addClass("navbar-item-image");
+                element.append(imageElement);
+            }
+            element.append(elementText);
+            element.attr("onclick", `window.open("${item.url}");`);
+            element.append(hr);
+            navbar.append(element);
+        }
+        i++;
+    });
+
+    navbar.removeClass("navbar-preload");
+
+    $("#center *").removeClass("title-preload");
+    $("#carousel").removeClass("carousel-preload");
+}
+
 $(document).ready((e) => {
     fetch("/config/home_navbar.json")
         .then((response) => response.json())
-        .then((items) => {
-            navbarItems = items;
-            let i = 0;
-            items.forEach((item) => {
-                let hr = $("<hr />");
-                if (item.multiple) {
-                    console.log("multiple items");
-                    let element = $(
-                        "<div class='navbar-item navbar-item-top'></div>",
-                    );
-                    element.text(item.text);
-                    element.attr(
-                        "onclick",
-                        `openDropdown(${items.indexOf(item)})`,
-                    );
-                    let dropdown = $(
-                        "<div class='dropdown hidden'><img class='notch' src='/images/dropdown-notch.svg' /></div>",
-                    );
-                    item.pages.forEach((page) => {
-                        let elem = $("<div>");
-                        elem.addClass("navbar-item");
-                        elem.text(page.text);
-                        elem.attr("onclick", `window.open("${page.url}");`);
-                        dropdown.append(elem);
-                    });
-                    element.append(dropdown);
-                    element.append(hr);
-                    navbar.append(element);
-                    dropdownIndexes.push(i);
-                } else {
-                    let element = $(
-                        `<div class='navbar-item navbar-item-top'></div>`,
-                    );
-
-                    const elementText = $(`<span>${item.text}</span>`);
-                    if (item.image) {
-                        console.log("image");
-                        const imageElement = $("<img>")
-                            .attr("src", `/images/${item.image}`)
-                            .addClass("navbar-item-image");
-                        element.append(imageElement);
-                    }
-                    element.append(elementText);
-                    element.attr("onclick", `window.open("${item.url}");`);
-                    element.append(hr);
-                    navbar.append(element);
-                }
-                i++;
-            });
-
-            navbar.removeClass("navbar-preload");
-
-            $("#center *").removeClass("title-preload");
-            $("#carousel").removeClass("carousel-preload");
-        })
+        .then((items) => displayNavbar(items))
         .catch((error) => {
             console.error(error);
         });

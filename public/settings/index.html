@@ -22,73 +22,64 @@
         <img src="/images/cursor/0.svg" />
       </button>
       <button>
-        <img src="/images/chezlinkz-tiktok.svg" />
+        <div class="gradient-text">bhop</div>
       </button>
       <button>
-        <img src="/images/chezlinkz-tiktok.svg" />
-      </button>
-      <button>
-        <img src="/images/chezlinkz-tiktok.svg" />
+        <div class="bucket"></div>
       </button>
     </div>
     <div id="settings-container">
-      <div class="option">
-        <img src="/images/cursor/0.svg" class="cursor-img" />
-        <button>Apply</button>
+      <div class="settings-container-row">
+        <!-- Generate options dynamically -->
+        <script>
+          for (let i = 0; i <= 13; i++) {
+            document.write(`
+              <div class="option">
+                <img src="/images/cursor/${i}.svg" class="cursor-img" />
+                <button onclick="setCursor(${i})">Apply</button>
+              </div>
+            `);
+          }
+        </script>
       </div>
-      <div class="option">
-        <img src="/images/cursor/1.svg" class="cursor-img" />
-        <button>Apply</button>
+      <div class="settings-container-row" id="gradient-text-row">
+        <script>
+          $.getJSON("/config/theme-colors.json").then((data) => {
+            for (let i = 0; i <= data.color1.length - 1; i++) {
+              $("#gradient-text-row").append(`
+                 <div class="option">
+            <div class="gradient-text" style="--color1: ${data.color1[i]}; --color2: ${data.color2[i]}">
+              bhop
+            </div>
+            <button
+              onclick="setUserStyle('color1', '${data.color1[i]}');setUserStyle('color2', '${data.color2[i]}');"
+            >
+              Apply
+            </button>
+            </div>
+              `);
+            }
+          });
+        </script>
       </div>
-      <div class="option">
-        <img src="/images/cursor/2.svg" class="cursor-img" />
-        <button>Apply</button>
-      </div>
-      <div class="option">
-        <img src="/images/cursor/3.svg" class="cursor-img" />
-        <button>Apply</button>
-      </div>
-      <div class="option">
-        <img src="/images/cursor/4.svg" class="cursor-img" />
-        <button>Apply</button>
-      </div>
-      <div class="option">
-        <img src="/images/cursor/5.svg" class="cursor-img" />
-        <button>Apply</button>
-      </div>
-      <div class="option">
-        <img src="/images/cursor/6.svg" class="cursor-img" />
-        <button>Apply</button>
-      </div>
-      <div class="option">
-        <img src="/images/cursor/7.svg" class="cursor-img" />
-        <button onclick="window.localStorage.setItem('cursor', '7')">
-          Apply
-        </button>
-      </div>
-      <div class="option">
-        <img src="/images/cursor/8.svg" class="cursor-img" />
-        <button>Apply</button>
-      </div>
-      <div class="option">
-        <img src="/images/cursor/9.svg" class="cursor-img" />
-        <button>Apply</button>
-      </div>
-      <div class="option">
-        <img src="/images/cursor/10.svg" class="cursor-img" />
-        <button>Apply</button>
-      </div>
-      <div class="option">
-        <img src="/images/cursor/11.svg" class="cursor-img" />
-        <button>Apply</button>
-      </div>
-      <div class="option">
-        <img src="/images/cursor/12.svg" class="cursor-img" />
-        <button>Apply</button>
-      </div>
-      <div class="option">
-        <img src="/images/cursor/13.svg" class="cursor-img" />
-        <button>Apply</button>
+
+      <div class="settings-container-row" id="background-row">
+        <script>
+          $.getJSON("/config/theme-colors.json").then((data) => {
+            for (let i = 0; i < data.bg1.length; i++) {
+              $("#background-row").append(`
+                <div class="option">
+                  <div class="bucket" style="
+                    background: linear-gradient(to right, ${data.bg1[i]}, ${data.bg2[i]});
+                  "></div>
+                  <button onclick="setUserStyle('bg1', '${data.bg1[i]}');setUserStyle('bg2', '${data.bg2[i]}');">
+                    Apply
+                  </button>
+                </div>
+              `);
+            }
+          });
+        </script>
       </div>
     </div>
   </body>
@@ -97,4 +88,5 @@
   <script type="text/javascript" src="/home/home.js"></script>
   <script type="text/javascript" src="/home/home-waves.js"></script>
   <script type="text/javascript" src="/settings/settings.js"></script>
+  <script type="text/javascript" src="/user-theme.js"></script>
 </html>

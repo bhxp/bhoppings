@@ -1,26 +1,32 @@
 // based on chatgpts code that didnt work; about half is mine
 
-const canvas = document.getElementById('waveCanvas');
-const ctx = canvas.getContext('2d');
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
+const canvas = document.getElementById("waveCanvas");
+const ctx = canvas.getContext("2d");
+canvas.width = window.innerWidth * 1.2;
+canvas.height = window.innerHeight * 1.2;
 
+const ogSize = [canvas.width, canvas.height];
 
 const points = [];
 const wavePoints = [];
 const numWaves = 15; // Number of wave points
-const rows = 80;
-const xScale = canvas.width * 1.5 / rows;
+const rows = 120;
+const xScale = (canvas.width * 1.5) / rows;
 const columns = Math.round(canvas.height / xScale);
 const yScale = xScale; //canvas.height / columns * 1.5;
 var fpsCompensation = 1;
 var fps = 0;
 var countingFps = true;
 var gravityStrength = 10; // Strength of the pull towards wave points
-var waveSpeed = 0.000005;
+var waveSpeed = 0.000001;
+
+$(document).on("resize", function (e) {
+    canvas.width = window.innerWidth * 1.2;
+    canvas.height = window.innerHeight * 1.2;
+});
 
 function fpsIncrement() {
-    fps ++;
+    fps++;
     if (countingFps) {
         requestAnimationFrame(fpsIncrement);
     }
@@ -32,8 +38,8 @@ setTimeout(5000, () => {
         countingFps = false;
         fps /= 2;
         fpsCompensation = 60 / fps;
-    })
-})
+    });
+});
 
 function distributePoints(numPoints, width, height) {
     const points = [];
@@ -45,7 +51,8 @@ function distributePoints(numPoints, width, height) {
 
     for (let row = 0; row < rows; row++) {
         for (let col = 0; col < cols; col++) {
-            if (points.length < numPoints) { // Check if we've added enough points
+            if (points.length < numPoints) {
+                // Check if we've added enough points
                 const x = col * spacingX + spacingX / 2; // Center the point in the cell
                 const y = row * spacingY + spacingY / 2; // Center the point in the cell
                 points.push({ x, y });
@@ -57,14 +64,13 @@ function distributePoints(numPoints, width, height) {
 
 // Example usage:
 const numPoints = 10; // Number of points to distribute
-const width = 800;    // Width of the area
-const height = 400;   // Height of the area
+const width = 800; // Width of the area
+const height = 400; // Height of the area
 
 const distributedPoints = distributePoints(numPoints, width, height);
 console.log(distributedPoints);
 
-
-const pointPositions = distributePoints(numWaves, canvas.width, canvas.height)
+const pointPositions = distributePoints(numWaves, canvas.width, canvas.height);
 
 // Initialize wave points randomly across the canvas
 for (let i = 0; i < numWaves; i++) {
@@ -72,18 +78,18 @@ for (let i = 0; i < numWaves; i++) {
         x: Math.random() * canvas.width,
         y: Math.random() * canvas.height,
         amplitude: Math.random() * 20 + 5,
-        wave: Math.random() * 40 + 10
+        wave: Math.random() * 40 + 10,
     });
 }
 
-for (let x = 0; x < rows; x ++) {
-    for (let y = 0; y < columns; y ++) {
+for (let x = 0; x < rows; x++) {
+    for (let y = 0; y < columns; y++) {
         points.push({
             x: x * xScale,
             y: y * yScale,
             originalY: y * yScale,
-            originalX: x * xScale
-        })
+            originalX: x * xScale,
+        });
     }
 }
 
@@ -91,40 +97,35 @@ function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     // Reset points to their original positions
-    points.forEach(point => {
+    points.forEach((point) => {
         point.y = point.originalY; // Reset to original Y position
         point.x = point.originalX;
     });
 
     // Apply gravity towards wave points
-    points.forEach(point => {
-        
-
+    points.forEach((point) => {
         // Find the nearest wave point
-        wavePoints.forEach(wave => {
+        wavePoints.forEach((wave) => {
             const distance = Math.hypot(wave.x - point.x, wave.y - point.y);
             wave.wave += waveSpeed * fpsCompensation;
 
             // Calculate the pull towards the nearest wave point
-        const dx = wave.x - point.x; // Change in x
-        const dy = wave.y - point.y; // Change in y
+            const dx = wave.x - point.x; // Change in x
+            const dy = wave.y - point.y; // Change in y
 
-        // Normalize the direction vector to ensure consistent speed
-        const distanceToWave = Math.hypot(dx, dy);
-        if (distanceToWave > 0) {
-            // Calculate normalized direction
-            const normX = dx / distanceToWave;
-            const normY = dy / distanceToWave;
+            // Normalize the direction vector to ensure consistent speed
+            const distanceToWave = Math.hypot(dx, dy);
+            if (distanceToWave > 0) {
+                // Calculate normalized direction
+                const normX = dx / distanceToWave;
+                const normY = dy / distanceToWave;
 
-            // Move the point towards the wave point based on gravity
-            point.x += normX * gravityStrength * Math.sin(wave.wave) * -1;
-            point.y += normY * gravityStrength * Math.sin(wave.wave) * -1;
-        }
+                // Move the point towards the wave point based on gravity
+                point.x += normX * gravityStrength * Math.sin(wave.wave) * -1;
+                point.y += normY * gravityStrength * Math.sin(wave.wave) * -1;
+            }
         });
-
-        
     });
-
 
     /*
     // Draw wave points
@@ -138,8 +139,8 @@ function draw() {
     */
 
     // Draw points
-    ctx.fillStyle = '#14161d';
-    points.forEach(point => {
+    ctx.fillStyle = "rgba(255, 255, 255, 0.1)";
+    points.forEach((point) => {
         ctx.beginPath();
         ctx.arc(point.x, point.y, 3, 0, Math.PI * 2);
         ctx.fill();

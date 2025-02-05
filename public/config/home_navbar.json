@@ -1,19 +1,17 @@
 [
     {
         "multiple": true,
-        "text": "Bio",
+        "text": "bio",
         "pages": [
-            { "text": "Bhop", "url": "/" },
-            { "text": "ChezLinkZ", "url": "/chezlinkz" }
+            { "text": "bhop", "url": "/" },
+            { "text": "chezlinkz", "url": "/chezlinkz" }
         ]
     },
-    { "text": "Tangini", "url": "/tangini" },
+    { "text": "tangini", "url": "/tangini" },
     {
         "multiple": true,
-        "text": "Downloads",
-        "pages": [
-            { "text": "Tango Clicker", "url": "/downloads/tangoclicker" }
-        ]
+        "text": "downloads",
+        "pages": [{ "text": "tango clicker", "url": "/downloads/tangoclicker" }]
     },
-    { "text": "App Store", "url": "/store", "image": "shop.svg" }
+    { "text": "app store", "url": "/store", "image": "shop.svg" }
 ]
