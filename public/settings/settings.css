@@ -158,14 +158,16 @@ img:not([data-ia-status="ignore:small"]) {
   position: relative;
 }
 
-#sidebar .gradient-text {
-  font-size: 2vh;
-  background-clip: text;
-  font-weight: 800;
+#sidebar #sidebar-b {
+  mask: url("/images/bhoppings-b.svg") no-repeat center / contain;
+  background: linear-gradient(to right, var(--color1), var(--color2));
   position: absolute;
   left: 50%;
   top: 50%;
+  width: 87%;
+  height: 87%;
   transform: translate(-50%, -50%);
+  content: "";
 }
 
 .option.active-option::after {

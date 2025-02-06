@@ -3,13 +3,30 @@
 const canvas = document.getElementById("waveCanvas");
 const ctx = canvas.getContext("2d");
 canvas.width = window.innerWidth * 1.2;
-canvas.height = window.innerHeight * 1.2;
+canvas.height = window.innerHeight * 1.2 + 10;
+
+let lastTime = 0;
+let refreshRate = 0;
+
+function detectRefreshRate() {
+    const currentTime = performance.now();
+    const timeDifference = currentTime - lastTime;
+
+    if (timeDifference > 0) {
+        refreshRate = 1000 / timeDifference; // In Hz (frames per second)
+    }
+
+    lastTime = currentTime;
+    waveSpeed = 5e-5 / refreshRate;
+
+    requestAnimationFrame(detectRefreshRate); // Keep running the function
+}
 
 const ogSize = [canvas.width, canvas.height];
 
 const points = [];
 const wavePoints = [];
-const numWaves = 15; // Number of wave points
+const numWaves = 20; // Number of wave points
 const rows = 120;
 const xScale = (canvas.width * 1.5) / rows;
 const columns = Math.round(canvas.height / xScale);
@@ -19,6 +36,8 @@ var fps = 0;
 var countingFps = true;
 var gravityStrength = 10; // Strength of the pull towards wave points
 var waveSpeed = 0.000001;
+
+requestAnimationFrame(detectRefreshRate);
 
 $(document).on("resize", function (e) {
     canvas.width = window.innerWidth * 1.2;

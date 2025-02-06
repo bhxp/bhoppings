@@ -22,11 +22,11 @@
         <img src="/images/cursor/0.svg" />
       </button>
       <button>
-        <div class="gradient-text">bhop</div>
+        <div id="sidebar-b"></div>
       </button>
-      <button>
+      <!--<button>
         <div class="bucket"></div>
-      </button>
+      </button>-->
     </div>
     <div id="settings-container">
       <div class="settings-container-row">
@@ -52,7 +52,7 @@
               bhop
             </div>
             <button
-              onclick="setUserStyle('color1', '${data.color1[i]}');setUserStyle('color2', '${data.color2[i]}');"
+              onclick="setUserStyle('color1', '${data.color1[i]}');setUserStyle('color2', '${data.color2[i]}');setUserStyle('bg1', '${data.bg1[i]}');setUserStyle('bg2', '${data.bg2[i]}');"
             >
               Apply
             </button>
@@ -62,7 +62,7 @@
           });
         </script>
       </div>
-
+<!--
       <div class="settings-container-row" id="background-row">
         <script>
           $.getJSON("/config/theme-colors.json").then((data) => {
@@ -81,7 +81,7 @@
           });
         </script>
       </div>
-    </div>
+    </div>-->
   </body>
 
   <script type="text/javascript" src="/cursor.js"></script>

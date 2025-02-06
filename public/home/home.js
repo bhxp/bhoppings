@@ -105,6 +105,7 @@ function displayNavbar(items) {
 
     $("#center *").removeClass("title-preload");
     $("#carousel").removeClass("carousel-preload");
+    $("body").addClass("bg-fadein");
 }
 
 $(document).ready((e) => {
@@ -141,3 +142,22 @@ $(document).ready((e) => {
         },
     );
 });
+
+const oldOpen = window.open;
+const fadeTime = 600;
+
+window.open = function (url, target, features) {
+    $("body").fadeOut(fadeTime / 2);
+    setTimeout(() => {
+        oldOpen(url, target, features);
+    }, fadeTime / 2);
+};
+
+if (window.opener) {
+    $("body").fadeOut(0);
+    $("body").fadeIn(fadeTime / 2);
+}
+
+const scrollToElement = ($parent, $target) => {
+    $parent.animate({ scrollTop: $target.offset().top }, 500);
+};

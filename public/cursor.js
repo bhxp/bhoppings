@@ -22,6 +22,8 @@ styleElem.innerHTML = `* {
   pointer-events: none;
   z-index: 9999;
   display: block;
+  top: -100%;
+  left: -100%;
 }
   
 

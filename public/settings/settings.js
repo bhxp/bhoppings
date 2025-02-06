@@ -57,29 +57,10 @@ $scrollContainer.on("scroll", function () {
   }
   activeIndex = closestIndex;
 });
-/*
-function scrollToChildByIndex(parent, index) {
-  let $child = $(parent).children().eq(index); // Get the child element at the specified index
-  let childOffset = $child.offset().top; // Get the offset of the child element relative to the document
-  let parentOffset = $(parent).offset().top; // Get the offset of the parent container relative to the document
-  let parentHeight = $(parent).height(); // Get the height of the parent container
-  let childHeight = $child.outerHeight(); // Get the height of the child element
-
-  // Calculate the scroll position so that the child is centered in the parent
-  let scrollPosition =
-    childOffset - parentOffset - parentHeight / 2 + childHeight / 2;
-
-  // Animate the scrollTop of the parent container to the calculated scroll position
-  $(parent).animate(
-    {
-      scrollTop: scrollPosition,
-    },
-    500,
-  ); // 500ms for the scroll animation duration
-}
 
 $("#sidebar button").on("click", function (e) {
-  let index = $(this).index();
-  scrollToChildByIndex($("#settings-container"), index);
+  scrollToElement(
+    $("#settings-container"),
+    $("#settings-container>.settings-container-row").eq($(this).index()),
+  );
 });
-*/
