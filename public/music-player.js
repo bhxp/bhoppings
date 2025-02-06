@@ -18,7 +18,7 @@ musicStyleElement.html(`
   bottom: 3vh;
   right: 3vh;
   height: 19vh;
-  width: 28.5vh;
+  width: 25.5vh;
 }
 #music-player-icon img {
 height: 70%;
@@ -54,7 +54,7 @@ box-sizing: border-box;
 position: absolute;
 right: 0px;
 top: 0px;
-width: calc(66.67% - 0.4vh);
+width: calc(66.67% - 1.4vh);
 display: flex;
 justify-content: center;
 align-items: center;
@@ -75,7 +75,7 @@ font-size: 3vh;
 
 #music-player-controls button {
 height: 100%;
-flex: 1;
+aspect-ratio: 1;
 margin-right: 1vh;
 border-radius: 1vh;
 background-color: rgba(255, 255, 255, 0);

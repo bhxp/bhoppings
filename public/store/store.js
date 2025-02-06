@@ -63,7 +63,9 @@ $("#container").on("mouseleave", ".item .item-button", function () {
 
 $("#container").on("click", ".item .item-button", function () {
   if (purchasedItems.includes($(this).data("original-text"))) {
-    window.open(getUrlByName(storeItems, $(this).data("original-text")));
+    window.open(
+      "/ai/" + getUrlByName(storeItems, $(this).data("original-text")),
+    );
   } else {
     purchasedItems.push($(this).data("original-text"));
     localStorage.setItem("purchased-items", JSON.stringify(purchasedItems));

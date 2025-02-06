@@ -147,6 +147,10 @@ const oldOpen = window.open;
 const fadeTime = 600;
 
 window.open = function (url, target, features) {
+    if (target !== "_self") {
+        oldOpen(url, target, features);
+        return;
+    }
     $("body").fadeOut(fadeTime / 2);
     setTimeout(() => {
         oldOpen(url, target, features);
