@@ -4,6 +4,7 @@
         "text": "bio",
         "pages": [
             { "text": "bhop", "url": "/" },
+            { "text": "bhop's observatory", "url": "/observe" }
             { "text": "chezlinkz", "url": "/chezlinkz" }
         ]
     },
