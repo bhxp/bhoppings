@@ -3,9 +3,6 @@ var navbarItems = null;
 var cancelNavbarHide = true;
 var hideTimeout = null; // track the hide timeout
 var dropdownIndexes = [];
-var settingsButtonHovered = false;
-var settingsRotateCycle = 0;
-var settingsRotateSpeed = 0.1;
 
 $(document).on("mousedown", (e) => {
     if (hideTimeout) {
@@ -19,22 +16,6 @@ $(document).on("mousedown", (e) => {
         }
     }, 50);
 });
-
-function settingsRotate() {
-    if (!settingsButtonHovered) {
-        $("#settings-icon").css("transform", `rotate(${0}deg)`);
-        settingsRotateCycle = 0;
-        return;
-    }
-    console.log(`Rotate Cycle: ${settingsRotateCycle}`);
-    $("#settings-icon").css("transform", `rotate(${settingsRotateCycle}deg)`);
-    $("#settings-icon div").css(
-        "background",
-        `linear-gradient(${90 - settingsRotateCycle}deg, var(--color1) 20%, var(--color2) 80%`,
-    );
-    settingsRotateCycle = (settingsRotateCycle + settingsRotateSpeed) % 360;
-    requestAnimationFrame(settingsRotate);
-}
 
 function openDropdown(index) {
     const dropdown = $("#navbar .navbar-item-top")
@@ -118,29 +99,6 @@ $(document).ready((e) => {
     $("#navbar .gradient-text").click(function () {
         window.open("/home", "_self");
     });
-    $("#settings-icon").hover(
-        function (e) {
-            settingsButtonHovered = true;
-            $("#settings-icon").css(
-                "animation",
-                "settings-rotate-short 0.8s ease forwards",
-            );
-
-            $("#settings-icon").css("transform", `rotate(${0}deg)`);
-            setTimeout(function () {
-                $("#settings-icon").css("animation", "none");
-                requestAnimationFrame(settingsRotate);
-            }, 400);
-        },
-        function (e) {
-            settingsButtonHovered = false;
-            $("#settings-icon").css("animation", "none");
-            $("#settings-icon").css("transition", "transform 0.4s ease-in-out");
-            setTimeout(() => {
-                $("#settings-icon").css("transition", "none");
-            }, 400);
-        },
-    );
 });
 
 const oldOpen = window.open;
@@ -165,3 +123,40 @@ if (window.opener) {
 const scrollToElement = ($parent, $target) => {
     $parent.animate({ scrollTop: $target.offset().top }, 500);
 };
+localStorage.setItem("skipBio", localStorage.getItem("skipBio") || false);
+const devMenu = $(`
+<div id="dev-menu">
+<button onclick="window.localStorage.setItem('skipBio', JSON.stringify(!JSON.parse(localStorage.getItem('skipBio'))));$('#dev-menu button').eq(0).html('Skip Bio ' + localStorage.getItem('skipBio') + ']');">Skip Bio [${localStorage.getItem("skipBio")}]</button>
+<button onclick="window.localStorage.clear()">
+  Clear window.LocalStorage
+</button>
+</div>
+`);
+devMenu.appendTo("body");
+devMenu.hide();
+
+$(document).on("keydown", function (e) {
+    if (e.ctrlKey && e.key === ".") {
+        devMenu.toggle();
+    }
+});
+
+$("head").append(`
+<style>
+#dev-menu {
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    right: 24px;
+    top: 48px;
+    background: #fff;
+    padding: 12px;
+    color: #000;
+    z-index: 9998;
+}
+#dev-menu button {
+padding: 6px;
+margin-top: 6px;
+color: #000 !important;
+}
+</style>`);

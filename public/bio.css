@@ -309,3 +309,38 @@ body {
     transform: TranslateX(-50%);
   }
 }
+
+@keyframes shine {
+  0% {
+    left: 0%;
+    opacity: 1;
+  }
+
+
+  50% {
+    left: 100%;
+    opacity: 0;
+  }
+
+  99% {
+    left: 100%;
+    opacity: 0;
+  }
+
+  100% {
+    left: 0%;
+    opacity: 1;
+  }
+}
+
+#animatedText::before {
+  position: absolute;
+  content: "";
+  left: 0px;
+  top: 0px;
+  height: 100%;
+  width: 5%;
+  border-radius: 9999px;
+  background: linear-gradient(to right, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0));
+  animation: shine 2s ease-in-out infinite;
+}

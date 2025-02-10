@@ -45,6 +45,7 @@
       <div class="settings-container-row" id="gradient-text-row">
         <script>
           $.getJSON("/config/theme-colors.json").then((data) => {
+            $("#settings-container, #sidebar").addClass("loaded");
             for (let i = 0; i <= data.color1.length - 1; i++) {
               $("#gradient-text-row").append(`
                  <div class="option">

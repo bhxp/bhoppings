@@ -1,6 +1,6 @@
 #sidebar {
   position: absolute;
-  left: 15vw;
+  left: -5vw;
   top: 50vh;
   transform: translate(-50%, -50%);
   background-color: rgba(0, 0, 0, 0.25);
@@ -8,6 +8,11 @@
   height: fit-content;
   border: solid 1px rgba(0, 0, 0, 0.6);
   border-radius: 1.25vw;
+  transition: left 0.5s ease-in-out;
+}
+
+#sidebar.loaded {
+  left: 15vw !important;
 }
 
 #sidebar button {
@@ -69,6 +74,12 @@
   overflow-y: scroll;
   overflow-x: hidden;
   flex-wrap: wrap;
+  transform: translateY(+100%);
+  transition: transform 0.5s ease-in-out;
+}
+
+#settings-container.loaded {
+  transform: translateY(0px) !important;
 }
 
 #settings-container::-webkit-scrollbar {

@@ -1,3 +1,5 @@
+$("body").append(`<div id="music-player-hitbox"></div>`);
+
 const musicPlayerContainer = $("<div id='music-player-container'></div>");
 
 musicPlayerContainer.html(`
@@ -19,6 +21,8 @@ musicStyleElement.html(`
   right: 3vh;
   height: 19vh;
   width: 25.5vh;
+  transform: translateX(+25.5vw) scale(-1);
+  transition: all 0.8s ease-in-out;
 }
 #music-player-icon img {
 height: 70%;
@@ -71,6 +75,18 @@ font-size: 3vh;
   width: 100%;
   display: flex;
   padding: 1vh;
+}
+
+#music-player-hitbox {
+  position: absolute;
+  bottom: 3vh;
+  right: 3vh;
+  height: 19vh;
+  width: 25.5vh;
+}
+
+body:has(#music-player-hitbox:hover) #music-player-container, #music-player-container:hover {
+  transform: translateX(0px) scale(1);
 }
 
 #music-player-controls button {
