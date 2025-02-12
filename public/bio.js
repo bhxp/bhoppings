@@ -2,8 +2,6 @@ var canvas = document.getElementById("effect");
 var ctx = canvas.getContext("2d");
 var particles = [];
 var particleCount = 150;
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight;
 var mouseX = 0;
 var mouseY = 0;
 var mouseXMiddle = 0;
@@ -112,9 +110,10 @@ function render() {
 }
 
 $(document).ready((e) => {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
   for (let i = 0; i < particleCount; i++) {
     let particle = createParticle();
-    particle.reset();
     particles.push(particle);
   }
   requestAnimationFrame(render);
