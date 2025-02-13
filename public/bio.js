@@ -81,13 +81,10 @@ function createParticle() {
   return new Particle();
 }
 
-var tango = new Image("tango.png");
-
 function render() {
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
   ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-  ctx.drawImage(tango, catX, 500, 50, 50);
   for (let i = 0; i < particles.length; i++) {
     let particle = particles[i];
     particle.move();
