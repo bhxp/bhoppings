@@ -1,0 +1,45 @@
+/* New file for checklist-specific styles */
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: white;
+  padding: 2rem;
+  border-radius: 8px;
+  max-width: 500px;
+  width: 90%;
+}
+
+.checklist-item {
+  display: flex;
+  align-items: center;
+  margin: 1rem 0;
+  padding: 0.5rem;
+  border-bottom: 1px solid #eee;
+}
+
+.checklist-item input[type="checkbox"] {
+  margin-right: 1rem;
+}
+
+.checklist-item label {
+  font-size: 1.1rem;
+}
+
+.incomplete {
+  color: #d0021b;
+}
+
+.complete {
+  color: #7ed321;
+}

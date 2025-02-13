@@ -838,5 +838,55 @@
     "name": "WTDJL (Scary Pumpkin Guy Game)",
     "url": "/wtdjl",
     "image": "wtdjl.png"
+  },
+  {
+    "name": "Edge Detection Filter",
+    "url": "/edge-detection-filter",
+    "image": "edge-detection-filter.png"
+  },
+  {
+    "name": "3D Driving Game",
+    "url": "/3d_driving_game",
+    "image": "3d_driving_game.png"
+  },
+  {
+    "name": "Evil Google",
+    "url": "/evil_google",
+    "image": "evil_google.png"
+  },
+  {
+    "name": "3D Space Explorer by <span style='color:red;'>Red Bot</span>",
+    "url": "/3d_space_explorer_by_Red_Bot",
+    "image": "3d_space_explorer_by_Red_Bot.png"
+  },
+  {
+    "name": "Giggler Land",
+    "url": "/giggler_land",
+    "image": "giggler_land.png"
+  },
+  {
+    "name": "EaglerCraft",
+    "url": "/eaglercraft",
+    "image": "eaglercraft.png"
+  },
+  {
+    "name": "Simple Civilization Simulator",
+    "url": "/simple_civilization_simulator",
+    "image": "simple_civilization_simulator.png"
+  },
+  {
+    "name": "Kita Sims",
+    "url": "/kita_sims__",
+    "image": "kita_sims__.png"
+  },
+  {
+    "name": "Falling Sand Simulator 98",
+    "url": "/falling_sand_simulator_98_",
+    "image": "falling_sand_simulator_98_.png"
+  },
+  {
+    "name": "Temple Scene",
+    "url": "/temple_scene",
+    "image": "temple_scene.png"
   }
 ]

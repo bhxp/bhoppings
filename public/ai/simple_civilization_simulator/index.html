@@ -1,0 +1,2301 @@
+    <style>
+        @font-face {
+            font-family: 'Mojangles';
+            src: url('/mojangles.ttf') format('truetype');
+        }
+        
+        body {
+            margin: 0;
+            /* overflow: hidden; */ 
+            font-family: 'Mojangles', Arial, sans-serif;
+        }
+        
+        #gameCanvas {
+            width: 100vw;
+            height: 100vh;
+            cursor: move;
+            image-rendering: pixelated;
+            image-rendering: crisp-edges;
+            /* transform: translate(-50%, -50%); */ 
+        }
+
+        #controls {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            z-index: 1000;
+            border: 2px solid #000;
+            background: #c0c0c0;
+            box-shadow: 4px 4px 0px #000;
+            padding: 5px;
+            border-radius: 5px;
+            max-width: 150px;
+            font-size: 10px;
+        }
+
+        #controls.collapsed {
+            max-height: 30px;
+            overflow: hidden;
+        }
+
+        .button {
+            padding: 5px 10px;
+            margin: 2px;
+            border: 2px solid #000;
+            box-shadow: 2px 2px 0px #000;
+            cursor: pointer;
+            transition: none;
+            font-family: 'Mojangles', monospace;
+            font-size: 10px;
+            background: #d0d0d0;
+            color: #000;
+            text-transform: uppercase;
+        }
+
+        .button:active {
+            transform: translate(1px, 1px);
+            box-shadow: 1px 1px 0px #000;
+        }
+
+        #maleBtn {
+            background: #2196F3;
+            color: white;
+            font-size: 10px;
+        }
+
+        #femaleBtn {
+            background: #E91E63;
+            color: white;
+            font-size: 10px;
+        }
+
+        .active {
+            box-shadow: 0 0 10px rgba(0,0,0,0.5);
+        }
+        
+        #populationCount {
+            font-weight: bold;
+            color: #333;
+        }
+
+        .townList {
+            margin-top: 10px;
+            font-size: 10px;
+        }
+        
+        .store {
+            background: #90EE90;
+            border-radius: 10px;
+            padding: 5px;
+            margin: 5px 0;
+            font-size: 12px;
+        }
+        
+        .buildingLabel {
+            font-family: 'Mojangles', Arial, sans-serif;
+            font-size: 14px;
+            color: #333;
+            text-align: center;
+            position: absolute;
+            pointer-events: none;
+        }
+
+        .peopleList {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: rgba(255,255,255,0.9);
+            padding: 8px;
+            border-radius: 5px;
+            max-height: 80vh;
+            overflow-y: auto;
+            max-width: 200px;
+            font-size: 10px;
+        }
+
+        .peopleList.collapsed {
+            height: 30px;
+            overflow: hidden;
+        }
+
+        .togglePeopleList {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 3px;
+            width: 100%;
+            cursor: pointer;
+            margin-bottom: 5px;
+            font-size: 12px;
+        }
+
+        .toggleControls {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 2px;
+            width: 100%;
+            cursor: pointer;
+            margin-bottom: 5px;
+            font-family: 'Mojangles', Arial, sans-serif;
+            font-size: 10px;
+        }
+
+        #controls select {
+            width: 100%;
+            font-size: 9px;
+            margin: 2px 0;
+            background: #d0d0d0;
+            border: 1px solid #333;
+            padding: 2px;
+        }
+
+        .languageSelect {
+            width: 100%;
+            font-size: 9px;
+            margin: 2px 0;
+            background: #d0d0d0;
+            border: 1px solid #333;
+            padding: 2px;
+        }
+
+        .personEntry {
+            font-family: 'Mojangles', Arial, sans-serif;
+            border-bottom: 1px solid #ddd;
+            padding: 3px 0;
+            font-size: 10px;
+        }
+
+        .personEntry.deceased {
+            color: #999;
+        }
+
+        .personEntry.mayor {
+            background: rgba(255, 215, 0, 0.2);
+            border: 1px solid gold;
+        }
+        
+        .personEntry.it {
+          background: rgba(255, 0, 0, 0.2);
+          border: 1px solid red;
+        }
+        
+        .personEntry.playing-rps {
+          background: rgba(0, 255, 0, 0.2);
+          border: 1px solid green;
+        }
+        
+        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+        
+        #pingRegulator, #birthChart {
+            position: fixed;
+            background: rgba(255,255,255,0.9);
+            padding: 8px;
+            border-radius: 5px;
+            max-height: 80vh;
+            overflow-y: auto;
+            max-width: 200px;
+            font-size: 10px;
+            border: 2px solid #000;
+            box-shadow: 4px 4px 0px #000;
+        }
+
+        #pingRegulator {
+            bottom: 10px;
+            left: 10px;
+        }
+
+        #birthChart {
+            bottom: 10px;
+            right: 10px;
+        }
+
+        #pingRegulator.collapsed, #birthChart.collapsed {
+            height: 30px;
+            overflow: hidden;
+        }
+
+        .toggleWindow {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 3px;
+            width: 100%;
+            cursor: pointer;
+            margin-bottom: 5px;
+            font-family: 'Mojangles', Arial, sans-serif;
+            font-size: 12px;
+        }
+
+        .chart {
+            width: 180px;
+            height: 100px;
+            border: 1px solid #000;
+            margin-top: 5px;
+            image-rendering: pixelated;
+        }
+        
+        .thoughtBubble {
+            position: fixed;
+            background: white;
+            border: 2px solid #333;
+            border-radius: 15px;
+            padding: 10px;
+            max-width: 200px;
+            z-index: 1000;
+            font-family: 'Mojangles', Arial, sans-serif;
+            font-size: 12px;
+            pointer-events: none;
+            box-shadow: 3px 3px 5px rgba(0,0,0,0.2);
+        }
+
+        .thoughtBubble:after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 20px;
+            width: 20px;
+            height: 20px;
+            background: white;
+            border-right: 2px solid #333;
+            border-bottom: 2px solid #333;
+            transform: rotate(45deg);
+        }
+
+        .personEntry .thoughts {
+            font-size: 9px;
+            font-style: italic;
+            color: #666;
+            margin-top: 3px;
+        }
+        
+        .engineer {
+            color: #1E90FF;
+        }
+
+        .publicBuilding {
+            opacity: 0.8;
+            transition: opacity 0.3s;
+        }
+
+        .publicBuilding:hover {
+            opacity: 1;
+        }
+        
+        #welcomeMessage {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-size: 24px;
+            font-family: 'Mojangles', Arial, sans-serif;
+            text-align: center;
+            opacity: 1;
+            transition: opacity 2s;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            z-index: 9999;
+            pointer-events: none;
+        }
+
+        #welcomeMessage.fade {
+            opacity: 0;
+        }
+        
+        .personEntry.road-worker {
+            background: rgba(128, 128, 128, 0.2);
+            border: 1px solid #666;
+        }
+
+        .hotel-building, .condo-building {
+            background: rgba(255,255,255,0.9);
+            padding: 8px;
+            border-radius: 5px;
+            font-family: 'Mojangles', Arial, sans-serif;
+        }
+
+        .building-label {
+            font-size: 14px;
+            text-align: center;
+            color: #333;
+        }
+
+        .capacity-info {
+            font-size: 12px;
+            color: #666;
+        }
+        
+        .personEntry .traits {
+          font-size: 9px;
+          font-style: italic;
+          color: #666;
+          margin-top: 3px;
+        }
+        
+        .giant {
+          transform-origin: center;
+        }
+        
+        .personLabel {
+          pointer-events: none;
+          text-shadow: -1px -1px 0 #fff, 
+                      1px -1px 0 #fff,
+                     -1px  1px 0 #fff,
+                      1px  1px 0 #fff;
+          font-family: Arial, sans-serif;
+          unicode-range: U+0000-FFFF;
+        }
+    </style>
+</head>
+<body>
+    <div id="controls">
+        <button class="toggleControls">Toggle Controls</button>
+        <button id="maleBtn" class="button">Spawn Male</button>
+        <button id="femaleBtn" class="button">Spawn Female</button>
+        <div>Zoom: <span id="zoomLevel">0.7</span>x</div>
+        <div>Game Speed: <input type="range" id="speedControl" min="0.5" max="5.0" step="0.1" value="1.0">
+            <span id="speedLevel">1.0</span>x
+        </div>
+        <div>Population: <span id="populationCount">0</span></div>
+        <div>
+            <label>Generation Naming Style:</label>
+            <select id="generationStyle">
+                <option value="greek">Greek Alphabet</option> 
+                <option value="hebrew">Hebrew Alphabet</option>
+                <option value="nato">NATO Phonetic</option>
+                <option value="oldnato">Old NATO/CCB Phonetic</option>
+                <option value="pagasa">PAGASA Names</option>
+                <option value="nhc">NHC Names</option>
+                <option value="typhoon">Typhoon Names</option>
+            </select>
+        </div>
+        <div>
+            <label>Language:</label>
+            <select id="languageSelect" class="languageSelect">
+                <option value="en">English</option>
+                <option value="tl">Filipino/Tagalog</option>
+                <option value="ja">Japanese</option>
+                <option value="es">Spanish</option>
+            </select>
+        </div>
+    </div>
+    <div id="peopleList" class="peopleList collapsed">
+        <button class="togglePeopleList">Toggle People List</button>
+        <div id="peopleEntries"></div>
+    </div>
+    <div id="pingRegulator" class="collapsed">
+        <button class="toggleWindow">Toggle Ping Regulator</button>
+        <div>Current FPS: <span id="currentFPS">0</span></div>
+        <div>Target FPS: <input type="range" id="targetFPS" min="1" max="60" value="30"></div>
+    </div>
+
+    <div id="birthChart" class="collapsed">
+        <button class="toggleWindow">Toggle Birth Chart</button>
+        <div>Average births per minute: <span id="birthRate">0</span></div>
+        <canvas id="birthCanvas" class="chart"></canvas>
+    </div>
+    <canvas id="gameCanvas"></canvas>
+    <div id="welcomeMessage">omg i didnt realize this would be popular lol thx</div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/simplex-noise/2.4.0/simplex-noise.min.js"></script>
+    <script>window.simplex = SimplexNoise;</script>
+    <script>
+    const TRANSLATE_TARGET_LANGS = ['km', 'ja', 'tl', 'he', 'cy', 'lt', 'ko', 'ru', 'es', 'hi'];
+    const COMMON_WORDS = [
+      'flower', 'river', 'mountain', 'sun', 'moon', 'star', 'tree', 'bird', 'fish',
+      'cloud', 'rain', 'wind', 'light', 'shadow', 'fire', 'water', 'earth', 'air',
+      'heart', 'mind', 'soul', 'peace', 'love', 'hope', 'dream', 'dance', 'song',
+      'story', 'magic', 'power', 'wisdom', 'truth', 'beauty', 'grace', 'strength',
+      'courage', 'honor', 'spirit', 'joy', 'faith', 'destiny', 'harmony', 'serenity',
+      'dawn', 'dusk', 'spring', 'summer', 'autumn', 'winter', 'crystal', 'diamond',
+      'pearl', 'rose', 'lily', 'lotus', 'ocean', 'forest', 'meadow', 'valley',
+      'transit', 'zoom', 'black', 'post', 'comment'
+    ];
+
+    const TRANSLATED_NAMES = {
+      masculine: [],
+      feminine: []
+    };
+
+    async function initializeNameLists() {
+      for (const word of COMMON_WORDS) {
+        for (const lang of TRANSLATE_TARGET_LANGS) {
+          try {
+            const response = await fetch(`https://translation.googleapis.com/language/translate/v2?key=YOUR_API_KEY&q=${word}&target=${lang}`);
+            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+            const data = await response.json();
+            const translatedWord = data.data.translations[0].translatedText;
+            
+            // Enhanced gender categorization for new languages
+            if (
+              translatedWord.endsWith('a') || 
+              translatedWord.endsWith('ah') ||
+              translatedWord.endsWith('i') ||
+              translatedWord.endsWith('mi') ||
+              translatedWord.endsWith('ko') ||
+              translatedWord.endsWith('na') ||
+              translatedWord.endsWith('ra') ||
+              // Russian feminine endings
+              translatedWord.endsWith('ая') ||
+              translatedWord.endsWith('ья') ||
+              // Korean feminine markers
+              translatedWord.includes('녀') ||
+              // Lithuanian feminine endings
+              translatedWord.endsWith('ė') ||
+              translatedWord.endsWith('a') ||
+              // Hindi feminine markers
+              translatedWord.match(/ी$/u)
+            ) {
+              TRANSLATED_NAMES.feminine.push(translatedWord);
+            } else {
+              TRANSLATED_NAMES.masculine.push(translatedWord);
+            }
+          } catch (err) {
+            console.error(`Translation failed for ${word} to ${lang}:`, err);
+          }
+        }
+      }
+    }
+
+    const FALLBACK_TRANSLATIONS = {
+      masculine: [
+        'Tsubasa', 'Takeshi', 'Hiroshi', 'Makoto', 'Kaito',
+        'Alon', 'Dov', 'Lior', 'Noam', 'Tal',
+        'Agos', 'Bayani', 'Kidlat', 'Tala', 'Dakila',
+        'Menroth', 'Hwyl', 'Berwyn', 'Cadfan', 'Deryn',
+        'Sothy', 'Virak', 'Phirun', 'Sophal', 'Mongkol',
+        'Vytautas', 'Mindaugas', 'Gedas',
+        'Min-ho', 'Jung-hoon', 'Tae-hyun',
+        'Igor', 'Dmitri', 'Viktor',
+        'Carlos', 'Miguel', 'Juan',
+        'Arjun', 'Rahul', 'Krishna'
+      ],
+      feminine: [
+        'Sakura', 'Yuki', 'Hana', 'Emi', 'Mei',
+        'Liora', 'Talia', 'Maya', 'Yael', 'Shira',
+        'Ligaya', 'Mayumi', 'Hiraya', 'Diwata', 'Marikit',
+        'Branwen', 'Ceridwen', 'Rhiannon', 'Seren', 'Angharad',
+        'Bopha', 'Chantha', 'Leap', 'Sokha', 'Tevy',
+        'Gabija', 'Austeja', 'Jurata',
+        'Ji-min', 'Soo-jin', 'Hye-jin',
+        'Natasha', 'Tatiana', 'Elena',
+        'Maria', 'Sofia', 'Ana',
+        'Priya', 'Divya', 'Lakshmi'
+      ]
+    };
+
+    if (TRANSLATED_NAMES.masculine.length === 0 || TRANSLATED_NAMES.feminine.length === 0) {
+      TRANSLATED_NAMES.masculine = FALLBACK_TRANSLATIONS.masculine;
+      TRANSLATED_NAMES.feminine = FALLBACK_TRANSLATIONS.feminine;
+    }
+
+    const OLD_NATO_ALPHABET = ['Able', 'Baker', 'Charlie', 'Dog', 'Easy', 'Fox', 'George', 'How', 'Interrogatory', 'Jig', 'King', 'Love', 'Mike', 'Nectar', 'Oboe', 'Peter', 'Queen', 'Roger', 'Sugar', 'Tare', 'Uncle', 'Victor', 'William', 'X-ray', 'Yoke', 'Zebra'];
+    let people = [];
+    let buildings = [];
+    let towns = [];
+    let terrain = [];
+    let offset = { x: 0, y: 0 };
+    let zoom = 0.7;
+    let isDragging = false;
+    let lastMousePos = null;
+    const MALE_SYLLABLES = TRANSLATED_NAMES.masculine;
+    const FEMALE_SYLLABLES = TRANSLATED_NAMES.feminine;
+    const TRAITS = {
+      FERTILE: 'Fertile',
+      FAST: 'Fast',
+      GIANT: 'Giant',
+      AUTISTIC: 'Autistic',
+      PTSD: 'PTSD'
+    };
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const simplex = new SimplexNoise();
+    let currentMode = null;
+    const COLORS = {
+      WATER: '#0a7cff',
+      SAND: '#ffc478',
+      GRASS: '#87ae43',
+      FOREST: '#66854a',
+      ASPHALT: '#293036'
+    };
+    const TOWN_PREFIXES = ['New', 'Town of', 'Old', 'Greater', 'Lesser', 'Upper', 'Lower', 'Port', 'Fort', 'North', 'South', 'East', 'West', 'Realm of the', 'The', 'San', 'Near', 'Urban', 'Rural', 'dat one', 'Farther'];
+    const TOWN_SYLLABLES = ['be', 'ma', 'ni', 'kee', 'hef', 'fer', 'ka', 'lo', 'pon', 'as', 'sand', 'ba', 'ta', 'nes', 'ba', 'coor', 'co', 'or', 'la', 'pu', 'las', 'le', 'san', 'jo', 'se', 'del', 'mon', 'te', 'wich', 'we', 'tha', 'qul', 'hyo', 'ta', 'li', 'pa', 'bae', 'sa', 'tu', 'that', 'xer', 'xes', 'chick', 'en', 'pump', 'one', 'me', 'when', 'nice', 'guy', 'is', 'cool', 'kin', 'greg', 'gr', 'eg', 'dor', 'han', 'o', 'war', 'asd', 'add', 'sub', 'tract', 'mul', 'ti', 'ply', 'di', 'vide', 'ver', 'mr', 'beast', 'i', 'show', 'speed', 'aan', 'ai', 'bas', 'bæ', 'kœ', 'vek', 'ke', 'de', 'que', 'ford', 'cas', 'ter', 'pib', 'xal', 'zee', 'quart', 'baab', 'zon', 'al', 'ton', 'burg', 'ville', 'wood', 'field', 'worth', 'stead', 'by', 'shire', 'mouth', 'ia', 'land', 'ssex', 'stead'];
+    const STORE_COLORS = {
+      WALL: '#98FB98',
+      ROOF: '#32CD32',
+      DOOR: '#228B22'
+    };
+    const SURNAME_PREFIXES = ['Mc', 'Mac', 'O\'', 'Van ', 'Von ', 'De ', 'La ', 'Le ', 'Di ', 'Del ', 'Doña ', 'Dela ', ''];
+    const SURNAME_ROOTS = ['je', 'ze', 'bu', 'lun', 'si', 'me', 'on', 'mo', 'ses', 'sal', 'mon', 'le', 'vi', 'as', 'jes', 'se', 'ner', 'gi', 'de', 'on', 'am', 'os', 'mac', 'ca', 'bee', 'nag', 'gai', 'ma', 'na', 'sseh'];
+    const PAGASA_NAMES = ['Ada', 'Basyang', 'Caloy', 'Domeng', 'Ester', 'Francisck', 'Gardo', 'Henry', 'Inday', 'Josie', 'Kiyapo', 'Luis', 'Maymay', 'Neneng', 'Obet', 'Pliandok', 'Queenie', 'Rosal', 'Samuel', 'Tomas', 'Usman', 'Venus', 'Waldo', 'Yayang', 'Zeny'];
+    const NHC_NAMES = ['Alex', 'Bonnie', 'Colin', 'Danielle', 'Earl', 'Fiona', 'Gaston', 'Hermine', 'Ian', 'Julia', 'Karl', 'Lisa', 'Martin', 'Nicole', 'Owen', 'Paula', 'Richard', 'Shary', 'Tobias', 'Virginia', 'Walter'];
+    const TYPHOON_NAMES = ['Damrey', 'Haikui', 'Kirogi', 'Kai-tak', 'Tembin', 'Bolaven', 'Sanba', 'Jelawat', 'Ewiniar', 'Maliksi', 'Gaemi', 'Prapiroon', 'Maria', 'Son-Tinh', 'Ampil', 'Wukong', 'Jongdari', 'Shanshan', 'Yagi', 'Leepi', 'Bebinca', 'Pulasan', 'Soulik', 'Cimaron', 'Jebi', 'Mangkhut', 'Barijat', 'Trami'];
+    const OBJECT_POOL = {
+      people: [],
+      buildings: [],
+      maxPoolSize: 1000
+    };
+    function getFromPool(type) {
+      if (OBJECT_POOL[type].length > 0) {
+        return OBJECT_POOL[type].pop();
+      }
+      return null;
+    }
+    function returnToPool(type, obj) {
+      if (OBJECT_POOL[type].length < OBJECT_POOL.maxPoolSize) {
+        OBJECT_POOL[type].push(obj);
+      }
+    }
+    class Person {
+      constructor(x, y, gender) {
+        const pooledPerson = getFromPool('people');
+        if (pooledPerson) {
+          Object.assign(this, pooledPerson);
+          this.reset(x, y, gender);
+          return;
+        }
+        this.reset(x, y, gender);
+      }
+      reset(x, y, gender) {
+        this.x = x;
+        this.y = y;
+        this.gender = gender;
+        const nameList = gender === 'male' ? TRANSLATED_NAMES.masculine : TRANSLATED_NAMES.feminine;
+        const name = nameList[Math.floor(Math.random() * nameList.length)];
+        this.name = name.charAt(0).toUpperCase() + name.slice(1);
+        this.partner = null;
+        this.home = null;
+        this.age = Math.floor(Math.random() * 6) + 15;
+        this.isPlayingTag = false;
+        this.isIt = false;
+        this.inRelation = false;
+        this.relationTimer = 0;
+        this.moveTimer = 0;
+        this.targetX = x;
+        this.targetY = y;
+        this.initialX = null;
+        this.initialY = null;
+        this.spinStartTime = null;
+        this.maxAge = Math.random() * 30 + 70;
+        this.occupation = this.age >= 13 ? this.assignOccupation() : 'Child';
+        this.workTimer = 0;
+        this.currentRoadTarget = null;
+        this.bridgeProgress = 0;
+        this.currentBridgeTarget = null;
+        this.setNewMoveTimer();
+        this.reproductionCooldown = 0;
+        this.town = null;
+        this.parent = null;
+        this.motherPartner = null;
+        this.fatherPartner = null;
+        this.spawnTime = Date.now();
+        this.following = null;
+        this.generation = currentGenerationNumber;
+        this.isMayor = false;
+        this.isPlayingRPS = false;
+        this.rpsChoice = null;
+        this.rpsResult = null;
+        this.currentThought = this.generateThought();
+        this.thoughtUpdateTimer = Math.random() * 5000 + 5000;
+        this.schoolTimer = 0;
+        this.traits = [];
+        if (Math.random() < 0.33) {
+          let availableTraits = Object.values(TRAITS);
+          if (this.gender !== 'female') {
+            availableTraits = availableTraits.filter(t => t !== TRAITS.FERTILE);
+          }
+          this.traits.push(availableTraits[Math.floor(Math.random() * availableTraits.length)]);
+          if (this.traits.includes(TRAITS.GIANT)) {
+            this.scale = 1 + (Math.random() * 0.03 + 0.02);
+          } else {
+            this.scale = 1;
+          }
+          if (this.traits.includes(TRAITS.FAST)) {
+            this.speedMultiplier = 1 + (Math.random() * 0.05 + 0.10);
+          } else {
+            this.speedMultiplier = 1;
+          }
+        }
+        allPeopleEver.push(this);
+      }
+      setNewMoveTimer() {
+        this.moveTimer = Math.random() * 15000 + 1000;
+      }
+      setNewTarget() {
+        let attempts = 0; 
+        const maxAttempts = 10;
+
+        if (this.age < 10) {
+          this.targetX = this.home ? this.home.x : this.x;
+          this.targetY = this.home ? this.home.y : this.y;
+          return;
+        }
+
+        if (this.age < 12 && this.parent) {
+          if (this.gender === 'male' && this.parent.partner && this.parent.partner.gender === 'male') {
+            this.following = this.parent.partner;
+          } else {
+            this.following = this.parent;
+          }
+          this.targetX = this.following.x;
+          this.targetY = this.following.y;
+          return;
+        }
+
+        this.following = null;
+
+        while (attempts < maxAttempts) {
+          const angle = Math.random() * Math.PI * 2;
+          const distance = Math.random() * 200 + 50; 
+          const newX = this.x + Math.cos(angle) * distance;
+          const newY = this.y + Math.sin(angle) * distance;
+          
+          if (this.isValidPosition(newX, newY)) {
+            this.targetX = newX;
+            this.targetY = newY;
+            return;
+          }
+          attempts++;
+        }
+
+        this.targetX = this.x;
+        this.targetY = this.y;
+      }
+      isValidPosition(x, y) {
+        const terrainX = Math.floor(x);
+        const terrainY = Math.floor(y);
+        if (terrainY < 0 || terrainY >= terrain.length || terrainX < 0 || terrainX >= terrain[0].length || terrain[terrainY][terrainX] === COLORS.WATER) {
+          return false;
+        }
+        return true;
+      }
+      assignOccupation() {
+        if (Math.random() < 0.5) {
+          const occupationRoll = Math.random();
+          if (occupationRoll < 0.2) return 'Paver';
+          if (occupationRoll < 0.4) return 'Bridgeman';
+          if (occupationRoll < 0.55) return 'Engineer';
+          if (occupationRoll < 0.7 && people.length >= 10) {
+            if (occupationRoll < 0.6) return 'Cashier';
+            if (occupationRoll < 0.65) return 'Storeowner';
+            return 'Supplier';
+          }
+          return 'Unemployed';
+        }
+        return 'Unemployed';
+      }
+      draw() {
+        const size = 8;
+        const screenX = Math.floor((this.x + offset.x) * zoom);
+        const screenY = Math.floor((this.y + offset.y) * zoom);
+        if (this.isMayor) {
+          ctx.fillStyle = this.gender === 'male' ? '#87CEEB' : '#FFB6C1';
+          const size = 12;
+          ctx.fillRect(screenX - size / 2, screenY - size / 2, size, size);
+          ctx.strokeStyle = 'gold';
+          ctx.lineWidth = 2;
+          ctx.strokeRect(screenX - size / 2, screenY - size / 2, size, size);
+          ctx.beginPath();
+          ctx.moveTo(screenX - 8, screenY - size / 2 - 2);
+          ctx.lineTo(screenX - 4, screenY - size / 2 - 6);
+          ctx.lineTo(screenX, screenY - size / 2 - 2);
+          ctx.lineTo(screenX + 4, screenY - size / 2 - 6);
+          ctx.lineTo(screenX + 8, screenY - size / 2 - 2);
+          ctx.fillStyle = 'gold';
+          ctx.fill();
+        } else {
+          ctx.fillStyle = this.gender === 'male' ? '#2196F3' : '#E91E63';
+          ctx.fillRect(screenX - size / 2, screenY - size / 2, size, size);
+          ctx.strokeStyle = '#000';
+          ctx.strokeRect(screenX - size / 2, screenY - size / 2, size, size);
+        }
+        if (this.occupation === 'Engineer') {
+          ctx.strokeStyle = '#1E90FF';
+          ctx.lineWidth = 2 * zoom;
+          ctx.strokeRect(screenX - size / 2 - 2, screenY - size / 2 - 2, size + 4, size + 4);
+        }
+        if (zoom > 0.3) {  
+          ctx.fillStyle = 'black';
+          ctx.font = `${Math.floor(10 * zoom)}px Mojangles`;
+          ctx.textAlign = 'center';
+          ctx.fillText(`${this.name} (${Math.floor(this.age)})`, screenX, screenY - 15 * zoom);
+        }
+        if (this.occupation === 'Storeowner' || this.occupation === 'Cashier' || this.occupation === 'Supplier') {
+          ctx.fillStyle = STORE_COLORS.WALL;
+          ctx.font = `${Math.floor(12 * zoom)}px "Press Start 2P"`;
+          ctx.fillText(this.occupation, screenX - 20, screenY - 30);
+        }
+        if (this.occupation === 'Bridgeman' && this.currentBridgeTarget && this.bridgeProgress > 0) {
+          ctx.fillStyle = 'rgba(255, 255, 0, 0.5)';
+          ctx.fillRect(screenX - 15, screenY - 25, Math.floor(30 * zoom * this.bridgeProgress), 5);
+        }
+        if (this.following) {
+          ctx.strokeStyle = '#FFB6C1';
+          ctx.beginPath();
+          ctx.moveTo(screenX, screenY);
+          ctx.lineTo(Math.floor((this.following.x + offset.x) * zoom), Math.floor((this.following.y + offset.y) * zoom));
+          ctx.stroke();
+        }
+        if (this.isPlayingTag) {
+          ctx.beginPath();
+          ctx.arc(screenX, screenY - 15 * zoom, 5 * zoom, 0, Math.PI * 2);
+          ctx.fillStyle = this.isIt ? 'red' : 'yellow';
+          ctx.fill();
+        }
+        if (this.isPlayingRPS) {
+          ctx.font = `${Math.floor(12 * zoom)}px "Press Start 2P"`;
+          ctx.fillStyle = 'black';
+          ctx.fillText(this.rpsChoice, screenX - 10, screenY - 40);
+          ctx.fillText(this.rpsResult, screenX - 20, screenY - 60);
+        }
+        if (this.scale && this.scale !== 1) {
+          ctx.save();
+          ctx.translate(screenX, screenY);
+          ctx.scale(this.scale, this.scale);
+          ctx.translate(-screenX, -screenY);
+        }
+        if (this.scale && this.scale !== 1) {
+          ctx.restore();
+        }
+      }
+      update(deltaTime) {
+        const screenX = (this.x + offset.x) * zoom;
+        const screenY = (this.y + offset.y) * zoom;
+        if (screenX < -100 || screenX > canvas.width + 100 || screenY < -100 || screenY > canvas.height + 100) {
+          return;
+        }
+        if (this.reproductionCooldown > 0) {
+          this.reproductionCooldown -= deltaTime;
+        }
+        this.updateBridgeWork(deltaTime);
+        if (this.occupation === 'Child' && this.age >= 13) {
+          this.occupation = this.assignOccupation();
+        }
+        if (this.age >= 12) {
+          if (this.isPlayingTag) {
+            this.isPlayingTag = false;
+            this.isIt = false;
+            const idx = tagGame.players.indexOf(this);
+            if (idx > -1) {
+              tagGame.players.splice(idx, 1);
+            }
+            if (tagGame.it === this) {
+              tagGame.it = null;
+            }
+          }
+          if (this.isPlayingRPS) {
+            this.isPlayingRPS = false;
+            this.rpsChoice = null;
+            this.rpsResult = null;
+            const idx = rpsGame.players.indexOf(this);
+            if (idx > -1) {
+              rpsGame.players.splice(idx, 1);
+            }
+          }
+        }
+        if (this.age < 12) {
+          const nearbyChildren = people.filter(p => p !== this && p.age < 12 && Math.hypot(p.x - this.x, p.y - this.y) < 100);
+          if (nearbyChildren.length >= 1) {
+            if (!tagGame.isActive) {
+              tagGame.isActive = true;
+              tagGame.players = [this, ...nearbyChildren.slice(0, 4)];
+              tagGame.it = tagGame.players[Math.floor(Math.random() * tagGame.players.length)];
+              tagGame.it.isIt = true;
+              tagGame.players.forEach(p => p.isPlayingTag = true);
+              tagGame.gameStartTime = Date.now();
+              tagGame.gameDuration = Math.random() * 15000 + 5000;
+            }
+          }
+          if (this.isPlayingTag) {
+            if (Date.now() - tagGame.gameStartTime > tagGame.gameDuration) {
+              tagGame.isActive = false;
+              tagGame.players.forEach(p => {
+                p.isPlayingTag = false;
+                p.isIt = false;
+              });
+              tagGame.players = [];
+              tagGame.it = null;
+              return;
+            }
+            if (this.isIt) {
+              const target = tagGame.players.filter(p => p !== this).sort((a, b) => Math.hypot(a.x - this.x, a.y - this.y) - Math.hypot(b.x - this.x, b.y - this.y))[0];
+              if (target) {
+                this.targetX = target.x;
+                this.targetY = target.y;
+                if (Math.hypot(target.x - this.x, target.y - this.y) < 10 && Date.now() - tagGame.lastTagTime > 1000) {
+                  this.isIt = false;
+                  target.isIt = true;
+                  tagGame.it = target;
+                  tagGame.lastTagTime = Date.now();
+                }
+              }
+            } else {
+              if (tagGame.it) {
+                const dx = this.x - tagGame.it.x;
+                const dy = this.y - tagGame.it.y;
+                const dist = Math.hypot(dx, dy);
+                if (dist < 50) {
+                  this.targetX = this.x + dx / dist * 100;
+                  this.targetY = this.y + dy / dist * 100;
+                }
+              }
+            }
+          }
+        }
+        this.age += deltaTime / 10000;
+        if (this.age >= this.maxAge) {
+          const index = people.indexOf(this);
+          if (index > -1) {
+            if (this.partner) {
+              this.partner.partner = null;
+            }
+            people.splice(index, 1);
+            updatePopulationCounter();
+            return;
+          }
+        }
+        let closestTown = null;
+        let closestDist = Infinity;
+        for (const town of towns) {
+          const dist = Math.hypot(this.x - town.x, this.y - town.y);
+          if (dist < town.radius && dist < closestDist) {
+            closestDist = dist;
+            closestTown = town;
+          }
+        }
+        if (this.town !== closestTown) {
+          if (this.town) {
+            const idx = this.town.population.indexOf(this);
+            if (idx > -1) this.town.population.splice(idx, 1);
+          }
+          this.town = closestTown;
+          if (closestTown && !closestTown.population.includes(this)) {
+            closestTown.population.push(this);
+          }
+        }
+        if (!this.inRelation) {
+          this.moveTimer -= deltaTime;
+          if (this.moveTimer <= 0) {
+            if (this.reproductionCooldown <= 0) {
+              let potentialPartners = people.filter(p => p.gender !== this.gender && !p.inRelation && !p.partner && p.reproductionCooldown <= 0 && Math.hypot(p.x - this.x, p.y - this.y) < 50 && p.age >= 17 && this.age >= 17 && p.town === this.town);
+              if (potentialPartners.length > 0) {
+                if (Math.random() < 0.33) {
+                  this.partner = potentialPartners[0];
+                  this.partner.partner = this;
+                  this.startRelation();
+                  return;
+                }
+              }
+            }
+            this.setNewTarget();
+            this.setNewMoveTimer();
+          }
+          const dx = this.targetX - this.x;
+          const dy = this.targetY - this.y;
+          const distance = Math.hypot(dx, dy);
+          if (distance > 1) {
+            const moveSpeed = 2 * (this.speedMultiplier || 1);
+            const nextX = this.x + dx / distance * moveSpeed;
+            const nextY = this.y + dy / distance * moveSpeed;
+            if (this.town) {
+              const distToTownCenter = Math.hypot(nextX - this.town.x, nextY - this.town.y);
+              if (distToTownCenter <= this.town.radius && this.isValidPosition(nextX, nextY)) {
+                this.x = nextX;
+                this.y = nextY;
+              } else {
+                this.setNewTarget();
+              }
+            } else if (this.isValidPosition(nextX, nextY)) {
+              this.x = nextX;
+              this.y = nextY;
+            } else {
+              this.setNewTarget();
+            }
+          }
+        }
+        if (this.inRelation) {
+          this.relationTimer -= deltaTime;
+          if (this.relationTimer <= 0) {
+            this.endRelation();
+          } else if (this.partner) {
+            const elapsed = performance.now() - this.spinStartTime;
+            const spinDuration = this.relationTimer;
+            const radius = 10;
+            const angle = elapsed / spinDuration * Math.PI * 4;
+            const midX = (this.x + this.partner.x) / 2;
+            const midY = (this.y + this.partner.y) / 2;
+            this.x = midX + Math.cos(angle) * radius;
+            this.y = midY + Math.sin(angle) * radius;
+            this.partner.x = midX + Math.cos(angle + Math.PI) * radius;
+            this.partner.y = midY + Math.sin(angle + Math.PI) * radius;
+          }
+        }
+        if (this.following) {
+          const followDist = Math.hypot(this.x - this.following.x, this.y - this.following.y);
+          if (followDist > 20) {
+            const dx = this.following.x - this.x;
+            const dy = this.following.y - this.y;
+            const dist = Math.hypot(dx, dy);
+            if (dist > 0) {
+              this.x += dx / dist * 2;
+              this.y += dy / dist * 2;
+            }
+          }
+          this.town = this.following.town;
+        }
+        this.updatePaverWork(deltaTime);
+        if (this.occupation === 'Storeowner' && Math.random() < 0.01) {
+          let myStores = buildings.filter(b => b instanceof Store && b.owner === this);
+          const myTown = this.town;
+          if (myStores.length < 2 && myTown) {
+            const storesInTown = buildings.filter(b => b instanceof Store && b.town === myTown);
+            const nearbyBuildings = buildings.filter(b => (b instanceof Store || b instanceof PublicBuilding && ['playground', 'mall'].includes(b.type)) && Math.hypot(b.x - this.x, b.y - this.y) < 50);
+            if (storesInTown.length < 2 && nearbyBuildings.length === 0) {
+              const store = new Store(this.x, this.y);
+              store.owner = this;
+              buildings.push(store);
+              if (myTown) {
+                myTown.addBuilding(store);
+              }
+            }
+          }
+          const unemployedNearby = people.filter(p => p.town === this.town && p.occupation === 'Unemployed' && Math.hypot(p.x - this.x, p.y - this.y) < 100);
+          for (let potential of unemployedNearby) {
+            if (Math.random() < 0.3) {
+              potential.occupation = Math.random() < 0.7 ? 'Cashier' : 'Supplier';
+            }
+          }
+        }
+        if (this.occupation === 'Supplier') {
+          const nearbyStores = buildings.filter(b => b instanceof Store && Math.hypot(b.x - this.x, b.y - this.y) < 200 && b.needsSupplies());
+          if (nearbyStores.length > 0) {
+            const store = nearbyStores[0];
+            this.targetX = store.x;
+            this.targetY = store.y;
+            if (Math.hypot(this.x - store.x, this.y - store.y) < 10) {
+              store.inventory = Math.min(100, store.inventory + 25);
+            }
+          }
+        }
+        if (this.occupation === 'Cashier') {
+          const nearbyStores = buildings.filter(b => b instanceof Store && Math.hypot(b.x - this.x, b.y - this.y) < 50);
+          if (nearbyStores.length > 0) {
+            const store = nearbyStores[0];
+            if (!store.employees.includes(this)) {
+              store.employees.push(this);
+            }
+            this.targetX = store.x;
+            this.targetY = store.y;
+          }
+        }
+        this.thoughtUpdateTimer -= deltaTime;
+        if (this.thoughtUpdateTimer <= 0) {
+          this.currentThought = this.generateThought();
+          this.thoughtUpdateTimer = Math.random() * 5000 + 5000;
+        }
+      }
+      updatePaverWork(deltaTime) {
+        if (this.occupation !== 'Paver') return;
+
+        this.workTimer -= deltaTime;
+
+        if (this.workTimer <= 0) {
+          let closestBuilding = null;
+          let shortestDist = Infinity;
+          for (const building of buildings) {
+            if (!building.hasRoad) {
+              const dist = Math.hypot(this.x - building.x, this.y - building.y);
+              if (dist < shortestDist) {
+                shortestDist = dist;
+                closestBuilding = building;
+              }
+            }
+          }
+          if (closestBuilding) {
+            this.currentRoadTarget = closestBuilding;
+            closestBuilding.hasRoad = true;
+          }
+          this.workTimer = 5000;
+        }
+
+        if (this.currentRoadTarget) {
+          const dx = this.currentRoadTarget.x - this.x;
+          const dy = this.currentRoadTarget.y - this.y;
+          const dist = Math.hypot(dx, dy); 
+          if (dist > 1) {
+            const nextX = this.x + dx / dist * 2; 
+            const nextY = this.y + dy / dist * 2;  
+            const terrainX = Math.floor(this.x);
+            const terrainY = Math.floor(this.y);
+            if (terrainY >= 0 && terrainY < terrain.length && terrainX >= 0 && terrainX < terrain[0].length && terrain[terrainY][terrainX] !== COLORS.WATER) {
+              for (let roadY = Math.max(0, terrainY - 2); roadY <= Math.min(terrain.length - 1, terrainY + 2); roadY++) {
+                for (let roadX = Math.max(0, terrainX - 2); roadX <= Math.min(terrain[0].length - 1, terrainX + 2); roadX++) {
+                  if (terrain[roadY][roadX] !== COLORS.WATER) {
+                    terrain[roadY][roadX] = COLORS.ASPHALT;
+                  }
+                }
+              }
+            }
+            this.x = nextX;
+            this.y = nextY;
+          } else {
+            this.currentRoadTarget = null;
+          }
+        }
+      }
+      updateBridgeWork(deltaTime) {
+        if (this.occupation !== 'Bridgeman') return;
+        if (!this.currentBridgeTarget && Math.random() < 0.01) {
+          let attempts = 0;
+          while (attempts < 20) {
+            const searchX = Math.floor(Math.random() * 2000);
+            const searchY = Math.floor(Math.random() * 2000);
+            if (this.isValidBridgeLocation(searchX, searchY)) {
+              this.currentBridgeTarget = {
+                x: searchX,
+                y: searchY
+              };
+              break;
+            }
+            attempts++;
+          }
+        }
+        if (this.currentBridgeTarget) {
+          const dx = this.currentBridgeTarget.x - this.x;
+          const dy = this.currentBridgeTarget.y - this.y;
+          const dist = Math.hypot(dx, dy);
+          if (dist > 1) {
+            const nextX = this.x + dx / dist * 2;
+            const nextY = this.y + dy / dist * 2;
+            this.x = nextX;
+            this.y = nextY;
+          } else {
+            this.bridgeProgress += deltaTime * 0.001;
+            if (this.bridgeProgress >= 1) {
+              const tx = Math.floor(this.currentBridgeTarget.x);
+              const ty = Math.floor(this.currentBridgeTarget.y);
+              if (terrain[ty][tx] === COLORS.WATER) {
+                terrain[ty][tx] = COLORS.ASPHALT;
+                if (window.terrainBuffer) {
+                  const bufferCtx = window.terrainBuffer.getContext('2d');
+                  bufferCtx.fillStyle = COLORS.ASPHALT;
+                  bufferCtx.fillRect(tx, ty, 1, 1);
+                }
+              }
+              this.currentBridgeTarget = null;
+              this.bridgeProgress = 0;
+            }
+          }
+        }
+      }
+      isValidBridgeLocation(x, y) {
+        if (y < 0 || y >= terrain.length || x < 0 || x >= terrain[0].length) return false; 
+        if (terrain[y][x] !== COLORS.WATER) return false;
+        let hasLandNearby = false;
+        for (let dy = -2; dy <= 2; dy++) {
+          for (let dx = -2; dx <= 2; dx++) {
+            const checkY = y + dy;
+            const checkX = x + dx;
+            if (checkY >= 0 && checkY < terrain.length && checkX >= 0 && checkX < terrain[0].length && terrain[checkY][checkX] !== COLORS.WATER) {
+              hasLandNearby = true;
+            }
+          }
+        }
+        return hasLandNearby;
+      }
+      startRelation() {
+        if (this.inRelation || this.partner.inRelation) {
+          return;
+        }
+        this.inRelation = true;
+        this.partner.inRelation = true;
+        this.relationTimer = (Math.random() * 3000 + 2000) / gameSpeed;
+        this.partner.relationTimer = this.relationTimer;
+        this.initialX = this.x;
+        this.initialY = this.y;
+        this.partner.initialX = this.partner.x;
+        this.partner.initialY = this.partner.y;
+        this.spinStartTime = performance.now();
+        this.partner.spinStartTime = performance.now();
+        const midX = (this.x + this.partner.x) / 2;
+        const midY = (this.y + this.partner.y) / 2;
+        this.x = midX - 10;
+        this.y = midY;
+        this.partner.x = midX + 10;
+        this.partner.y = midY;
+      }
+      endRelation() {
+        if (this.inRelation || this.partner && !this.partner.deceased) {
+          const home = new Building(this.x, this.y);
+          let canBuildHere = true;
+          for (const building of buildings) {
+            const dist = Math.hypot(home.x - building.x, home.y - building.y);
+            if (dist < 50) {
+              canBuildHere = false;
+              break;
+            }
+          }
+          if (canBuildHere) {
+            const surname = (() => {
+              const numSyllables = Math.floor(Math.random() * 2) + 2;
+              let name = '';
+              for (let i = 0; i < numSyllables; i++) {
+                name += SURNAME_ROOTS[Math.floor(Math.random() * SURNAME_ROOTS.length)];
+              }
+              return SURNAME_PREFIXES[Math.floor(Math.random() * SURNAME_PREFIXES.length)] + name.charAt(0).toUpperCase() + name.slice(1);
+            })();
+            const familyName = `The ${surname} Family`;
+            home.familyName = familyName;
+            buildings.push(home);
+            this.home = home;
+            if (this.partner) {
+              this.partner.home = home;
+            }
+            let joinedTown = false;
+            for (const town of towns) {
+              if (town.canAddBuilding(home)) {
+                town.addBuilding(home);
+                joinedTown = true;
+                break;
+              }
+            }
+            if (!joinedTown) {
+              const newTown = new Town(home.x, home.y);
+              newTown.addBuilding(home);
+              for (const existingTown of towns) {
+                const dist = Math.hypot(newTown.x - existingTown.x, newTown.y - existingTown.y);
+                if (dist < existingTown.radius + newTown.radius + 200) {
+                  existingTown.updateBordersForNewTown(newTown);
+                }
+              }
+              towns.push(newTown);
+            }
+          }
+          if (this.partner) {
+            const mother = this.gender === 'female' ? this : this.partner;
+            const father = this.gender === 'male' ? this : this.partner;
+            if (mother.traits && mother.traits.includes(TRAITS.FERTILE) && Math.random() < 0.5) {
+              const twin = new Person(this.x, this.y, Math.random() < 0.5 ? 'male' : 'female');
+              twin.age = 0;
+              twin.parent = mother;
+              twin.motherPartner = mother;
+              twin.fatherPartner = father;
+              twin.home = this.home;
+              twin.generation = Math.max(this.generation, this.partner.generation) + 1;
+              if (twin.generation > currentGenerationNumber) {
+                currentGenerationNumber = twin.generation;
+              }
+              allPeopleEver.push(twin);
+              currentBirthCount++;
+              twin.home = this.home;
+              people.push(twin);
+            }
+            const baby = new Person(this.x, this.y, Math.random() < 0.5 ? 'male' : 'female');
+            baby.age = 0;
+            if (baby) {
+              baby.parent = mother;
+              baby.motherPartner = mother;
+              baby.fatherPartner = father;
+              baby.home = this.home;
+              baby.generation = Math.max(this.generation, this.partner.generation) + 1;
+              if (baby.generation > currentGenerationNumber) {
+                currentGenerationNumber = baby.generation;
+              }
+              allPeopleEver.push(baby);
+              currentBirthCount++;
+              baby.home = this.home;
+              people.push(baby);
+              updatePopulationCounter();
+              const cooldownTime = (Math.random() * 90000 + 30000) / gameSpeed;
+              this.reproductionCooldown = cooldownTime;
+              this.partner.reproductionCooldown = cooldownTime;
+            }
+          }
+          this.setNewTarget();
+          if (this.partner) {
+            this.partner.setNewTarget();
+            this.partner.setNewMoveTimer();
+            this.partner.partner = null;
+          }
+          this.setNewMoveTimer();
+          this.partner = null;
+        }
+        if (this.town) {
+          const idx = this.town.population.indexOf(this);
+          if (idx > -1) {
+            this.town.population.splice(idx, 1);
+          }
+          this.town = null;
+        }
+        if (this.partner && this.partner.town) {
+          const idx = this.partner.town.population.indexOf(this.partner);
+          if (idx > -1) {
+            this.partner.town.population.splice(idx, 1);
+          }
+          this.partner.town = null;
+        }
+        this.inRelation = false;
+      }
+      generateThought() {
+        const thoughts = TRANSLATIONS[currentLanguage].thoughts;
+        const ageBasedThoughts = this.age < 12 ? thoughts.CHILD : this.age >= 17 ? thoughts.ADULT : thoughts.WORKING;
+        if (this.occupation === 'Engineer') {
+          return ageBasedThoughts[Math.floor(Math.random() * ageBasedThoughts.length)];
+        }
+        return thoughts.MAYOR[Math.floor(Math.random() * thoughts.MAYOR.length)];
+      }
+    }
+    class Building {
+      constructor(x, y) {
+        this.x = x;
+        this.y = y;
+        this.hasRoad = false;
+        this.town = null;
+        this.familyName = null;
+      }
+      draw() {
+        const screenX = (this.x + offset.x) * zoom;
+        const screenY = (this.y + offset.y) * zoom;
+        ctx.fillStyle = '#8B4513';
+        ctx.fillRect(screenX - 15 * zoom, screenY - 15 * zoom, 30 * zoom, 30 * zoom);
+        ctx.fillStyle = '#4A2811';
+        ctx.fillRect(screenX - 5 * zoom, screenY + 5 * zoom, 10 * zoom, 10 * zoom);
+        ctx.beginPath();
+        ctx.moveTo(screenX - 20 * zoom, screenY - 15 * zoom);
+        ctx.lineTo(screenX + 20 * zoom, screenY - 15 * zoom);
+        ctx.lineTo(screenX, screenY - 30 * zoom);
+        ctx.closePath();
+        ctx.fillStyle = '#654321';
+        ctx.fill();
+        if (this.familyName) {
+          ctx.fillStyle = 'black';
+          ctx.font = `bold ${14 * zoom}px Mojangles`;
+          ctx.textAlign = 'center';
+          ctx.fillText(this.familyName, screenX, screenY - 35 * zoom);
+          const nameWidth = ctx.measureText(this.familyName).width;
+          ctx.strokeStyle = '#654321';
+          ctx.lineWidth = 2 * zoom;
+          ctx.strokeRect(screenX - nameWidth / 2 - 5 * zoom, screenY - 48 * zoom, nameWidth + 10 * zoom, 18 * zoom);
+          ctx.fillStyle = 'rgba(255,255,255,0.8)';
+          ctx.fillRect(screenX - nameWidth / 2 - 5 * zoom, screenY - 48 * zoom, nameWidth + 10 * zoom, 18 * zoom);
+          ctx.fillStyle = '#333';
+          ctx.fillText(this.familyName, screenX, screenY - 35 * zoom);
+          ctx.textAlign = 'left';
+        }
+      }
+      update(deltaTime) {}
+    }
+    class Store extends Building {
+      constructor(x, y) {
+        super(x, y);
+        this.type = 'store';
+        this.owner = null;
+        this.employees = [];
+        this.inventory = 100;
+        this.customers = [];
+        this.restockTimer = 0;
+      }
+      draw() {
+        const screenX = (this.x + offset.x) * zoom;
+        const screenY = (this.y + offset.y) * zoom;
+        ctx.fillStyle = STORE_COLORS.WALL;
+        ctx.fillRect(screenX - 20 * zoom, screenY - 20 * zoom, 40 * zoom, 30 * zoom);
+        ctx.beginPath();
+        ctx.moveTo(screenX - 25 * zoom, screenY - 20 * zoom);
+        ctx.lineTo(screenX + 25 * zoom, screenY - 20 * zoom);
+        ctx.lineTo(screenX, screenY - 35 * zoom);
+        ctx.closePath();
+        ctx.fillStyle = STORE_COLORS.ROOF;
+        ctx.fill();
+        ctx.fillStyle = STORE_COLORS.DOOR;
+        ctx.fillRect(screenX - 5 * zoom, screenY - 10 * zoom, 10 * zoom, 20 * zoom);
+        ctx.fillStyle = 'rgba(0,0,0,0.2)';
+        ctx.fillRect(screenX - 15 * zoom, screenY - 25 * zoom, 30 * zoom * (this.inventory / 100), 3 * zoom);
+      }
+      update(deltaTime) {
+        super.update(deltaTime);
+        this.restockTimer -= deltaTime;
+        if (this.restockTimer <= 0) {
+          this.inventory = Math.max(0, Math.min(100, this.inventory - 5));
+          this.restockTimer = 5000;
+        }
+      }
+      needsSupplies() {
+        return this.inventory < 50;
+      }
+    }
+    class PublicBuilding extends Building {
+      constructor(x, y, type) {
+        super(x, y);
+        this.type = type;
+        this.occupants = [];
+        this.capacity = type === 'school' ? 30 : type === 'playground' ? 15 : type === 'mall' ? 50 : 20;
+      }
+      draw() {
+        const screenX = (this.x + offset.x) * zoom;
+        const screenY = (this.y + offset.y) * zoom;
+        ctx.fillStyle = '#A0A0A0';
+        ctx.fillRect(screenX - 25 * zoom, screenY - 25 * zoom, 50 * zoom, 50 * zoom);
+        switch (this.type) {
+          case 'school':
+            ctx.fillStyle = '#4169E1';
+            ctx.fillRect(screenX - 10 * zoom, screenY - 15 * zoom, 20 * zoom, 30 * zoom);
+            ctx.fillStyle = '#FFD700';
+            ctx.fillRect(screenX - 5 * zoom, screenY - 20 * zoom, 10 * zoom, 5 * zoom);
+            break;
+          case 'playground':
+            ctx.fillStyle = '#32CD32';
+            ctx.beginPath();
+            ctx.arc(screenX, screenY, 20 * zoom, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = '#FFD700';
+            ctx.fillRect(screenX - 15 * zoom, screenY - 5 * zoom, 30 * zoom, 10 * zoom);
+            break;
+          case 'mall':
+            ctx.fillStyle = '#FF69B4';
+            for (let i = 0; i < 3; i++) {
+              ctx.fillRect(screenX - 20 * zoom + i * 15 * zoom, screenY - 20 * zoom, 10 * zoom, 40 * zoom);
+            }
+            break;
+        }
+        ctx.fillStyle = 'black';
+        ctx.font = `${12 * zoom}px Mojangles`;
+        ctx.textAlign = 'center';
+        ctx.fillText(`${this.type.charAt(0).toUpperCase() + this.type.slice(1)}`, screenX, screenY - 30 * zoom);
+        ctx.fillText(`(${this.occupants.length}/${this.capacity})`, screenX, screenY - 40 * zoom);
+      }
+    }
+    class Town {
+      constructor(x, y) {
+        this.x = x;
+        this.y = y;
+        this.radius = 100;
+        this.name = this.generateName();
+        let mottoWord;
+        if (Math.random() < 0.5) {
+          if (!this.constructor.townNameGenerator) {
+            this.constructor.townNameGenerator = new MarkovChain(2);
+            this.constructor.townNameGenerator.train(TOWN_SYLLABLES.map(s => s.toLowerCase()));
+          }
+          mottoWord = this.constructor.townNameGenerator.generate(4, 12);
+          mottoWord = mottoWord.charAt(0).toUpperCase() + mottoWord.slice(1);
+        } else {
+          const numSyllables = Math.floor(Math.random() * 2) + 2;
+          mottoWord = '';
+          for (let i = 0; i < numSyllables; i++) {
+            mottoWord += TOWN_SYLLABLES[Math.floor(Math.random() * TOWN_SYLLABLES.length)];
+          }
+          mottoWord = mottoWord.charAt(0).toUpperCase() + mottoWord.slice(1);
+        }
+        let mottoWord2 = '';
+        if (Math.random() < 0.5) {
+          mottoWord2 = this.constructor.townNameGenerator.generate(4, 12);
+          mottoWord2 = mottoWord2.charAt(0).toUpperCase() + mottoWord2.slice(1);
+        } else {
+          const numSyllables = Math.floor(Math.random() * 2) + 2;
+          mottoWord2 = '';
+          for (let i = 0; i < numSyllables; i++) {
+            mottoWord2 += TOWN_SYLLABLES[Math.floor(Math.random() * TOWN_SYLLABLES.length)];
+          }
+          mottoWord2 = mottoWord2.charAt(0).toUpperCase() + mottoWord2.slice(1);
+        }
+        this.motto = MOTTO_TEMPLATES[Math.floor(Math.random() * MOTTO_TEMPLATES.length)]
+          .replace(/\[townName\]/g, this.name)
+          .replace(/\[WORD\]/g, mottoWord)
+          .replace(/\[WORD2\]/g, mottoWord2);
+        this.color = `hsla(${Math.random() * 360}, 70%, 50%, 0.1)`;
+        this.borderColor = `hsla(${Math.random() * 360}, 70%, 50%, 0.5)`;
+        this.population = [];
+        this.buildings = [];
+        this.numSides = Math.floor(Math.random() * 11) + 6;
+        this.isIrregular = Math.random() < 0.7;
+        this.radiusVariations = this.generateRadiusVariations();
+        this.mayor = null;
+        this.foundingFamilies = [];
+        this.mayorMigrationTime = null;
+      }
+      generateName() {
+        if (!this.constructor.townNameGenerator) {
+          this.constructor.townNameGenerator = new MarkovChain(2);
+          this.constructor.townNameGenerator.train(TOWN_SYLLABLES.map(s => s.toLowerCase()));
+        }
+        const usePrefix = Math.random() < 0.6;
+        let name = '';
+        if (usePrefix) {
+          name = TOWN_PREFIXES[Math.floor(Math.random() * TOWN_PREFIXES.length)] + ' ';
+        }
+        name += this.constructor.townNameGenerator.generate(4, 12);
+        if (!usePrefix) {
+          name = name.charAt(0).toUpperCase() + name.slice(1);
+        }
+        return name;
+      }
+      draw() {
+        const screenX = Math.floor((this.x + offset.x) * zoom);
+        const screenY = Math.floor((this.y + offset.y) * zoom);
+        ctx.beginPath();
+        for (let i = 0; i < this.numSides; i++) {
+          const angle = i / this.numSides * Math.PI * 2;
+          const variation = this.radiusVariations[i];
+          const r = this.radius * zoom * variation;
+          const x = screenX + Math.cos(angle) * r;
+          const y = screenY + Math.sin(angle) * r;
+          if (i === 0) ctx.moveTo(x, y);else ctx.lineTo(x, y);
+        }
+        ctx.closePath();
+        ctx.fillStyle = this.color;
+        ctx.fill();
+        ctx.strokeStyle = this.borderColor;
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        ctx.fillStyle = 'black';
+        ctx.font = `bold ${16 * zoom}px Mojangles`;
+        ctx.textAlign = 'center';
+        ctx.fillText(this.name, screenX, screenY - this.radius * zoom - 10);
+        ctx.font = `italic ${12 * zoom}px Mojangles`;
+        ctx.fillText(`"${this.motto}"`, screenX, screenY - this.radius * zoom + 10);
+        ctx.textAlign = 'left';
+      }
+      generateRadiusVariations() {
+        const variations = [];
+        for (let i = 0; i < this.numSides; i++) {
+          if (this.isIrregular) {
+            variations.push(1 + (Math.random() * 0.4 - 0.2));
+          } else {
+            variations.push(1);
+          }
+        }
+        return variations;
+      }
+      updateBordersForNewTown(newTown) {
+        const dx = newTown.x - this.x;
+        const dy = newTown.y - this.y;
+        const distance = Math.hypot(dx, dy);
+
+        const angle = Math.atan2(dy, dx);
+
+        const totalRadius = this.radius + newTown.radius;
+
+        const overlapCorrection = (totalRadius - distance) / 2;
+
+        if (overlapCorrection > 0) {
+          const adjustX = Math.cos(angle) * overlapCorrection;
+          const adjustY = Math.sin(angle) * overlapCorrection;
+
+          this.x -= adjustX;
+          this.y -= adjustY;
+
+          newTown.x += adjustX;
+          newTown.y += adjustY;
+        }
+        
+        const angleDegrees = (angle * 180 / Math.PI + 360) % 360;
+        for (let i = 0; i < this.numSides; i++) {
+          const sectionAngle = i / this.numSides * 360 % 360;
+          const angleDiff = Math.abs(angleDegrees - sectionAngle);
+
+          if (angleDiff < 90 || angleDiff > 270) {
+            this.radiusVariations[i] *= 0.7 + Math.random() * 0.1;
+          }
+        }
+      }
+      addBuilding(building) {
+        this.buildings.push(building);
+        building.town = this;
+        if (this.buildings.length === 1) {
+          const residents = people.filter(p => p.home === building);
+          this.foundingFamilies.push(...residents);
+          this.selectNewMayor();
+        }
+        const centerX = this.buildings.reduce((sum, b) => sum + b.x, 0) / this.buildings.length;
+        const centerY = this.buildings.reduce((sum, b) => sum + b.y, 0) / this.buildings.length;
+        this.x = centerX;
+        this.y = centerY;
+        let maxDist = 0;
+        for (const b of this.buildings) {
+          const dist = Math.hypot(b.x - centerX, b.y - centerY);
+          maxDist = Math.max(maxDist, dist);
+        }
+        const oldRadius = this.radius;
+        this.radius = maxDist + 100;
+        if (maxDist > oldRadius) {
+          const additionalSides = Math.floor(Math.random() * 9) + 2;
+          this.numSides += additionalSides;
+          this.radiusVariations = this.generateRadiusVariations();
+        }
+        for (const otherTown of towns) {
+          if (otherTown !== this) {
+            const dist = Math.hypot(this.x - otherTown.x, this.y - otherTown.y);
+            if (dist < this.radius + otherTown.radius + 200) {
+              otherTown.updateBordersForNewTown(this);
+              this.updateBordersForNewTown(otherTown);
+            }
+          }
+        }
+      }
+      selectNewMayor() {
+        if (!this.mayor || !people.includes(this.mayor)) {
+          let successor = null;
+          if (this.mayor) {
+            const relatives = this.population.filter(p => p.motherPartner === this.mayor || p.fatherPartner === this.mayor || p.parent === this.mayor || p.generation === this.mayor.generation && (p.motherPartner === this.mayor.motherPartner || p.fatherPartner === this.mayor.fatherPartner));
+            successor = relatives.find(p => p.age >= 18);
+          }
+          if (!successor && this.foundingFamilies.length > 0) {
+            const validFounders = this.foundingFamilies.filter(f => f.age >= 18 && this.population.includes(f));
+            if (validFounders.length > 0) {
+              successor = validFounders[0];
+            }
+          }
+          if (!successor) {
+            const adults = this.population.filter(p => p.age >= 18);
+            if (adults.length > 0) {
+              successor = adults.reduce((a, b) => a.age > b.age ? a : b);
+            }
+          }
+          if (this.mayor) {
+            this.mayor.isMayor = false;
+          }
+          if (successor) {
+            this.mayor = successor;
+            this.mayor.isMayor = true;
+          }
+        }
+      }
+      canAddBuilding(building) {
+        for (const existingBuilding of this.buildings) {
+          const dist = Math.hypot(building.x - existingBuilding.x, building.y - existingBuilding.y);
+          if (dist <= 600) { 
+            return true;
+          }
+        }
+        return false;
+      }
+      updateMayorMigration(deltaTime) {
+        if (this.mayor) {
+          const distanceFromTown = Math.hypot(this.x - this.mayor.x, this.y - this.mayor.y);
+          if (distanceFromTown > this.radius && !this.mayorMigrationTime) {
+            this.mayorMigrationTime = Date.now();
+          } else if (distanceFromTown <= this.radius) {
+            this.mayorMigrationTime = null;
+          }
+          if (this.mayorMigrationTime && Date.now() - this.mayorMigrationTime > mayorAwayTime / gameSpeed) {
+            this.selectNewMayor();
+            this.mayorMigrationTime = null;
+          }
+        }
+      }
+    }
+    function generateTerrain() {
+      terrain = [];
+      const scale = 0.003;
+      const riverScale = 0.008;
+      
+      for (let y = 0; y < 2000; y++) {
+        terrain[y] = [];
+        for (let x = 0; x < 2000; x++) {
+          const noise = simplex.noise2D(x * scale, y * scale);
+          const riverNoise = simplex.noise2D(x * riverScale, y * riverScale);
+          
+          if (Math.abs(riverNoise) < 0.05) {
+            const borderNoise = Math.abs(riverNoise);
+            if (borderNoise < 0.04) {
+              terrain[y][x] = COLORS.WATER;
+            } else if (borderNoise < 0.05) {
+              terrain[y][x] = COLORS.SAND;
+            }
+          } else if (noise < -0.3) {
+            terrain[y][x] = COLORS.WATER;
+          } else if (noise < -0.1) {
+            terrain[y][x] = COLORS.SAND;
+          } else if (noise < 0.3) {
+            terrain[y][x] = COLORS.GRASS;
+          } else {
+            terrain[y][x] = COLORS.FOREST;
+          }
+        }
+      }
+
+      const tempTerrain = JSON.parse(JSON.stringify(terrain));
+      for (let y = 2; y < terrain.length - 2; y++) {
+        for (let x = 2; x < terrain[0].length - 2; x++) {
+          if (terrain[y][x] !== COLORS.WATER) continue;
+          for (let dy = -2; dy <= 2; dy++) {
+            for (let dx = -2; dx <= 2; dx++) {
+              const nx = x + dx;
+              const ny = y + dy;
+              if (terrain[ny][nx] !== COLORS.WATER && terrain[ny][nx] !== COLORS.SAND) {
+                tempTerrain[ny][nx] = COLORS.SAND;
+              }
+            }
+          }
+        }
+      }
+
+      for (let y = 1; y < terrain.length - 1; y++) {
+        for (let x = 1; x < terrain[0].length - 1; x++) {
+          let waterCount = 0;
+          for (let dy = -1; dy <= 1; dy++) {
+            for (let dx = -1; dx <= 1; dx++) {
+              if (tempTerrain[y + dy][x + dx] === COLORS.WATER) {
+                waterCount++;
+              }
+            }
+          }
+          if (waterCount <= 2 && tempTerrain[y][x] === COLORS.WATER) {
+            tempTerrain[y][x] = COLORS.SAND;
+          }
+          if (waterCount >= 6 && tempTerrain[y][x] !== COLORS.WATER) {
+            tempTerrain[y][x] = COLORS.WATER;
+          }
+        }
+      }
+
+      terrain = tempTerrain;
+
+      if (window.terrainBuffer) {
+        const bufferCtx = window.terrainBuffer.getContext('2d');
+        for (let y = 0; y < terrain.length; y++) {
+          for (let x = 0; x < terrain[0].length; x++) {
+            bufferCtx.fillStyle = terrain[y][x];
+            bufferCtx.fillRect(x, y, 1, 1);
+          }
+        }
+      }
+    }
+    function drawTerrain() {
+      if (!window.terrainBuffer) {
+        window.terrainBuffer = document.createElement('canvas');
+        window.terrainBuffer.width = 2000; 
+        window.terrainBuffer.height = 2000;
+        const bufferCtx = window.terrainBuffer.getContext('2d');
+        for (let y = 0; y < terrain.length; y++) {
+          for (let x = 0; x < terrain[0].length; x++) {
+            bufferCtx.fillStyle = terrain[y][x];
+            bufferCtx.fillRect(x, y, 1, 1);
+          }
+        }
+      }
+      ctx.save();
+      ctx.translate(Math.floor(offset.x * zoom), Math.floor(offset.y * zoom));
+      ctx.scale(zoom, zoom);
+      ctx.drawImage(window.terrainBuffer, 0, 0);
+      ctx.restore();
+    }
+    function updatePopulationCounter() {
+      document.getElementById('populationCount').textContent = people.length;
+      const townList = document.querySelector('.townList') || (() => {
+        const list = document.createElement('div');
+        list.className = 'townList';
+        document.getElementById('controls').appendChild(list);
+        return list;
+      })();
+      townList.innerHTML = towns.map(town => `<div>${town.name}: ${town.population.length} citizens</div>`).join('');
+    }
+    function init() {
+      initializeNameLists();
+      const simplex = new SimplexNoise();
+      const welcomeMessage = document.getElementById('welcomeMessage');
+      setTimeout(() => {
+        welcomeMessage.classList.add('fade');
+        setTimeout(() => {
+          welcomeMessage.remove();
+        }, 2000);
+      }, 100);
+      canvas.width = window.innerWidth * 2;
+      canvas.height = window.innerHeight * 2;
+      generateTerrain();
+      updatePopulationCounter();
+      document.getElementById('maleBtn').addEventListener('click', () => {
+        currentMode = 'male';
+      });
+      document.getElementById('femaleBtn').addEventListener('click', () => {
+        currentMode = 'female';
+      });
+      document.getElementById('speedControl').addEventListener('input', e => {
+        gameSpeed = parseFloat(e.target.value);
+        document.getElementById('speedLevel').textContent = gameSpeed.toFixed(1);
+      });
+      canvas.addEventListener('click', e => {
+        if (currentMode) {
+          const rect = canvas.getBoundingClientRect();
+          const scaleX = canvas.width / rect.width;
+          const scaleY = canvas.height / rect.height;
+          
+          // Calculate true click coordinates accounting for canvas scaling
+          const clickX = ((e.clientX - rect.left) * scaleX / zoom - offset.x);
+          const clickY = ((e.clientY - rect.top) * scaleY / zoom - offset.y); 
+          
+          const terrainX = Math.floor(clickX);
+          const terrainY = Math.floor(clickY);
+          
+          if (terrainY >= 0 && terrainY < terrain.length && terrainX >= 0 && terrainX < terrain[0].length && terrain[terrainY][terrainX] !== COLORS.WATER) {
+            people.push(new Person(clickX, clickY, currentMode));
+            updatePopulationCounter();
+          }
+        } else {
+          const rect = canvas.getBoundingClientRect();
+          const scaleX = canvas.width / rect.width;
+          const scaleY = canvas.height / rect.height;
+          
+          // Use same coordinate calculation for person clicking
+          const clickX = ((e.clientX - rect.left) * scaleX / zoom - offset.x);
+          const clickY = ((e.clientY - rect.top) * scaleY / zoom - offset.y);
+          
+          const clickedPerson = people.find(p => {
+            const dx = p.x - clickX;
+            const dy = p.y - clickY;
+            return Math.hypot(dx, dy) < 10;
+          });
+          
+          if (clickedPerson) {
+            const bubble = document.createElement('div');
+            bubble.className = 'thoughtBubble';
+            bubble.textContent = clickedPerson.currentThought;
+            bubble.style.left = e.clientX + 'px';
+            bubble.style.top = e.clientY - 50 + 'px';
+            document.body.appendChild(bubble);
+            activeBubble = bubble;
+          }
+        }
+      });
+      canvas.addEventListener('wheel', e => {
+        e.preventDefault();
+        const zoomSpeed = 0.1;
+        const oldZoom = zoom;
+        if (e.deltaY < 0) {
+          zoom *= 1 + zoomSpeed;
+        } else {
+          zoom *= 1 - zoomSpeed;
+        }
+        zoom = Math.max(0.3, Math.min(5, zoom));
+        const mouseX = e.clientX - canvas.offsetLeft;
+        const mouseY = e.clientY - canvas.offsetTop;
+        offset.x -= mouseX / zoom - mouseX / oldZoom;
+        offset.y -= mouseY / zoom - mouseY / oldZoom;
+        document.getElementById('zoomLevel').textContent = zoom.toFixed(1);
+      });
+      canvas.addEventListener('mousedown', e => {
+        isDragging = true;
+        lastMousePos = {
+          x: e.clientX,
+          y: e.clientY
+        };
+      });
+      canvas.addEventListener('mousemove', e => {
+        if (isDragging) {
+          const deltaX = e.clientX - lastMousePos.x;
+          const deltaY = e.clientY - lastMousePos.y;
+          offset.x += deltaX / zoom;
+          offset.y += deltaY / zoom;
+          lastMousePos = {
+            x: e.clientX,
+            y: e.clientY
+          };
+        }
+      });
+      canvas.addEventListener('mouseup', () => {
+        isDragging = false;
+      });
+      document.querySelector('.togglePeopleList').addEventListener('click', () => {
+        document.getElementById('peopleList').classList.toggle('collapsed');
+      });
+      document.getElementById('generationStyle').addEventListener('change', e => {
+        currentGenerationStyle = e.target.value;
+        updatePeopleList();
+      });
+      document.querySelector('.toggleControls').addEventListener('click', () => {
+        document.getElementById('controls').classList.toggle('collapsed');
+      });
+      document.querySelectorAll('.toggleWindow').forEach(btn => {
+        btn.addEventListener('click', () => {
+          btn.parentElement.classList.toggle('collapsed');
+        });
+      });
+      const targetFPSSlider = document.getElementById('targetFPS');
+      targetFPSSlider.addEventListener('input', e => {
+        targetFPS = parseInt(e.target.value);
+      });
+      const birthCanvas = document.getElementById('birthCanvas');
+      birthCanvas.width = 180;
+      birthCanvas.height = 100;
+      const birthCtx = birthCanvas.getContext('2d');
+      document.getElementById('languageSelect').addEventListener('change', e => {
+        currentLanguage = e.target.value;
+        updatePeopleList();
+      });
+      document.getElementById('zoomLevel').textContent = zoom.toFixed(1);
+      animate();
+    }
+    let lastTime = 0;
+    let lastRender = 0;
+    let lastUIUpdate = 0;
+    const FRAME_RATE = 30;
+    let gameSpeed = 1.0;
+    function animate(timestamp) {
+      if (timestamp - lastRender < 1000 / targetFPS) {
+        requestAnimationFrame(animate);
+        return;
+      }
+      lastRender = timestamp;
+      const deltaTime = (timestamp - lastTime) * gameSpeed;
+      lastTime = timestamp;
+      towns.forEach(town => {
+        town.population = town.population.filter(p => p && !p.partner);
+      });
+      buildings = buildings.filter(b => !(b instanceof Store) || b.owner);
+      const visiblePeople = people.filter(p => {
+        const screenX = (p.x + offset.x) * zoom;
+        const screenY = (p.y + offset.y) * zoom;
+        return screenX >= -100 && screenX <= canvas.width + 100 && screenY >= -100 && screenY <= canvas.height + 100;
+      });
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      drawTerrain();
+      visiblePeople.forEach(person => {
+        person.update(deltaTime);
+        person.draw();
+      });
+      if (tagGame.isActive) {
+        tagGame.players = tagGame.players.filter(p => {
+          if (p.age >= 12 || !people.includes(p)) return false;
+          const otherPlayers = tagGame.players.filter(op => op !== p);
+          return otherPlayers.some(op => Math.hypot(op.x - p.x, op.y - p.y) < 150);
+        });
+        if (tagGame.players.length < 2) {
+          tagGame.isActive = false;
+          tagGame.players.forEach(p => {
+            p.isPlayingTag = false;
+            p.isIt = false;
+          });
+          tagGame.players = [];
+          tagGame.it = null;
+        }
+      }
+      const visibleBuildings = buildings.filter(b => {
+        const screenX = (b.x + offset.x) * zoom;
+        const screenY = (b.y + offset.y) * zoom;
+        return screenX >= -100 && screenX <= canvas.width + 100 && screenY >= -100 && screenY <= canvas.height + 100;
+      });
+      visibleBuildings.forEach(building => {
+        building.update();
+        building.draw();
+      });
+      towns.forEach(town => {
+        town.draw();
+        town.selectNewMayor();
+      });
+      if (timestamp - lastUIUpdate > 1000) {
+        updatePeopleList(deltaTime);
+        lastUIUpdate = timestamp;
+      }
+      if (timestamp - lastUIUpdate > 1000) {
+        document.getElementById('currentFPS').textContent = Math.round(1000 / (timestamp - lastRender));
+        const birthRate = (currentBirthCount - lastBirthCount) * 60;
+        document.getElementById('birthRate').textContent = birthRate;
+        lastBirthCount = currentBirthCount;
+        birthData.push(birthRate);
+        birthData.shift();
+        birthCtx.clearRect(0, 0, birthCanvas.width, birthCanvas.height);
+        birthCtx.fillStyle = '#4CAF50';
+        const maxBirth = Math.max(...birthData, 1);
+        birthData.forEach((value, index) => {
+          const height = value / maxBirth * birthCanvas.height;
+          birthCtx.fillRect(index * 3, birthCanvas.height - height, 2, height);
+        });
+      }
+      requestAnimationFrame(animate);
+    }
+    let allPeopleEver = [];
+    const GENERATION_NAMING_STYLES = ['greek', 'hebrew', 'nato', 'oldnato', 'pagasa', 'nhc', 'typhoon'];
+    const GREEK_ALPHABET = ['Alpha', 'Beta', 'Gamma', 'Delta', 'Epsilon', 'Zeta', 'Eta', 'Theta', 'Iota', 'Kappa', 'Lambda', 'Mu', 'Nu', 'Xi', 'Omicron', 'Pi', 'Rho', 'Sigma', 'Tau', 'Upsilon', 'Phi', 'Chi', 'Psi', 'Omega'];
+    const HEBREW_ALPHABET = ['Alef', 'Bet', 'Gimel', 'Daleth', 'He', 'Waw', 'Zayin', 'Chet', 'Tet', 'Yod', 'Kaf', 'Lamed', 'Mem', 'Nun', 'Samech', 'Ayin', 'Pe', 'Tsade', 'Qof', 'Resh', 'Shin', 'Tav'];
+    const NATO_PHONETIC = ['Alpha', 'Bravo', 'Charlie', 'Delta', 'Echo', 'Foxtrot', 'Golf', 'Hotel', 'India', 'Juliet', 'Kilo', 'Lima', 'Mike', 'November', 'Oscar', 'Papa', 'Quebec', 'Romeo', 'Sierra', 'Tango', 'Uniform', 'Victor', 'Whiskey', 'X-ray', 'Yankee', 'Zulu'];
+    const GENERATION_PREFIXES = ["Generation of", "The", "Age of the", "Generation of the", "Era of", "Time of the", "Rise of the", "Dawn of the"];
+    const GENERATION_NOUNS = ["Spawnings", "Commercials", "Unknown", "Foobars", "Additions", "Subtractions", "Multiplications", "Reproductions", "Diversities", "Stuff", "Changes", "Growth", "Beginnings", "Prosperity", "Innovation", "Development", "Progress", "Evolution", 'Advertisements', 'Sponsorships', 'Annexing', 'Extravagance', 'Revenue', 'Revelation', 'Reveille', 'Catalyst', 'Capital', 'Industry'];
+    let currentGenerationStyle = 'greek';
+    let currentGenerationNumber = 0;
+    let activeBubble = null;
+    const TRANSLATIONS = {
+      en: {
+        thoughts: {
+          CHILD: ["I wonder if anyone wants to play tag...", "Rock paper scissors is fun!", "I wish I was grown up like mom and dad", "Playing is the best!", "I'm getting sleepy...", "I'm hungry!", "That cloud looks like a bunny!", "I want ice cream!", "Will you be my friend?", "Hide and seek next?", "I love running around!", "Story time please!", "Can we play pretend?", "Look what I found!", "I drew a picture!", "One more game please!", "When is snack time?", "Let's build a fort!", "I want to explore!", "Watch this cool trick!", "Can we have a playdate?", "I'm too little to reach!", "Can we go to the playground?", "My blocks fell down...", "I want mommy!", "Look at my toy!", "I colored inside the lines!", "Read me a story!", "That's not fair!", "Five more minutes please!", "Sharing is caring!", "Nap time already?", "My turn next!", "Let's play make believe!", "Race you to the tree!", "Can I have a snack?", "Watch me jump!", "I made a new friend!", "When is recess?", "Catch me if you can!", "Let's play house!", "Tag, you're it!", "Best friends forever!", "I want to swing higher!", "Can I help?", "Look what I can do!"],
+          ADULT: ["I should find a partner...", "This town is growing nicely", "What a beautiful day", "I need to work harder", "Time to settle down maybe?", "I miss being young", "Life is good", "Need to fix the house", "What's for dinner...", "Bills to pay...", "Getting older every day", "Could use a vacation", "Hope the kids are okay", "Quiet evening at last", "New neighbors moved in", "Weather's changing", "Should plant a garden", "Time goes by so fast", "Remember when...", "Maybe I'll learn a hobby", "Need more sleep", "Thinking about the future", "Getting old isn't easy", "Kids these days...", "Back in my day...", "Need to save money", "Should call my parents", "Good time for a walk", "Love this community", "Always something to do", "House needs cleaning", "What's on TV tonight", "Better times ahead", "Looking for work", "Miss my family", "Making progress", "Can't complain", "Beautiful sunset", "Early to bed tonight", "Living the dream", "Taking it day by day", "Good company here", "Things are looking up", "Need a change", "Same old routine", "Getting by alright", "Another day begins"],
+          MAYOR: ["I must lead wisely", "The town needs more stores", "My citizens seem happy", "Such responsibility...", "We need more roads", "Growth is steady", "Town meeting soon", "Budget planning time", "Need infrastructure work", "More housing needed", "Event planning ideas", "Community spirit growing", "Election season coming", "Town festival plans", "Development projects", "Public works needed", "Safety concerns", "Education priorities", "Economic growth plans", "Green space projects", "Transportation issues", "Must address concerns", "New policy needed", "Citizens first", "Building permits pending", "Town hall renovation", "Park improvements soon", "Library funding review", "Emergency planning", "Tourism initiative", "Historic preservation", "Zoning updates", "Community feedback", "Business development", "Grant applications", "Road maintenance", "Water system updates", "Waste management", "Council meeting prep", "Budget review time", "Election campaign", "Public outreach", "Environmental concerns", "Housing development", "Cultural programs", "Downtown revitalization"],
+          WORKING: ["Another day at work", "These supplies are heavy", "Customers are coming in", "Business is good today", "Need to restock soon", "Time for inventory", "Sales are up today", "Break time soon", "Busy shift ahead", "New shipment arriving", "Customer service smile", "Need coffee...", "End of day approaching", "Market trends looking good", "Store layout changes", "Training new staff", "Meeting deadlines", "Quarterly goals", "Work-life balance", "Career growth plans", "Hope for a raise", "Customer complaints", "Need organization", "Overtime again", "Sales targets", "New products coming", "Training required", "Staff meeting later", "Inventory check", "Promotion possible", "Long shift today", "Good teamwork", "Performance review", "Project deadline", "Email backlog", "Schedule conflicts", "Office politics", "Professional development", "Work-from-home day", "Client meeting prep", "Need motivation", "Doing my best", "Career goals", "Time management", "Workplace culture", "Need more buildings", "Calculating dimensions...", "Construction plans ready", "Site survey needed", "Safety first on site", "Building permits pending", "Material costs rising", "Project deadline looming", "Foundation looks good", "Structural integrity check", "Need more workers", "Blueprint revisions", "Construction on schedule", "Quality inspection time", "Site cleanup needed"]
+        },
+        ui: {
+          population: "Population",
+          generation: "Generation",
+          currentGen: "Current Generation",
+          totalPop: "Total Population Ever",
+          currentPop: "Current Population",
+          works: "Works as",
+          unemployed: "Unemployed",
+          mother: "Mother",
+          father: "Father",
+          citizen: "Citizen of",
+          unknown: "unknown",
+          noTown: "no town",
+          age: "Age",
+          deceased: "Deceased",
+          mayor: "Mayor of",
+          mayoress: "Mayoress of",
+          currently: "Currently",
+          playing: "Playing",
+          idle: "Idle",
+          walking: "Walking around",
+          building: "Building bridge",
+          paving: "Paving roads",
+          following: "Following",
+          working: "Working at store",
+          delivering: "Delivering supplies"
+        }
+      },
+      tl: {
+        thoughts: {
+          CHILD: ["Sana may makalaro ako ng taguan...", "Gusto ko maglaro!", "Sana lumaki na ako tulad ni mama at papa", "Ang saya maglaro!", "Inaantok na ako...", "Gutom na ako!", "Parang kuneho yung ulap!", "Gusto ko ng ice cream!", "Pwede ba tayong maging magkaibigan?"],
+          ADULT: ["Kailangan ko ng partner...", "Lumalaki na ang bayan", "Ang ganda ng araw", "Kailangan kong magtrabaho", "Oras na para mag-settle down"],
+          MAYOR: ["Kailangan kong mamuno ng maayos", "Kailangan ng bayan ng mas maraming tindahan", "Masaya ang mga mamamayan", "Malaking responsibilidad...", "Kailangan natin ng mas maraming kalsada"],
+          WORKING: ["Isa na namang araw ng trabaho", "Mabigat ang mga supply", "May mga customer na dumarating", "Maganda ang kita ngayong araw", "Kailangan ng restock"]
+        },
+        ui: {
+          population: "Populasyon",
+          generation: "Henerasyon",
+          currentGen: "Kasalukuyang Henerasyon",
+          totalPop: "Kabuuang Naging Populasyon",
+          currentPop: "Kasalukuyang Populasyon",
+          works: "Trabaho",
+          unemployed: "Walang Trabaho",
+          mother: "Ina",
+          father: "Ama",
+          citizen: "Mamamayan ng",
+          unknown: "hindi alam",
+          noTown: "walang bayan",
+          age: "Edad",
+          deceased: "Pumanaw na",
+          mayor: "Alkalde ng",
+          mayoress: "Alkaldesa ng",
+          currently: "Kasalukuyang",
+          playing: "Naglalaro",
+          idle: "Walang ginagawa",
+          walking: "Naglalakad",
+          building: "Gumagawa ng tulay",
+          paving: "Gumagawa ng kalsada",
+          following: "Sumusunod kay",
+          working: "Nagtatrabaho sa tindahan",
+          delivering: "Nagdedeliver ng supplies"
+        }
+      },
+      ja: {
+        thoughts: {
+          CHILD: ["誰かおにごっこしたいかな...", "遊びたい！", "早く大人になりたいな", "遊ぶの楽しい！", "眠くなってきた...", "お腹すいた！", "あの雲うさぎみたい！", "アイス食べたい！", "お友達になってくれる？"],
+          ADULT: ["パートナーを見つけないと...", "町が成長してきてる", "いい天気だ", "もっと働かないと", "落ち着くときかも", "若かった頃が懐かしい", "人生は素晴らしい"],
+          MAYOR: ["賢く導かないと", "町にはもっと店が必要だ", "市民は幸せそうだ", "責任重大...", "道路が必要だ"],
+          WORKING: ["また仕事の一日が始まる", "荷物が重い", "お客さんが来てる", "今日は売れてる", "在庫補充が必要だ"]
+        },
+        ui: {
+          population: "人口",
+          generation: "世代",
+          currentGen: "現在の世代",
+          totalPop: "これまでの総人口",
+          currentPop: "現在の人口",
+          works: "職業",
+          unemployed: "無職",
+          mother: "母",
+          father: "父",
+          citizen: "市民",
+          unknown: "不明",
+          noTown: "所属なし",
+          age: "年齢",
+          deceased: "死亡",
+          mayor: "市長",
+          mayoress: "女性市長",
+          currently: "現在",
+          playing: "遊び中",
+          idle: "待機中",
+          walking: "散歩中",
+          building: "橋を建設中",
+          paving: "道路を舗装中",
+          following: "について行く",
+          working: "店で働いている",
+          delivering: "配達中"
+        }
+      },
+      es: {
+        thoughts: {
+          CHILD: ["Me pregunto si alguien quiere jugar a la mancha...", "¡Quiero jugar!", "Ojalá fuera grande como mamá y papá", "¡Jugar es lo mejor!", "Tengo sueño...", "¡Tengo hambre!", "¡Esa nube parece un conejo!", "¡Quiero helado!", "¿Quieres ser mi amigo?"],
+          ADULT: ["Debería encontrar pareja...", "El pueblo está creciendo bien", "Qué hermoso día", "Necesito trabajar más", "Tal vez es hora de establecerse", "Extraño ser joven", "La vida es buena"],
+          MAYOR: ["Debo liderar con sabiduría", "El pueblo necesita más tiendas", "Los ciudadanos parecen felices", "Tanta responsabilidad...", "Necesitamos más calles"],
+          WORKING: ["Otro día de trabajo", "Los suministros son pesados", "Llegan los clientes", "El negocio va bien hoy", "Hay que reponer stock"]
+        },
+        ui: {
+          population: "Población",
+          generation: "Generación",
+          currentGen: "Generación Actual",
+          totalPop: "Población Total Histórica",
+          currentPop: "Población Actual",
+          works: "Trabaja como",
+          unemployed: "Desempleado",
+          mother: "Madre",
+          father: "Padre",
+          citizen: "Ciudadano de",
+          unknown: "desconocido",
+          noTown: "sin pueblo",
+          age: "Edad",
+          deceased: "Fallecido",
+          mayor: "Alcalde de",
+          mayoress: "Alcaldesa de",
+          currently: "Actualmente",
+          playing: "Jugando",
+          idle: "Inactivo",
+          walking: "Caminando",
+          building: "Construyendo puente",
+          paving: "Pavimentando calles",
+          following: "Siguiendo a",
+          working: "Trabajando en tienda",
+          delivering: "Entregando suministros"
+        }
+      }
+    };
+    let currentLanguage = 'en';
+    const THOUGHTS = {
+      CHILD: TRANSLATIONS[currentLanguage].thoughts.CHILD,
+      ADULT: TRANSLATIONS[currentLanguage].thoughts.ADULT,
+      MAYOR: TRANSLATIONS[currentLanguage].thoughts.MAYOR,
+      WORKING: TRANSLATIONS[currentLanguage].thoughts.WORKING
+    };
+    class ResidentialBuilding extends PublicBuilding {
+      constructor(x, y, type) {
+        super(x, y, type);
+        this.type = type;
+        if (type === 'hotel') {
+          this.capacity = Math.round(Math.random() * (75 - 50) / 5) * 5 + 50;
+        } else if (type === 'condo') {
+          this.capacity = Math.round(Math.random() * (40 - 20) / 5) * 5 + 20;
+        }
+        this.occupants = [];
+      }
+      draw() {
+        const screenX = (this.x + offset.x) * zoom;
+        const screenY = (this.y + offset.y) * zoom;
+        ctx.fillStyle = this.type === 'hotel' ? '#4A90E2' : '#9B59B6';
+        ctx.fillRect(screenX - 30 * zoom, screenY - 40 * zoom, 60 * zoom, 80 * zoom);
+        ctx.fillStyle = '#FFF';
+        for (let i = 0; i < 4; i++) {
+          for (let j = 0; j < 3; j++) {
+            ctx.fillRect(screenX - 20 * zoom + j * 20 * zoom, screenY - 30 * zoom + i * 20 * zoom, 10 * zoom, 10 * zoom);
+          }
+        }
+        ctx.fillStyle = 'black';
+        ctx.font = `${12 * zoom}px Mojangles`;
+        ctx.textAlign = 'center';
+        ctx.fillText(`${this.type.charAt(0).toUpperCase() + this.type.slice(1)}`, screenX, screenY - 45 * zoom);
+        ctx.fillText(`(${this.occupants.length}/${this.capacity})`, screenX, screenY - 55 * zoom);
+      }
+    }
+    const ENGINEER_RESIDENTIAL = ["Planning new housing...", "These blueprints look good", "Need more residential space", "Hotel or condo next?", "Population growing fast", "Checking building codes", "Urban development plans", "Need construction permits"];
+    THOUGHTS.WORKING = [...THOUGHTS.WORKING, ...ENGINEER_RESIDENTIAL];
+    const MOTTO_TEMPLATES = [
+      "We behave for [WORD]",
+      "Swords for [WORD]", 
+      "[WORD] is the way",
+      "In [WORD] we trust",
+      "Forever [WORD]",
+      "We are [WORD]",
+      "Nothing without [WORD]",
+      "Through [WORD] we prosper",
+      "[WORD] leads the way",
+      "For glory of [WORD]",
+      "United under [WORD]",
+      "Blessed be [WORD]",
+      "Victory through [WORD]",
+      "[WORD] provides",
+      "By [WORD]'s grace", 
+      "[WORD] endures",
+      "Strength in [WORD]",
+      "Forward with [WORD]",
+      "[WORD] protects",
+      "[WORD] guides us",
+      
+      "We use [WORD] for [WORD2]",
+      "[WORD] is [WORD2]",
+      "From [WORD] to [WORD2]",
+      "[WORD] begets [WORD2]",
+      "First [WORD], then [WORD2]",
+      "[WORD] before [WORD2]",
+      "Neither [WORD] nor [WORD2]",
+      "Both [WORD] and [WORD2]",
+      "[WORD] conquers [WORD2]",
+      "Against [WORD] and [WORD2]",
+      "[WORD] serves [WORD2]",
+      "Between [WORD] and [WORD2]",
+      "Beyond [WORD] lies [WORD2]",
+      "[WORD] fears no [WORD2]",
+      "[WORD] knows only [WORD2]",
+      "Let [WORD] meet [WORD2]",
+      "[WORD] yields to [WORD2]",
+      "Through [WORD] to [WORD2]",
+      "When [WORD] meets [WORD2]",
+      "[WORD] until [WORD2]",
+      "If [WORD], then [WORD2]",
+      "See [WORD] for more info",
+      "Love for both [WORD] & [WORD2]"
+    ];
+    function updatePeopleList(deltaTime) {
+      const peopleEntries = document.getElementById('peopleEntries');
+      const t = TRANSLATIONS[currentLanguage].ui;
+      function getGenerationName(generationNum) {
+        switch (currentGenerationStyle) {
+          case 'greek':
+            return GREEK_ALPHABET[generationNum % GREEK_ALPHABET.length];
+          case 'hebrew':
+            return HEBREW_ALPHABET[generationNum % HEBREW_ALPHABET.length];
+          case 'nato':
+            return NATO_PHONETIC[generationNum % NATO_PHONETIC.length];
+          case 'oldnato':
+            return OLD_NATO_ALPHABET[generationNum % OLD_NATO_ALPHABET.length];
+          case 'pagasa':
+            return PAGASA_NAMES[generationNum % PAGASA_NAMES.length];
+          case 'nhc':
+            return NHC_NAMES[generationNum % NHC_NAMES.length];
+          case 'typhoon':
+            return TYPHOON_NAMES[generationNum % TYPHOON_NAMES.length];
+          default:
+            const prefix = GENERATION_PREFIXES[generationNum % GENERATION_PREFIXES.length];
+            const noun = GENERATION_NOUNS[generationNum % GENERATION_NOUNS.length];
+            return `${prefix} ${noun}`;
+        }
+      }
+      allPeopleEver.sort((a, b) => a.spawnTime - b.spawnTime);
+      peopleEntries.innerHTML = `
+                    <div style="font-size: 10px">
+                        ${t.totalPop}: ${allPeopleEver.length}<br>
+                        ${t.currentPop}: ${people.length}<br>
+                        ${t.currentGen}: ${currentGenerationNumber}<br>
+                        (${getGenerationName(currentGenerationNumber)})<br><br>
+                    </div>
+                    ${allPeopleEver.map(person => {
+        if (!person) return '';
+        const isDeceased = !people.includes(person);
+        const townInfo = person.town ? person.town.name : t.noTown;
+        const motherInfo = person.motherPartner ? person.motherPartner.name : t.unknown;
+        const fatherInfo = person.fatherPartner ? person.fatherPartner.name : t.unknown;
+        const mayorTitle = person.isMayor && person.town ? (person.gender === 'female' ? ` ${t.mayoress} ` : ` ${t.mayor} `) + person.town.name : '';
+        const occupationInfo = person.occupation || t.unemployed;
+        let activity = '';
+        if (!isDeceased) {
+          if (person.inRelation) {
+            activity = t.inRelation;
+          } else if (person.currentBridgeTarget) {
+            activity = `${t.building} (${Math.floor(person.bridgeProgress * 100)}% complete)`;
+          } else if (person.currentRoadTarget) {
+            activity = t.paving;
+          } else if (person.following) {
+            activity = `${t.following} ${person.following.name}`;
+          } else if (person.occupation === 'Cashier') {
+            activity = t.working;
+          } else if (person.occupation === 'Supplier' && person.targetX !== person.x) {
+            activity = t.delivering;
+          } else if (person.occupation === 'Child' && person.age < 12) {
+            activity = t.playing;
+          } else if (person.moveTimer > 0) {
+            activity = t.walking;
+          } else if (person.isPlayingRPS) {
+            activity = `Hit ${person.rpsChoice}${person.rpsResult ? `. ${person.rpsResult}!` : '...'}`;
+          } else {
+            activity = t.idle;
+          }
+        }
+        return `<div class="personEntry ${isDeceased ? 'deceased' : ''} ${person.isMayor ? 'mayor' : ''} ${person.isPlayingTag ? 'it' : ''} ${person.isPlayingRPS ? 'playing-rps' : ''}">
+                        ${person.name} - ${t.age}: ${Math.floor(person.age)}
+                        ${isDeceased ? ` (${t.deceased})` : ''}
+                        ${mayorTitle}
+                        ${!isDeceased ? `<br><span style="font-size: 9px; color: #666;">${t.currently}: ${activity}</span>` : ''}
+                        <br><span style="font-size: 9px">${t.works}: ${occupationInfo}</span>
+                        <br><span style="font-size: 9px">${t.generation}: ${person.generation}<br>(${getGenerationName(person.generation)})</span>
+                        <br><span style="font-size: 9px">${t.mother}: ${motherInfo}</span>
+                        <br><span style="font-size: 9px">${t.father}: ${fatherInfo}</span>
+                        <br><span style="font-size: 9px">${t.citizen}: ${townInfo}</span>
+                        ${person.currentThought ? `<div class="thoughts">"${person.currentThought}"</div>` : ''}
+                        ${person.traits && person.traits.length ? `<div class="traits">Traits: ${person.traits.join(', ')}</div>` : ''}
+                        ${person.isPlayingTag ? `<br><span style="font-size: 9px; color: ${person.isIt ? 'red' : '#FFD700'}">
+                        ${person.isIt ? t.it : t.playingTag}</span>` : ''}
+                        ${person.currentBridgeTarget instanceof ResidentialBuilding ? `<br><span class="capacity-info">Capacity: ${person.currentBridgeTarget.capacity}</span>` : ''}
+                    </div>`;
+      }).join('')}
+                `;
+      towns.forEach(town => {
+        town.updateMayorMigration(deltaTime);
+      });
+    }
+    let birthData = new Array(60).fill(0);
+    let lastBirthCount = 0;
+    let currentBirthCount = 0;
+    let targetFPS = 30;
+    let tagGame = {
+      isActive: false,
+      players: [],
+      it: null,
+      lastTagTime: 0,
+      gameStartTime: 0,
+      gameDuration: Math.random() * 15000 + 5000
+    };
+    let rpsGame = {
+      isActive: false,
+      players: [],
+      choices: ['Rock', 'Paper', 'Scissors'],
+      roundStartTime: 0,
+      roundDuration: 2000,
+      results: {}
+    };
+    let mayorAwayTime = 30000;
+    class MarkovChain {
+      constructor(n = 2) {
+        this.n = n;
+        this.transitionTable = new Map();
+      }
+      train(words) {
+        for (const word of words) {
+          const chars = Array.from(word);
+          for (let i = 0; i <= chars.length - this.n; i++) {
+            const key = chars.slice(i, i + this.n).join('');
+            const next = chars[i + this.n] || null;
+            if (!this.transitionTable.has(key)) {
+              this.transitionTable.set(key, new Map());
+            }
+            const transitions = this.transitionTable.get(key);
+            transitions.set(next, (transitions.get(next) || 0) + 1);
+          }
+        }
+      }
+      generate(minLength = 4, maxLength = 10) {
+        if (this.transitionTable.size === 0) return '';
+        let result = '';
+        let current = Array.from([...this.transitionTable.keys()][Math.floor(Math.random() * this.transitionTable.size)]);
+        while (result.length < maxLength) {
+          result += current[0];
+          const key = current.join('');
+          const transitions = this.transitionTable.get(key);
+          const total = Array.from(transitions.values()).reduce((a, b) => a + b, 0);
+          let rand = Math.random() * total;
+          let next = null;
+          for (const [char, count] of transitions) {
+            rand -= count;
+            if (rand <= 0) {
+              next = char;
+              break;
+            }
+          }
+          if (next === null) {
+            if (result.length >= minLength) break;
+            current = Array.from([...this.transitionTable.keys()][Math.floor(Math.random() * this.transitionTable.size)]);
+            continue;
+          }
+          current = [...current.slice(1), next];
+        }
+        return result;
+      }
+    }
+    init();
+    </script>
+</body>
+</html>

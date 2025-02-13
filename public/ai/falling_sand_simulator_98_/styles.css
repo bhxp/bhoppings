@@ -1,0 +1,189 @@
+body {
+  margin: 0;
+  padding: 0;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  background: #008080;
+  font-family: "Microsoft Sans Serif", Arial, sans-serif;
+}
+
+.container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.controls {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  transform: none;
+  z-index: 10;
+  width: auto;
+  min-width: 300px;
+}
+
+.settings-window {
+  position: fixed;
+  top: 20px;
+  right: 340px;
+  transform: none;
+  z-index: 20;
+  width: 300px;
+}
+
+.presets-window {
+  position: fixed;
+  top: 260px;
+  right: 20px;
+  transform: none;
+  z-index: 20;
+  width: 300px;
+}
+
+.button-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  padding: 6px;
+}
+
+.button-grid button {
+  min-width: 80px;
+  margin: 0;
+  box-shadow: inset -1px -1px #0a0a0a, inset 1px 1px #ffffff, inset -2px -2px #808080, inset 2px 2px #dfdfdf;
+  background: #c0c0c0;
+  padding: 6px;
+  border: none;
+  border-radius: 0;
+  height: auto;
+  color: #000;
+}
+
+.button-grid button:not(:disabled):active,
+.button-grid button.active {
+  box-shadow: inset -1px -1px #ffffff, inset 1px 1px #0a0a0a,
+              inset -2px -2px #dfdfdf, inset 2px 2px #808080 !important;
+  background: #c0c0c0;
+}
+
+.button-grid button:not(:disabled):hover {
+  box-shadow: inset -1px -1px #0a0a0a, inset 1px 1px #ffffff, inset -2px -2px #808080, inset 2px 2px #dfdfdf;
+  background: #c0c0c0;
+}
+
+.cursor-preview {
+  position: absolute;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  pointer-events: none;
+  z-index: 100;
+}
+
+.status-bar {
+  margin-top: 8px;
+  padding: 2px 4px;
+  background: #dfdfdf;
+  border: inset 1px #fff;
+}
+
+.status-text {
+  margin: 0;
+  font-size: 11px;
+  color: #222;
+}
+
+.title-bar {
+  background: linear-gradient(90deg, navy, #1084d0);
+  padding: 3px 2px 3px 3px;
+}
+
+.title-bar-text {
+  font-weight: bold;
+  color: white;
+  letter-spacing: 0;
+  margin-right: 24px;
+}
+
+.field-row-stacked {
+  margin-bottom: 12px;
+}
+
+.field-row-stacked label {
+  display: block;
+  margin-bottom: 4px;
+}
+
+.field-row {
+  margin: 4px 0;
+}
+
+input[type="range"] {
+  width: 100%;
+  margin: 8px 0;
+}
+
+hr {
+  margin: 16px 0;
+}
+
+.window-body {
+  margin: 8px;
+}
+
+.tabs {
+  margin: 8px 0;
+}
+
+.tab-buttons {
+  display: flex;
+  border-bottom: 1px solid #808080;
+  margin-bottom: 8px;
+}
+
+.tab-button {
+  padding: 4px 8px;
+  margin-right: 4px;
+  background: #c0c0c0;
+  border: 1px solid #808080;
+  border-bottom: none;
+  position: relative;
+  bottom: -1px;
+}
+
+.tab-button.active {
+  background: #dfdfdf;
+  border-bottom: 1px solid #dfdfdf;
+}
+
+.tab-content {
+  display: none;
+  padding: 8px 0;
+}
+
+.tab-content.active {
+  display: block;
+}
+
+.presets-window select {
+  width: 100%;
+  min-height: 100px;
+}
+
+.presets-window input[type="text"] {
+  flex: 1;
+  margin-right: 8px;
+}
+
+.settings-window .window-body {
+  max-height: 70vh;
+  overflow-y: auto;
+}

@@ -1,0 +1,1433 @@
+    <title>Giggler Land Theme Park - Three.js Experience</title>
+    <meta charset="utf-8">
+    <style>
+        body { margin: 0; overflow: hidden; }
+        canvas { display: block; }
+        #loading {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-family: Arial, sans-serif;
+            font-size: 24px;
+            color: #FFD700;
+            background: rgba(0,0,0,0.8);
+            padding: 20px;
+            border-radius: 10px;
+            z-index: 1000;
+        }
+        #instructions {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            color: white;
+            font-family: Arial, sans-serif;
+            background: rgba(0,0,0,0.5);
+            padding: 10px;
+            border-radius: 5px;
+        }
+        #toggleControl {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            padding: 10px;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            z-index: 1000;
+        }
+        #joystickContainer {
+            position: fixed;
+            bottom: 100px;
+            left: 100px;
+            width: 100px;
+            height: 100px;
+            display: none;
+            z-index: 1000;
+        }
+        #jumpButton {
+            display: none !important;
+        }
+        #touchArea {
+            position: fixed;
+            top: 0;
+            right: 0;
+            width: 50%;
+            height: 100%;
+            z-index: 999;
+        }
+        #flashOverlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: url('IMG_5997.webp') center center;
+            background-size: cover;
+            opacity: 0;
+            pointer-events: none;
+            z-index: 1001;
+            transition: opacity 0.5s ease-in, opacity 1s ease-out; /* Updated timing */
+        }
+        #eButton {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 60px;
+            height: 60px;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            font-size: 24px;
+            font-weight: bold;
+            cursor: pointer;
+            display: none;
+            z-index: 1000;
+        }
+        #rButton {
+            position: fixed;
+            bottom: 90px; /* Position it above the E button */
+            right: 20px;
+            width: 60px;
+            height: 60px;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            font-size: 24px;
+            font-weight: bold;
+            cursor: pointer;
+            display: none;
+            z-index: 1000;
+        }
+        #rideText {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-family: Arial, sans-serif;
+            font-size: 24px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            display: none;
+            z-index: 1000;
+        }
+        #switchMusicBtn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 10px;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            z-index: 1000;
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/nipplejs/0.9.0/nipplejs.min.js"></script>
+</head>
+<body>
+    <div id="loading">Loading Giggler Land...</div>
+    <audio id="backgroundMusic" loop>
+        <source src="ROBLOX_ Natural Disaster Survival OST - Party Palace (OG).mp3" type="audio/mpeg">
+    </audio>
+    <audio id="laughSound">
+        <source src="Cartoon laugh - sound effect.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="boomSound">
+        <source src="vine-boom-sound-effect(chosic.com).mp3" type="audio/mpeg">
+    </audio>
+    <audio id="railSound" loop>
+        <source src="rail.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="suspenseSound">
+        <source src="suspense.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="funhouseMusic" loop>
+        <source src="funhouse.mp3" type="audio/mpeg">
+    </audio>
+    <div id="instructions">
+        WASD - Move around<br>
+        Mouse - Look around<br>
+        R - Ride nearest coaster<br>
+        E - Exit coaster/tower<br>
+        Enter - Switch music
+    </div>
+    <button id="toggleControl">Toggle Mobile Controls</button>
+    <div id="joystickContainer"></div>
+    <div id="touchArea"></div>
+    <div id="flashOverlay"></div>
+    <div id="rideText">RIDE</div>
+    <button id="eButton">E</button>
+    <button id="rButton">R</button>
+    <button id="switchMusicBtn">Switch Music</button>
+
+    <script async src="https://unpkg.com/es-module-shims@1.3.6/dist/es-module-shims.js"></script>
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://unpkg.com/three@0.151.3/build/three.module.js",
+          "three/addons/": "https://unpkg.com/three@0.151.3/examples/jsm/",
+          "three/examples/": "https://unpkg.com/three@0.151.3/examples/"
+        }
+      }
+    </script>
+
+    <script type="module">
+    import * as THREE from 'three';
+    import { PointerLockControls } from 'three/addons/controls/PointerLockControls.js';
+
+    const TRACK_SEGMENTS = 100; 
+    const NUM_COASTERS = 20; 
+    const MAX_COASTERS = 20; 
+
+    function playRandomLaugh() {
+        const laughSound = document.getElementById('laughSound');
+        laughSound.volume = 0.3; // Set volume to 30%
+        laughSound.currentTime = 0; // Reset to start
+        laughSound.play().catch(function(error) {
+            console.log("Laugh audio play failed:", error);
+        });
+
+        // Schedule next laugh in 10-30 seconds
+        const nextLaughDelay = 10000 + Math.random() * 20000;
+        setTimeout(playRandomLaugh, nextLaughDelay);
+    }
+
+    class RollerCoaster {
+        constructor(scene, startX, startZ) {
+            this.scene = scene;
+            this.points = [];
+            this.track = null;
+            this.cart = null;
+            this.startX = startX;
+            this.startZ = startZ;
+            this.generateTrack();
+            this.createTrackMesh();
+            this.createSupportBeams();
+            this.createCart();
+            this.currentT = 0;
+            this.riding = false;
+            this.cartPosition = new THREE.Vector3();
+            this.cartLookAt = new THREE.Vector3();
+        }
+
+        generateTrack() {
+            const height = 20 + Math.random() * 30;
+            const width = 30 + Math.random() * 40;
+            const depth = 30 + Math.random() * 40;
+
+            for (let i = 0; i <= TRACK_SEGMENTS; i++) {
+                const t = i / TRACK_SEGMENTS;
+                const x = this.startX + Math.sin(t * Math.PI * 4) * width;
+                const z = this.startZ + Math.cos(t * Math.PI * 2) * depth;
+                let y = Math.sin(t * Math.PI * 6) * height;
+                y = Math.max(y, 5);
+                
+                this.points.push(new THREE.Vector3(x, y, z));
+            }
+        }
+
+        createSupportBeams() {
+            const supportMaterial = new THREE.MeshStandardMaterial({
+                color: 0x505050,
+                metalness: 0.8,
+                roughness: 0.4,
+            });
+
+            for (let i = 0; i < this.points.length; i += 4) {
+                const point = this.points[i];
+                
+                if (point.y > 5) {
+                    const supportGeometry = new THREE.CylinderGeometry(0.3, 0.3, point.y, 8);
+                    const support = new THREE.Mesh(supportGeometry, supportMaterial);
+                    support.position.set(point.x, point.y / 2, point.z);
+                    
+                    const crossBeamGeometry = new THREE.BoxGeometry(2, 0.3, 2);
+                    const crossBeam = new THREE.Mesh(crossBeamGeometry, supportMaterial);
+                    crossBeam.position.set(point.x, point.y - 0.5, point.z);
+                    
+                    this.scene.add(support);
+                    this.scene.add(crossBeam);
+                }
+            }
+        }
+
+        createTrackMesh() {
+            const curve = new THREE.CatmullRomCurve3(this.points, true);
+            const geometry = new THREE.TubeGeometry(curve, TRACK_SEGMENTS, 0.5, 8, true);
+            const material = new THREE.MeshStandardMaterial({
+                color: 0xFFD700,
+                metalness: 0.9,
+                roughness: 0.3,
+            });
+            
+            this.track = new THREE.Mesh(geometry, material);
+            this.scene.add(this.track);
+            this.curve = curve;
+        }
+
+        createCart() {
+            this.cart = new THREE.Group();
+            this.scene.add(this.cart);
+        }
+
+        update(delta) {
+            if (this.riding) {
+                this.currentT = (this.currentT + delta * 0.1) % 1;
+                const point = this.curve.getPointAt(this.currentT);
+                const lookAhead = this.curve.getPointAt((this.currentT + 0.01) % 1);
+                
+                this.cart.position.copy(point);
+                this.cart.lookAt(lookAhead);
+                this.cartPosition.copy(point);
+                this.cartLookAt.copy(lookAhead);
+            }
+        }
+
+        startRide(camera) {
+            this.riding = true;
+            this.currentT = 0;
+            camera.position.copy(this.cart.position);
+            camera.lookAt(this.cartLookAt);
+            
+            // Play rail sound
+            const railSound = document.getElementById('railSound');
+            railSound.volume = 0.3; // Set volume to 30%
+            railSound.currentTime = 0;
+            railSound.play().catch(error => console.log("Rail sound play failed:", error));
+        }
+
+        stopRide() {
+            this.riding = false;
+            // Stop rail sound
+            const railSound = document.getElementById('railSound');
+            railSound.pause();
+            railSound.currentTime = 0;
+        }
+    }
+
+    class WalkingSmiley {
+        constructor(scene, x, z) {
+            this.scene = scene;
+            this.speed = 0.5 + Math.random() * 0.5;
+            this.direction = new THREE.Vector2(Math.random() - 0.5, Math.random() - 0.5).normalize();
+            
+            const geometry = new THREE.PlaneGeometry(5, 5);
+            const texture = new THREE.TextureLoader().load('IMG_5997.webp');
+            const material = new THREE.MeshBasicMaterial({
+                map: texture,
+                transparent: true,
+                side: THREE.DoubleSide
+            });
+            
+            this.mesh = new THREE.Mesh(geometry, material);
+            this.mesh.position.set(x, 2.5, z);
+            this.mesh.rotation.x = -Math.PI / 8; 
+            
+            scene.add(this.mesh);
+        }
+
+        update() {
+            this.mesh.position.x += this.direction.x * this.speed;
+            this.mesh.position.z += this.direction.y * this.speed;
+            this.mesh.rotation.y = Math.atan2(this.direction.x, this.direction.y);
+            
+            if (Math.abs(this.mesh.position.x) > 400) {
+                this.direction.x *= -1;
+            }
+            if (Math.abs(this.mesh.position.z) > 400) {
+                this.direction.y *= -1;
+            }
+            
+            this.mesh.position.y = 2.5 + Math.sin(Date.now() * 0.005) * 0.2;
+        }
+    }
+
+    class DropTower {
+        constructor(scene, x, z) {
+            this.scene = scene;
+            this.height = 30 + Math.random() * 50; 
+            this.position = new THREE.Vector3(x, 0, z);
+            this.cart = null;
+            this.cartHeight = this.height;
+            this.isMoving = false;
+            this.dropSpeed = 0;
+            this.riding = false; 
+            this.createTower();
+        }
+
+        createTower() {
+            const towerGeometry = new THREE.CylinderGeometry(2, 2, this.height, 8);
+            const towerMaterial = new THREE.MeshStandardMaterial({
+                color: 0x505050,
+                metalness: 0.8,
+                roughness: 0.2
+            });
+            this.tower = new THREE.Mesh(towerGeometry, towerMaterial);
+            this.tower.position.copy(this.position);
+            this.tower.position.y = this.height / 2;
+            this.scene.add(this.tower);
+
+            const cartGeometry = new THREE.BoxGeometry(6, 4, 6);
+            const cartMaterial = new THREE.MeshStandardMaterial({
+                color: 0xFFD700,
+                metalness: 0.9,
+                roughness: 0.3
+            });
+            this.cart = new THREE.Mesh(cartGeometry, cartMaterial);
+            this.cart.position.copy(this.position);
+            this.cart.position.y = this.cartHeight;
+            this.scene.add(this.cart);
+
+            const topGeometry = new THREE.ConeGeometry(3, 5, 8);
+            const top = new THREE.Mesh(topGeometry, towerMaterial);
+            top.position.copy(this.position);
+            top.position.y = this.height + 2.5;
+            this.scene.add(top);
+
+            const light1 = new THREE.PointLight(0xff0000, 1, 20);
+            light1.position.copy(this.position);
+            light1.position.y = this.height;
+            this.scene.add(light1);
+
+            this.startCycle();
+        }
+
+        startCycle() {
+            this.isMoving = true;
+            this.cartHeight = this.height;
+            this.dropSpeed = 0;
+        }
+
+        update(delta) {
+            if (!this.isMoving) return;
+
+            if (this.cartHeight >= this.height) {
+                setTimeout(() => {
+                    this.dropSpeed = 0.5; 
+                }, 2000);
+            }
+
+            if (this.dropSpeed > 0) {
+                this.cartHeight -= this.dropSpeed;
+                this.dropSpeed += 0.2; // Makes the drop accelerate faster
+
+                if (this.cartHeight <= 5) { 
+                    this.cartHeight = 5;
+                    this.dropSpeed = 0;
+                    setTimeout(() => {
+                        this.startCycle();
+                    }, 2000); // Add 2 second delay before rising
+                }
+            } else if (this.cartHeight < this.height && this.dropSpeed === 0) {
+                this.cartHeight += 0.2; // Slower rising speed (was originally same as initial drop speed)
+            }
+
+            if (this.cart) {
+                this.cart.position.y = this.cartHeight;
+            }
+        }
+
+        startRide(camera) {
+            this.riding = true; 
+            this.cartHeight = this.height;
+            this.dropSpeed = 0;
+        }
+
+        stopRide() {
+            this.riding = false; 
+        }
+    }
+
+    class Booth {
+        constructor(scene, x, z, associatedCoaster) {
+            this.scene = scene;
+            this.position = new THREE.Vector3(x, 2, z);
+            this.associatedCoaster = associatedCoaster;
+            this.createBooth(x, z);
+        }
+
+        createBooth(x, z) {
+            // Create the main booth structure
+            const boothGeometry = new THREE.BoxGeometry(6, 4, 4);
+            const boothMaterial = new THREE.MeshStandardMaterial({
+                color: 0xFF69B4, // Pink color for the booths
+                roughness: 0.5,
+                metalness: 0.2
+            });
+            const booth = new THREE.Mesh(boothGeometry, boothMaterial);
+            booth.position.set(x, 2, z);
+            this.scene.add(booth);
+
+            // Create a striped awning
+            const awningGeometry = new THREE.BoxGeometry(8, 0.2, 5);
+            const awningMaterial = new THREE.MeshStandardMaterial({
+                color: 0xFFFFFF,
+                roughness: 0.5,
+                metalness: 0.1
+            });
+            const awning = new THREE.Mesh(awningGeometry, awningMaterial);
+            awning.position.set(x, 4.2, z);
+            this.scene.add(awning);
+
+            // Create a counter
+            const counterGeometry = new THREE.BoxGeometry(4, 1, 1);
+            const counterMaterial = new THREE.MeshStandardMaterial({
+                color: 0x8B4513,
+                roughness: 0.8,
+                metalness: 0.1
+            });
+            const counter = new THREE.Mesh(counterGeometry, counterMaterial);
+            counter.position.set(x, 2.5, z + 2);
+            this.scene.add(counter);
+
+            // Add some decorative elements - balloons
+            const balloonGeometry = new THREE.SphereGeometry(0.3, 16, 16);
+            const balloonColors = [0xFF0000, 0x00FF00, 0x0000FF, 0xFFFF00];
+            
+            for(let i = 0; i < 4; i++) {
+                const balloonMaterial = new THREE.MeshStandardMaterial({
+                    color: balloonColors[i],
+                    roughness: 0.2,
+                    metalness: 0.8
+                });
+                const balloon = new THREE.Mesh(balloonGeometry, balloonMaterial);
+                balloon.position.set(x - 1.5 + i, 5 + Math.sin(i) * 0.2, z);
+                this.scene.add(balloon);
+            }
+        }
+
+        isPlayerNearby(playerPosition) {
+            const distance = playerPosition.distanceTo(this.position);
+            return distance < 10; // Within 10 units
+        }
+    }
+
+    function checkCollisions(newPosition) {
+        // Check booth collisions with slightly larger radius
+        for (const booth of booths) {
+            const dx = newPosition.x - booth.position.x;
+            const dz = newPosition.z - booth.position.z;
+            const distance = Math.sqrt(dx * dx + dz * dz);
+            if (distance < 6) { // Increased from 5 to 6 for safer margin
+                return false;
+            }
+        }
+
+        // Add boundary check to prevent getting stuck at map edges
+        const mapBoundary = 990; // Just inside the skybox
+        if (Math.abs(newPosition.x) > mapBoundary || Math.abs(newPosition.z) > mapBoundary) {
+            return false;
+        }
+
+        return true;
+    }
+
+    let rollerCoasters = [];
+    let smileys = [];
+    let currentCoaster = null;
+    let dropTowers = [];
+    let booths = [];
+    let camera, scene, renderer, controls;
+    let moveForward = false;
+    let moveBackward = false;
+    let moveLeft = false;
+    let moveRight = false;
+    let canJump = true;
+    let isMobileControls = false;
+    let joystick;
+
+    let velocity = new THREE.Vector3();
+    let direction = new THREE.Vector3();
+
+    let touchStartX = 0;
+    let touchStartY = 0;
+    let touchX = 0;
+    let touchY = 0;
+
+    function createSkybox() {
+        const size = 1000;
+        const geometry = new THREE.BoxGeometry(size, size, size);
+        
+        const textureLoader = new THREE.TextureLoader();
+        textureLoader.load('IMG_6017.png', (texture) => {
+            const materials = [];
+            for (let i = 0; i < 6; i++) {
+                materials.push(new THREE.MeshBasicMaterial({
+                    map: texture,
+                    side: THREE.BackSide
+                }));
+            }
+            
+            const skybox = new THREE.Mesh(geometry, materials);
+            skybox.name = 'skybox';
+            scene.add(skybox);
+        });
+    }
+
+    function createEntranceArch() {
+        const archMaterial = new THREE.MeshStandardMaterial({ 
+            color: 0xFFD700,
+            roughness: 0.3,
+            metalness: 0.7
+        });
+
+        const pillarGeometry = new THREE.CylinderGeometry(1, 1, 20, 32);
+        const leftPillar = new THREE.Mesh(pillarGeometry, archMaterial);
+        const rightPillar = new THREE.Mesh(pillarGeometry, archMaterial);
+        
+        leftPillar.position.set(-10, 10, -20);
+        rightPillar.position.set(10, 10, -20);
+        
+        scene.add(leftPillar);
+        scene.add(rightPillar);
+
+        const fenceMaterial = new THREE.MeshStandardMaterial({
+            color: 0x8B4513,
+            roughness: 0.8,
+            metalness: 0.1
+        });
+
+        const postGeometry = new THREE.BoxGeometry(0.4, 4, 0.4);
+        const beamGeometry = new THREE.BoxGeometry(10, 0.4, 0.4);
+
+        function createFenceSection(startX, startZ) {
+            const post = new THREE.Mesh(postGeometry, fenceMaterial);
+            post.position.set(startX, 2, startZ);
+            scene.add(post);
+
+            const lowerBeam = new THREE.Mesh(beamGeometry, fenceMaterial);
+            lowerBeam.position.set(startX + 5, 1.5, startZ);
+            scene.add(lowerBeam);
+
+            const upperBeam = new THREE.Mesh(beamGeometry, fenceMaterial);
+            upperBeam.position.set(startX + 5, 2.5, startZ);
+            scene.add(upperBeam);
+        }
+
+        for (let i = 0; i < 100; i++) {
+            createFenceSection(-20 - (i * 10), -20);
+        }
+
+        for (let i = 0; i < 100; i++) {
+            createFenceSection(10 + (i * 10), -20);
+        }
+    }
+
+    function createRollerCoasters() {
+        rollerCoasters = [];
+        
+        for (let i = 0; i < NUM_COASTERS; i++) {
+            const angle = (i / NUM_COASTERS) * Math.PI * 4; 
+            const radius = 100 + (i * 20); 
+            const x = Math.cos(angle) * radius;
+            const z = Math.sin(angle) * radius - 100; 
+            
+            if (z < -50) {
+                const coaster = new RollerCoaster(scene, x, z);
+                rollerCoasters.push(coaster);
+            }
+        }
+    }
+
+    function createBooths() {
+        const booths = [];
+        rollerCoasters.forEach(coaster => {
+            if (!coaster || !coaster.cart || !coaster.cart.position) return;
+            
+            // Calculate position for booth near the coaster's starting point
+            const boothOffset = 15; // Distance from coaster
+            const boothX = coaster.startX + boothOffset;
+            const boothZ = coaster.startZ + boothOffset;
+            
+            const booth = new Booth(scene, boothX, boothZ, coaster);
+            booths.push(booth);
+        });
+        return booths;
+    }
+
+    function createDropTowers() {
+        const dropTowers = [];
+        const numTowers = 10;
+        const minDistance = 300; // Minimum distance from center
+        const maxDistance = 500; // Maximum distance from center
+        const minDistanceBetweenTowers = 50; // Minimum distance between towers
+
+        // Helper function to check if position is valid
+        function isValidPosition(x, z, existingTowers, rollerCoasters) {
+            // Check distance from other towers
+            for (const tower of existingTowers) {
+                const dx = x - tower.position.x;
+                const dz = z - tower.position.z;
+                const distance = Math.sqrt(dx * dx + dz * dz);
+                if (distance < minDistanceBetweenTowers) return false;
+            }
+
+            // Check distance from rollercoasters
+            for (const coaster of rollerCoasters) {
+                if (!coaster.startX || !coaster.startZ) continue;
+                const dx = x - coaster.startX;
+                const dz = z - coaster.startZ;
+                const distance = Math.sqrt(dx * dx + dz * dz);
+                if (distance < 100) return false; // Keep 100 units away from coasters
+            }
+
+            // Check if behind entrance (negative Z)
+            if (z > -50) return false;
+
+            return true;
+        }
+
+        // Try to place each tower
+        for (let i = 0; i < numTowers; i++) {
+            let validPosition = false;
+            let attempts = 0;
+            let x, z;
+
+            // Try up to 50 times to find a valid position
+            while (!validPosition && attempts < 50) {
+                const angle = Math.random() * Math.PI * 2;
+                const distance = minDistance + Math.random() * (maxDistance - minDistance);
+                x = Math.cos(angle) * distance;
+                z = Math.sin(angle) * distance;
+
+                if (isValidPosition(x, z, dropTowers, rollerCoasters)) {
+                    validPosition = true;
+                }
+                attempts++;
+            }
+
+            if (validPosition) {
+                dropTowers.push(new DropTower(scene, x, z));
+            }
+        }
+        return dropTowers;
+    }
+
+    function createSmileys() {
+        for (let i = 0; i < 30; i++) {
+            const x = (Math.random() - 0.5) * 800;
+            const z = (Math.random() - 0.5) * 800;
+            smileys.push(new WalkingSmiley(scene, x, z));
+        }
+    }
+
+    function init() {
+        scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x87CEEB);
+
+        // Create skybox
+        createSkybox();
+
+        camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 1, 1000);
+        camera.position.y = 3;
+        camera.position.z = 30;
+        camera.rotation.order = 'YXZ';
+
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+        scene.add(ambientLight);
+
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+        directionalLight.position.set(0, 100, 0);
+        scene.add(directionalLight);
+
+        const textureLoader = new THREE.TextureLoader();
+        textureLoader.load('IMG_5997.webp', 
+            function(texture) {
+                texture.wrapS = THREE.RepeatWrapping;
+                texture.wrapT = THREE.RepeatWrapping;
+                texture.repeat.set(500, 500); // Increased from 50 to 500 for more repetition
+
+                const groundGeometry = new THREE.PlaneGeometry(5000, 5000); // Increased from 1000 to 5000
+                const groundMaterial = new THREE.MeshStandardMaterial({ 
+                    map: texture,
+                    roughness: 0.8,
+                    metalness: 0.2
+                });
+                const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+                ground.rotation.x = -Math.PI / 2;
+                ground.position.y = 0;
+                scene.add(ground);
+            },
+            undefined,
+            function(err) {
+                console.error('Error loading ground texture:', err);
+                const groundGeometry = new THREE.PlaneGeometry(5000, 5000); // Increased here too
+                const groundMaterial = new THREE.MeshStandardMaterial({ 
+                    color: 0x90EE90,
+                    roughness: 0.8,
+                    metalness: 0.2
+                });
+                const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+                ground.rotation.x = -Math.PI / 2;
+                ground.position.y = 0;
+                scene.add(ground);
+            }
+        );
+
+        const textureLoaderLogo = new THREE.TextureLoader();
+        textureLoaderLogo.load('IMG_5998.jpeg', 
+            function(texture) {
+                const logoGeometry = new THREE.PlaneGeometry(20, 10);
+                const logoMaterial = new THREE.MeshBasicMaterial({ 
+                    map: texture,
+                    transparent: true,
+                    side: THREE.DoubleSide
+                });
+                const logo = new THREE.Mesh(logoGeometry, logoMaterial);
+                logo.position.set(0, 15, -20);
+                scene.add(logo);
+                document.getElementById('loading').style.display = 'none';
+            },
+            undefined,
+            function(err) {
+                console.error('Error loading texture:', err);
+                document.getElementById('loading').style.display = 'none';
+            }
+        );
+
+        createEntranceArch();
+        createRollerCoasters();
+        booths = createBooths();
+        dropTowers = createDropTowers(); 
+        createSmileys();
+
+        renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.shadowMap.enabled = true;
+        document.body.appendChild(renderer.domElement);
+
+        controls = new PointerLockControls(camera, document.body);
+
+        const toggleButton = document.getElementById('toggleControl');
+        const instructions = document.getElementById('instructions');
+        const joystickContainer = document.getElementById('joystickContainer');
+        const touchArea = document.getElementById('touchArea');
+        
+        toggleButton.addEventListener('click', () => {
+            isMobileControls = !isMobileControls;
+            if (isMobileControls) {
+                instructions.style.display = 'none';
+                joystickContainer.style.display = 'block';
+                const eButton = document.getElementById('eButton');
+                const rButton = document.getElementById('rButton');
+                eButton.style.display = 'block';
+                rButton.style.display = 'block'; 
+                if (!joystick) {
+                    joystick = nipplejs.create({
+                        zone: joystickContainer,
+                        mode: 'static',
+                        position: { left: '50%', top: '50%' },
+                        color: 'white',
+                        size: 100
+                    });
+
+                    joystick.on('move', (evt, data) => {
+                        if (data && data.vector) {
+                            const forward = data.vector.y;
+                            const side = data.vector.x;
+                            
+                            moveForward = forward > 0.2;
+                            moveBackward = forward < -0.2;
+                            moveLeft = side < -0.2;
+                            moveRight = side > 0.2;
+                        }
+                    });
+
+                    joystick.on('end', () => {
+                        moveForward = false;
+                        moveBackward = false;
+                        moveLeft = false;
+                        moveRight = false;
+                    });
+                }
+                // Start playing music on mobile control activation
+                let currentMusic = 'party'; // Can be 'party' or 'funhouse'
+                const backgroundMusic = document.getElementById('backgroundMusic');
+                const funhouseMusic = document.getElementById('funhouseMusic');
+                if (currentMusic === 'party') {
+                    backgroundMusic.volume = 0.5; // Set volume to 50%
+                    backgroundMusic.play().catch(function(error) {
+                        console.log("Party music play failed:", error);
+                    });
+                } else {
+                    funhouseMusic.volume = 0.5; // Set volume to 50%
+                    funhouseMusic.play().catch(function(error) {
+                        console.log("Funhouse music play failed:", error);
+                    });
+                }
+            } else {
+                instructions.style.display = 'block';
+                joystickContainer.style.display = 'none';
+                const eButton = document.getElementById('eButton');
+                const rButton = document.getElementById('rButton');
+                eButton.style.display = 'none';
+                rButton.style.display = 'none'; 
+            }
+        });
+
+        touchArea.addEventListener('touchstart', function(event) {
+            if (isMobileControls) {
+                const touch = event.touches[0];
+                touchStartX = touch.clientX;
+                touchStartY = touch.clientY;
+                touchX = touchStartX;
+                touchY = touchStartY;
+            }
+        }, { passive: false });
+
+        touchArea.addEventListener('touchmove', function(event) {
+            if (isMobileControls) {
+                event.preventDefault();
+                const touch = event.touches[0];
+                const deltaX = (touch.clientX - touchX) * 0.002;
+                const deltaY = (touch.clientY - touchY) * 0.002;
+                
+                camera.rotation.y -= deltaX;
+                // Add vertical rotation with limits to prevent over-rotation
+                camera.rotation.x = Math.max(-Math.PI/2, Math.min(Math.PI/2, camera.rotation.x - deltaY));
+                
+                touchX = touch.clientX;
+                touchY = touch.clientY;
+            }
+        }, { passive: false });
+
+        document.addEventListener('click', function() {
+            if (!isMobileControls) {
+                controls.lock();
+                // Start playing music on first interaction
+                let currentMusic = 'party'; // Can be 'party' or 'funhouse'
+                const backgroundMusic = document.getElementById('backgroundMusic');
+                const funhouseMusic = document.getElementById('funhouseMusic');
+                if (currentMusic === 'party') {
+                    backgroundMusic.volume = 0.5; // Set volume to 50%
+                    backgroundMusic.play().catch(function(error) {
+                        console.log("Party music play failed:", error);
+                    });
+                } else {
+                    funhouseMusic.volume = 0.5; // Set volume to 50%
+                    funhouseMusic.play().catch(function(error) {
+                        console.log("Funhouse music play failed:", error);
+                    });
+                }
+            }
+        });
+
+        document.addEventListener('keydown', (event) => {
+            if (event.code === 'KeyR') {
+                const nearestBooth = checkBoothProximity();
+                if (nearestBooth) {
+                    try {
+                        if (currentCoaster) {
+                            currentCoaster.stopRide();
+                        }
+                        currentCoaster = nearestBooth.associatedCoaster;
+                        currentCoaster.startRide(camera);
+                        controls.isLocked = false;
+                    } catch (err) {
+                        console.error('Error handling ride:', err);
+                    }
+                } else {
+                    // Check both coasters and drop towers
+                    try {
+                        let nearestDist = Infinity;
+                        let nearest = null;
+                        let isDropTower = false;
+                        
+                        if (rollerCoasters) {
+                            rollerCoasters.forEach(coaster => {
+                                if (!coaster || !coaster.cart || !coaster.cart.position) return;
+                                const dist = camera.position.distanceTo(coaster.cart.position);
+                                if (dist < nearestDist && dist < 10) {
+                                    nearestDist = dist;
+                                    nearest = coaster;
+                                    isDropTower = false;
+                                }
+                            });
+                        }
+                        
+                        if (dropTowers) {
+                            dropTowers.forEach(tower => {
+                                if (!tower || !tower.cart) return;
+                                const dist = camera.position.distanceTo(tower.cart.position);
+                                if (dist < nearestDist && dist < 10) {
+                                    nearestDist = dist;
+                                    nearest = tower;
+                                    isDropTower = true;
+                                }
+                            });
+                        }
+                        
+                        if (nearest) {
+                            if (currentCoaster) {
+                                currentCoaster.stopRide();
+                            }
+                            currentCoaster = nearest;
+                            currentCoaster.startRide(camera);
+                            controls.isLocked = false;
+                        }
+                    } catch (err) {
+                        console.error('Error handling ride:', err);
+                    }
+                }
+            }
+        });
+
+        // New keyboard event listeners for movement
+        document.addEventListener('keydown', function(event) {
+            if (currentCoaster) return; // Don't process movement if riding coaster
+            
+            switch (event.code) {
+                case 'ArrowUp':
+                case 'KeyW':
+                    moveForward = true;
+                    break;
+                case 'ArrowDown':
+                case 'KeyS':
+                    moveBackward = true;
+                    break;
+                case 'ArrowLeft':
+                case 'KeyA':
+                    moveLeft = true;
+                    break;
+                case 'ArrowRight':
+                case 'KeyD':
+                    moveRight = true;
+                    break;
+            }
+        });
+
+        document.addEventListener('keyup', function(event) {
+            if (currentCoaster) return; // Don't process movement if riding coaster
+            
+            switch (event.code) {
+                case 'ArrowUp':
+                case 'KeyW':
+                    moveForward = false;
+                    break;
+                case 'ArrowDown':
+                case 'KeyS':
+                    moveBackward = false;
+                    break;
+                case 'ArrowLeft':
+                case 'KeyA':
+                    moveLeft = false;
+                    break;
+                case 'ArrowRight':
+                case 'KeyD':
+                    moveRight = false;
+                    break;
+            }
+        });
+
+        document.addEventListener('keydown', (event) => {
+            if (event.code === 'KeyE') {
+                if (currentCoaster) {
+                    try {
+                        // Find the nearest booth
+                        let nearestBooth = null;
+                        let nearestDist = Infinity;
+                        
+                        // Check for associated booth if it's a roller coaster
+                        if (!(currentCoaster instanceof DropTower)) {
+                            booths.forEach(booth => {
+                                if (booth.associatedCoaster === currentCoaster) {
+                                    nearestBooth = booth;
+                                }
+                            });
+                        }
+
+                        currentCoaster.stopRide();
+                        currentCoaster = null;
+                        
+                        // Teleport to booth position if found, otherwise use a safe exit position
+                        if (nearestBooth) {
+                            camera.position.copy(nearestBooth.position);
+                            camera.position.x += 15;
+                            camera.position.y = 3;
+                        } else {
+                            // For drop towers or if no booth found, move player away from the ride
+                            camera.position.x += 15;
+                            camera.position.y = 3;
+                        }
+                        
+                        controls.isLocked = false;
+                        controls.lock();
+                    } catch (err) {
+                        console.error('Error stopping ride:', err);
+                    }
+                }
+            }
+        });
+
+        // Start the random laugh cycle
+        setTimeout(playRandomLaugh, 5000); // Start first laugh after 5 seconds
+
+        // Track current music state
+        let currentMusic = 'party'; // Can be 'party' or 'funhouse'
+
+        // Set up music switching functionality
+        const switchMusicBtn = document.getElementById('switchMusicBtn');
+        const backgroundMusic = document.getElementById('backgroundMusic');
+        const funhouseMusic = document.getElementById('funhouseMusic');
+
+        switchMusicBtn.addEventListener('click', () => {
+            // Save current time of playing music
+            const currentTime = currentMusic === 'party' ? 
+                backgroundMusic.currentTime : funhouseMusic.currentTime;
+            
+            // Pause both musics
+            backgroundMusic.pause();
+            funhouseMusic.pause();
+            
+            if (currentMusic === 'party') {
+                // Switch to funhouse music
+                currentMusic = 'funhouse';
+                funhouseMusic.volume = 0.5;
+                funhouseMusic.currentTime = currentTime;
+                funhouseMusic.play().catch(error => console.log("Funhouse music play failed:", error));
+            } else {
+                // Switch to party music
+                currentMusic = 'party';
+                backgroundMusic.volume = 0.5;
+                backgroundMusic.currentTime = currentTime;
+                backgroundMusic.play().catch(error => console.log("Party music play failed:", error));
+            }
+        });
+
+        document.addEventListener('keydown', (event) => {
+            if (event.code === 'Enter') {
+                // Save current time of playing music
+                const backgroundMusic = document.getElementById('backgroundMusic');
+                const funhouseMusic = document.getElementById('funhouseMusic');
+                const currentTime = currentMusic === 'party' ? 
+                    backgroundMusic.currentTime : funhouseMusic.currentTime;
+                
+                // Pause both musics
+                backgroundMusic.pause();
+                funhouseMusic.pause();
+                
+                if (currentMusic === 'party') {
+                    // Switch to funhouse music
+                    currentMusic = 'funhouse';
+                    funhouseMusic.volume = 0.5;
+                    funhouseMusic.currentTime = currentTime;
+                    funhouseMusic.play().catch(error => console.log("Funhouse music play failed:", error));
+                } else {
+                    // Switch to party music
+                    currentMusic = 'party';
+                    backgroundMusic.volume = 0.5;
+                    backgroundMusic.currentTime = currentTime;
+                    backgroundMusic.play().catch(error => console.log("Party music play failed:", error));
+                }
+            }
+        });
+
+        window.addEventListener('resize', onWindowResize, false);
+    }
+
+    function onWindowResize() {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    }
+
+    function checkSmileyCollisions() {
+        if (!camera || !smileys) return;
+        
+        const playerPosition = new THREE.Vector3();
+        camera.getWorldPosition(playerPosition);
+        
+        smileys.forEach(smiley => {
+            if (!smiley.mesh) return;
+            
+            const distance = playerPosition.distanceTo(smiley.mesh.position);
+            if (distance < 5) { // Collision radius
+                triggerSmileyEffect();
+            }
+        });
+    }
+
+    function triggerSmileyEffect() {
+        // Randomly choose between boom and suspense sounds
+        const randomSound = Math.random() < 0.5 ? 
+            document.getElementById('boomSound') : 
+            document.getElementById('suspenseSound');
+        
+        randomSound.volume = 0.3;
+        randomSound.currentTime = 0;
+        randomSound.play().catch(error => console.log("Sound play failed:", error));
+        
+        // Flash the overlay with immediate appearance
+        const overlay = document.getElementById('flashOverlay');
+        overlay.style.opacity = '1';
+        
+        // Start fade out after 0.5 seconds
+        setTimeout(() => {
+            overlay.style.opacity = '0';
+        }, 500); 
+    }
+
+    function checkBoothProximity() {
+        const playerPosition = new THREE.Vector3();
+        camera.getWorldPosition(playerPosition);
+        
+        const rideText = document.getElementById('rideText');
+        let isNearRide = false;
+        let nearestBooth = null;
+        
+        // Check booths first
+        booths.forEach(booth => {
+            if (booth.isPlayerNearby(playerPosition)) {
+                isNearRide = true;
+                nearestBooth = booth;
+            }
+        });
+
+        // Check drop towers
+        dropTowers.forEach(tower => {
+            if (tower && tower.cart) {
+                const distance = playerPosition.distanceTo(tower.position);
+                if (distance < 10) { // Within 10 units of the tower
+                    isNearRide = true;
+                }
+            }
+        });
+        
+        rideText.style.display = isNearRide ? 'block' : 'none';
+        return nearestBooth;
+    }
+
+    function animate() {
+        try {
+            requestAnimationFrame(animate);
+            const delta = 0.016;
+
+            if ((controls && controls.isLocked) || isMobileControls) {
+                velocity.x -= velocity.x * 10.0 * delta;
+                velocity.z -= velocity.z * 10.0 * delta;
+                
+                direction.z = Number(moveForward) - Number(moveBackward);
+                direction.x = Number(moveRight) - Number(moveLeft);
+                direction.normalize();
+
+                if (isMobileControls) {
+                    const moveDirection = new THREE.Vector3();
+                    camera.getWorldDirection(moveDirection);
+                    moveDirection.y = 0;
+                    moveDirection.normalize();
+
+                    const sideDirection = new THREE.Vector3(-moveDirection.z, 0, moveDirection.x);
+
+                    if (moveForward || moveBackward) {
+                        velocity.z = direction.z * 20.0 * delta; 
+                        // Replace the direct position update with collision check:
+                        const newPosition = camera.position.clone();
+                        newPosition.addScaledVector(moveDirection, velocity.z);
+                        if (checkCollisions(newPosition)) {
+                            camera.position.copy(newPosition);
+                        } else {
+                            // Try smaller movement if full movement fails
+                            newPosition.copy(camera.position);
+                            newPosition.addScaledVector(moveDirection, velocity.z * 0.5);
+                            if (checkCollisions(newPosition)) {
+                                camera.position.copy(newPosition);
+                            }
+                        }
+                    }
+                    
+                    if (moveLeft || moveRight) {
+                        velocity.x = direction.x * 20.0 * delta; 
+                        // Replace the direct position update with collision check:
+                        const newPosition = camera.position.clone();
+                        newPosition.addScaledVector(sideDirection, velocity.x);
+                        if (checkCollisions(newPosition)) {
+                            camera.position.copy(newPosition);
+                        } else {
+                            // Try smaller movement if full movement fails
+                            newPosition.copy(camera.position);
+                            newPosition.addScaledVector(sideDirection, velocity.x * 0.5);
+                            if (checkCollisions(newPosition)) {
+                                camera.position.copy(newPosition);
+                            }
+                        }
+                    }
+                } else {
+                    if (moveForward || moveBackward) velocity.z -= direction.z * 100.0 * delta; 
+                    if (moveLeft || moveRight) velocity.x -= direction.x * 100.0 * delta; 
+                    
+                    // Add collision detection for PC controls:
+                    const newPosition = camera.position.clone();
+                    newPosition.x -= velocity.x * delta;
+                    newPosition.z -= velocity.z * delta;
+                    
+                    if (checkCollisions(newPosition)) {
+                        controls.moveRight(-velocity.x * delta);
+                        controls.moveForward(-velocity.z * delta);
+                    } else {
+                        // Try smaller movement if full movement fails
+                        newPosition.copy(camera.position);
+                        newPosition.x -= velocity.x * delta * 0.5;
+                        newPosition.z -= velocity.z * delta * 0.5;
+                        if (checkCollisions(newPosition)) {
+                            controls.moveRight(-velocity.x * delta * 0.5);
+                            controls.moveForward(-velocity.z * delta * 0.5);
+                        }
+                        velocity.x = 0;
+                        velocity.z = 0;
+                    }
+                }
+
+                camera.position.y = 3;
+            }
+
+            if (rollerCoasters) {
+                rollerCoasters.forEach(coaster => {
+                    if (coaster && typeof coaster.update === 'function') {
+                        coaster.update(delta);
+                    }
+                });
+            }
+
+            if (dropTowers) {
+                dropTowers.forEach(tower => {
+                    if (tower && typeof tower.update === 'function') {
+                        tower.update(delta);
+                    }
+                });
+            }
+
+            if (smileys) {
+                smileys.forEach(smiley => {
+                    if (smiley && typeof smiley.update === 'function') {
+                        smiley.update();
+                    }
+                });
+            }
+
+            if (currentCoaster && currentCoaster.riding) {
+                if (currentCoaster instanceof DropTower) {
+                    // Only update the vertical position when on drop tower
+                    camera.position.copy(currentCoaster.position);
+                    camera.position.y = currentCoaster.cartHeight + 1;
+                    // Remove any camera.lookAt() call here to allow free camera movement
+                } else if (currentCoaster.cartPosition && currentCoaster.cartLookAt) {
+                    // Regular roller coaster camera behavior remains unchanged
+                    camera.position.copy(currentCoaster.cartPosition);
+                    camera.position.y += 1;
+                    camera.lookAt(currentCoaster.cartLookAt);
+                }
+            }
+
+            const skybox = scene.getObjectByName('skybox');
+            if (skybox) {
+                skybox.position.copy(camera.position);
+            }
+
+            checkSmileyCollisions();
+            checkBoothProximity();
+
+            renderer.render(scene, camera);
+        } catch (err) {
+            console.error('Error in animation loop:', err);
+        }
+    }
+    
+    init();
+    animate();
+
+    document.getElementById('eButton').addEventListener('click', () => {
+        if (currentCoaster) {
+            try {
+                // Find the nearest booth
+                let nearestBooth = null;
+                let nearestDist = Infinity;
+                
+                // Check for associated booth if it's a roller coaster
+                if (!(currentCoaster instanceof DropTower)) {
+                    booths.forEach(booth => {
+                        if (booth.associatedCoaster === currentCoaster) {
+                            nearestBooth = booth;
+                        }
+                    });
+                }
+
+                currentCoaster.stopRide();
+                currentCoaster = null;
+                
+                // Teleport to booth position if found, otherwise use a safe exit position
+                if (nearestBooth) {
+                    camera.position.copy(nearestBooth.position);
+                    camera.position.x += 15;
+                    camera.position.y = 3;
+                } else {
+                    // For drop towers or if no booth found, move player away from the ride
+                    camera.position.x += 15;
+                    camera.position.y = 3;
+                }
+                
+                controls.isLocked = false;
+            } catch (err) {
+                console.error('Error stopping ride:', err);
+            }
+        }
+    });
+    
+    document.getElementById('rButton').addEventListener('click', () => {
+        try {
+            const nearestBooth = checkBoothProximity();
+            if (nearestBooth) {
+                if (currentCoaster) {
+                    currentCoaster.stopRide();
+                }
+                currentCoaster = nearestBooth.associatedCoaster;
+                currentCoaster.startRide(camera);
+                controls.isLocked = false;
+            } else {
+                // Check both coasters and drop towers
+                let nearestDist = Infinity;
+                let nearest = null;
+                
+                if (rollerCoasters) {
+                    rollerCoasters.forEach(coaster => {
+                        if (!coaster || !coaster.cart || !coaster.cart.position) return;
+                        const dist = camera.position.distanceTo(coaster.cart.position);
+                        if (dist < nearestDist && dist < 10) {
+                            nearestDist = dist;
+                            nearest = coaster;
+                        }
+                    });
+                }
+                
+                if (dropTowers) {
+                    dropTowers.forEach(tower => {
+                        if (!tower || !tower.cart) return;
+                        const dist = camera.position.distanceTo(tower.cart.position);
+                        if (dist < nearestDist && dist < 10) {
+                            nearestDist = dist;
+                            nearest = tower;
+                        }
+                    });
+                }
+                
+                if (nearest) {
+                    if (currentCoaster) {
+                        currentCoaster.stopRide();
+                    }
+                    currentCoaster = nearest;
+                    currentCoaster.startRide(camera);
+                    controls.isLocked = false;
+                }
+            }
+        } catch (err) {
+            console.error('Error handling ride:', err);
+        }
+    });
+    </script>
+</body>
+</html>

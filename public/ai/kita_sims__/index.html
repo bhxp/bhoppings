@@ -1,0 +1,40 @@
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Daycare Sims: 3D Fire Safety Edition</title>
+  <link rel="stylesheet" href="style.css">
+  <script async src="https://unpkg.com/es-module-shims/dist/es-module-shims.js"></script>
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://unpkg.com/three@0.158.0/build/three.module.js",
+        "three/addons/": "https://unpkg.com/three@0.158.0/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+<body>
+  <div id="game-container">
+    <canvas id="game-world"></canvas>
+    <div id="hud">
+      <div id="stats">
+        <div id="budget">Budget: €<span>10000</span></div>
+        <div id="experience">XP: <span>0</span></div>
+        <div id="time">Day: <span>1</span> Time: <span>08:00</span></div>
+      </div>
+      <div id="controls">
+        <button id="pause">⏸️</button>
+        <button id="speed-up">⏩</button>
+        <button id="build-mode">🏗️ Build Mode</button>
+        <button id="check-mode">✔️ Check Mode</button>
+        <button id="objects-check">📋 Object Check</button>
+      </div>
+    </div>
+    <div id="modal" class="hidden">
+      <div id="modal-content"></div>
+    </div>
+  </div>
+  <script type="module" src="game.js"></script>
+</body>
+</html>

@@ -1,0 +1,156 @@
+<html>
+<head>
+  <title>Falling Sand Simulator 98</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <link rel="stylesheet" href="https://unpkg.com/98.css">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="container">
+    <canvas id="sandCanvas"></canvas>
+    <div class="window controls">
+      <div class="title-bar">
+        <div class="title-bar-text">Particle Controls</div>
+      </div>
+      <div class="window-body">
+        <div class="button-grid">
+          <button id="sandBtn" class="active">Sand</button>
+          <button id="waterBtn">Water</button>
+          <button id="wallBtn">Glass</button>
+          <button id="seedBtn">Grass Seed</button>
+          <button id="algaeBtn">Algae</button>
+          <button id="fireBtn">Fire</button>
+          <button id="smokeBtn">Smoke</button>
+          <button id="oilBtn">Oil</button>
+          <button id="acidBtn">Acid</button>
+          <button id="fishBtn">Fish</button>
+          <button id="eraseBtn">Erase</button>
+          <button id="clearBtn">Clear All</button>
+          <button id="settingsBtn">Settings</button>
+        </div>
+        <div class="status-bar">
+          <p class="status-text">Tip: Use mouse wheel to adjust brush size</p>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Settings Window -->
+    <div class="window settings-window" style="display: none;">
+      <div class="title-bar">
+        <div class="title-bar-text">Advanced Settings</div>
+        <div class="title-bar-controls">
+          <button aria-label="Close" id="closeSettings"></button>
+        </div>
+      </div>
+      <div class="window-body">
+        <div class="tabs">
+          <div class="tab-buttons">
+            <button class="tab-button active" data-tab="basic">Basic</button>
+            <button class="tab-button" data-tab="advanced">Advanced</button>
+          </div>
+          
+          <div class="tab-content active" data-tab="basic">
+            <div class="field-row-stacked">
+              <label for="cellSize">Cell Size:</label>
+              <input type="range" min="2" max="8" value="4" id="cellSize">
+              <div class="field-row" style="justify-content: space-between;">
+                <span>Small</span>
+                <span>Large</span>
+              </div>
+            </div>
+            <div class="field-row-stacked">
+              <label for="simSpeed">Simulation Speed:</label>
+              <input type="range" min="1" max="3" value="1" id="simSpeed">
+              <div class="field-row" style="justify-content: space-between;">
+                <span>Slow</span>
+                <span>Fast</span>
+              </div>
+            </div>
+            <div class="field-row-stacked">
+              <label>Gravity:</label>
+              <div class="field-row">
+                <input type="radio" id="normalGravity" name="gravity" value="normal" checked>
+                <label for="normalGravity">Normal</label>
+              </div>
+              <div class="field-row">
+                <input type="radio" id="lowGravity" name="gravity" value="low">
+                <label for="lowGravity">Low</label>
+              </div>
+              <div class="field-row">
+                <input type="radio" id="highGravity" name="gravity" value="high">
+                <label for="highGravity">High</label>
+              </div>
+            </div>
+          </div>
+          
+          <div class="tab-content" data-tab="advanced">
+            <div class="field-row-stacked">
+              <label for="fluidViscosity">Fluid Viscosity:</label>
+              <input type="range" min="1" max="10" value="5" id="fluidViscosity">
+              <div class="field-row" style="justify-content: space-between;">
+                <span>Low</span>
+                <span>High</span>
+              </div>
+            </div>
+            <div class="field-row-stacked">
+              <label for="reactionRate">Reaction Rate:</label>
+              <input type="range" min="1" max="10" value="5" id="reactionRate">
+              <div class="field-row" style="justify-content: space-between;">
+                <span>Slow</span>
+                <span>Fast</span>
+              </div>
+            </div>
+            <div class="field-row">
+              <input type="checkbox" id="enableEdgeWrap" checked>
+              <label for="enableEdgeWrap">Edge Wrapping</label>
+            </div>
+            <div class="field-row">
+              <input type="checkbox" id="enableThermalEffects">
+              <label for="enableThermalEffects">Thermal Effects</label>
+            </div>
+            <div class="field-row">
+              <input type="checkbox" id="enablePressure">
+              <label for="enablePressure">Pressure Simulation</label>
+            </div>
+          </div>
+        </div>
+        <hr>
+        <div class="field-row" style="justify-content: flex-end">
+          <button id="applySettings">Apply</button>
+          <button id="cancelSettings">Cancel</button>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Presets Window -->
+    <div class="window presets-window" style="display: none;">
+      <div class="title-bar">
+        <div class="title-bar-text">Presets</div>
+        <div class="title-bar-controls">
+          <button aria-label="Close" id="closePresets"></button>
+        </div>
+      </div>
+      <div class="window-body">
+        <div class="field-row-stacked">
+          <label>Save Current State:</label>
+          <div class="field-row">
+            <input type="text" id="presetName" placeholder="Preset name">
+            <button id="savePreset">Save</button>
+          </div>
+        </div>
+        <hr>
+        <div class="field-row-stacked">
+          <label>Saved Presets:</label>
+          <select id="presetList" size="5">
+          </select>
+        </div>
+        <div class="field-row" style="justify-content: space-between; margin-top: 8px;">
+          <button id="loadPreset">Load</button>
+          <button id="deletePreset">Delete</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script type="module" src="sand.js"></script>
+</body>
+</html>

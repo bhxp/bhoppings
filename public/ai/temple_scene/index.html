@@ -1,0 +1,72 @@
+<html>
+<head>
+  <title>3D First Person Game</title>
+  <style>
+    body { margin: 0; }
+    canvas { display: block; }
+    #hud {
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      color: white;
+      font-family: monospace;
+      font-size: 20px;
+      text-shadow: 2px 2px black;
+    }
+    #controls {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      text-align: right;
+      background: rgba(0, 0, 0, 0.5);
+      padding: 15px;
+      border-radius: 8px;
+      color: white;
+      font-family: monospace;
+      font-size: 16px;
+    }
+    #instructions {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+      background: rgba(0, 0, 0, 0.7);
+      padding: 20px;
+      border-radius: 10px;
+      color: white;
+      font-family: Arial, sans-serif;
+      display: none;
+    }
+    #instructions.visible {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <div id="hud">
+    Position: <span id="position"></span><br>
+    FPS: <span id="fps"></span>
+  </div>
+  <div id="controls">
+    WASD - Move<br>
+    SPACE - Jump<br>
+    ESC - Pause
+  </div>
+  <div id="instructions" class="visible">
+    <h2>Click to Start</h2>
+    <p>Move mouse to look around</p>
+  </div>
+  <script type="module" src="game.js"></script>
+  <script>
+    document.addEventListener('pointerlockchange', () => {
+      const instructions = document.getElementById('instructions');
+      if (document.pointerLockElement) {
+        instructions.classList.remove('visible');
+      } else {
+        instructions.classList.add('visible');
+      }
+    });
+  </script>
+</body>
+</html>
