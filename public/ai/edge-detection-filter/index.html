@@ -1,69 +1,109 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Edge Detection Filter</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <div class="container">
-        <h1>Edge Detection Filter</h1>
+        <h1>Edge Detection Toolkit</h1>
         
         <div class="upload-section">
             <input type="file" id="mediaInput" accept="image/*, video/*">
-            <label for="mediaInput" class="upload-btn">Upload Image/Video</label>
+            <label for="mediaInput" class="upload-btn">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-upload-cloud">
+                    <polyline points="16 16 12 12 8 16"></polyline>
+                    <line x1="12" y1="12" x2="12" y2="21"></line>
+                    <path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"></path>
+                    <polyline points="16 16 12 12 8 16"></polyline>
+                </svg>
+                Upload Image/Video
+            </label>
+        </div>
+
+        <div id="userInstructions" class="user-instructions">
+            <p> Start by uploading an image or video</p>
         </div>
 
         <div class="preview-section">
             <div class="original-media">
                 <h3>Original</h3>
-                <canvas id="originalCanvas"></canvas>
+                <div class="canvas-container">
+                    <canvas id="originalCanvas"></canvas>
+                    <div class="placeholder-text">No media uploaded</div>
+                </div>
             </div>
             <div class="filtered-media">
                 <h3>Filtered</h3>
-                <canvas id="filteredCanvas"></canvas>
+                <div class="canvas-container">
+                    <canvas id="filteredCanvas"></canvas>
+                    <div class="placeholder-text">Apply filter to see results</div>
+                </div>
             </div>
         </div>
 
         <div class="filter-controls">
-            <h2>Edge Detection Settings</h2>
+            <h2>Filter Settings</h2>
             
             <div class="control-group">
-                <label for="kernelType">Kernel Type:</label>
+                <div class="control-label">
+                    <label for="kernelType">Edge Detection Method</label>
+                    <span class="tooltip" title="Choose the algorithm for detecting edges">ℹ️</span>
+                </div>
                 <select id="kernelType">
+                    <option value="roberts" selected>Roberts Cross</option>
                     <option value="sobel">Sobel</option>
                     <option value="prewitt">Prewitt</option>
-                    <option value="roberts" selected>Roberts Cross</option>
                     <option value="laplacian">Laplacian</option>
                 </select>
             </div>
 
             <div class="control-group">
-                <label for="threshold">Edge Threshold:</label>
-                <input type="range" id="threshold" min="0" max="255" value="11">
-                <span id="thresholdValue">11</span>
+                <div class="control-label">
+                    <label for="threshold">Edge Sensitivity</label>
+                    <span class="tooltip" title="Adjust how strongly edges are detected">ℹ️</span>
+                </div>
+                <div class="slider-container">
+                    <input type="range" id="threshold" min="0" max="255" value="11">
+                    <span id="thresholdValue">11</span>
+                </div>
+            </div>
+
+            <div class="control-group toggle-group">
+                <div class="control-label">
+                    <label for="invert">Invert Edge Colors</label>
+                    <span class="tooltip" title="Swap edge and background colors">ℹ️</span>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" id="invert">
+                    <span class="slider round"></span>
+                </label>
             </div>
 
             <div class="control-group">
-                <label for="invert">Invert Colors:</label>
-                <input type="checkbox" id="invert">
-            </div>
-
-            <div class="control-group">
-                <label for="colorize">Colorize Edges:</label>
+                <div class="control-label">
+                    <label for="colorize">Edge Color</label>
+                    <span class="tooltip" title="Choose the color of detected edges">ℹ️</span>
+                </div>
                 <input type="color" id="edgeColor" value="#ffffff">
             </div>
 
             <div class="control-group">
-                <label for="blur">Pre-processing Blur:</label>
-                <input type="range" id="blur" min="0" max="10" value="0" step="0.1">
-                <span id="blurValue">0</span>
+                <div class="control-label">
+                    <label for="blur">Pre-processing Blur</label>
+                    <span class="tooltip" title="Apply soft blur before edge detection">ℹ️</span>
+                </div>
+                <div class="slider-container">
+                    <input type="range" id="blur" min="0" max="10" value="0" step="0.1">
+                    <span id="blurValue">0</span>
+                </div>
             </div>
 
-            <div class="buttons">
-                <button id="processVideoBtn" style="display:none;">Process Video</button>
-                <button id="applyFilter">Apply Filter</button>
-                <button id="downloadMedia">Download Filtered Media</button>
+            <div class="action-buttons">
+                <button id="processVideoBtn" class="secondary-btn" style="display:none;">Process Video</button>
+                <button id="applyFilter" class="primary-btn" disabled>Apply Filter</button>
+                <button id="downloadMedia" class="primary-btn" disabled>Download Result</button>
             </div>
         </div>
     </div>
