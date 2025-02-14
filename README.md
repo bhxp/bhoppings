@@ -9,8 +9,9 @@ A super cool amazing website that is made without any flaws 100%
 
 ## Brought to you by
 ![StudioLogo](https://i.imgur.com/3bOeJmm.png)
+![Uses](https://i.imgur.com/Lao8bUJ.png)
 
-## Developers
+## Authors
 
 - [@bhxp](https://www.github.com/bhxp) - i do random stupid shit
 - [@ChezLinkZ](https://www.github.com/ChezLinkZ) - developer
