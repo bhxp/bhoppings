@@ -188,7 +188,7 @@ class EdgeDetector {
 
     this.mediaRecorder.onstop = () => {
       // Video processing complete
-      this.processVideoBtn.textContent = 'Download Processed Video';
+      this.processVideoBtn.textContent = 'Done Processing!';
       this.processVideoBtn.disabled = false;
     };
 
