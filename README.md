@@ -3,23 +3,25 @@
 
 
 
-A website with my projects, tools, games, and all of the above.
+A super cool amazing website that is made without any flaws 100%
 
 
 
+## Brought to you by
+![StudioLogo](https://i.imgur.com/3bOeJmm.png)
 
-## Authors
+## Developers
 
-- [@bhxp](https://www.github.com/bhxp) - Project Manager | Designer 
-- [@ChezLinkZ](https://www.github.com/ChezLinkZ) - someone? maybe?
+- [@bhxp](https://www.github.com/bhxp) - i do random stupid shit
+- [@ChezLinkZ](https://www.github.com/ChezLinkZ) - developer
 
 
 ## Features
 
-- [Poop Shooter 3D](https://bhoppings.de/poopshooter3d/)
-- [Poop Game](https://bhoppings.de/poop/)
-- [Tangini](https://bhoppings.de/tangini/)
-- [Home](https://bhoppings.de/home/)
+- retarded
+- tango!
+- cool
+- and other things
 
 
 ## FAQ
@@ -38,7 +40,7 @@ A: yes
 
 #### Q: Is the website very professionally made without mistakes?
 
-A: yes
+A: yes trust 🙏
 
 ## Visiting
 
@@ -49,8 +51,8 @@ done!
     
 ## Roadmap
 
-- numero 1
-- numero 2
+- idk
+- idk
 
 
 ## Used By
