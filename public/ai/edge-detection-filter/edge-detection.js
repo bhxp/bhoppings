@@ -15,13 +15,26 @@ class EdgeDetector {
     this.blurValue = document.getElementById('blurValue');
     this.processVideoBtn = document.getElementById('processVideoBtn');
     this.processVideoBtn.addEventListener('click', this.processVideoForDownload.bind(this));
-
+    this.userInstructions = document.getElementById('userInstructions');
+    
     this.video = null;
     this.animationFrameId = null;
     this.mediaRecorder = null;
     this.recordedChunks = [];
 
     this.setupEventListeners();
+    this.setupInitialState();
+  }
+
+  setupInitialState() {
+    this.applyFilterBtn.disabled = true;
+    this.downloadBtn.disabled = true;
+    this.processVideoBtn.style.display = 'none';
+    this.updateInstructions('Upload an image or video to get started');
+  }
+
+  updateInstructions(message) {
+    this.userInstructions.textContent = message;
   }
 
   setupEventListeners() {
@@ -61,6 +74,10 @@ class EdgeDetector {
     };
 
     reader.readAsDataURL(file);
+
+    // Enable apply filter button and update instructions
+    this.applyFilterBtn.disabled = false;
+    this.updateInstructions('👉 Press "Apply Filter" to see edge detection results');
   }
 
   loadImage(src) {
@@ -75,6 +92,7 @@ class EdgeDetector {
       origCtx.drawImage(img, 0, 0);
     };
     img.src = src;
+    this.downloadBtn.disabled = false;
   }
 
   loadVideo(file) {
@@ -125,6 +143,9 @@ class EdgeDetector {
       // Enable process video button
       this.processVideoBtn.disabled = false;
     });
+
+    // Show process video button and update instructions
+    this.updateInstructions('👉 Press "Process Video" to apply edge detection to entire video');
   }
 
   processVideoForDownload() {
@@ -176,6 +197,8 @@ class EdgeDetector {
 
     // Process video frames
     this.processVideoFrames(true);
+    this.updateInstructions('👉 Press "Download Filtered Media" to save processed video');
+    this.downloadBtn.disabled = false;
   }
 
   processVideoFrames(forDownload = false) {
@@ -227,6 +250,8 @@ class EdgeDetector {
       filteredCtx.putImageData(edgeData, 0, 0);
     }
     // For video, the processing is continuous via processVideoFrames
+    this.updateInstructions('👉 Press "Download Filtered Media" to save your result');
+    this.downloadBtn.disabled = false;
   }
 
   detectEdges(imageData) {
@@ -395,9 +420,9 @@ class EdgeDetector {
 
   downloadMedia() {
     if (this.video) {
-      // Check if video is processed
+      // For video, ensure processing happened first
       if (this.recordedChunks.length === 0) {
-        alert('Please process the video first by clicking "Process Video".');
+        this.updateInstructions('❌ Please process the video first');
         return;
       }
 
