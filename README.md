@@ -5,15 +5,25 @@
 
 A super cool amazing website that is made without any flaws 100%
 
-
+ㅤ
 
 ## Brought to you by
 ![StudioLogo](https://i.imgur.com/3bOeJmm.png)
 
-##
+ㅤ
+ㅤ
+ㅤ
+
+
+ㅤ
+ㅤ
 
 ![Uses](https://i.imgur.com/Lao8bUJ.png)
+ㅤ
+ㅤ
+ㅤ
 
+ㅤ
 ## Authors
 
 - [@bhxp](https://www.github.com/bhxp) - i do random stupid shit
