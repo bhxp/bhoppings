@@ -1,0 +1,264 @@
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nexa - AI Image Generator</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        fontFamily: {
+          'sans': ['Poppins', 'sans-serif'],
+        },
+        extend: {
+          animation: {
+            'gradient': 'gradient 8s linear infinite',
+          },
+          keyframes: {
+            gradient: {
+              '0%, 100%': {
+                'background-size': '200% 200%',
+                'background-position': 'left center'
+              },
+              '50%': {
+                'background-size': '200% 200%',
+                'background-position': 'right center'
+              }
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="text-white min-h-screen font-sans">
+  <!-- Settings Modal -->
+  <div id="settingsModal" class="fixed inset-0 bg-black/90 backdrop-blur-sm z-50 hidden opacity-0 transition-opacity duration-300">
+    <div class="absolute inset-0 flex items-center justify-center p-4">
+      <div class="bg-gradient-to-br from-gray-800/50 to-gray-900/50 backdrop-blur-md rounded-2xl p-8 max-w-2xl w-full shadow-2xl border border-white/5 transform scale-95 transition-all">
+        <div class="flex justify-between items-center mb-6">
+          <h2 class="text-2xl font-bold">Settings</h2>
+          <button id="closeSettings" class="text-white/70 hover:text-white transition-colors">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+          </button>
+        </div>
+
+        <div class="space-y-8">
+          <!-- Themes -->
+          <div>
+            <h3 class="text-lg font-medium mb-4">Theme</h3>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              <button class="theme-option rounded-xl p-4 bg-black transition-all hover:scale-105 relative border border-white/10" data-theme="oled">
+                <div class="absolute inset-0 rounded-xl bg-black opacity-90"></div>
+                <span class="relative z-10">OLED</span>
+              </button>
+              <button class="theme-option rounded-xl p-4 bg-gradient-to-br from-gray-900 to-black transition-all hover:scale-105 relative border border-white/10" data-theme="dark">
+                <div class="absolute inset-0 rounded-xl bg-gradient-to-br from-gray-900 via-gray-800 to-black opacity-90"></div>
+                <span class="relative z-10">Dark</span>
+              </button>
+              <button class="theme-option rounded-xl p-4 bg-gradient-to-br from-purple-900 to-black transition-all hover:scale-105 relative border border-white/10" data-theme="cyberpunk">
+                <div class="absolute inset-0 rounded-xl bg-gradient-to-br from-purple-900 via-pink-800 to-black opacity-90"></div>
+                <span class="relative z-10">Cyberpunk</span>
+              </button>
+              <button class="theme-option rounded-xl p-4 bg-gradient-to-br from-green-900 to-black transition-all hover:scale-105 relative border border-white/10" data-theme="forest">
+                <div class="absolute inset-0 rounded-xl bg-gradient-to-br from-green-900 via-emerald-800 to-black opacity-90"></div>
+                <span class="relative z-10">Forest</span>
+              </button>
+              <button class="theme-option rounded-xl p-4 bg-gradient-to-br from-blue-900 to-black transition-all hover:scale-105 relative border border-white/10" data-theme="ocean">
+                <div class="absolute inset-0 rounded-xl bg-gradient-to-br from-blue-900 via-cyan-800 to-black opacity-90"></div>
+                <span class="relative z-10">Ocean</span>
+              </button>
+              <button class="theme-option rounded-xl p-4 bg-gradient-to-br from-red-900 to-black transition-all hover:scale-105 relative border border-white/10" data-theme="crimson">
+                <div class="absolute inset-0 rounded-xl bg-gradient-to-br from-red-900 via-red-800 to-black opacity-90"></div>
+                <span class="relative z-10">Crimson</span>
+              </button>
+              <button class="theme-option rounded-xl p-4 bg-gradient-to-br from-violet-900 to-black transition-all hover:scale-105 relative border border-white/10" data-theme="midnight">
+                <div class="absolute inset-0 rounded-xl bg-gradient-to-br from-violet-900 via-indigo-800 to-black opacity-90"></div>
+                <span class="relative z-10">Midnight</span>
+              </button>
+              <button class="theme-option rounded-xl p-4 bg-gradient-to-br from-amber-900 to-black transition-all hover:scale-105 relative border border-white/10" data-theme="sunset">
+                <div class="absolute inset-0 rounded-xl bg-gradient-to-br from-amber-900 via-orange-800 to-black opacity-90"></div>
+                <span class="relative z-10">Sunset</span>
+              </button>
+              <button class="theme-option rounded-xl p-4 bg-gradient-to-br from-slate-900 to-black transition-all hover:scale-105 relative border border-white/10" data-theme="mono">
+                <div class="absolute inset-0 rounded-xl bg-gradient-to-br from-slate-900 via-gray-800 to-black opacity-90"></div>
+                <span class="relative z-10">Mono</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Interface Settings -->
+          <div>
+            <h3 class="text-lg font-medium mb-4">Interface</h3>
+            <div class="space-y-4">
+              <label class="flex items-center justify-between p-4 bg-black/30 rounded-xl">
+                <span>Show Keyboard Shortcuts</span>
+                <input type="checkbox" id="showShortcuts" class="setting-toggle">
+              </label>
+              <label class="flex items-center justify-between p-4 bg-black/30 rounded-xl">
+                <span>Show Tooltips</span>
+                <input type="checkbox" id="showTooltips" class="setting-toggle">
+              </label>
+              <label class="flex items-center justify-between p-4 bg-black/30 rounded-xl">
+                <span>Use Animations</span>
+                <input type="checkbox" id="useAnimations" class="setting-toggle">
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Image Preview Modal -->
+  <div id="imageModal" class="fixed inset-0 bg-black/90 backdrop-blur-sm z-50 hidden opacity-0 transition-opacity duration-300">
+    <div class="absolute inset-0 flex items-center justify-center p-4">
+      <button id="closeModal" class="absolute top-4 right-4 text-white/70 hover:text-white transition-colors">
+        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
+      <img id="modalImage" class="max-h-[90vh] max-w-[90vw] rounded-xl shadow-2xl transform scale-95 opacity-0 transition-all duration-300" src="" alt="Preview">
+    </div>
+  </div>
+
+  <div class="min-h-screen flex flex-col">
+    <header class="py-6 px-4 backdrop-blur-md bg-black/40 fixed w-full z-10 border-b border-white/10">
+      <div class="container mx-auto flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="p-2 bg-purple-500/10 rounded-lg">
+            <svg class="w-8 h-8 text-purple-400" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <h1 class="text-2xl font-bold bg-gradient-to-r from-purple-400 via-pink-400 to-purple-400 animate-gradient text-transparent bg-clip-text">Nexa</h1>
+        </div>
+        <div class="flex items-center gap-4">
+          <button id="settingsBtn" class="p-2 hover:bg-white/10 rounded-lg transition-colors">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <main class="flex-grow container mx-auto px-4 pt-28 pb-8">
+      <div class="max-w-4xl mx-auto">
+        <div class="bg-gradient-to-br from-gray-800/50 to-gray-900/50 backdrop-blur-md rounded-2xl p-8 mb-8 shadow-2xl border border-white/5">
+          <textarea
+            id="promptInput"
+            class="w-full bg-black/30 text-white rounded-xl p-4 mb-6 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all resize-none border border-white/5"
+            rows="3"
+            placeholder="Describe your imagination in detail..."></textarea>
+
+          <div class="mb-6">
+            <label class="text-sm text-gray-400 ml-1 mb-2 block">Quick Presets</label>
+            <div id="presets" class="flex flex-wrap gap-2">
+              <!-- Preset buttons will be added here -->
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-6 mb-6">
+            <div class="space-y-2">
+              <label class="text-sm text-gray-400 ml-1">Model Selection</label>
+              <select id="modelSelect" class="model-select w-full bg-black/30 text-white rounded-xl p-4 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all border border-white/5">
+                <!-- Options will be populated by JavaScript -->
+              </select>
+            </div>
+
+            <div class="space-y-2">
+              <label class="text-sm text-gray-400 ml-1">Number of Images</label>
+              <select id="imageCountSelect" class="model-select w-full bg-black/30 text-white rounded-xl p-4 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all border border-white/5">
+                <option value="1">1 Image</option>
+                <option value="2">2 Images</option>
+                <option value="4">4 Images</option>
+                <option value="6">6 Images</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Advanced Options Section -->
+          <div class="mb-6">
+            <button id="advancedOptionsBtn" class="text-gray-400 hover:text-white transition-colors flex items-center gap-2 text-sm">
+              <svg id="advancedChevron" class="w-4 h-4 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+              </svg>
+              Advanced Options
+            </button>
+
+            <div id="advancedOptions" class="hidden mt-4 grid grid-cols-2 gap-6">
+              <div class="space-y-2">
+                <label class="text-sm text-gray-400 ml-1">Width (optional)</label>
+                <input
+                  type="number"
+                  id="widthInput"
+                  placeholder="Enter width"
+                  min="64"
+                  step="64"
+                  class="w-full bg-black/30 text-white rounded-xl p-4 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all border border-white/5"
+                >
+              </div>
+              <div class="space-y-2">
+                <label class="text-sm text-gray-400 ml-1">Height (optional)</label>
+                <input
+                  type="number"
+                  id="heightInput"
+                  placeholder="Enter height"
+                  min="64"
+                  step="64"
+                  class="w-full bg-black/30 text-white rounded-xl p-4 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all border border-white/5"
+                >
+              </div>
+            </div>
+          </div>
+
+          <div class="flex flex-wrap gap-4">
+            <button
+              id="enhanceBtn"
+              data-shortcut="⇧ + ↵"
+              data-tooltip="Enhance your prompt with artistic details"
+              class="flex-1 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 text-white px-8 py-4 rounded-xl transition-all transform hover:scale-[1.02] hover:shadow-xl flex items-center justify-center gap-3 min-w-[200px] tooltip">
+              <svg class="w-5 h-5 enhance-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              <span>Enhance Prompt</span>
+              <div class="spinner hidden ml-2"></div>
+            </button>
+            <button
+              id="generateBtn"
+              data-shortcut="↵"
+              data-tooltip="Generate images from your prompt"
+              class="flex-1 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-500 hover:to-purple-600 text-white px-8 py-4 rounded-xl transition-all transform hover:scale-[1.02] hover:shadow-xl flex items-center justify-center gap-3 min-w-[200px] tooltip">
+              <svg class="w-5 h-5 generate-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              <span>Generate Images</span>
+              <div class="spinner hidden ml-2"></div>
+            </button>
+          </div>
+        </div>
+
+        <div id="chatHistory" class="space-y-4 mb-8 opacity-0 scale-95 transform transition-all">
+          <!-- Chat messages will appear here -->
+        </div>
+
+        <div id="imageResults" class="hidden opacity-0 scale-95 transform transition-all">
+          <!-- Generated images will appear here -->
+        </div>
+      </div>
+    </main>
+
+    <footer class="py-4 text-center text-gray-500 text-sm">
+      <p>Bhoppings Studio</p>
+    </footer>
+  </div>
+
+  <script src="app.js" type="module"></script>
+</body>
+</html>

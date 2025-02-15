@@ -1,0 +1,351 @@
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.spinner {
+  width: 1.5rem;
+  height: 1.5rem;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+.enhance-icon,
+.generate-icon {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+button:hover .enhance-icon {
+  transform: scale(1.2) rotate(12deg);
+}
+
+button:hover .generate-icon {
+  transform: rotate(-15deg) scale(1.1);
+}
+
+#chatHistory > div {
+  animation: slideIn 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+#imageResult.show {
+  opacity: 1;
+  transform: scale(1);
+}
+
+#chatHistory.show {
+  opacity: 1;
+  transform: scale(1);
+}
+
+#imageResults {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem;
+  margin-top: 2rem;
+  opacity: 0;
+  transform: translateY(20px);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+#imageResults.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.image-container {
+  min-height: 300px;
+  background: rgba(0, 0, 0, 0.2);
+  position: relative;
+  opacity: 0;
+  transform: translateY(20px);
+  animation: imageAppear 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes imageAppear {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.generated-image {
+  width: 100%;
+  height: auto;
+  min-height: 300px;
+  object-fit: cover;
+  opacity: 0;
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.generated-image.loaded {
+  opacity: 1;
+}
+
+.generated-image {
+  cursor: zoom-in;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.generated-image:hover {
+  transform: scale(1.03);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+.model-select {
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+  background-position: right 0.5rem center;
+  background-repeat: no-repeat;
+  background-size: 1.5em 1.5em;
+  padding-right: 2.5rem;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+.model-select option.censored::after {
+  content: " (Censored)";
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.loading-overlay {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+#modalImage.show {
+  opacity: 1;
+  transform: scale(1);
+}
+
+#imageModal.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+#imageModal {
+  pointer-events: none;
+}
+
+.modal-open {
+  overflow: hidden;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+#advancedOptionsBtn {
+  position: relative;
+  padding: 0.5rem;
+  border-radius: 0.5rem;
+}
+
+#advancedOptionsBtn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+#advancedOptions {
+  opacity: 0;
+  max-height: 0;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+#advancedOptions:not(.hidden) {
+  opacity: 1;
+  max-height: 200px;
+}
+
+#advancedChevron {
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+
+body {
+  font-family: 'Poppins', sans-serif;
+}
+
+.preset-btn {
+  transition: all 0.2s;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.preset-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.preset-btn.active {
+  background: rgba(147, 51, 234, 0.3);
+  border-color: rgb(147, 51, 234);
+}
+
+.tooltip {
+  position: relative;
+}
+
+.tooltip:hover:after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.8);
+  padding: 0.5rem;
+  border-radius: 0.25rem;
+  font-size: 0.8rem;
+  white-space: nowrap;
+  z-index: 10;
+}
+
+.keyboard-shortcut {
+  padding: 0.2rem 0.5rem;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 0.25rem;
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.7);
+  display: inline-flex;
+  align-items: center;
+  margin-left: 0.5rem;
+  font-family: system-ui, -apple-system, sans-serif;
+  letter-spacing: 0.05em;
+}
+
+.keyboard-shortcut::before {
+  content: attr(data-key);
+}
+
+.keyboard-shortcut:hover {
+  background: rgba(255, 255, 255, 0.15);
+  color: rgba(255, 255, 255, 0.9);
+  transform: translateY(-1px);
+  transition: all 0.2s ease;
+}
+
+.quality-preset {
+  transition: all 0.2s ease;
+}
+
+.quality-preset:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+input[type="checkbox"] {
+  accent-color: rgb(147, 51, 234);
+}
+
+kbd {
+  font-family: ui-monospace, monospace;
+  font-size: 0.8em;
+  font-weight: 600;
+}
+
+.advanced-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.tooltip-advanced {
+  position: absolute;
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 0.5rem;
+  border-radius: 0.25rem;
+  font-size: 0.8rem;
+  pointer-events: none;
+  transition: all 0.2s ease;
+  z-index: 50;
+}
+
+.reduce-motion * {
+  animation: none !important;
+  transition: none !important;
+}
+
+#settingsModal {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+#settingsModal.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+#settingsModal .theme-option {
+  transition: all 0.2s ease;
+}
+
+#settingsModal .theme-option:hover {
+  transform: scale(1.05);
+}
+
+#settingsModal .theme-option.active {
+  ring-color: currentColor;
+  ring-opacity: 0.5;
+}
+
+.setting-toggle {
+  appearance: none;
+  width: 3rem;
+  height: 1.5rem;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 1rem;
+  position: relative;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.setting-toggle:checked {
+  background: rgb(147, 51, 234);
+}
+
+.setting-toggle::before {
+  content: '';
+  position: absolute;
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 50%;
+  background: white;
+  top: 0.125rem;
+  left: 0.125rem;
+  transition: transform 0.2s ease;
+}
+
+.setting-toggle:checked::before {
+  transform: translateX(1.5rem);
+}
