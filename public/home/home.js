@@ -126,7 +126,7 @@ const scrollToElement = ($parent, $target) => {
 localStorage.setItem("skipBio", localStorage.getItem("skipBio") || false);
 const devMenu = $(`
 <div id="dev-menu">
-<button onclick="window.localStorage.setItem('skipBio', JSON.stringify(!JSON.parse(localStorage.getItem('skipBio'))));$('#dev-menu button').eq(0).html('Skip Bio ' + localStorage.getItem('skipBio') + ']');">Skip Bio [${localStorage.getItem("skipBio")}]</button>
+<button onclick="window.localStorage.setItem('skipBio', JSON.stringify(!JSON.parse(localStorage.getItem('skipBio'))));$('#dev-menu button').eq(0).html('Skip Bio [' + localStorage.getItem('skipBio') + ']');">Skip Bio [${localStorage.getItem("skipBio")}]</button>
 <button onclick="window.localStorage.clear()">
   Clear window.LocalStorage
 </button>
