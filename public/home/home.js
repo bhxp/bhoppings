@@ -1,3 +1,5 @@
+"use strict";
+
 const navbar = $("#navbar");
 var navbarItems = null;
 var cancelNavbarHide = true;
@@ -89,16 +91,14 @@ function displayNavbar(items) {
     $("body").addClass("bg-fadein");
 }
 
-$(document).ready((e) => {
-    fetch("/config/home_navbar.json")
-        .then((response) => response.json())
-        .then((items) => displayNavbar(items))
-        .catch((error) => {
-            console.error(error);
-        });
-    $("#navbar .gradient-text").click(function () {
-        window.open("/home", "_self");
+fetch("/config/home_navbar.json")
+    .then((response) => response.json())
+    .then((items) => displayNavbar(items))
+    .catch((error) => {
+        console.error(error);
     });
+$("#navbar .gradient-text").click(function () {
+    window.open("/home", "_self");
 });
 
 const oldOpen = window.open;

@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width" />
     <link rel="icon" type="image/x-icon" href="/images/favicon.ico" />
-    <title>Home - Bhop</title>
+    <title>Settings - Bhop</title>
     <link rel="stylesheet" href="/home/home.css" />
     <link rel="stylesheet" href="settings.css" />
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
@@ -19,7 +19,7 @@
 
     <div id="sidebar">
       <button id="cursor-sidebar-button" class="active-sidebar-button">
-        <img src="/images/cursor/0.svg" />
+        <div id="cursor-sidebar-img"></div>
       </button>
       <button>
         <div id="sidebar-b"></div>
@@ -32,36 +32,68 @@
       <div class="settings-container-row">
         <!-- Generate options dynamically -->
         <script>
-          for (let i = 0; i <= 13; i++) {
-            document.write(`
-              <div class="option">
-                <img src="/images/cursor/${i}.svg" class="cursor-img" />
-                <button onclick="setCursor(${i})">Apply</button>
-              </div>
-            `);
-          }
-        </script>
-      </div>
-      <div class="settings-container-row" id="gradient-text-row">
-        <script>
-          $.getJSON("/config/theme-colors.json").then((data) => {
-            $("#settings-container, #sidebar").addClass("loaded");
-            for (let i = 0; i <= data.color1.length - 1; i++) {
-              $("#gradient-text-row").append(`
-                 <div class="option">
-            <div class="gradient-text" style="--color1: ${data.color1[i]}; --color2: ${data.color2[i]}">
-              bhop
-            </div>
-            <button
-              onclick="setUserStyle('color1', '${data.color1[i]}');setUserStyle('color2', '${data.color2[i]}');setUserStyle('bg1', '${data.bg1[i]}');setUserStyle('bg2', '${data.bg2[i]}');"
-            >
-              Apply
-            </button>
-            </div>
+          const cursorContainer = $(".settings-container-row").eq(0);
+          const themes = JSON.parse(localStorage.getItem("themes"));
+
+          (async () => {
+            const data = await $.getJSON("/config/theme-colors.json");
+            const cursorSvgDoc = await $.get("/images/cursor.svg");
+            const cursorSvg = new XMLSerializer().serializeToString(cursorSvgDoc);
+
+            // Loop through each cursor preset and dynamically replace the gradient ID and colors
+            for (let i = 0; i <= Object.keys(data.cursors).length - 1; i++) {
+              const key = Object.keys(data.cursors)[i];
+              const cursorData = data.cursors[key];
+
+              // Generate a unique gradient ID for each cursor
+              const gradientId = `gradientStroke-${key}`;
+
+              // Replace the gradient ID and colors in the SVG
+              const modifiedSvg = cursorSvg
+                .replace(/gradientStroke/g, `${gradientId}`)  // Replace the ID to make it unique
+                .replace(/stop-color="#fff"/g, `stop-color="${cursorData.color1}"`)  // Replace color1
+                .replace(/stop-color="#000"/g, `stop-color="${cursorData.color2 || cursorData.color1}"`)
+                .replace("<svg", `<svg class="cursor-img"`);  // Replace color2 (or fallback to color1)
+
+              console.log(cursorData);
+
+              // Append the modified SVG
+              cursorContainer.append(`
+                <div class="option">
+                  ${modifiedSvg}
+                  <button onclick="
+                    setUserStyle('cursor1', '${cursorData.color1}');
+                    setUserStyle('cursor2', '${cursorData.color2 || cursorData.color1}');
+                  ">${idToName(key)}</button>
+                </div>
               `);
             }
-          });
+
+
+            $("#settings-container, #sidebar").addClass("loaded");
+
+            for (let i = 0; i <= Object.keys(data.themes).length - 1; i++) {
+              const key = Object.keys(data.themes)[i];
+              $("#gradient-text-row").append(`
+                <div class="option">
+                  <div class="gradient-text" style="--color1: ${data.themes[key].color1}; --color2: ${data.themes[key].color2}">
+                    bhop
+                  </div>
+                  <button onclick="
+                    setUserStyle('color1', '${data.themes[key].color1}');
+                    setUserStyle('color2', '${data.themes[key].color2}');
+                    setUserStyle('bg1', '${data.themes[key].bg1}');
+                    setUserStyle('bg2', '${data.themes[key].bg2}');
+                  ">${idToName(key)}</button>
+                </div>
+              `);
+            }
+          })();
         </script>
+
+      </div>
+      <div class="settings-container-row" id="gradient-text-row">
+        
       </div>
 <!--
       <div class="settings-container-row" id="background-row">

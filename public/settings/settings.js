@@ -22,6 +22,23 @@ function cursorSettings() {
   updateCursorSettings();
 }
 
+function idToName(input) {
+  return (
+    input
+      // Replace the first letter and any letter after "_" with the uppercase equivalent
+      .replace(
+        /(?:^|\_)([a-z])/g,
+        (match, letter) => `_${letter.toUpperCase()}`,
+      )
+
+      // Replace underscores with spaces
+      .replace(/_/g, " ")
+
+      // Replace groups of digits with "#<digits>"
+      .replace(/\d+/g, (match) => ` #${match}`)
+  );
+}
+
 cursorSettings();
 
 function getClosestElementIndex($container) {
@@ -64,3 +81,30 @@ $("#sidebar button").on("click", function (e) {
     $("#settings-container>.settings-container-row").eq($(this).index()),
   );
 });
+
+var cursorSvgDoc;
+var cursorSvg;
+
+const cursorPromise = $.get("/images/cursor.svg");
+cursorPromise.then(function (data) {
+  cursorSvgDoc = data;
+  cursorSvg = new XMLSerializer().serializeToString(cursorSvgDoc);
+  settingsCursorUpdate();
+});
+
+function settingsCursorUpdate() {
+  const theme = JSON.parse(localStorage.getItem("theme"));
+  console.log(theme);
+
+  console.log(cursorSvg);
+
+  // Modify the SVG string
+  let modifiedSvg = cursorSvg
+    .replace("<svg", `<svg id="cursor-sidebar-img"`)
+    .replace(/stop-color="#fff"/g, `stop-color="${theme.cursor1}"`)
+    .replace(/stop-color="#000"/g, `stop-color="${theme.cursor2}"`);
+
+  console.log("Modified SVG:", modifiedSvg);
+
+  $("#cursor-sidebar-img").replaceWith($(modifiedSvg));
+}

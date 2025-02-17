@@ -42,6 +42,10 @@
   transform: translate(-30%, -30%);
 }
 
+#cursor-sidebar-img {
+  transform: translate(+20%, +20%);
+}
+
 #sidebar button::before {
   content: "";
   height: 0px;
@@ -118,8 +122,12 @@
 }
 
 .option .cursor-img {
-
-  transform: translate(-33%, -40%);
+    position: absolute;
+    left: 50%;
+    transform: translate(-33%, -43%);
+    top: 50%;
+    height: 80%;
+    aspect-ratio: 1;
 }
 
 .option button {

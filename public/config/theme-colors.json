@@ -1,8 +1,138 @@
 {
   "primary": ["#fff"],
   "dark-background": ["#12151c"],
-  "color1": ["#D185FF", "#f0f", "#0ff", "#0f0", "#fff", "#f00", "#A63AFF"],
-  "color2": ["#0ff", "#0ff", "#f00", "#f00", "#000", "#000", "#B873F0"],
-  "bg1": ["#669", "#f0f", "#0ff", "#0f0", "#fff", "#f00", "#A63AFF"],
-  "bg2": ["#669", "#0ff", "#f00", "#f00", "#000", "#000", "#B873F0"]
+  "cursors": {
+    "ocean": {
+      "color1": "#3AC4FF"
+    },
+    "snow": {
+      "color1": "#fff"
+    },
+    "rose": {
+      "color1": "#FF3AC1"
+    },
+    "aquamarine": {
+      "color1": "#3AFFF2"
+    },
+    "crimson": {
+      "color1": "#FF3A3A"
+    },
+    "emerald": {
+      "color1": "#54FF3A"
+    },
+    "amethyst": {
+      "color1": "#A63AFF"
+    },
+    "sunset": {
+      "color1": "#FFA63A"
+    },
+    "twilight": {
+      "color1": "#A63AFF",
+      "color2": "#237999"
+    },
+    "ember": {
+      "color1": "#000000",
+      "color2": "#FF0000"
+    },
+    "festive": {
+      "color1": "#00FF37",
+      "color2": "#FF0000"
+    },
+    "vaporwave": {
+      "color1": "#FF00E1",
+      "color2": "#00FFFB"
+    },
+    "monochrome": {
+      "color1": "#000000",
+      "color2": "#ffffff"
+    },
+    "celestial": {
+      "color1": "#00FBFF",
+      "color2": "#FF0000"
+    },
+    "deep_ocean": {
+      "color1": "#3AC4FF",
+      "color2": "#0019F9"
+    }
+  },
+  "themes": {
+    "legacy": {
+      "color1": "#D185FF",
+      "color2": "#0ff",
+      "bg1": "#669",
+      "bg2": "#669"
+    },
+    "vaporwave": {
+      "color1": "#f0f",
+      "color2": "#0ff",
+      "bg1": "#f0f",
+      "bg2": "#0ff"
+    },
+    "celestial": {
+      "color1": "#0ff",
+      "color2": "#f00",
+      "bg1": "#0ff",
+      "bg2": "#f00"
+    },
+    "festive": {
+      "color1": "#0f0",
+      "color2": "#f00",
+      "bg1": "#0f0",
+      "bg2": "#f00"
+    },
+    "monochrome": {
+      "color1": "#fff",
+      "color2": "#000",
+      "bg1": "#fff",
+      "bg2": "#000"
+    },
+    "ember": {
+      "color1": "#f00",
+      "color2": "#000",
+      "bg1": "#f00",
+      "bg2": "#000"
+    },
+    "amethyst": {
+      "color1": "#A63AFF",
+      "color2": "#B873F0",
+      "bg1": "#A63AFF",
+      "bg2": "#B873F0"
+    },
+    "aquatic": {
+      "color1": "#00CCFF",
+      "color2": "#00FFD0",
+      "bg1": "#00CCFF",
+      "bg2": "#00FFD0"
+    },
+    "mystic": {
+      "color1": "#FF00D4",
+      "color2": "#BB00FF",
+      "bg1": "#FF00D4",
+      "bg2": "#BB00FF"
+    },
+    "cream": {
+      "color1": "#FFBA7E",
+      "color2": "#FF8400",
+      "bg1": "#FFBA7E",
+      "bg2": "#FF8400"
+    },
+    "lemon": {
+      "color1": "#FFF264",
+      "color2": "#FFFF00",
+      "bg1": "#FFF264",
+      "bg2": "#FFFF00"
+    },
+    "dusk_fire": {
+      "color1": "#FF00EE",
+      "color2": "#FF9000",
+      "bg1": "#FF00EE",
+      "bg2": "#FF9000"
+    },
+    "ocean_sage": {
+      "color1": "#CAFFFD",
+      "color2": "#007870",
+      "bg1": "#CAFFFD",
+      "bg2": "#007870"
+    }
+  }
 }
