@@ -133,30 +133,50 @@ const devMenu = $(`
 </div>
 `);
 devMenu.appendTo("body");
-devMenu.hide();
 
 $(document).on("keydown", function (e) {
     if (e.ctrlKey && e.key === ".") {
-        devMenu.toggle();
+        devMenu.toggleClass("open");
     }
 });
 
 $("head").append(`
 <style>
+
+#dev-menu.open {
+    transform: translateX(-24px) !important;
+}
 #dev-menu {
     display: flex;
     flex-direction: column;
     position: fixed;
-    right: 24px;
-    top: 48px;
-    background: #fff;
+    right: 0%;
+    top: 120px;
+    background: rgba(0, 0, 0, 0.5);
     padding: 12px;
     color: #000;
     z-index: 9998;
+    border-radius: 24px;
+    border: solid 1px rgba(255, 255, 255, 0.2);
+    transition: all 0.5s ease-in-out;
+    transform: translateX(+100%);
+}
+#dev-menu button:hover {
+    filter: invert(1);
+}
+#dev-menu button:first-child {
+    margin-top: 0px;
 }
 #dev-menu button {
-padding: 6px;
-margin-top: 6px;
-color: #000 !important;
+    font-size: 18px;
+    padding: 24px;
+    margin-top: 12px;
+    color: #fff;
+    background-color: #000;
+    outline: 0px;
+    border-radius: 12px;
+    outline: 0px;
+    transition: all 0.5s ease-in-out;
+    border: 0px;
 }
 </style>`);
