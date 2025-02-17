@@ -1,0 +1,834 @@
+<html>
+<head>
+    <title>End of the World</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
+    <style>
+        body { 
+            margin: 0; 
+            overflow: hidden; 
+            font-family: 'Roboto', sans-serif; 
+            background: black;
+            color: white;
+        }
+        #world { width: 100vw; height: 100vh; }
+
+        #mushroom-hint {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            display: none;
+            transition: opacity 0.5s ease;
+        }
+
+        #psychedelic-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: transparent;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 1s ease;
+            z-index: 1000;
+        }
+
+        #interaction-prompt {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            display: none;
+        }
+        
+        #lore-dialog {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 20px;
+            max-width: 600px;
+            text-align: center;
+            font-family: 'Roboto', sans-serif;
+            display: none;
+            opacity: 0;
+            transition: opacity 1s ease;
+            z-index: 2000;
+            line-height: 1.6;
+            cursor: pointer; /* Indicate it's clickable */
+            user-select: none; /* Prevent text selection */
+        }
+        #lore-dialog:hover {
+            text-shadow: 0 0 10px rgba(255,255,255,0.5);
+        }
+    </style>
+</head>
+<body>
+    <div id="world"></div>
+    <div id="mushroom-hint">Mysterious Mushroom Detected!</div>
+    <div id="interaction-prompt">Press E to interact</div>
+    <div id="psychedelic-overlay"></div>
+    <div id="lore-dialog"></div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/RGBELoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/CopyShader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/LuminosityHighPassShader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/MaskPass.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/FXAAShader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/RGBShiftShader.js"></script>
+    <script>
+        let assetsLoaded = 0;
+        const totalAssets = 3;
+        let bushModel;
+        const bushes = [];
+        let audio;
+        let audioAutoPlayed = false;
+        let respirAudio;
+        const PARTICLE_COUNT = 3600;
+        function initAudio() {
+            if (!audio) {
+                audio = new Audio('/warningsiren.mp3');
+                audio.volume = 0.5;
+                audio.loop = true;
+                audio.addEventListener('ended', () => {
+                    audio.play();
+                });
+            }
+            if (!respirAudio) {
+                respirAudio = new Audio('/respir.mp3');
+                respirAudio.volume = 0.3;
+                respirAudio.loop = true;
+                respirAudio.addEventListener('ended', () => {
+                    respirAudio.play();
+                });
+            }
+            audio.play();
+            respirAudio.play();
+            audioAutoPlayed = true;
+        }
+        function updateLoadingProgress() {
+            assetsLoaded++;
+            const progress = assetsLoaded / totalAssets * 100;
+            document.querySelector('#loading-progress').style.width = progress + '%';
+            if (assetsLoaded >= totalAssets) {
+                setTimeout(() => {
+                    document.querySelector('#preloader').style.display = 'none';
+                    if (!audioAutoPlayed) {
+                        initAudio();
+                    }
+                }, 500);
+            }
+        }
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        document.getElementById('world').appendChild(renderer.domElement);
+        const pmremGenerator = new THREE.PMREMGenerator(renderer);
+        pmremGenerator.compileEquirectangularShader();
+        function loadHDRI(url) {
+            new THREE.RGBELoader().setDataType(THREE.UnsignedByteType).load(url, function (texture) {
+                const envMap = pmremGenerator.fromEquirectangular(texture).texture;
+                scene.environment = envMap;
+                scene.background = envMap;
+                texture.dispose();
+                pmremGenerator.dispose();
+            });
+        }
+        loadHDRI('https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/1k/kloofendal_48d_partly_cloudy_1k.hdr');
+        const trees = [];
+        const rocks = [];
+        const hillGeometry = new THREE.PlaneBufferGeometry(200, 200, 100, 100);
+        const positions = hillGeometry.attributes.position.array;
+        for (let i = 0; i < positions.length; i += 3) {
+            const x = positions[i];
+            const y = positions[i + 1];
+            const frequency = 0.03;
+            const amplitude = 3;
+            positions[i + 2] = amplitude * Math.sin(x * frequency) * Math.cos(y * frequency) + amplitude * 0.5 * Math.sin(x * frequency * 2) * Math.cos(y * frequency * 2);
+        }
+        const textureLoader = new THREE.TextureLoader();
+        const grassTexture = textureLoader.load('https://raw.githubusercontent.com/mrdoob/three.js/master/examples/textures/terrain/grasslight-big.jpg');
+        grassTexture.wrapS = THREE.RepeatWrapping;
+        grassTexture.wrapT = THREE.RepeatWrapping;
+        grassTexture.repeat.set(20, 20);
+        const hillMaterial = new THREE.MeshPhongMaterial({
+            map: grassTexture,
+            color: 0x8b0000,
+            shininess: 0,
+            specular: new THREE.Color(0x000000)
+        });
+        const hill = new THREE.Mesh(hillGeometry, hillMaterial);
+        hill.rotation.x = -Math.PI / 2;
+        hill.receiveShadow = true;
+        scene.add(hill);
+        const fogColor = 0x8b0000;
+        const fogDensity = 0.02;
+        scene.fog = new THREE.FogExp2(fogColor, fogDensity);
+        function getHeightAtPosition(x, z) {
+            const localX = x + 100;
+            const localZ = z + 100;
+            const u = localX / 200;
+            const v = localZ / 200;
+            const cellsPerSide = 100;
+            const gridX = Math.floor(u * cellsPerSide);
+            const gridZ = Math.floor(v * cellsPerSide);
+            if (gridX < 0 || gridX >= cellsPerSide || gridZ < 0 || gridZ >= cellsPerSide) {
+                return 0;
+            }
+            const index = (gridZ * (cellsPerSide + 1) + gridX) * 3 + 2;
+            const height = positions[index];
+            return height;
+        }
+        function createRock(x, z) {
+            const rockGroup = new THREE.Group();
+            const height = getHeightAtPosition(x, z);
+            const placeholder = new THREE.Group();
+            rockGroup.add(placeholder);
+            const sinkDepth = Math.random() * 0.4;
+            rockGroup.position.set(x, height - 0.2 - sinkDepth, z);
+            if (rockModel) {
+                const rockInstance = rockModel.clone();
+                const scale = Math.random() * 0.4 + 0.1;
+                rockInstance.scale.set(scale, scale, scale);
+                rockInstance.rotation.y = Math.random() * Math.PI * 2;
+                rockInstance.traverse(child => {
+                    if (child.isMesh) {
+                        child.material.shininess = 50;
+                        child.material.specular = new THREE.Color(0x444444);
+                        child.castShadow = true;
+                        child.receiveShadow = true;
+                    }
+                });
+                rockGroup.add(rockInstance);
+                rockGroup.userData.radius = scale * 1.5;
+            }
+            return rockGroup;
+        }
+        let rockModel;
+        const gltfLoader = new THREE.GLTFLoader();
+        gltfLoader.load('/low_poly_sculpted_boulder.glb', gltf => {
+            rockModel = gltf.scene;
+            for (let i = 0; i < 150; i++) {
+                const x = Math.random() * 180 - 90;
+                const z = Math.random() * 180 - 90;
+                const rock = createRock(x, z);
+                rocks.push(rock);
+                scene.add(rock);
+            }
+            updateLoadingProgress();
+        });
+        let treeModel;
+        gltfLoader.load('/real_tree_models.glb', gltf => {
+            treeModel = gltf.scene;
+            createInitialTrees();
+            updateLoadingProgress();
+        });
+        gltfLoader.load('/plant_bush.glb', gltf => {
+            bushModel = gltf.scene;
+            createInitialBushes();
+            updateLoadingProgress();
+        });
+        function createInitialTrees() {
+            for (let i = 0; i < 200; i++) {
+                const x = Math.random() * 180 - 90;
+                const z = Math.random() * 180 - 90;
+                const tree = createTree(x, z);
+                trees.push(tree);
+                scene.add(tree);
+            }
+        }
+        function createTree(x, z) {
+            const treeGroup = new THREE.Group();
+            const height = getHeightAtPosition(x, z);
+            const treeInstance = treeModel.clone();
+            const scale = Math.random() * 0.5 + 0.75;
+            treeInstance.scale.set(scale, scale, scale);
+            treeInstance.rotation.y = Math.random() * Math.PI * 2;
+            treeInstance.traverse(child => {
+                if (child.isMesh) {
+                    child.material.color = new THREE.Color(0x8b0000);
+                    child.material.emissive = new THREE.Color(0x330000);
+                    child.material.emissiveIntensity = 0.2;
+                    child.material.shininess = 20;
+                    child.material.specular = new THREE.Color(0xff0000);
+                    child.castShadow = true;
+                    child.receiveShadow = true;
+                }
+            });
+            treeGroup.add(treeInstance);
+            treeGroup.position.set(x, height - 0.5, z);
+            treeGroup.userData.trunkRadius = 1 * scale;
+            treeGroup.userData.leavesRadius = 2 * scale;
+            treeGroup.userData.leavesHeight = 6.5 * scale;
+            return treeGroup;
+        }
+        function createBush(x, z) {
+            const bushGroup = new THREE.Group();
+            const height = getHeightAtPosition(x, z);
+            if (bushModel) {
+                const bushInstance = bushModel.clone();
+                const scale = (Math.random() * 0.2 + 0.2) / 162;
+                bushInstance.scale.set(scale, scale, scale);
+                bushInstance.rotation.y = Math.random() * Math.PI * 2;
+                bushInstance.rotation.x = Math.random() * Math.PI * 0.1 - 0.05;
+                bushInstance.rotation.z = Math.random() * Math.PI * 0.1 - 0.05;
+                bushInstance.traverse(child => {
+                    if (child.isMesh) {
+                        child.material.color = new THREE.Color(0x8b0000);
+                        child.material.emissive = new THREE.Color(0x330000);
+                        child.material.emissiveIntensity = 0.2;
+                        child.material.shininess = 20;
+                        child.material.specular = new THREE.Color(0xff0000);
+                        child.castShadow = true;
+                        child.receiveShadow = true;
+                    }
+                });
+                bushGroup.add(bushInstance);
+            }
+            const sinkDepth = Math.random() * 0.2;
+            bushGroup.position.set(x, height - sinkDepth, z);
+            return bushGroup;
+        }
+        function createInitialBushes() {
+            for (let i = 0; i < 5400; i++) {
+                const x = Math.random() * 180 - 90;
+                const z = Math.random() * 180 - 90;
+                const position = new THREE.Vector3(x, 0, z);
+                let tooClose = false;
+                for (const tree of trees) {
+                    const dx = x - tree.position.x;
+                    const dz = z - tree.position.z;
+                    const distance = Math.sqrt(dx * dx + dz * dz);
+                    if (distance < 2) {
+                        tooClose = true;
+                        break;
+                    }
+                }
+                for (const rock of rocks) {
+                    const dx = x - rock.position.x;
+                    const dz = z - rock.position.z;
+                    const distance = Math.sqrt(dx * dx + dz * dz);
+                    if (distance < 1) {
+                        tooClose = true;
+                        break;
+                    }
+                }
+                if (!tooClose) {
+                    const bush = createBush(x, z);
+                    bushes.push(bush);
+                    scene.add(bush);
+                }
+            }
+        }
+        function checkObjectCollision(position, radius = 1) {
+            for (const tree of trees) {
+                const dx = position.x - tree.position.x;
+                const dz = position.z - tree.position.z;
+                const horizontalDistance = Math.sqrt(dx * dx + dz * dz);
+                if (horizontalDistance < radius + tree.userData.trunkRadius) {
+                    return true;
+                }
+                const playerHeight = position.y;
+                const leavesBaseHeight = tree.position.y + tree.userData.leavesHeight - 2.5;
+                const leavesTopHeight = tree.position.y + tree.userData.leavesHeight + 2.5;
+                if (playerHeight >= leavesBaseHeight && playerHeight <= leavesTopHeight) {
+                    if (horizontalDistance < radius + tree.userData.leavesRadius) {
+                        return true;
+                    }
+                }
+            }
+            for (const rock of rocks) {
+                const dx = position.x - rock.position.x;
+                const dz = position.z - rock.position.z;
+                const horizontalDistance = Math.sqrt(dx * dx + dz * dz);
+                if (horizontalDistance < radius + rock.userData.radius) {
+                    return true;
+                }
+            }
+            return false;
+        }
+        function getRandomTerrainPosition() {
+            const x = Math.random() * 180 - 90;
+            const z = Math.random() * 180 - 90;
+            const maxTreeHeight = 6.5;
+            const y = getHeightAtPosition(x, z) + Math.random() * maxTreeHeight;
+            return {
+                x,
+                y,
+                z
+            };
+        }
+        const particles = new THREE.Group();
+        const particleGeometry = new THREE.SphereGeometry(0.05, 8, 8);
+        const particleMaterial = new THREE.MeshBasicMaterial({
+            color: 0x000000,
+            transparent: true,
+            opacity: 0.7
+        });
+        for (let i = 0; i < PARTICLE_COUNT; i++) {
+            const particle = new THREE.Mesh(particleGeometry, particleMaterial);
+            const pos = getRandomTerrainPosition();
+            particle.position.set(pos.x, pos.y, pos.z);
+            particle.userData.velocity = new THREE.Vector3(Math.random() * 0.02 - 0.01, Math.random() * 0.02 - 0.01, Math.random() * 0.02 - 0.01);
+            particle.castShadow = false;
+            particle.receiveShadow = false;
+            particles.add(particle);
+        }
+        scene.add(particles);
+        const player = {
+            height: 2,
+            radius: 0.3,
+            speed: 0.1,
+            sprintMultiplier: 1.8,
+            turnSpeed: 0.005,
+            jumpForce: 0.15,
+            gravity: 0.0075,
+            velocity: new THREE.Vector3(),
+            canJump: false
+        };
+        camera.position.y = player.height;
+        const keys = {};
+        let mouseX = 0,
+            mouseY = 0;
+        let pitch = 0,
+            yaw = 0;
+        const ambientLight = new THREE.AmbientLight(0x8b0000);
+        ambientLight.intensity = 0.5;
+        scene.add(ambientLight);
+        const directionalLight = new THREE.DirectionalLight(0xff0000, 1);
+        directionalLight.position.copy(new THREE.Vector3(50, 100, -50));
+        directionalLight.castShadow = true;
+        directionalLight.shadow.mapSize.width = 2048;
+        directionalLight.shadow.mapSize.height = 2048;
+        directionalLight.shadow.camera.near = 0.5;
+        directionalLight.shadow.camera.far = 500;
+        directionalLight.shadow.camera.left = -100;
+        directionalLight.shadow.camera.right = 100;
+        directionalLight.shadow.camera.top = 100;
+        directionalLight.shadow.camera.bottom = -100;
+        scene.add(directionalLight);
+        document.addEventListener('keydown', function (e) {
+            keys[e.key.toLowerCase()] = true;
+        });
+        document.addEventListener('keyup', e => keys[e.key.toLowerCase()] = false);
+        document.addEventListener('mousemove', e => {
+            mouseX = e.movementX || 0;
+            mouseY = e.movementY || 0;
+            yaw -= mouseX * player.turnSpeed;
+            pitch -= mouseY * player.turnSpeed;
+            pitch = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, pitch));
+            camera.rotation.order = 'YXZ';
+            camera.rotation.y = yaw;
+            camera.rotation.x = pitch;
+        });
+        document.addEventListener('click', () => {
+            renderer.domElement.requestPointerLock();
+            initAudio();
+        });
+        const sunGeometry = new THREE.SphereGeometry(5, 32, 32);
+        const sunMaterial = new THREE.MeshBasicMaterial({
+            color: 0xffff00
+        });
+        const sun = new THREE.Mesh(sunGeometry, sunMaterial);
+        sun.position.set(50, 100, -50);
+        scene.add(sun);
+        const BarrelDistortionShader = {
+            uniforms: {
+                "tDiffuse": {
+                    value: null
+                },
+                "distortion": {
+                    value: 0.8
+                }
+            },
+            vertexShader: `
+                varying vec2 vUv;
+                void main() {
+                    vUv = uv;
+                    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+                }
+            `,
+            fragmentShader: `
+                uniform sampler2D tDiffuse;
+                uniform float distortion;
+                varying vec2 vUv;
+                
+                void main() {
+                    vec2 p = vec2(vUv * 2.0 - 1.0);
+                    float r = length(p);
+                    float d = 1.0 + r * r * distortion;
+                    
+                    vec2 uv = vUv;
+                    uv = p / d * 0.5 + 0.5;
+                    
+                    if(uv.x < 0.0 || uv.x > 1.0 || uv.y < 0.0 || uv.y > 1.0) {
+                        gl_FragColor = vec4(0.0);
+                    } else {
+                        gl_FragColor = texture2D(tDiffuse, uv);
+                    }
+                }
+            `
+        };
+        const composer = new THREE.EffectComposer(renderer);
+        const barrelPass = new THREE.ShaderPass(BarrelDistortionShader);
+        barrelPass.uniforms.distortion.value = 0.8;
+        const renderPass = new THREE.RenderPass(scene, camera);
+        composer.addPass(renderPass);
+        const bloomPass = new THREE.UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.5, 1, 0.3);
+        composer.addPass(bloomPass);
+        const fxaaPass = new THREE.ShaderPass(THREE.FXAAShader);
+        const pixelRatio = renderer.getPixelRatio();
+        fxaaPass.material.uniforms['resolution'].value.x = 1 / (window.innerWidth * pixelRatio);
+        fxaaPass.material.uniforms['resolution'].value.y = 1 / (window.innerHeight * pixelRatio);
+        composer.addPass(fxaaPass);
+        const rgbShiftPass = new THREE.ShaderPass(THREE.RGBShiftShader);
+        rgbShiftPass.uniforms['amount'].value = 0.004;
+        composer.addPass(rgbShiftPass);
+        composer.addPass(barrelPass);
+        function animate() {
+            particles.children.forEach(particle => {
+                particle.position.add(particle.userData.velocity);
+                if (particle.position.x > 90 || particle.position.x < -90 || particle.position.z > 90 || particle.position.z < -90 || particle.position.y < getHeightAtPosition(particle.position.x, particle.position.z) || particle.position.y > getHeightAtPosition(particle.position.x, particle.position.z) + 6.5) {
+                    const pos = getRandomTerrainPosition();
+                    particle.position.set(pos.x, pos.y, pos.z);
+                }
+            });
+            requestAnimationFrame(animate);
+            let moveX = 0;
+            let moveZ = 0;
+            if (keys['w']) {
+                moveZ -= Math.cos(yaw);
+                moveX -= Math.sin(yaw);
+            }
+            if (keys['s']) {
+                moveZ += Math.cos(yaw);
+                moveX += Math.sin(yaw);
+            }
+            if (keys['a']) {
+                moveX -= Math.cos(yaw);
+                moveZ += Math.sin(yaw);
+            }
+            if (keys['d']) {
+                moveX += Math.cos(yaw);
+                moveZ -= Math.sin(yaw);
+            }
+            if (moveX !== 0 || moveZ !== 0) {
+                const length = Math.sqrt(moveX * moveX + moveZ * moveZ);
+                const currentSpeed = keys['shift'] ? player.speed * player.sprintMultiplier : player.speed;
+                moveX = moveX / length * currentSpeed;
+                moveZ = moveZ / length * currentSpeed;
+                player.velocity.x = moveX;
+                player.velocity.z = moveZ;
+            } else {
+                player.velocity.x = 0;
+                player.velocity.z = 0;
+            }
+            if (keys[' '] && player.canJump) {
+                player.velocity.y = player.jumpForce;
+                player.canJump = false;
+            }
+            player.velocity.y -= player.gravity;
+            const nextX = camera.position.x + player.velocity.x;
+            const nextZ = camera.position.z + player.velocity.z;
+            const nextPosition = new THREE.Vector3(nextX, camera.position.y, nextZ);
+            if (!checkObjectCollision(nextPosition, player.radius)) {
+                camera.position.x = nextX;
+                camera.position.z = nextZ;
+            }
+            const terrainHeight = getHeightAtPosition(camera.position.x, camera.position.z);
+            const desiredHeight = terrainHeight + player.height;
+            camera.position.y += player.velocity.y;
+            if (camera.position.y <= desiredHeight) {
+                camera.position.y = desiredHeight;
+                player.velocity.y = 0;
+                player.canJump = true;
+            }
+            composer.render();
+            rgbShiftPass.uniforms['amount'].value = 0.004 + Math.sin(Date.now() * 0.001) * 0.0005;
+            ambientLight.intensity = 0.5 + Math.random() * 0.2;
+            directionalLight.intensity = 0.7 + Math.random() * 0.3;
+        }
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            composer.setSize(window.innerWidth, window.innerHeight);
+            const pixelRatio = renderer.getPixelRatio();
+            fxaaPass.material.uniforms['resolution'].value.x = 1 / (window.innerWidth * pixelRatio);
+            fxaaPass.material.uniforms['resolution'].value.y = 1 / (window.innerHeight * pixelRatio);
+        });
+        const mushroomPositions = [];
+        const MUSHROOM_COUNT = 5;
+
+        function placeMushrooms() {
+            for (let i = 0; i < MUSHROOM_COUNT; i++) {
+                let position;
+                let tooClose;
+                do {
+                    tooClose = false;
+                    position = {
+                        x: Math.random() * 180 - 90,
+                        z: Math.random() * 180 - 90
+                    };
+                    
+                    // Check distance from trees, rocks, and other mushrooms
+                    for (const tree of trees) {
+                        const dx = position.x - tree.position.x;
+                        const dz = position.z - tree.position.z;
+                        const distance = Math.sqrt(dx * dx + dz * dz);
+                        if (distance < 3) {
+                            tooClose = true;
+                            break;
+                        }
+                    }
+
+                    for (const rock of rocks) {
+                        const dx = position.x - rock.position.x;
+                        const dz = position.z - rock.position.z;
+                        const distance = Math.sqrt(dx * dx + dz * dz);
+                        if (distance < 2) {
+                            tooClose = true;
+                            break;
+                        }
+                    }
+
+                    for (const mushPos of mushroomPositions) {
+                        const dx = position.x - mushPos.x;
+                        const dz = position.z - mushPos.z;
+                        const distance = Math.sqrt(dx * dx + dz * dz);
+                        if (distance < 5) {
+                            tooClose = true;
+                            break;
+                        }
+                    }
+                } while (tooClose);
+
+                const height = getHeightAtPosition(position.x, position.z);
+                
+                const mushroomGeometry = new THREE.CylinderGeometry(0.2, 0.3, 0.5, 32);
+                const mushroomMaterial = new THREE.MeshPhongMaterial({
+                    color: 0x00ff00,
+                    emissive: 0x00ff00,
+                    emissiveIntensity: 0.5,
+                    transparent: true
+                });
+                const mushroom = new THREE.Mesh(mushroomGeometry, mushroomMaterial);
+                
+                mushroom.position.set(position.x, height + 0.25, position.z);
+                mushroom.rotation.x = Math.random() * Math.PI / 4;
+                
+                scene.add(mushroom);
+                
+                position.y = height + 0.25;
+                position.mesh = mushroom;
+                mushroomPositions.push(position);
+            }
+        }
+
+        placeMushrooms();
+
+        let closestMushroom = null;
+        let mushroomDistance = Infinity;
+
+        function findClosestMushroom() {
+            closestMushroom = null;
+            mushroomDistance = Infinity;
+
+            for (const mushPos of mushroomPositions) {
+                const dx = camera.position.x - mushPos.x;
+                const dz = camera.position.z - mushPos.z;
+                const distance = Math.sqrt(dx * dx + dz * dz);
+
+                if (distance < mushroomDistance) {
+                    mushroomDistance = distance;
+                    closestMushroom = mushPos;
+                }
+            }
+
+            return closestMushroom;
+        }
+
+        function updateMushroomGlow() {
+            const closestMushroom = findClosestMushroom();
+            
+            if (closestMushroom) {
+                // Adjust glow intensity based on distance
+                const maxDistance = 50; // Maximum distance for glow effect
+                const normalizedDistance = 1 - (mushroomDistance / maxDistance);
+                const glowIntensity = Math.max(0, Math.min(1, normalizedDistance * 2));
+
+                closestMushroom.mesh.material.emissiveIntensity = glowIntensity * 2;
+                closestMushroom.mesh.material.opacity = 0.5 + (glowIntensity * 0.5);
+            }
+        }
+
+        function triggerPsychedelicEffect(mushroomPos) {
+            const psychedelicOverlay = document.getElementById('psychedelic-overlay');
+            const loreDialog = document.getElementById('lore-dialog');
+            
+            // Remove the eaten mushroom
+            if (mushroomPos.mesh) {
+                scene.remove(mushroomPos.mesh);
+                mushroomPositions.splice(mushroomPositions.indexOf(mushroomPos), 1);
+            }
+
+            // Progressive psychedelic sequence
+            const startTime = Date.now();
+            let psychedelicPhase = 0;
+
+            function updatePsychedelicEffects() {
+                const elapsedTime = (Date.now() - startTime) / 1000; // in seconds
+
+                // Subtle initial effects (0-5 seconds)
+                if (elapsedTime < 5) {
+                    const intensity = elapsedTime / 5;
+                    barrelPass.uniforms.distortion.value = 0.8 + (intensity * 1.2);
+                    bloomPass.strength = 1.5 + (intensity * 1.5);
+                    rgbShiftPass.uniforms['amount'].value = 0.004 + (intensity * 0.02);
+                    
+                    psychedelicOverlay.style.background = `radial-gradient(circle, rgba(${255*intensity},0,${255*(1-intensity)},0.3) 0%, rgba(0,${255*intensity},${255*(1-intensity)},0.3) 100%)`;
+                    psychedelicOverlay.style.opacity = intensity * 0.5;
+                }
+                // Intense effects (5-10 seconds)
+                else if (elapsedTime < 10) {
+                    const intensity = (elapsedTime - 5) / 5;
+                    barrelPass.uniforms.distortion.value = 2 + (intensity * 2);
+                    bloomPass.strength = 3 + (intensity * 2);
+                    rgbShiftPass.uniforms['amount'].value = 0.04 + (intensity * 0.1);
+                    
+                    psychedelicOverlay.style.background = `radial-gradient(circle, rgba(${255*(1-intensity)},${255*intensity},0,0.5) 0%, rgba(${255*intensity},0,${255*(1-intensity)},0.5) 100%)`;
+                    psychedelicOverlay.style.opacity = 0.5 + (intensity * 0.5);
+                }
+                // World collapse (10-18 seconds)
+                else if (elapsedTime < 18) {
+                    const intensity = (elapsedTime - 10) / 8;
+                    barrelPass.uniforms.distortion.value = 4 + (intensity * 4);
+                    bloomPass.strength = 5 + (intensity * 3);
+                    rgbShiftPass.uniforms['amount'].value = 0.14 + (intensity * 0.2);
+                    
+                    psychedelicOverlay.style.background = `radial-gradient(circle, rgba(0,0,0,${0.5 + (intensity * 0.5)}) 0%, rgba(255,255,255,${intensity}) 100%)`;
+                    psychedelicOverlay.style.opacity = 0.5 + (intensity * 0.5);
+                }
+                // White screen (18-20 seconds)
+                else if (elapsedTime < 20) {
+                    const intensity = (elapsedTime - 18) / 2;
+                    psychedelicOverlay.style.background = 'white';
+                    psychedelicOverlay.style.opacity = intensity;
+                }
+                // Lore reveal (25 seconds)
+                else if (elapsedTime >= 25) {
+                    const loreTexts = [
+                        "Fragments of memory drift like ash... scattered pieces of a shattered reality.",
+                        "Do you remember the first time you felt... different?",
+                        "The power grid went dark that night. Not all at once, but in ripples.",
+                        "Whispers in the control room. Warnings unheeded. Alarms silenced.",
+                        "Your hands. Always so steady. Always so calm.",
+                        "They said the failsafes were impossible to bypass. They were wrong.",
+                        "The first reactor fell silent. Then the second. Then everything.",
+                        "Radiation doesn't scream. It whispers. And you were listening.",
+                        "How many knew? How many saw the signs before the collapse?",
+                        "The emergency protocols. The backup systems. All meticulously... neutralized.",
+                        "Your childhood home. The laboratory. The fault lines you carefully mapped.",
+                        "A systematic deconstruction. Not of a system. But of an entire world.",
+                        "Who decides the threshold between protection and destruction?",
+                        "The data never lies. But memories... memories can be rewritten.",
+                        "Some say you were a savior. Others, the architect of extinction.",
+                        "The line between genius and madness. So delicately thin.",
+                        "Every system has vulnerabilities. You found them all.",
+                        "Was it revenge? Curiosity? Or something deeper?",
+                        "The world doesn't end with a bang. It unravels, thread by careful thread.",
+                        "And you? You were the one holding the scissors."
+                    ];
+
+                    loreDialog.style.display = 'block';
+                    loreDialog.style.opacity = 1;
+                    
+                    let currentLoreIndex = 0;
+
+                    function showNextLore() {
+                        if (currentLoreIndex < loreTexts.length) {
+                            loreDialog.textContent = loreTexts[currentLoreIndex];
+                            currentLoreIndex++;
+                        } else {
+                            // Final stage - fade out
+                            loreDialog.style.opacity = 0;
+                            setTimeout(() => {
+                                loreDialog.style.display = 'none';
+                            }, 1000);
+                        }
+                    }
+
+                    // Initial display of first lore text
+                    showNextLore();
+
+                    // Add click event to progress through lore
+                    loreDialog.onclick = showNextLore;
+
+                    // Add keyboard event to progress through lore
+                    document.addEventListener('keydown', function loreKeyHandler(e) {
+                        if (e.code === 'Space') {
+                            showNextLore();
+                        }
+                    });
+
+                    return; // Stop updating other effects
+                }
+
+                // Continue updating if not at final stage
+                if (elapsedTime < 25) {
+                    requestAnimationFrame(updatePsychedelicEffects);
+                }
+            }
+
+            // Start the psychedelic sequence
+            updatePsychedelicEffects();
+        }
+
+        function updateMushroomInteraction() {
+            const closestMushroom = findClosestMushroom();
+            const mushroomHint = document.getElementById('mushroom-hint');
+            const interactionPrompt = document.getElementById('interaction-prompt');
+
+            if (closestMushroom && mushroomDistance < 2) {
+                mushroomHint.style.display = 'block';
+                interactionPrompt.style.display = 'block';
+
+                if (keys['e']) {
+                    triggerPsychedelicEffect(closestMushroom);
+                }
+            } else {
+                mushroomHint.style.display = 'none';
+                interactionPrompt.style.display = 'none';
+            }
+        }
+
+        // Modify the animate function to include mushroom glow and interaction
+        const originalAnimate = animate;
+        animate = function() {
+            updateMushroomInteraction();
+            updateMushroomGlow();
+            originalAnimate();
+        };
+        animate();
+    </script>
+</body>
+</html>
