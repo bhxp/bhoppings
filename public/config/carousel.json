@@ -1,14 +1,14 @@
 [
   {
-    "link": "/tangini",
-    "img": "tangini.png"
-  },
-  {
-    "link": "/poop",
-    "img": "poop.png"
+    "link": "/settings",
+    "img": "settings.png"
   },
   {
     "link": "/store",
     "img": "app-store.svg"
+  },
+  {
+    "link": "/nexa",
+    "img": "nexa.svg"
   }
 ]
