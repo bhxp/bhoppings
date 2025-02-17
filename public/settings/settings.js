@@ -7,16 +7,7 @@ function setCursor(number) {
   updateCursorSettings();
 }
 
-function updateCursorSettings() {
-  $("#cursor-sidebar-button img").attr(
-    "src",
-    `/images/cursor/${window.localStorage.cursor}.svg`,
-  );
-  $("#settings-container .option").removeClass("active-cursor");
-  $("#settings-container .option")
-    .eq(JSON.parse(window.localStorage.cursor))
-    .addClass("active-cursor");
-}
+function updateCursorSettings() {}
 
 function cursorSettings() {
   updateCursorSettings();

@@ -3,12 +3,17 @@
 var userTheme;
 var themeOptions = {};
 
-function defaultTheme(themeSettings) {
-  const theme = {};
-  Object.keys(themeSettings).forEach((key) => {
-    theme[key] = themeSettings[key][0];
-  });
-  return theme;
+function defaultTheme() {
+  return {
+    primary: "#fff",
+    "dark-background": "#12151c",
+    cursor1: "#3AC4FF",
+    cursor2: "#3AC4FF",
+    color1: "#D185FF",
+    color2: "#0ff",
+    bg1: "#669",
+    bg2: "#669",
+  };
 }
 
 function userThemeStyleElement(theme) {
@@ -24,22 +29,25 @@ function userThemeStyleElement(theme) {
   return $(styleElement);
 }
 
-async function lsInit() {
+async function lsInit(reload = false) {
   if (localStorage.getItem("theme")) {
     userTheme = JSON.parse(localStorage.getItem("theme"));
   } else {
-    await $.getJSON("/config/theme-colors.json").then((data) => {
-      themeOptions = data;
-    });
-    userTheme = defaultTheme(themeOptions);
+    userTheme = defaultTheme();
     localStorage.setItem("theme", JSON.stringify(userTheme));
   }
 
   userThemeStyleElement(userTheme).appendTo("head");
 }
 
-$(document).ready(function () {
-  lsInit();
+$(document).ready(async function () {
+  if (!window.localStorage.theme) {
+    await lsInit(); // Wait for the initialization to complete
+    //window.location.reload();
+    cursorMain();
+  } else {
+    lsInit();
+  }
 });
 
 function setUserStyle(key, value) {
