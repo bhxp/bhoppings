@@ -16,7 +16,6 @@ const getFile = (url, name) => {
   }
 };
 
-// Custom static file serving middleware for preloading
 const processPreloadTags = (req, res, next) => {
   let filePath = path.join(__dirname, "public", req.path);
 
@@ -32,16 +31,19 @@ const processPreloadTags = (req, res, next) => {
         return next(err);
       }
 
-      // Replace preload tags
+      // Determine the base directory relative to /public
+      const baseDir = path.dirname(req.path);
+
+      // Replace preload tags and pass the baseDir
       let modifiedData = data.replace(
         /<preload\s+name="([^"]+)"\s+src="([^"]+)"\s*\/>/g,
-        (match, name, url) => getFile(url, name),
+        (match, name, url) => getFile(baseDir, url, name),
       );
       if (modifiedData.includes("<preload ")) {
         modifiedData = modifiedData.replace(
           `</body>`,
           `<!-- preload script injected by server software, ignore -->
-        <script type="text/javascript" src="/preload.js"></script>
+          <script type="text/javascript" src="/preload.js"></script>
           </body>`,
         );
       }
