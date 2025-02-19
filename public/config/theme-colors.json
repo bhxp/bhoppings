@@ -53,6 +53,26 @@
     "deep_ocean": {
       "color1": "#3AC4FF",
       "color2": "#0019F9"
+    },
+    "mystic": {
+      "color1": "#FF00D4",
+      "color2": "#BB00FF"
+    },
+    "cream": {
+      "color1": "#FFBA7E",
+      "color2": "#FF8400"
+    },
+    "lemon": {
+      "color1": "#FFF264",
+      "color2": "#FFFF00"
+    },
+    "dusk_fire": {
+      "color1": "#FF00EE",
+      "color2": "#FF9000"
+    },
+    "ocean_sage": {
+      "color1": "#CAFFFD",
+      "color2": "#007870"
     }
   },
   "themes": {
