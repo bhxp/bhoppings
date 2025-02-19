@@ -91,12 +91,10 @@ function displayNavbar(items) {
     $("body").addClass("bg-fadein");
 }
 
-fetch("/config/home_navbar.json")
-    .then((response) => response.json())
-    .then((items) => displayNavbar(items))
-    .catch((error) => {
-        console.error(error);
-    });
+$(document).ready(function () {
+    const navbarData = JSON.parse(getPreloadedValue("navbar"));
+    displayNavbar(navbarData);
+});
 $("#navbar .gradient-text").click(function () {
     window.open("/home", "_self");
 });

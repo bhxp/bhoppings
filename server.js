@@ -3,40 +3,80 @@ const path = require("path");
 const fs = require("fs");
 const app = express();
 const PORT = process.env.PORT || 3000;
-/*
-// Load redirects from redirects.json (array format)
-const redirects = JSON.parse(
-  fs.readFileSync(path.join(__dirname, "redirects.json"), "utf-8"),
-);
 
-app.use(express.json()); // Middleware to parse JSON requests
-app.use(express.static(path.join(__dirname, "public")));
-
-// Normalize paths with no trailing slash (redirect them to paths with trailing slash)
-app.use((req, res, next) => {
-  if (req.path[req.path.length - 1] !== "/" && req.path !== "/") {
-    return res.redirect(301, req.path + "/");
+// Helper function to get file content
+const getFile = (url, name) => {
+  try {
+    const filePath = path.join(__dirname, "public", url);
+    const data = fs.readFileSync(filePath, "utf8");
+    return `<preload name='${name}'>${data}</preload>`;
+  } catch (err) {
+    console.error(`Error reading file ${url}:`, err);
+    return `<!-- Error reading file ${url} -->`;
   }
-  next();
-});
+};
 
-// Setup all redirects from redirects.json array
-redirects.forEach((redirect) => {
-  app.get(redirect.from, (req, res) => {
-    res.redirect(redirect.to);
-  });
-});
-*/
+// Custom static file serving middleware for preloading
+const processPreloadTags = (req, res, next) => {
+  let filePath = path.join(__dirname, "public", req.path);
+
+  // If the request is for a directory, append "index.html"
+  if (fs.existsSync(filePath) && fs.statSync(filePath).isDirectory()) {
+    filePath = path.join(filePath, "index.html");
+  }
+
+  // Check if the file exists and is an HTML file
+  if (fs.existsSync(filePath) && path.extname(filePath) === ".html") {
+    fs.readFile(filePath, "utf8", (err, data) => {
+      if (err) {
+        return next(err);
+      }
+
+      // Replace preload tags
+      let modifiedData = data.replace(
+        /<preload\s+name="([^"]+)"\s+src="([^"]+)"\s*\/>/g,
+        (match, name, url) => getFile(url, name),
+      );
+      if (modifiedData.includes("<preload ")) {
+        modifiedData = modifiedData.replace(
+          `</body>`,
+          `<!-- preload script injected by server software, ignore -->
+        <script type="text/javascript" src="/preload.js"></script>
+          </body>`,
+        );
+      }
+
+      res.set("Content-Type", "text/html");
+      res.send(modifiedData);
+    });
+  } else {
+    next();
+  }
+};
 
 app.get("/tango", (req, res) => {
   res.redirect("/tangini");
 });
 
+app.use(processPreloadTags);
 app.use(express.static(path.join(__dirname, "public")));
 
 // 404 handler
 app.use((req, res) => {
-  res.status(404).sendFile(path.join(__dirname, "public/404/index.html"));
+  let filePath = path.join(__dirname, "public/404/index.html");
+
+  fs.readFile(filePath, "utf8", (err, data) => {
+    if (err) {
+      return res.status(404).send("404 Not Found");
+    }
+
+    const modifiedData = data.replace(
+      /<preload\s+name="([^"]+)"\s+src="([^"]+)"\s*\/>/g,
+      (match, name, url) => getFile(url, name),
+    );
+
+    res.status(404).send(modifiedData);
+  });
 });
 
 app.listen(PORT, () => {

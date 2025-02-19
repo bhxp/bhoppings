@@ -18,27 +18,17 @@ if (localStorage.getItem("purchased-items")) {
   localStorage.setItem("purchased-items", "[]");
 }
 var storeItems = [];
-fetch("/config/store.json")
-  .then((response) => {
-    if (!response.ok) {
-      throw new Error(`HTTP error! Status: ${response.status}`);
-    }
-    return response.json();
-  })
-  .then((data) => {
-    storeItems = data;
-    data.forEach((item) => {
-      $("#container").append(
-        `<div class="item">
-            <img src="/images/store/${item.image}" />
-            <button class="item-button">${item.name}</button>
-          </div>`,
-      );
-    });
-  })
-  .catch((error) => {
-    console.error("Error fetching or processing the data:", error);
+$(document).ready(function () {
+  storeItems = JSON.parse(getPreloadedValue("store"));
+  data.forEach((item) => {
+    $("#container").append(
+      `<div class="item">
+          <img src="/images/store/${item.image}" />
+          <button class="item-button">${item.name}</button>
+        </div>`,
+    );
   });
+});
 
 // Attach hover in event
 $("#container").on("mouseenter", ".item .item-button", function () {

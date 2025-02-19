@@ -83,15 +83,13 @@ function carouselInit() {
 }
 
 $(document).ready((e) => {
-  $.getJSON("/config/carousel.json", (data) => {
-    carouselData = data;
-    carouselInit();
-    setInterval(() => {
-      if (!carouselHovered && !skipThis && document.hasFocus()) {
-        carouselLeft();
-      }
-    }, 6000);
-  });
+  carouselData = JSON.parse(getPreloadedValue("carousel"));
+  carouselInit();
+  setInterval(() => {
+    if (!carouselHovered && !skipThis && document.hasFocus()) {
+      carouselLeft();
+    }
+  }, 6000);
   $("#carousel")
     .on("mouseenter", function () {
       carouselHovered = true;
