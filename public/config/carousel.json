@@ -1,7 +1,7 @@
 [
   {
     "link": "/settings",
-    "img": "settings.png"
+    "img": "settings-new.png"
   },
   {
     "link": "/store",
@@ -9,6 +9,6 @@
   },
   {
     "link": "/nexa",
-    "img": "nexa.svg"
+    "img": "nexa-new.png"
   }
 ]
