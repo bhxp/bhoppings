@@ -1,5 +1,10 @@
 [
   {
+    "name": "InfiniCraft",
+    "url": "/infinicraft",
+    "image": "infinicraft.png"
+  },
+  {
     "name": "❓Enhance",
     "url": "/enhance",
     "image": "enhance.png"
