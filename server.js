@@ -4,17 +4,45 @@ const fs = require("fs");
 
 const app = express();
 
-// Helper function to get file content
+// 1️⃣ Fix relative paths first
+const fixRelativePaths = (req, res, next) => {
+  if (req.path.endsWith("/") || req.path.endsWith(".html")) {
+    return next(); // Skip directories and HTML files
+  }
+
+  const referrer = req.get("Referrer");
+  if (!referrer) return next();
+
+  try {
+    const referrerUrl = new URL(referrer);
+    const basePath = path.dirname(referrerUrl.pathname); // Get the directory of the referring file
+    const correctedPath = path.join(
+      process.cwd(),
+      "public",
+      basePath,
+      req.path,
+    );
+
+    if (fs.existsSync(correctedPath) && fs.statSync(correctedPath).isFile()) {
+      return res.sendFile(correctedPath);
+    }
+  } catch (err) {
+    console.error("Error fixing relative paths:", err);
+  }
+
+  next();
+};
+
+app.use(fixRelativePaths);
+
+// 2️⃣ Handle preload tags before serving static files
 const getFile = (baseDir, url, name) => {
   try {
-    // Normalize the URL to remove any leading slashes
     const normalizedUrl = url.startsWith("/") ? url.slice(1) : url;
-    
-    // For Vercel, we need to use the absolute path from the project root
     const filePath = path.join(process.cwd(), "public", baseDir, normalizedUrl);
-    
-    console.log("Attempting to read file:", filePath); // Debug log
-    
+
+    console.log("Attempting to read file:", filePath);
+
     if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
       const data = fs.readFileSync(filePath, "utf8");
       return `<preload name='${name}'>${data}</preload>`;
@@ -28,46 +56,9 @@ const getFile = (baseDir, url, name) => {
   }
 };
 
-// Custom middleware to handle relative paths
-const handleRelativePaths = (req, res, next) => {
-  // Skip if it's a request for a directory or has an absolute path
-  if (req.path.endsWith('/') || req.path.startsWith('/_next') || req.path.includes('.html')) {
-    return next();
-  }
-
-  // Get the directory path from the referrer
-  const referrer = req.get('Referrer');
-  if (!referrer) {
-    return next();
-  }
-
-  try {
-    // Parse the referrer URL
-    const referrerUrl = new URL(referrer);
-    // Get the directory path from the referrer
-    const dirPath = path.dirname(referrerUrl.pathname);
-    
-    // Construct the full file path
-    const fileName = path.basename(req.path);
-    const possiblePath = path.join(process.cwd(), "public", dirPath, fileName);
-    
-    console.log("Checking relative path:", possiblePath);
-
-    // Check if the file exists in the same directory as the referring HTML
-    if (fs.existsSync(possiblePath) && fs.statSync(possiblePath).isFile()) {
-      return res.sendFile(possiblePath);
-    }
-  } catch (err) {
-    console.error("Error handling relative path:", err);
-  }
-
-  // If we couldn't find the file, continue to next middleware
-  next();
-};
-
 const processPreloadTags = (req, res, next) => {
   let filePath = path.join(process.cwd(), "public", req.path);
-  
+
   if (fs.existsSync(filePath) && fs.statSync(filePath).isDirectory()) {
     filePath = path.join(filePath, "index.html");
   }
@@ -77,19 +68,19 @@ const processPreloadTags = (req, res, next) => {
       if (err) {
         return next(err);
       }
-      
+
       const baseDir = path.dirname(req.path).substring(1);
-      
+
       let modifiedData = data.replace(
         /<preload\s+name="([^"]+)"\s+src="([^"]+)"(?:\s*\/>|>\s*<\/preload>)/g,
-        (match, name, url) => getFile(baseDir, url, name)
+        (match, name, url) => getFile(baseDir, url, name),
       );
 
       modifiedData = modifiedData.replace(
         `</body>`,
         `<!-- preload script injected by server software, ignore -->
         <script type="text/javascript" src="/preload.js"></script>
-        </body>`
+        </body>`,
       );
 
       res.set("Content-Type", "text/html");
@@ -100,21 +91,17 @@ const processPreloadTags = (req, res, next) => {
   }
 };
 
-// Redirect handler
+app.use(processPreloadTags);
+
+// 3️⃣ Serve static files after processing
+app.use(express.static(path.join(process.cwd(), "public")));
+
+// 4️⃣ Handle custom redirects
 app.get("/tango", (req, res) => {
   res.redirect("/tangini");
 });
 
-// Add the relative path handler before static files
-app.use(handleRelativePaths);
-
-// Preload tags processor
-app.use(processPreloadTags);
-
-// Static file serving
-app.use(express.static(path.join(process.cwd(), "public")));
-
-// 404 handler
+// 5️⃣ Handle 404 errors (relative paths still apply here)
 app.use((req, res) => {
   let filePath = path.join(process.cwd(), "public/404/index.html");
   fs.readFile(filePath, "utf8", (err, data) => {
@@ -123,16 +110,16 @@ app.use((req, res) => {
     }
     const modifiedData = data.replace(
       /<preload\s+name="([^"]+)"\s+src="([^"]+)"\s*\/>/g,
-      (match, name, url) => getFile("404", url, name)
+      (match, name, url) => getFile("404", url, name),
     );
     res.status(404).send(modifiedData);
   });
 });
 
-// Export the app for Vercel
+// 6️⃣ Export for Vercel
 module.exports = app;
 
-// Only start the server if we're running locally
+// 7️⃣ Start server locally
 if (process.env.NODE_ENV !== "production") {
   const PORT = process.env.PORT || 3000;
   app.listen(PORT, () => {
