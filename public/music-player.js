@@ -3,7 +3,7 @@ $("body").append(`<div id="music-player-hitbox"></div>`);
 const musicPlayerContainer = $("<div id='music-player-container'></div>");
 
 musicPlayerContainer.html(`
-<div id="music-player-icon"><img src="/images/ballbird.jpg" /></div>
+<div id="music-player-icon"><img src="/images/placeholder.png" /></div>
 <div id="music-player-title">TITLE</div>
 <div id="music-player-controls">
 <button id="music-player-back-button"><img src="/images/music-forward.svg" /></button>
