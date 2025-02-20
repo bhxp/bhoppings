@@ -4,7 +4,6 @@ const fs = require("fs");
 
 const app = express();
 
-// 1️⃣ Fix relative paths first
 const fixRelativePaths = (req, res, next) => {
   if (req.path.endsWith("/") || req.path.endsWith(".html")) {
     return next(); // Skip directories and HTML files
@@ -15,13 +14,14 @@ const fixRelativePaths = (req, res, next) => {
 
   try {
     const referrerUrl = new URL(referrer);
-    const basePath = path.dirname(referrerUrl.pathname); // Get the directory of the referring file
-    const correctedPath = path.join(
-      process.cwd(),
-      "public",
-      basePath,
-      req.path,
-    );
+    let basePath = referrerUrl.pathname;
+
+    // Ensure the referrer path is treated as a directory
+    if (!basePath.endsWith("/")) {
+      basePath += "/"; // Force it to behave like a directory
+    }
+
+    const correctedPath = path.join(process.cwd(), "public", basePath, req.path);
 
     if (fs.existsSync(correctedPath) && fs.statSync(correctedPath).isFile()) {
       return res.sendFile(correctedPath);
