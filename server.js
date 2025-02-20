@@ -2,10 +2,9 @@ const express = require("express");
 const path = require("path");
 const fs = require("fs");
 
-// Create the Express app
 const app = express();
 
-// Helper function to get file content - modified for Vercel
+// Helper function to get file content
 const getFile = (baseDir, url, name) => {
   try {
     // Normalize the URL to remove any leading slashes
@@ -29,32 +28,63 @@ const getFile = (baseDir, url, name) => {
   }
 };
 
+// Custom middleware to handle relative paths
+const handleRelativePaths = (req, res, next) => {
+  // Skip if it's a request for a directory or has an absolute path
+  if (req.path.endsWith('/') || req.path.startsWith('/_next') || req.path.includes('.html')) {
+    return next();
+  }
+
+  // Get the directory path from the referrer
+  const referrer = req.get('Referrer');
+  if (!referrer) {
+    return next();
+  }
+
+  try {
+    // Parse the referrer URL
+    const referrerUrl = new URL(referrer);
+    // Get the directory path from the referrer
+    const dirPath = path.dirname(referrerUrl.pathname);
+    
+    // Construct the full file path
+    const fileName = path.basename(req.path);
+    const possiblePath = path.join(process.cwd(), "public", dirPath, fileName);
+    
+    console.log("Checking relative path:", possiblePath);
+
+    // Check if the file exists in the same directory as the referring HTML
+    if (fs.existsSync(possiblePath) && fs.statSync(possiblePath).isFile()) {
+      return res.sendFile(possiblePath);
+    }
+  } catch (err) {
+    console.error("Error handling relative path:", err);
+  }
+
+  // If we couldn't find the file, continue to next middleware
+  next();
+};
+
 const processPreloadTags = (req, res, next) => {
-  // For Vercel, use process.cwd() instead of __dirname
   let filePath = path.join(process.cwd(), "public", req.path);
   
-  // If the request is for a directory, append "index.html"
   if (fs.existsSync(filePath) && fs.statSync(filePath).isDirectory()) {
     filePath = path.join(filePath, "index.html");
   }
 
-  // Check if the file exists and is an HTML file
   if (fs.existsSync(filePath) && path.extname(filePath) === ".html") {
     fs.readFile(filePath, "utf8", (err, data) => {
       if (err) {
         return next(err);
       }
       
-      // Get the directory path relative to the HTML file
-      const baseDir = path.dirname(req.path).substring(1); // Remove leading slash
+      const baseDir = path.dirname(req.path).substring(1);
       
-      // Replace preload tags with file contents
       let modifiedData = data.replace(
         /<preload\s+name="([^"]+)"\s+src="([^"]+)"(?:\s*\/>|>\s*<\/preload>)/g,
         (match, name, url) => getFile(baseDir, url, name)
       );
 
-      // Inject the preload script with absolute path
       modifiedData = modifiedData.replace(
         `</body>`,
         `<!-- preload script injected by server software, ignore -->
@@ -75,10 +105,13 @@ app.get("/tango", (req, res) => {
   res.redirect("/tangini");
 });
 
+// Add the relative path handler before static files
+app.use(handleRelativePaths);
+
 // Preload tags processor
 app.use(processPreloadTags);
 
-// Static file serving - specify the full path for Vercel
+// Static file serving
 app.use(express.static(path.join(process.cwd(), "public")));
 
 // 404 handler
