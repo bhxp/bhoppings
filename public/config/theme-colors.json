@@ -153,6 +153,60 @@
       "color2": "#007870",
       "bg1": "#CAFFFD",
       "bg2": "#007870"
+    },
+    "emerald_mist": {
+      "color1": "#1B4D3E",
+      "color2": "#2F847C",
+      "bg1": "#000",
+      "bg2": "#000"
+    },
+    "lavendar_haze": {
+      "color1": "#FFDAB9",
+      "color2": "#663399",
+      "bg1": "#FFDAB9",
+      "bg2": "#663399"
+    },
+    "arborealis": {
+      "color1": "#008080",
+      "color2": "#FF8082",
+      "bg1": "#008080",
+      "bg2": "#FF8082"
+    },
+    "midnight_meadow": {
+      "color1": "#4B0082",
+      "color2": "#00CED1",
+      "bg1": "#4B0082",
+      "bg2": "#00CED1"
+    },
+    "spring_jade": {
+      "color1": "#00BFFF",
+      "color2": "#00FF7F",
+      "bg1": "#00BFFF",
+      "bg2": "#00FF7F"
+    },
+    "orchard": {
+      "color1": "#DA70D6",
+      "color2": "#00BFFF",
+      "bg1": "#DA70D6",
+      "bg2": "#00BFFF"
+    },
+    "sapphire": {
+      "color1": "#1E90FF",
+      "color2": "#00FFFF",
+      "bg1": "#1E90FF",
+      "bg2": "#00FFFF"
+    },
+    "starlit_coral": {
+      "color1": "#FFF29D",
+      "color2": "#FF5864",
+      "bg1": "#FF5864",
+      "bg2": "#FFF29D"
+    },
+    "lilac_pasture": {
+      "color1": "#8A2BE2",
+      "color2": "#FFA4E5",
+      "bg1": "#8A2BE2",
+      "bg2": "#FFA4E5"
     }
   }
 }
