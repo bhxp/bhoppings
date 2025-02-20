@@ -19,8 +19,9 @@ if (localStorage.getItem("purchased-items")) {
 }
 var storeItems = [];
 $(document).ready(function () {
+  console.log(getPreloadedValue("store"));
   storeItems = JSON.parse(getPreloadedValue("store"));
-  data.forEach((item) => {
+  storeItems.forEach((item) => {
     $("#container").append(
       `<div class="item">
           <img src="/images/store/${item.image}" />
