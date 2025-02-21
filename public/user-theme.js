@@ -6,7 +6,7 @@ var themeOptions = {};
 function defaultTheme() {
   return {
     primary: "#fff",
-    "dark-background": "#12151c",
+    dark-background: "#12151c",
     cursor1: "#3AC4FF",
     cursor2: "#3AC4FF",
     color1: "#D185FF",
