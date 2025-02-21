@@ -4,16 +4,16 @@ var userTheme;
 var themeOptions = {};
 
 function defaultTheme() {
-  return {
-    primary: "#fff",
-    dark-background: "#12151c",
-    cursor1: "#3AC4FF",
-    cursor2: "#3AC4FF",
-    color1: "#D185FF",
-    color2: "#0ff",
-    bg1: "#669",
-    bg2: "#669",
-  };
+  return JSON.parse(`{
+    "primary": "#fff",
+    "dark-background": "#12151c",
+    "cursor1": "#3AC4FF",
+    "cursor2": "#3AC4FF",
+    "color1": "#D185FF",
+    "color2": "#0ff",
+    "bg1": "#669",
+    "bg2": "#669"
+  }`);
 }
 
 function userThemeStyleElement(theme) {
