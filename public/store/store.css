@@ -1,61 +1,169 @@
+@import url('https://fonts.googleapis.com/css2?family=Kumbh+Sans:wght@100..900&display=swap');
+
+
 #container {
-    position: absolute;
-    top: 96px;
-    left: 0px;
-    height: calc(100vh - 96px);
-    width: 100vw;
-    overflow-y: scroll;
-    display: flex;
-    flex-direction: row;
-    flex-wrap: wrap;
-    padding: 8px;
-  }
+  --margin: 2.3vw;
+  --columns: 5;
+  position: absolute;
+  bottom: 0px;
+  left: 0px;
+  height: calc(100vh - 192px);
+  width: 103vw;
+  overflow-y: scroll;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  box-sizing: border-box;
+  padding-left: calc(var(--margin) / 2);
+}
+#container .item {
+  width: calc(100% / var(--columns) - var(--margin) - (var(--margin) / (var(--columns) - 1.5)));
+  margin: calc(var(--margin) / 2);
+  overflow: hidden;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  font-family: "Kumbh Sans", sans-serif;
+  font-size: calc(var(--margin) / 2);
+  font-weight: 600;
+  border-radius: 2vh;
+  overflow: hidden;
+}
+
+#container .item:nth-child(5n) {
+  margin-right: 0px !important;
+}
+
+#container .item * {
+  font-family: inherit !important;
+  font-size: inherit !important;
+  font-weight: inherit !important;
+}
+
+#container .item:last-child {
+  margin-right: 0px;
+}
   
-  #container .item {
-    --margin: 36px;
-    width: calc(20%);
-    margin: var(--margin);
-    border: solid 1.5px #262626;
-    border-radius: 48px;
-    overflow: hidden;
-    position: relative;
-  }
-  
-  #container .item img {
+#container .item .item-img img {
+  width: calc(100% + 1vh);
+  transform: translate(-0.5vh, -0.5vh);
+  aspect-ratio: 1;
+  border-radius: 2vh;
+  object-fit: cover;
+  filter: blur(0px);
+  transition: filter 0.5s ease-in-out;
+  overflow: hidden;
+  isolation: isolate;
+  clip-path: inset(0); /* Prevents blur from affecting surroundings */
+}
+
+#container .item .item-img {
     width: 100%;
     aspect-ratio: 1;
-  }
+    border-radius: 2vh;
+    overflow: hidden;
+  isolation: isolate;
+}
+
   
-  #container .item::after {
-    position: absolute;
-    bottom: 0px;
-    left: 0px;
-    width: 100%;
-    height: 80%;
-    background: linear-gradient(to bottom, rgba(0, 0, 0, 0), rgba(0, 0, 0, 1));
-    content: "";
-    z-index: 1;
-  }
-  
-  #container .item .item-button {
-    position: absolute;
-    bottom: 12px;
-    left: 50%;
-    transform: TranslateX(-50%);
-    z-index: 2;
-    background-color: rgba(0, 0, 0, 0.3);
-    border: solid 1.5px #262626;
-    border-radius: 9999px;
-    padding: calc(var(--margin) / 2) var(--margin);
-    box-sizing: border-box;
-    width: calc(100% - 24px);
-    height: fit-content;
-    font-size: 18px;
-    transition: background-color 0.4s ease, color 0.4s ease, border 0.4s ease;
-  }
-  
-  #container .item .item-button:hover {
-    background-color: #fff;
-    color: #000;
-    border: solid 1.5px #fff;
-  }
+#container .item .item-name {
+    margin-top: 1em;
+    min-width: 100px; /* Ensures it doesn’t shrink too much */
+    max-width: 100%; /* Prevents it from stretching too much */
+    text-align: center; /* Ensures wrapped text is centered */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+#waveCanvas {
+  backdrop-filter: brightness(0.4);
+}
+
+#container .item:hover img {
+  filter: blur(0.5vh);
+}
+
+#container .item .item-open {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: rgba(0, 0, 0, 0.3);
+  border: solid 0.6vh rgba(0, 0, 0, 0.3);
+  outline: none;
+  width: 66%;
+  padding: 2vh 0vh;
+  border-radius: 9999px;
+  opacity: 0;
+  transition: all 0.3s ease-in-out;
+  backdrop-filter: blur(1vh);
+}
+
+#container .item:hover .item-open {
+  opacity: 1;
+  transform: translate(-50%, -70%);
+}
+
+#search-box {
+  background-color: #000;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  height: 60px;
+  width: 20vw;
+  position: absolute;
+  top: 130px;
+  left: 50%;
+  transform: translateX(-50%);
+  border: solid 0.2vh #262626;
+  box-sizing: border-box;
+  padding: 18px;
+  border-radius: 9999px;
+}
+
+#search-box img {
+  filter: brightness(200%);
+  height: 100%;
+  aspect-ratio: 1;
+}
+
+#search-input {
+  background-color: transparent;
+  border: none;
+  outline: none;
+  color: #fff;
+  font-size: 1.2em;
+  font-family: "Kumbh Sans", sans-serif;
+  font-weight: 600;
+  flex: 1;
+  padding-left: 12px;
+  height: 100%;
+}
+
+#item-count {
+  position: absolute;
+  top: 0px;
+  right: 0px;
+  transform: translateX(calc(100% + 12px));
+  background-color: #000;
+  color: #fff;
+  font-size: 1.2em;
+  font-family: "Kumbh Sans", sans-serif;
+  font-weight: 600;
+  padding: 18px;
+  border-radius: 9999px;
+  box-sizing: border-box;
+}
+
+.item.newItem::after {
+  position: absolute;
+  top: 0px;
+  right: 50%;
+  transform: translate(-50%, -50%);
+  content: "New!";
+}

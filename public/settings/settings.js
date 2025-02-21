@@ -99,3 +99,4 @@ function settingsCursorUpdate() {
 
   $("#cursor-sidebar-img").replaceWith($(modifiedSvg));
 }
+

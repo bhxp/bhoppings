@@ -1,5 +1,32 @@
 [
   {
+    "name": "Tangini",
+    "url": "/tangini",
+    "image": "tangini.png",
+    "fromRoot": true
+  },
+  {
+    "name": "Poop Playground",
+    "url": "/poop",
+    "image": "poop.png",
+    "fromRoot": true
+  },
+  {
+    "name": "Poop Shooter 3D",
+    "url": "/poopshooter3d",
+    "image": "poopshooter3d.png"
+  },
+  {
+    "name": "Damyan Run",
+    "url": "/damyan-run",
+    "image": "damyan-run.png"
+  },
+  {
+    "name": "Drug Tycoon",
+    "url": "/drugtycoon",
+    "image": "drugtycoon.png"
+  },
+  {
     "name": "InfiniCraft",
     "url": "/infinicraft",
     "image": "infinicraft.png"
@@ -250,11 +277,6 @@
     "image": "cute-robot-robby.png"
   },
   {
-    "name": "Damyan Run",
-    "url": "/damyan-run",
-    "image": "damyan-run.png"
-  },
-  {
     "name": "DD&S",
     "url": "/dd&s",
     "image": "dd&s.png"
@@ -283,11 +305,6 @@
     "name": "DreamyOS",
     "url": "/dreamyos",
     "image": "dreamyos.png"
-  },
-  {
-    "name": "Drug Tycoon",
-    "url": "/drugtycoon",
-    "image": "drugtycoon.png"
   },
   {
     "name": "Earth",
@@ -583,11 +600,6 @@
     "name": "Poogle Photos",
     "url": "/pooglephotos",
     "image": "pooglephotos.png"
-  },
-  {
-    "name": "Poop Shooter 3D",
-    "url": "/poopshooter3d",
-    "image": "poopshooter3d.png"
   },
   {
     "name": "Poop Train",
