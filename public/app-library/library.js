@@ -74,8 +74,7 @@ $(document).ready(function () {
         </div>`,
     );
   });
-
-  search("");
+  $("#item-count").text(`${storeItems.length} apps(s)`);
 });
 
 $("#container").on("click", ".item-open", function () {

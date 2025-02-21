@@ -4,8 +4,8 @@
     "img": "settings-new.png"
   },
   {
-    "link": "/store",
-    "img": "app-store-new.png"
+    "link": "/app-library",
+    "img": "app-library.png"
   },
   {
     "link": "/nexa",

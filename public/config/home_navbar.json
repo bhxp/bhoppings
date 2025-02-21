@@ -15,5 +15,5 @@
         "pages": [{ "text": "tango clicker", "url": "/downloads/tangoclicker" }]
     },
     { "text": "nexa", "url": "/nexa" },
-    { "text": "app store", "url": "/store", "image": "shop.svg" }
+    { "text": "App Library", "url": "/app-library", "image": "shop.svg" }
 ]
