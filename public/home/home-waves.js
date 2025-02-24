@@ -1,9 +1,11 @@
+"use strict";
+
 // based on chatgpts code that didnt work; about half is mine
 
 const canvas = document.getElementById("waveCanvas");
 const ctx = canvas.getContext("2d");
-canvas.width = window.innerWidth * 1.2;
-canvas.height = window.innerHeight * 1.2 + 10;
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
 
 let lastTime = 0;
 let refreshRate = 0;
@@ -24,24 +26,60 @@ function detectRefreshRate() {
 
 const ogSize = [canvas.width, canvas.height];
 
-const points = [];
-const wavePoints = [];
-const numWaves = 20; // Number of wave points
-const rows = 120;
-const xScale = (canvas.width * 1.5) / rows;
-const columns = Math.round(canvas.height / xScale);
-const yScale = xScale; //canvas.height / columns * 1.5;
+var points = [];
+var wavePoints = [];
+var numWaves = 20; // Number of wave points
+var rows = 80;
+var xScale = Math.sqrt(canvas.width ** 2 + canvas.height ** 2) / rows;
+var columns = Math.round(canvas.height / xScale);
+var yScale = xScale; //canvas.height / columns * 1.5;
 var fpsCompensation = 1;
 var fps = 0;
 var countingFps = true;
 var gravityStrength = 10; // Strength of the pull towards wave points
 var waveSpeed = 0.000001;
+var cols = Math.ceil(Math.sqrt(numPoints)); // Calculate number of columns
 
 requestAnimationFrame(detectRefreshRate);
 
-$(document).on("resize", function (e) {
-    canvas.width = window.innerWidth * 1.2;
-    canvas.height = window.innerHeight * 1.2;
+function generatePoints() {
+    // Calculate number of points needed to cover canvas plus overflow
+    const totalWidth = canvas.width * 1.2; // Add 20% for overflow (-10% to 110%)
+    const totalHeight = canvas.height * 1.2;
+
+    // Calculate scales to maintain even spacing
+    xScale = Math.sqrt(canvas.width ** 2 + canvas.height ** 2) / rows; // Adjust this number to control density
+    if (canvas.height >= canvas.width) {
+        xScale *= 3;
+    }
+    yScale = xScale; // Keep square grid
+
+    // Calculate number of rows and columns needed
+    rows = Math.ceil(totalWidth / xScale);
+    columns = Math.ceil(totalHeight / yScale);
+
+    points = [];
+
+    // Start position at -10% of canvas
+    const startX = -0.1 * canvas.width;
+    const startY = -0.1 * canvas.height;
+
+    for (let y = 0; y < columns; y++) {
+        for (let x = 0; x < rows; x++) {
+            points.push({
+                x: startX + x * xScale,
+                y: startY + y * yScale,
+                originalX: startX + x * xScale,
+                originalY: startY + y * yScale,
+            });
+        }
+    }
+}
+
+$(window).on("resize", function (e) {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    generatePoints();
 });
 
 function fpsIncrement() {
@@ -61,10 +99,6 @@ setTimeout(5000, () => {
 });
 
 function distributePoints(numPoints, width, height) {
-    const points = [];
-    const cols = Math.ceil(Math.sqrt(numPoints)); // Calculate number of columns
-    const rows = Math.ceil(numPoints / cols); // Calculate number of rows
-
     const spacingX = width / cols; // Calculate horizontal spacing
     const spacingY = height / rows; // Calculate vertical spacing
 
@@ -82,9 +116,9 @@ function distributePoints(numPoints, width, height) {
 }
 
 // Example usage:
-const numPoints = 10; // Number of points to distribute
-const width = 800; // Width of the area
-const height = 400; // Height of the area
+var numPoints = 10; // Number of points to distribute
+var width = 800; // Width of the area
+var height = 400; // Height of the area
 
 const distributedPoints = distributePoints(numPoints, width, height);
 console.log(distributedPoints);
@@ -101,16 +135,7 @@ for (let i = 0; i < numWaves; i++) {
     });
 }
 
-for (let x = 0; x < rows; x++) {
-    for (let y = 0; y < columns; y++) {
-        points.push({
-            x: x * xScale,
-            y: y * yScale,
-            originalY: y * yScale,
-            originalX: x * xScale,
-        });
-    }
-}
+generatePoints();
 
 function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);

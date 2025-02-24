@@ -1,3 +1,36 @@
+@media (orientation: portrait) {
+  ::-webkit-scrollbar {
+    width: 0px;
+  }
+  body {
+    overflow-y: hidden;
+    overflow-x: hidden;
+  }
+  #sidebar {
+    display: none;
+  }
+  #settings-container {
+    width: 100vw !important;
+    right: -36px;
+    top: 0px;
+    height: 100vh !important;
+  }
+
+  #settings-container >  :first-child {
+    margin-top: 96px;
+  }
+  .option {
+      flex: 0 0 40vw !important;
+      height: auto !important;
+    border-radius: 4vw !important;
+  }
+  .option button {
+    border-radius: 4vw !important;
+    font-size: 0.7em !important;
+  }
+}
+
+
 #sidebar {
   position: absolute;
   left: -5vw;
@@ -70,7 +103,7 @@
   height: calc(100vh - 96px);
   width: 70vw;
   position: absolute;
-  right: 6px;
+  right: -36px;
   bottom: 0px;
   background-color: transparent;
   display: flex;
@@ -132,7 +165,7 @@
 
 .option button {
   width: calc(100% - 1vw);
-  height: 3vw;
+  height: 20%;
   position: absolute;
   left: 50%;
   bottom: 0.5vw;

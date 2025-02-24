@@ -1,4 +1,5 @@
 "use strict";
+console.log(window.innerWidth, window.innerHeight);
 
 const navbar = $("#navbar");
 var navbarItems = null;
@@ -42,6 +43,14 @@ function openDropdown(index) {
 }
 
 function displayNavbar(items) {
+    navbar.empty();
+    if (window.innerWidth >= window.innerHeight) {
+        navbar.append(`<div class="gradient-text">bhop</div>`);
+    } else {
+        navbar.append(
+            `<div class="gradient-text"><div id="navbar-home-button"></div></div>`,
+        );
+    }
     navbarItems = items;
     let i = 0;
     items.forEach((item) => {
@@ -86,7 +95,7 @@ function displayNavbar(items) {
 
     navbar.removeClass("navbar-preload");
 
-    $("#center *").removeClass("title-preload");
+    $("#center").removeClass("title-preload");
     $("#carousel").removeClass("carousel-preload");
     $("body").addClass("bg-fadein");
 }
@@ -95,7 +104,7 @@ $(document).ready(function () {
     const navbarData = JSON.parse(getPreloadedValue("navbar"));
     displayNavbar(navbarData);
 });
-$("#navbar .gradient-text").click(function () {
+$("#navbar").on("click", ".gradient-text", function () {
     window.open("/home", "_self");
 });
 
