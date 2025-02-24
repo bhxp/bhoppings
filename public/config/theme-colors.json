@@ -73,6 +73,42 @@
     "ocean_sage": {
       "color1": "#CAFFFD",
       "color2": "#007870"
+    },
+    "emerald_mist": {
+      "color1": "#1B4D3E",
+      "color2": "#2F847C"
+    },
+    "lavendar_haze": {
+      "color1": "#FFDAB9",
+      "color2": "#663399"
+    },
+    "arborealis": {
+      "color1": "#008080",
+      "color2": "#FF8082"
+    },
+    "midnight_meadow": {
+      "color1": "#4B0082",
+      "color2": "#00CED1"
+    },
+    "spring_jade": {
+      "color1": "#00BFFF",
+      "color2": "#00FF7F"
+    },
+    "orchard": {
+      "color1": "#DA70D6",
+      "color2": "#00BFFF"
+    },
+    "sapphire": {
+      "color1": "#1E90FF",
+      "color2": "#00FFFF"
+    },
+    "starlit_coral": {
+      "color1": "#FFF29D",
+      "color2": "#FF5864"
+    },
+    "lilac_pasture": {
+      "color1": "#8A2BE2",
+      "color2": "#FFA4E5"
     }
   },
   "themes": {
