@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>dp4</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            width: 100%;
+            overflow: hidden;
+            background-color: black;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+        .container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            z-index: 1;
+        }
+        .video-container {
+            display: none;
+            width: 30%;
+            height: 100%;
+            background-color: black;
+        }
+        .video-container iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+        iframe.main {
+            width: 100%;
+            height: 100%;
+            border: none;
+            transition: width 0.5s;
+        }
+        .small-iframe iframe.main {
+            width: 70%;
+        }
+        .small-iframe .video-container {
+            display: block;
+        }
+        .toggle-button {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 80px;
+            height: 40px;
+            background-color: rgba(0, 0, 0, 0.1); /* 80% opacity black */
+            color: rgba(255, 255, 255, 0.2); /* 50% opacity white */
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            z-index: 2; /* Ensure the button is above other content */
+            font-size: 14px;
+            text-align: center;
+            line-height: 40px; /* Center the text vertically */
+        }
+    </style>
+</head>
+<body>
+    <button class="toggle-button">Toggle</button>
+    <div class="container">
+        <div class="video-container">
+            <iframe src="https://www.youtube.com/embed/zBN729Jwab0?controls=0&autoplay=1&mute=1&loop=1&playlist=zBN729Jwab0" title="YouTube video player" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+        </div>
+        <iframe class="main" src="https://mcloud.vvid30c.site/watch/?v21#ZXIvbm94emh5WkVFa0FjM1VacUtNRVBwbVlNb0FwdmhtT1dpeXlQWTVGSURqalFBQWkyOU9sWVQzT0JoUWF2dllSVjJiNUh0Y2g4PQ" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+    </div>
+
+    <script>
+        document.querySelector('.toggle-button').addEventListener('click', function() {
+            const container = document.querySelector('.container');
+            container.classList.toggle('small-iframe');
+        });
+    </script>
+</body>
+</html>

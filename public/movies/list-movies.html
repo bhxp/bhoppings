@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Movie List</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            padding: 0;
+        }
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        li {
+            margin: 5px 0;
+        }
+        a {
+            text-decoration: none;
+            color: #007BFF;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <h1>movies</h1>
+    <ul id="file-list"></ul>
+
+    <script>
+        // Manually update this list with new HTML files
+        const htmlFiles = [
+            '500daysofsummer.html',
+            'despicableme4.html',
+            'godfather.html',
+            'mario.html',
+            'quietplace.html',
+        ];
+
+        // Reference to the file list UL element
+        const fileList = document.getElementById('file-list');
+
+        // Function to create list items with links for each HTML file
+        htmlFiles.forEach(file => {
+            const listItem = document.createElement('li');
+            const link = document.createElement('a');
+            link.href = file;
+            link.textContent = file;
+            listItem.appendChild(link);
+            fileList.appendChild(listItem);
+        });
+    </script>
+</body>
+</html>
