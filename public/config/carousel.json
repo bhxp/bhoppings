@@ -10,5 +10,9 @@
   {
     "link": "/nexa",
     "img": "nexa-new.png"
+  },
+  {
+    "link": "/b-link",
+    "img": "b-link.png"
   }
 ]
