@@ -32,6 +32,41 @@
     "image": "infinicraft.png"
   },
   {
+    "name": "3D Connect Four",
+    "url": "/3d-connect-four",
+    "image": "3d-voxel-engine.png"
+  },
+  {
+    "name": "3D Voxel Engine",
+    "url": "/3d-voxel-engine",
+    "image": "3d-voxel-engine.png"
+  },
+  {
+    "name": "Cosmic Hangout",
+    "url": "/cosmic-hangout",
+    "image": "cosmic-hangout.png"
+  },
+  {
+    "name": "Endless Office",
+    "url": "/endless-office",
+    "image": "endless-office.png"
+  },
+  {
+    "name": "Hue Finder",
+    "url": "/hue-finder",
+    "image": "hue-finder.png"
+  },
+  {
+    "name": "Space Explorer",
+    "url": "/space-explorer",
+    "image": "space-explorer.png"
+  },
+  {
+    "name": "Tetris",
+    "url": "/tetris",
+    "image": "tetris.png"
+  },
+  {
     "name": "❓Enhance",
     "url": "/enhance",
     "image": "enhance.png"
