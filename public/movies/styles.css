@@ -1,0 +1,170 @@
+:root {
+    --primary-bg: #121212;
+    --secondary-bg: #1e1e1e;
+    --accent-color: #4a90e2;
+    --text-color: #ffffff;
+    --hover-bg: rgba(74, 144, 226, 0.05);
+    --shadow-color: rgba(0, 0, 0, 0.2);
+    --border-color: rgba(255, 255, 255, 0.08);
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Inter', 'Segoe UI', sans-serif;
+}
+
+body {
+    background-color: var(--primary-bg);
+    color: var(--text-color);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    line-height: 1.5;
+}
+
+.container {
+    width: 100%;
+    max-width: 900px;
+    background-color: var(--secondary-bg);
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+    overflow: hidden;
+    padding-bottom: 20px;
+}
+
+header {
+    padding: 30px 20px;
+    text-align: center;
+    background-color: var(--secondary-bg);
+    border-bottom: 1px solid var(--border-color);
+    position: relative;
+}
+
+.logo-container {
+    margin-bottom: 20px;
+    display: flex;
+    justify-content: center;
+}
+
+.logo {
+    max-width: 240px;
+    height: auto;
+    transition: transform 0.2s ease;
+    border-radius: 0;
+    box-shadow: none;
+}
+
+.logo:hover {
+    transform: scale(1.02);
+}
+
+h1 {
+    margin: 15px 0;
+    font-size: 2.2rem;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    color: var(--text-color);
+}
+
+.movie-list {
+    padding: 20px;
+}
+
+ul {
+    list-style-type: none;
+}
+
+li {
+    margin-bottom: 10px;
+    border-radius: 6px;
+    overflow: hidden;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    position: relative;
+}
+
+li:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+li a {
+    display: flex;
+    align-items: center;
+    padding: 16px 20px;
+    text-decoration: none;
+    color: var(--text-color);
+    background-color: var(--secondary-bg);
+    border-left: 2px solid transparent;
+    position: relative;
+    z-index: 1;
+}
+
+li a:hover {
+    border-left: 2px solid var(--accent-color);
+    background-color: var(--hover-bg);
+}
+
+li a i {
+    margin-right: 15px;
+    min-width: 22px;
+    text-align: center;
+    font-size: 1.1rem;
+    color: var(--accent-color);
+    transition: transform 0.2s ease;
+}
+
+li a:hover i {
+    transform: scale(1.1);
+}
+
+li a span {
+    font-size: 1rem;
+    font-weight: 400;
+}
+
+li a:hover span {
+    color: var(--accent-color);
+}
+
+.hover-effect {
+    display: none;
+}
+
+/* Add subtle indication for active link */
+li.active a {
+    background-color: var(--hover-bg);
+    border-left: 2px solid var(--accent-color);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .container {
+        border-radius: 10px;
+    }
+    
+    h1 {
+        font-size: 1.8rem;
+    }
+    
+    li a {
+        padding: 14px;
+    }
+    
+    .logo {
+        max-width: 200px;
+    }
+}
+
+@media (max-width: 480px) {
+    h1 {
+        font-size: 1.5rem;
+    }
+    
+    li a i {
+        margin-right: 10px;
+    }
+}
