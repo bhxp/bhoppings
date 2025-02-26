@@ -104,6 +104,8 @@ $(document).ready(function () {
     const navbarData = JSON.parse(getPreloadedValue("navbar"));
     displayNavbar(navbarData);
 });
+
+$("body").css("display", "flex");
 $("#navbar").on("click", ".gradient-text", function () {
     window.open("/home", "_self");
 });
@@ -124,8 +126,8 @@ window.open = function (url, target, features) {
 
 if (window.opener) {
     $("body").fadeOut(0);
-    $("body").fadeIn(fadeTime / 2);
 }
+$("body").fadeIn(fadeTime / 2);
 
 const scrollToElement = ($parent, $target) => {
     $parent.animate({ scrollTop: $target.offset().top }, 500);

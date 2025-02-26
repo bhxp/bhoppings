@@ -25,9 +25,12 @@
       <button>
         <div id="sidebar-b"></div>
       </button>
-      <!--<button>
-        <div class="bucket"></div>
-      </button>-->
+      <button>
+        <img src="images/lightning.svg" />
+      </button>
+      <button>
+        <img src="images/science.svg" />
+      </button>
     </div>
     <div id="settings-container">
       <div class="settings-container-row">
@@ -39,7 +42,9 @@
           (async () => {
             const data = await $.getJSON("/config/theme-colors.json");
             const cursorSvgDoc = await $.get("/images/cursor.svg");
-            const cursorSvg = new XMLSerializer().serializeToString(cursorSvgDoc);
+            const cursorSvg = new XMLSerializer().serializeToString(
+              cursorSvgDoc,
+            );
 
             // Loop through each cursor preset and dynamically replace the gradient ID and colors
             for (let i = 0; i <= Object.keys(data.cursors).length - 1; i++) {
@@ -51,10 +56,16 @@
 
               // Replace the gradient ID and colors in the SVG
               const modifiedSvg = cursorSvg
-                .replace(/gradientStroke/g, `${gradientId}`)  // Replace the ID to make it unique
-                .replace(/stop-color="#fff"/g, `stop-color="${cursorData.color1}"`)  // Replace color1
-                .replace(/stop-color="#000"/g, `stop-color="${cursorData.color2 || cursorData.color1}"`)
-                .replace("<svg", `<svg class="cursor-img"`);  // Replace color2 (or fallback to color1)
+                .replace(/gradientStroke/g, `${gradientId}`) // Replace the ID to make it unique
+                .replace(
+                  /stop-color="#fff"/g,
+                  `stop-color="${cursorData.color1}"`,
+                ) // Replace color1
+                .replace(
+                  /stop-color="#000"/g,
+                  `stop-color="${cursorData.color2 || cursorData.color1}"`,
+                )
+                .replace("<svg", `<svg class="cursor-img"`); // Replace color2 (or fallback to color1)
 
               console.log(cursorData);
 
@@ -69,7 +80,6 @@
                 </div>
               `);
             }
-
 
             $("#settings-container, #sidebar").addClass("loaded");
 
@@ -91,31 +101,80 @@
             }
           })();
         </script>
+      </div>
 
+      <div class="settings-container-row" id="gradient-text-row"></div>
+
+      <div class="settings-container-row">
+        <div class="option">
+          <img src="/images/placeholder.png" />
+          <button>Test #1</button>
+        </div>
+        <div class="option">
+          <img src="/images/placeholder.png" />
+          <button>Test #2</button>
+        </div>
+        <div class="option">
+          <img src="/images/placeholder.png" />
+          <button>Test #3</button>
+        </div>
+        <div class="option">
+          <img src="/images/placeholder.png" />
+          <button>Test #4</button>
+        </div>
+        <div class="option">
+          <img src="/images/placeholder.png" />
+          <button>Test #5</button>
+        </div>
+        <div class="option">
+          <img src="/images/placeholder.png" />
+          <button>Test #6</button>
+        </div>
+        <div class="option">
+          <img src="/images/placeholder.png" />
+          <button>Test #7</button>
+        </div>
+        <div class="option">
+          <img src="/images/placeholder.png" />
+          <button>Test #8</button>
+        </div>
+        <div class="option">
+          <img src="/images/placeholder.png" />
+          <button>Test #9</button>
+        </div>
+        <div class="option">
+          <img src="/images/placeholder.png" />
+          <button>Test #10</button>
+        </div>
       </div>
-      <div class="settings-container-row" id="gradient-text-row">
-        
+
+      <div class="settings-container-row">
+        <div class="option">
+          <img src="/images/placeholder5.png" />
+          <button>Test #1</button>
+        </div>
+        <div class="option">
+          <img src="/images/placeholder5.png" />
+          <button>Test #2</button>
+        </div>
+        <div class="option">
+          <img src="/images/placeholder5.png" />
+          <button>Test #3</button>
+        </div>
+        <div class="option">
+          <img src="/images/placeholder5.png" />
+          <button>Test #4</button>
+        </div>
+        <div class="option">
+          <img src="/images/placeholder5.png" />
+          <button>Test #5</button>
+        </div>
+        <div class="option">
+          <img src="/images/placeholder5.png" />
+          <button>Test #6</button>
+        </div>
       </div>
-<!--
-      <div class="settings-container-row" id="background-row">
-        <script>
-          $.getJSON("/config/theme-colors.json").then((data) => {
-            for (let i = 0; i < data.bg1.length; i++) {
-              $("#background-row").append(`
-                <div class="option">
-                  <div class="bucket" style="
-                    background: linear-gradient(to right, ${data.bg1[i]}, ${data.bg2[i]});
-                  "></div>
-                  <button onclick="setUserStyle('bg1', '${data.bg1[i]}');setUserStyle('bg2', '${data.bg2[i]}');">
-                    Apply
-                  </button>
-                </div>
-              `);
-            }
-          });
-        </script>
-      </div>
-    </div>-->
+    </div>
   </body>
 
   <script type="text/javascript" src="/cursor.js"></script>

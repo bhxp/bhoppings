@@ -1,13 +1,12 @@
 @import url('https://fonts.googleapis.com/css2?family=Kumbh+Sans:wght@100..900&display=swap');
 
-
 #container {
   --margin: 2.3vw;
   --columns: 5;
   position: absolute;
   bottom: 0px;
   left: 0px;
-  height: calc(100vh - 192px);
+  height: calc(100vh - 98px);
   width: 103vw;
   overflow-y: scroll;
   display: flex;
@@ -19,7 +18,7 @@
 #container .item {
   width: calc(100% / var(--columns) - var(--margin) - (var(--margin) / (var(--columns) - 1.5)));
   margin: calc(var(--margin) / 2);
-  overflow: hidden;
+  /* overflow: hidden; */
   position: relative;
   display: flex;
   flex-direction: column;
@@ -29,7 +28,6 @@
   font-size: calc(var(--margin) / 2);
   font-weight: 600;
   border-radius: 2vh;
-  overflow: hidden;
 }
 
 #container .item:nth-child(5n) {
@@ -37,15 +35,15 @@
 }
 
 #container .item * {
-  font-family: inherit !important;
-  font-size: inherit !important;
-  font-weight: inherit !important;
+  /* font-family: inherit !important; */
+  /* font-size: inherit !important; */
+  /* font-weight: inherit !important; */
 }
 
 #container .item:last-child {
   margin-right: 0px;
 }
-  
+
 #container .item .item-img img {
   width: calc(100% + 1vh);
   transform: translate(-0.5vh, -0.5vh);
@@ -67,7 +65,7 @@
   isolation: isolate;
 }
 
-  
+
 #container .item .item-name {
     margin-top: 1em;
     min-width: 100px; /* Ensures it doesn’t shrink too much */
@@ -91,6 +89,7 @@
   position: absolute;
   top: 50%;
   left: 50%;
+  font-size: 1.1vw;
   transform: translate(-50%, -50%);
   background-color: rgba(0, 0, 0, 0.3);
   border: solid 0.6vh rgba(0, 0, 0, 0.3);
@@ -109,13 +108,14 @@
 }
 
 #search-box {
-  background-color: #000;
+  background-color: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(0.7vh);
   display: flex;
   flex-direction: row;
   align-items: center;
   justify-content: center;
   height: 60px;
-  width: 20vw;
+  width: fit-content;
   position: absolute;
   top: 130px;
   left: 50%;
@@ -123,6 +123,7 @@
   border: solid 0.2vh #262626;
   box-sizing: border-box;
   padding: 18px;
+  z-index: 23;
   border-radius: 9999px;
 }
 
@@ -146,11 +147,11 @@
 }
 
 #item-count {
-  position: absolute;
-  top: 0px;
-  right: 0px;
-  transform: translateX(calc(100% + 12px));
-  background-color: #000;
+  /* position: absolute; */
+  /* top: 0px; */
+  /* right: 0px; */
+  /* transform: translateX(calc(100% + 12px)); */
+  /* background-color: #000; */
   color: #fff;
   font-size: 1.2em;
   font-family: "Kumbh Sans", sans-serif;
@@ -158,12 +159,150 @@
   padding: 18px;
   border-radius: 9999px;
   box-sizing: border-box;
+  text-wrap: nowrap;
+  width: fit-content;
 }
 
-.item.newItem::after {
+
+.item-tags {
+  border: solid 0.2vw rgba(255, 255, 255, 0.3);
+  box-sizing: border-box;
   position: absolute;
-  top: 0px;
-  right: 50%;
-  transform: translate(-50%, -50%);
-  content: "New!";
+  top: -7%;
+  right: -8.5%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 17%;
+  background: linear-gradient(to right, var(--color2), var(--color1));
+  background-size: 150%;
+  background-position: 78%;
+  z-index: 22;
+  border-radius: 9999px;
 }
+
+.item-tag {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  border-radius: 9999px;
+  margin-bottom: 27%;
+}
+
+.item-tags:has(:first-child) {
+  padding: 2%;
+}
+
+.item-tag:last-child {
+  margin-bottom: 0px;
+}
+
+#container .item div.item-new {
+  background-size: 200% !important;
+  font-weight: 600 !important;
+  font-size: 1.2vw !important;
+  background-position-x: 97% !important;
+  border: solid 0.2vw rgba(255, 255, 255, 0.3);
+  box-sizing: border-box;
+  position: absolute;
+  top: 0%;
+  height: 2.8vw;
+  left: 50%;
+  transform: translate(-50%, -47%);
+  width: 44%;
+  color: black;
+  text-align: center;
+  padding: 3%;
+  /* width: 30%; */
+  border-radius: 9999px;
+  background-image: linear-gradient(to right, var(--color2), var(--color1));
+  font-family: "Montserrat", sans-serif !important;
+}
+
+span.item-tag.item-tag-ai {
+  background-image: url("/images/ai_powered.svg");
+}
+
+span.item-tag {
+    background-size: 100%;
+    background-repeat: no-repeat;
+    background-position: center;
+    position: relative;
+}
+
+span.item-tag.item-tag-multiplayer {
+    background-image: url("/images/multiplayer.svg");
+    background-size: 86%;
+}
+
+.item-tags:not(:has(:first-child)) {
+  display: none;
+}
+.item:not(.hidden):nth-of-type(-n+5) {
+    margin-top: calc(120px + 1.5vw) !important;
+}
+
+
+.item-new::before, .item-tags::before {
+    position: absolute;
+    top: 50%;
+    content: "";
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(to right, var(--color2), var(--color1));
+    filter: blur(1vw);
+    background-size: 150%;
+    background-position-x: 100%;
+    z-index: -2;
+}
+
+.hidden {
+  display: none !important;
+  opacity: 0 !important;
+}
+/*
+span.item-tag.item-tag-ai::after {
+    content: "Powered by AI";
+}
+
+span.item-tag::after {
+  color: black;
+  position: absolute;
+  font-size: 0.8vw;
+  width: fit-content;
+  text-wrap: nowrap;
+  top: 50%;
+  left: calc(100% + 1vw);
+  transform: translate(-0%, -50%) scaleX(1);
+  background-color: rgba(0, 0, 0, 0.5);
+  padding: 0.9vw;
+  box-sizing: border-box;
+  border-radius: 9999px;
+  );),;);
+  backdrop-filter: blur(0.2vw);
+  opacity: 0;
+  transition: all 0.6s ease;
+  pointer-events: none;
+  background: linear-gradient(to right, var(--color1), var(--color2));
+  border: solid 0.2vw rgba(255, 255, 255, 0.3);
+  background-size: 150%;
+  background-position: 24%;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-content: center;
+  justify-content: center;
+  transform-origin: left;
+}
+
+span.item-tag.item-tag-multiplayer::after {
+  content: "Powered by Bhoppings Studio";
+}
+
+span.item-tag:hover::after {
+  opacity: 1;
+  transform: translate(+0%, -50%);
+}
+*/

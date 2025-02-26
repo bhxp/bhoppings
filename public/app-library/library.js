@@ -71,6 +71,19 @@ $(document).ready(function () {
             })()}">Open</button>
           </div>
           <span class="item-name">${item.name}</span>
+          ${(function () {
+            const $tagElement = $("<div class='item-tags'></div>");
+
+            if (item.tags) {
+              item.tags.forEach((tag) => {
+                $tagElement.append(
+                  `<span class='item-tag item-tag-${tag}'></span>`,
+                );
+              });
+            }
+            return $tagElement.prop("outerHTML");
+          })()}
+          ${item.new ? '<div class="item-new">NEW!</div>' : ""}
         </div>`,
     );
   });
@@ -114,9 +127,8 @@ function levenshteinDistance(str1, str2) {
   return matrix[str1.length][str2.length];
 }
 
-function search(input) {
-  console.log("search", input);
-  const searchInput = $("#search-input").val().toLowerCase();
+function search(inputText) {
+  const searchInput = $("#search-input").val().toLowerCase().replace(" ", "");
   const $container = $("#container");
   const $items = $container.find(".item");
   let itemCount = 0;
@@ -124,21 +136,32 @@ function search(input) {
 
   $items.each(function () {
     const $item = $(this);
-    $item.hide();
-    const itemName = $item.find(".item-name").text().toLowerCase();
+    $item.addClass("hidden");
+    const itemName = $item
+      .find(".item-name")
+      .text()
+      .toLowerCase()
+      .replace(" ", "");
 
     if (
       levenshteinDistance(searchInput, itemName) <= 3 ||
       itemName.includes(searchInput)
     ) {
-      $item.show();
+      $item.removeClass("hidden");
       itemCount++;
     } else {
-      $item.hide();
+      $item.addClass("hidden");
     }
   });
 
   $("#item-count").text(`${itemCount} apps(s)`);
+  $(document).ready(function () {
+    // Reset margin-top for all .item elements
+    $(".item").css("margin-top", "");
+
+    // Get the first 5 visible .item elements and apply margin-top
+    $(".item:not(.hidden)").slice(0, 5).css("margin-top", "120px");
+  });
 }
 $(document).ready(function () {
   $("#search-input").on("input", function () {

@@ -1,15 +1,59 @@
 [
   {
-    "name": "Tangini",
-    "url": "/tangini",
-    "image": "tangini.png",
-    "fromRoot": true
+    "name": "Nexa",
+    "url": "/nexa",
+    "image": "nexa.png",
+    "fromRoot": true,
+    "new": true,
+    "tags": ["ai"]
   },
   {
-    "name": "Poop Playground",
-    "url": "/poop",
-    "image": "poop.png",
-    "fromRoot": true
+    "name": "InfiniCraft",
+    "url": "/infinicraft",
+    "image": "infinicraft.png",
+    "tags": ["multiplayer", "ai"]
+  },
+  {
+    "name": "3D Connect Four",
+    "url": "/3d-connect-four",
+    "image": "3d-connect-four.png",
+    "tags": ["multiplayer"]
+  },
+  {
+    "name": "3D Voxel Engine",
+    "url": "/3d-voxel-engine",
+    "image": "3d-voxel-engine.png",
+    "tags": ["multiplayer"]
+  },
+  {
+    "name": "Cosmic Hangout",
+    "url": "/cosmic-hangout",
+    "image": "cosmic-hangout.png",
+    "tags": ["multiplayer"]
+  },
+  {
+    "name": "Endless Office",
+    "url": "/endless-office",
+    "image": "endless-office.png",
+    "tags": ["multiplayer"]
+  },
+  {
+    "name": "Hue Finder",
+    "url": "/hue-finder",
+    "image": "hue-finder.png",
+    "tags": ["multiplayer"]
+  },
+  {
+    "name": "Space Explorer",
+    "url": "/space-explorer",
+    "image": "space-explorer.png",
+    "tags": ["multiplayer"]
+  },
+  {
+    "name": "Tetris",
+    "url": "/tetris",
+    "image": "tetris.png",
+    "tags": ["multiplayer"]
   },
   {
     "name": "Poop Shooter 3D",
@@ -25,46 +69,6 @@
     "name": "Drug Tycoon",
     "url": "/drugtycoon",
     "image": "drugtycoon.png"
-  },
-  {
-    "name": "InfiniCraft",
-    "url": "/infinicraft",
-    "image": "infinicraft.png"
-  },
-  {
-    "name": "3D Connect Four",
-    "url": "/3d-connect-four",
-    "image": "3d-connect-four.png"
-  },
-  {
-    "name": "3D Voxel Engine",
-    "url": "/3d-voxel-engine",
-    "image": "3d-voxel-engine.png"
-  },
-  {
-    "name": "Cosmic Hangout",
-    "url": "/cosmic-hangout",
-    "image": "cosmic-hangout.png"
-  },
-  {
-    "name": "Endless Office",
-    "url": "/endless-office",
-    "image": "endless-office.png"
-  },
-  {
-    "name": "Hue Finder",
-    "url": "/hue-finder",
-    "image": "hue-finder.png"
-  },
-  {
-    "name": "Space Explorer",
-    "url": "/space-explorer",
-    "image": "space-explorer.png"
-  },
-  {
-    "name": "Tetris",
-    "url": "/tetris",
-    "image": "tetris.png"
   },
   {
     "name": "❓Enhance",
