@@ -333,7 +333,7 @@ body.bg-fadein {
 
 .navbar-item-top hr {
     position: absolute;
-    left: calc(50% - 12px);
+    left: 50%;
     top: calc(50% + 4px);
     transform: TranslateX(-50%);
     border: solid 2.5px #fff;
@@ -343,6 +343,9 @@ body.bg-fadein {
     opacity: 0;
     display: block;
     width: 0px;
+}
+.navbar-item-top:has(.dropdown) hr {
+    left: calc(50% - 12px);
 }
 
 .navbar-item-top:hover hr {
@@ -538,7 +541,7 @@ body.bg-fadein {
 @media (orientation: portrait) {
     #navbar {
         overflow-x: scroll;
-        overflow-y: hidden;
+        overflow-y: show;
         border-bottom: none !important;
         width: 100vw;
         left: 0px;
