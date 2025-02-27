@@ -13,6 +13,7 @@
       "name": "Orik",
       "url": "/orik",
       "image": "orik.png",
+      "fromRoot": true,
       "new": true,
       "tags": [
           "multiplayer",
