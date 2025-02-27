@@ -102,6 +102,10 @@
   backdrop-filter: blur(1vh);
 }
 
+#container .item .item-open:hover {
+  transform: translate(-50%, -70%) scale(1.05) !important;
+}
+
 #container .item:hover .item-open {
   opacity: 1;
   transform: translate(-50%, -70%);
