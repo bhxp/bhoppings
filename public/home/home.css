@@ -164,7 +164,7 @@ body.bg-fadein {
     background-color: #000;
     opacity: 1;
     border: solid 1px #333;
-    width: 247.85px;
+    width: max-content;
     min-width: 120px;
     z-index: 2;
     transform-origin: top;
