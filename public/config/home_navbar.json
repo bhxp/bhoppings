@@ -15,6 +15,7 @@
         "pages": [{ "text": "tango clicker", "url": "/downloads/tangoclicker" }]
     },
     { "text": "nexa", "url": "/nexa" },
+    { "text": "orik", "url": "/orik" },
     { "text": "movies", "url": "/movies" },
     { "text": "App Library", "url": "/app-library", "image": "shop.svg" }
 ]
