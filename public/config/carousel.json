@@ -14,5 +14,9 @@
   {
     "link": "/b-link",
     "img": "b-link.png"
+  },
+  {
+    "link": "/orik",
+    "img": "orik.png"
   }
 ]
