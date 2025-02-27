@@ -11,7 +11,23 @@
     "name": "Orik",
     "url": "/orik",
     "image": "orik.png",
+    "new": true,
     "tags": ["multiplayer", "ai"]
+  },
+  {
+    "name": "Poop Shooter 3D",
+    "url": "/poopshooter3d",
+    "image": "poopshooter3d.png"
+  },
+  {
+    "name": "Damyan Run",
+    "url": "/damyan-run",
+    "image": "damyan-run.png"
+  },
+  {
+    "name": "Drug Tycoon",
+    "url": "/drugtycoon",
+    "image": "drugtycoon.png"
   },
   {
     "name": "InfiniCraft",
@@ -60,21 +76,6 @@
     "url": "/tetris",
     "image": "tetris.png",
     "tags": ["multiplayer"]
-  },
-  {
-    "name": "Poop Shooter 3D",
-    "url": "/poopshooter3d",
-    "image": "poopshooter3d.png"
-  },
-  {
-    "name": "Damyan Run",
-    "url": "/damyan-run",
-    "image": "damyan-run.png"
-  },
-  {
-    "name": "Drug Tycoon",
-    "url": "/drugtycoon",
-    "image": "drugtycoon.png"
   },
   {
     "name": "❓Enhance",
