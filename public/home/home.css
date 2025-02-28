@@ -588,6 +588,9 @@ body.bg-fadein {
     html *:not(head) {
         cursor: auto !important;
     }
+    html, body {
+        padding-top: env(safe-area-inset-top);
+    }
 }
 
 
