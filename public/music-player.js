@@ -336,116 +336,116 @@ $(document).ready(function () {
 
   MusicPlayer.addSong({
     title: "AP Skelly",
-    src: "/assets/audio/AP Skelly.mp3",
+    src: "https://songs-sage.vercel.app/songs/AP Skelly.mp3",
     cover: "/images/cover/AP Skelly.jpg",
   });
 
   MusicPlayer.addSong({
     title: "Drank Love",
-    src: "/assets/audio/Drank Love.mp3",
+    src: "https://songs-sage.vercel.app/songs/Drank Love.mp3",
     cover: "/images/cover/Drank Love.jpg",
   });
 
   MusicPlayer.addSong({
     title: "Fent",
-    src: "/assets/audio/Fent.mp3",
+    src: "https://songs-sage.vercel.app/songs/Fent.mp3",
     cover: "/images/cover/Fent.jpg",
   });
 
   MusicPlayer.addSong({
     title: "Gta",
-    src: "/assets/audio/Gta.mp3",
+    src: "https://songs-sage.vercel.app/songs/Gta.mp3",
     cover: "/images/cover/Gta.jpg",
   });
 
   MusicPlayer.addSong({
     title: "Keep Cryin",
-    src: "/assets/audio/Keep Cryin.mp3",
+    src: "https://songs-sage.vercel.app/songs/Keep Cryin.mp3",
     cover: "/images/cover/Keep Cryin.jpg",
   });
 
   MusicPlayer.addSong({
     title: "Kickback",
-    src: "/assets/audio/Kickback.mp3",
+    src: "https://songs-sage.vercel.app/songs/Kickback.mp3",
     cover: "/images/cover/Kickback.jpg",
   });
 
   MusicPlayer.addSong({
     title: "Million Dollar",
-    src: "/assets/audio/Million Dollar.mp3",
+    src: "https://songs-sage.vercel.app/songs/Million Dollar.mp3",
     cover: "/images/cover/Million Dollar.jpg",
   });
 
   MusicPlayer.addSong({
     title: "No Clout",
-    src: "/assets/audio/No Clout.mp3",
+    src: "https://songs-sage.vercel.app/songs/No Clout.mp3",
     cover: "/images/cover/No Clout.jpg",
   });
 
   MusicPlayer.addSong({
     title: "No Dissin",
-    src: "/assets/audio/No Dissin.mp3",
+    src: "https://songs-sage.vercel.app/songs/No Dissin.mp3",
     cover: "/images/cover/No Dissin.jpg",
   });
 
   MusicPlayer.addSong({
     title: "Perky Dream",
-    src: "/assets/audio/Perky Dream.mp3",
+    src: "https://songs-sage.vercel.app/songs/Perky Dream.mp3",
     cover: "/images/cover/Perky Dream.jpg",
   });
 
   MusicPlayer.addSong({
     title: "Swerve",
-    src: "/assets/audio/Swerve.mp3",
+    src: "https://songs-sage.vercel.app/songs/Swerve.mp3",
     cover: "/images/cover/Swerve.jpg",
   });
 
   MusicPlayer.addSong({
     title: "Ain Goin' To Heaven",
-    src: "/assets/audio/Ain Goin' To Heaven.mp3",
+    src: "https://songs-sage.vercel.app/songs/Ain Goin' To Heaven.mp3",
     cover: "/images/cover/Ain Goin' To Heaven.jpg",
   });
 
   MusicPlayer.addSong({
     title: "Goin' To Hell",
-    src: "/assets/audio/Goin' To Hell.mp3",
+    src: "https://songs-sage.vercel.app/songs/Goin' To Hell.mp3",
     cover: "/images/cover/Goin' To Hell.jpg",
   });
 
   MusicPlayer.addSong({
     title: "off the leash!",
-    src: "/assets/audio/off the leash! (feat. yvngxchris and Luisss).mp3",
+    src: "https://songs-sage.vercel.app/songs/off the leash! (feat. yvngxchris and Luisss).mp3",
     cover: "/images/cover/off the leash! (feat. yvngxchris and Luisss).jpg",
   });
 
   // Add the new songs
   MusicPlayer.addSong({
     title: "YEAH (RIOLEYVA)",
-    src: "/assets/audio/YEAH (RIOLEYVA).mp3",
+    src: "https://songs-sage.vercel.app/songs/YEAH (RIOLEYVA).mp3",
     cover: "/images/cover/YEAH (RIOLEYVA).jpg",
   });
 
   MusicPlayer.addSong({
     title: "DESERT SHIT",
-    src: "/assets/audio/DESERT SHIT.m4a",
+    src: "https://songs-sage.vercel.app/songs/DESERT SHIT.mp3",
     cover: "/images/cover/DESERT SHIT.jpg",
   });
 
   MusicPlayer.addSong({
     title: "All Different",
-    src: "/assets/audio/All Different (ft YEAT ) Prod. Luca malaspina.mp3",
+    src: "https://songs-sage.vercel.app/songs/All Different (ft YEAT ) Prod. Luca malaspina.mp3",
     cover: "/images/cover/All Different (ft YEAT ) Prod. Luca malaspina.jpg",
   });
 
   MusicPlayer.addSong({
     title: "Relapsed!",
-    src: "/assets/audio/Relapsed!.mp3",
+    src: "https://songs-sage.vercel.app/songs/Relapsed!.mp3",
     cover: "/images/cover/Relapsed!.jpg",
   });
 
   MusicPlayer.addSong({
     title: "Fan Burger",
-    src: "/assets/audio/Fan Burger.mp3",
+    src: "https://songs-sage.vercel.app/songs/Fan Burger.mp3",
     cover: "/images/cover/Fan Burger.jpg",
   });
 
