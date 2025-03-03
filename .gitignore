@@ -1,0 +1,11 @@
+.env
+generated-icon.png
+readme.md
+README.MD
+.git
+dev
+.replit
+replit.nix
+package-lock.json
+.upm
+node_modules
