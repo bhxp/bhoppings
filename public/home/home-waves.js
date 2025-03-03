@@ -125,13 +125,15 @@ console.log(distributedPoints);
 
 const pointPositions = distributePoints(numWaves, canvas.width, canvas.height);
 
-// Initialize wave points randomly across the canvas
+// Initialize wave points with different phases and frequencies
 for (let i = 0; i < numWaves; i++) {
     wavePoints.push({
         x: Math.random() * canvas.width,
         y: Math.random() * canvas.height,
         amplitude: Math.random() * 20 + 5,
-        wave: Math.random() * 40 + 10,
+        frequency: Math.random() * 0.4 + 0.8, // Random frequency multiplier for each wave
+        phase: Math.random() * Math.PI * 2, // Random initial phase offset (0 to 2π)
+        wave: Math.random() * Math.PI * 2, // Start at random position in the cycle
     });
 }
 
@@ -150,8 +152,10 @@ function draw() {
     points.forEach((point) => {
         // Find the nearest wave point
         wavePoints.forEach((wave) => {
+            // Increment each wave's position based on its unique frequency
+            wave.wave += waveSpeed * wave.frequency * fpsCompensation;
+
             const distance = Math.hypot(wave.x - point.x, wave.y - point.y);
-            wave.wave += waveSpeed * fpsCompensation;
 
             // Calculate the pull towards the nearest wave point
             const dx = wave.x - point.x; // Change in x
@@ -164,9 +168,17 @@ function draw() {
                 const normX = dx / distanceToWave;
                 const normY = dy / distanceToWave;
 
-                // Move the point towards the wave point based on gravity
-                point.x += normX * gravityStrength * Math.sin(wave.wave) * -1;
-                point.y += normY * gravityStrength * Math.sin(wave.wave) * -1;
+                // Use the wave's unique phase in the sin calculation
+                point.x +=
+                    normX *
+                    gravityStrength *
+                    Math.sin(wave.wave + wave.phase) *
+                    -1;
+                point.y +=
+                    normY *
+                    gravityStrength *
+                    Math.sin(wave.wave + wave.phase) *
+                    -1;
             }
         });
     });
@@ -179,18 +191,17 @@ function draw() {
         ctx.arc(wave.x, wave.y, 8, 0, Math.PI * 2);
         ctx.fill();
     });
-
     */
 
     // Draw points
-    ctx.fillStyle = "rgba(255, 255, 255, 0.1)";
+    ctx.fillStyle = "rgba(255, 255, 255, 0.05)";
     points.forEach((point) => {
         ctx.beginPath();
-        ctx.arc(point.x, point.y, 3, 0, Math.PI * 2);
+        ctx.arc(point.x, point.y, 2, 0, Math.PI * 2);
         ctx.fill();
     });
 
-    requestAnimationFrame(draw); // Loop the drawing
+    requestAnimationFrame(draw); // Loop the animation
 }
 
 draw(); // Start the animation
