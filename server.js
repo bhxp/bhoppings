@@ -21,7 +21,12 @@ const fixRelativePaths = (req, res, next) => {
       basePath += "/"; // Force it to behave like a directory
     }
 
-    const correctedPath = path.join(process.cwd(), "public", basePath, req.path);
+    const correctedPath = path.join(
+      process.cwd(),
+      "public",
+      basePath,
+      req.path,
+    );
 
     if (fs.existsSync(correctedPath) && fs.statSync(correctedPath).isFile()) {
       return res.sendFile(correctedPath);
@@ -68,20 +73,24 @@ const processPreloadTags = (req, res, next) => {
       if (err) {
         return next(err);
       }
-
+      const preloadTagRegex =
+        /<preload\s+name="([^"]+)"\s+src="([^"]+)"(?:\s*\/>|>\s*<\/preload>)/g;
       const baseDir = path.dirname(req.path).substring(1);
+      let modifiedData = data;
+      // Use the regex's test method on the string `data`
+      if (preloadTagRegex.test(data)) {
+        modifiedData = data.replace(
+          `</body>`,
+          `<!-- preload script injected by server software, ignore -->
+          <script type="text/javascript" src="/preload.js"></script>
+          </body>`,
+        );
 
-      let modifiedData = data.replace(
-        /<preload\s+name="([^"]+)"\s+src="([^"]+)"(?:\s*\/>|>\s*<\/preload>)/g,
-        (match, name, url) => getFile(baseDir, url, name),
-      );
-
-      modifiedData = modifiedData.replace(
-        `</body>`,
-        `<!-- preload script injected by server software, ignore -->
-        <script type="text/javascript" src="/preload.js"></script>
-        </body>`,
-      );
+        modifiedData = modifiedData.replace(
+          preloadTagRegex,
+          (match, name, url) => getFile(baseDir, url, name),
+        );
+      }
 
       res.set("Content-Type", "text/html");
       res.send(modifiedData);
