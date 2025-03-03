@@ -13,7 +13,8 @@ fi
 remote_url=$(git remote get-url origin 2>/dev/null)
 if [ -z "$remote_url" ]; then
   echo "Remote 'origin' not found. Setting remote URL..."
-  git remote add origin https://github.com/bhxp/bhoppings.git
+  git remote add origin https://ChezLinkZ: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@github.com/bhxp/bhoppings.git
+
 fi
 
 # Function to push changes
