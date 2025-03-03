@@ -73,6 +73,7 @@ const processPreloadTags = (req, res, next) => {
       if (err) {
         return next(err);
       }
+      // <preload src="$URL"></preload>
       const preloadTagRegex =
         /<preload\s+name="([^"]+)"\s+src="([^"]+)"(?:\s*\/>|>\s*<\/preload>)/g;
       const baseDir = path.dirname(req.path).substring(1);
