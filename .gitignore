@@ -9,3 +9,4 @@ replit.nix
 package-lock.json
 .upm
 node_modules
+github.sh
