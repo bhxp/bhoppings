@@ -16,7 +16,7 @@ musicStyleElement.html(`
 @import url('https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@0,400..700;1,400..700&display=swap');
 #music-player-container {
   position: fixed;
-  bottom: 2vh;
+  bottom: 1vw;
   right: 0vh;
   height: 19vh;
   width: 25.5vh;
@@ -81,14 +81,14 @@ musicStyleElement.html(`
 }
 #music-player-hitbox {
   position: fixed;
-  bottom: 2vh;
-  right: 2vh;
+  bottom: 1vw;
+  right: 1vw;
   height: 19vh;
   width: 25.5vh;
   z-index: 9998;
 }
 body:has(#music-player-hitbox:hover) #music-player-container, #music-player-container:hover {
-  transform: translateX(-2vh) scale(1);
+  transform: translateX(-1vw) scale(1);
 }
 #music-player-controls button {
   height: 100%;

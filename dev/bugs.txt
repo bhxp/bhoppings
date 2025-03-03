@@ -1,8 +1,0 @@
-Poop Game
-  user can select any poop skin in the battle pass, reguardless of if they actually own it by clicking outside the chest
-
-Home Page
-  notch thing on dropdown is pure black and not transparent
-
-Bio
-  shine thing on "click to enter" text is broken

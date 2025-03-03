@@ -1,1 +1,0 @@
-assume everything goes in public/ and pretend that all the other stuff above it doesnt exist (package.json, server.js, etc)
