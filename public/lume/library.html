@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lumicons Library - Modern Icon Collection</title>
+    <meta name="description" content="Browse our collection of carefully crafted Lumicons for your next web project. Download SVG icons or copy code.">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="cursor"></div>
+    <div class="particles-container" id="particles-container"></div>
+    <header>
+        <div class="logo">
+            <img src="/Bold/package.svg" class="logo-icon" alt="Lume Logo" />
+            <h1>Lume</h1>
+        </div>
+        <nav>
+            <ul>
+                <li><a href="index.html">Home</a></li>
+                <li><a href="library.html" class="active">Icons</a></li>
+                <li><a href="index.html#about">About</a></li>
+                <li><a href="index.html#download" class="cta-button">Download</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <section id="library-hero">
+        <div class="section-header">
+            <h2>Icon Library</h2>
+            <p>Browse our collection of meticulously crafted icons for your next project</p>
+            <div class="hero-badge">
+                <span>180+ Premium Icons</span>
+            </div>
+        </div>
+    </section>
+
+    <section id="icons-library">
+        <div class="container">
+            <div class="library-controls">
+                <div class="search-container">
+                    <input type="text" id="icon-search" placeholder="Search icons...">
+                    <button class="search-button">
+                        <img src="/Solid/search.svg" alt="Search" />
+                    </button>
+                </div>
+                
+                <div class="style-switch-container">
+                    <span>Style:</span>
+                    <div class="style-switch">
+                        <input type="checkbox" id="style-toggle" class="style-toggle-checkbox">
+                        <label for="style-toggle" class="style-toggle-label">
+                            <span class="style-toggle-inner"></span>
+                            <span class="style-toggle-switch"></span>
+                        </label>
+                        <div class="style-labels">
+                            <span class="style-label active" data-style="solid">Solid</span>
+                            <span class="style-label" data-style="bold">Bold</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="filter-container">
+                    <button class="filter-button active" data-category="all">All</button>
+                    <button class="filter-button" data-category="interface">Interface</button>
+                    <button class="filter-button" data-category="communication">Communication</button>
+                    <button class="filter-button" data-category="media">Media</button>
+                    <button class="filter-button" data-category="devices">Devices</button>
+                </div>
+            </div>
+            
+            <div class="icons-grid" id="icons-grid">
+                <!-- Icon items will be populated by JavaScript -->
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <div class="footer-content">
+            <div class="footer-logo">
+                <img src="/Bold/package.svg" class="logo-icon" alt="Lume Logo" />
+                <span>Lume</span>
+            </div>
+            <div class="footer-links">
+                <div class="footer-column">
+                    <h4>Product</h4>
+                    <ul>
+                        <li><a href="library.html">Icons</a></li>
+                        <li><a href="index.html#how-to-use">Usage</a></li>
+                        <li><a href="index.html#download">Download</a></li>
+                        <li><a href="index.html#license">License</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h4>Resources</h4>
+                    <ul>
+                        <li><a href="#documentation">Documentation</a></li>
+                        <li><a href="#api">API</a></li>
+                        <li><a href="#tutorials">Tutorials</a></li>
+                        <li><a href="#blog">Blog</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h4>Connect</h4>
+                    <ul>
+                        <li><a href="#github">GitHub</a></li>
+                        <li><a href="#twitter">Twitter</a></li>
+                        <li><a href="#discord">Discord</a></li>
+                        <li><a href="#contact">Contact Us</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p> 2023 Lumicons. Designed by bhop. All rights reserved.</p>
+            <div class="social-links">
+                <a href="#" class="social-link">
+                    <img src="/Solid/globe.svg" alt="Twitter" />
+                </a>
+                <a href="#" class="social-link">
+                    <img src="/Solid/download.svg" alt="Download" />
+                </a>
+                <a href="#" class="social-link">
+                    <img src="/Solid/film.svg" alt="YouTube" />
+                </a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Modal for icon detail -->
+    <div class="modal" id="icon-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modal-icon-name">Icon Name</h3>
+                <button class="close-button" id="close-modal">
+                    <img src="/Solid/times-square.svg" alt="Close" />
+                </button>
+            </div>
+            <div class="modal-icon-display">
+                <div id="modal-icon-svg"></div>
+            </div>
+            <div class="modal-actions">
+                <button class="action-button" id="copy-svg">
+                    <img src="/Solid/copy.svg" alt="Copy" />
+                    <span>Copy SVG</span>
+                </button>
+                <button class="action-button" id="copy-component">
+                    <img src="/Solid/code.svg" alt="Component" />
+                    <span>Copy Component</span>
+                </button>
+                <button class="action-button" id="download-svg">
+                    <img src="/Solid/download.svg" alt="Download" />
+                    <span>Download</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.8/clipboard.min.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
