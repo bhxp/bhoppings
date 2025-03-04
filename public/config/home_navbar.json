@@ -17,5 +17,5 @@
     { "text": "nexa", "url": "/nexa" },
     { "text": "orik", "url": "/orik" },
     { "text": "movies", "url": "/movies" },
-    { "text": "", "url": "/app-library", "image": "lume-package-bold.svg" }
+    { "text": "Apps", "url": "/app-library", "image": "lume-package-bold.svg" }
 ]
