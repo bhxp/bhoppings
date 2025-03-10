@@ -103,6 +103,15 @@ const processPreloadTags = (req, res, next) => {
 
 app.use(processPreloadTags);
 
+app.get("/app-icon", (req, res, next) => {
+  const filePath = path.join(__dirname, "public", "ai/app-icon/index.html"); // Adjust path as needed
+  res.sendFile(filePath, (err) => {
+    if (err) {
+      next(err); // Pass errors to the error handler
+    }
+  });
+});
+
 // 3️⃣ Serve static files after processing
 app.use(express.static(path.join(process.cwd(), "public")));
 

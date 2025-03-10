@@ -1,0 +1,1019 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Image Generator with Templates</title>
+    <style>
+      /*
+      :root {
+        --primary: #5c6ac4;
+        --primary-light: #7386ff;
+        --secondary: #f6f8fd;
+        --dark: #2a2f45;
+        --light: #ffffff;
+        --gray: #e1e5ee;
+        --gray-light: #f5f7fa;
+        --success: #10b981;
+        --error: #ef4444;
+        --radius: 8px;
+        --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
+          0 2px 4px -1px rgba(0, 0, 0, 0.06);
+      }*/
+      :root {
+        --primary: #4ac2ad;        /* Washed out turquoise accent */
+        --primary-light: #68cebf;  /* Lighter version of turquoise */
+        --secondary: #2A2C32;      /* Dark secondary (was light) */
+        --dark: #F2F2F2;           /* Light color (was dark) */
+        --light: #2A2C32;          /* Dark color (was light) */
+        --gray: #1e2337;           /* Darker gray */
+        --gray-light: #33353B;     /* Slightly lighter than base dark */
+        --success: #34D399;        /* Slightly adjusted success */
+        --error: #F87171;          /* Slightly adjusted error */
+        --radius: 8px;             /* Kept the same */
+        --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.25),
+          0 2px 4px -1px rgba(0, 0, 0, 0.15); /* Slightly darker shadow */
+        --color: #fff;
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family:
+          "Inter",
+          -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          Roboto,
+          Oxygen,
+          Ubuntu,
+          Cantarell,
+          "Open Sans",
+          "Helvetica Neue",
+          sans-serif;
+      }
+
+      body {
+        background-color: var(--gray-light);
+        color: var(--dark);
+        min-height: 100vh;
+        padding: 0;
+        margin: 0;
+      }
+
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 2rem;
+      }
+
+      header {
+        margin-bottom: 2rem;
+        text-align: center;
+      }
+
+      h1 {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+        background: linear-gradient(
+          to right,
+          var(--primary),
+          var(--primary-light)
+        );
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+
+      p.subtitle {
+        font-size: 1.1rem;
+        color: var(--dark);
+        opacity: 0.8;
+        max-width: 600px;
+        margin: 0 auto 2rem auto;
+      }
+
+      .card {
+        background-color: var(--light);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        padding: 2rem;
+        margin-bottom: 2rem;
+      }
+
+      .form-group {
+        /* margin-bottom: 1rem; */
+        display: flex;
+        flex-direction: column;
+        position: relative;
+      }
+      .form-group textarea {
+        resize: none;
+      }
+
+      label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 500;
+      }
+
+      input,
+      select,
+      textarea {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        border: 1px solid var(--gray);
+        border-radius: var(--radius);
+        font-size: 1rem;
+        transition: all 0.2s ease;
+        flex: 1;
+        background: var(--light);););););););););););
+        filter: brightness(1.3) saturate(0.5););
+        color: var(--color);
+      }
+
+      input:focus,
+      select:focus,
+      textarea:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(92, 106, 196, 0.2);
+      }
+
+      .btn {
+        display: inline-block;
+        background-color: var(--primary);
+        color: white;
+        font-weight: 500;
+        padding: 0.75rem 1.5rem;
+        border-radius: var(--radius);
+        border: none;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        font-size: 1rem;
+      }
+
+      .btn:hover {
+        background-color: var(--primary-light);
+        transform: translateY(-1px);
+      }
+
+      .btn:active {
+        transform: translateY(0);
+      }
+
+      .btn-block {
+        display: block;
+        width: 100%;
+        text-align: center;
+      }
+      .copy-json-btn {
+        margin-bottom: 12px;
+      }
+
+      .results {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        gap: 1.5rem;
+      }
+
+      .image-card {
+        background-color: var(--light);
+        border-radius: var(--radius);
+        overflow: hidden;
+        box-shadow: var(--shadow);
+        transition: transform 0.2s ease;
+        position: relative;
+      }
+
+      .image-card:hover {
+        transform: translateY(-4px);
+      }
+
+      .image-container {
+        position: relative;
+        padding-top: 100%; /* 1:1 Aspect Ratio */
+        overflow: hidden;
+        background-color: var(--gray-light);
+      }
+
+      .image-container img {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.3s ease;
+      }
+
+      .image-card:hover .image-container img {
+        transform: scale(1.05);
+      }
+
+      .image-info {
+        padding: 1rem;
+      }
+
+      .image-info h3 {
+        margin-bottom: 0.5rem;
+        font-size: 0.9rem;
+        font-weight: 500;
+      }
+
+      .download-btn {
+        font-size: 0.8rem;
+        padding: 0.5rem 1rem;
+        width: 100%;
+        background-color: var(--gray-light);
+        color: var(--dark);
+        margin-bottom: 1rem;
+      }
+
+      .download-btn:hover {
+        background-color: var(--gray);
+      }
+
+      .loading {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 2rem;
+      }
+
+      .spinner {
+        width: 40px;
+        height: 40px;
+        border: 4px solid rgba(92, 106, 196, 0.1);
+        border-radius: 50%;
+        border-top-color: var(--primary);
+        animation: spin 1s linear infinite;
+      }
+
+      .form-vertical-container {
+        display: flex;
+        flex-direction: column;
+        /* justify-content: center; */
+        /* align-items: center; */
+        flex-wrap: wrap;
+        height: 20rem;
+        margin-top: 1.5rem;
+      }
+      .form-vertical-container > * {
+        /* flex: 1; */
+        height: calc(50% - 1rem);
+        width: calc(50% - 0.5rem);
+      }
+      .form-vertical-container > .form-group:first-child {
+        margin-right: 1rem;
+        height: 50%;
+        margin-bottom: 1rem;
+      }
+
+      .image-loading {
+        position: absolute;
+        left: 50%;
+        top: 0px;
+        transform: rotate(90deg) translateY(+50%) rotate(-90deg);
+        width: 100%;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        background-color: var(--gray-light);
+        color: var(--dark);
+      }
+
+      .image-loading .spinner {
+        width: 30px;
+        height: 30px;
+        margin-bottom: 10px;
+      }
+
+      .image-error {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        background-color: rgba(239, 68, 68, 0.1);
+        color: var(--error);
+        padding: 1rem;
+        text-align: center;
+      }
+
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      .status {
+        text-align: center;
+        margin: 1rem 0;
+        padding: 1rem;
+        border-radius: var(--radius);
+      }
+
+      .success {
+        background-color: rgba(16, 185, 129, 0.1);
+        color: var(--success);
+      }
+
+      .error {
+        background-color: rgba(239, 68, 68, 0.1);
+        color: var(--error);
+      }
+
+      .hidden {
+        display: none;
+      }
+
+      .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+        color: var(--dark);
+        opacity: 0.6;
+      }
+
+      .empty-state i {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        display: block;
+      }
+
+      footer {
+        text-align: center;
+        padding: 2rem;
+        color: var(--dark);
+        opacity: 0.7;
+        font-size: 0.9rem;
+      }
+
+      .prompt-preview {
+        margin-top: 1rem;
+        padding: 1rem;
+        background-color: var(--gray-light);
+        border-radius: var(--radius);
+        font-size: 0.9rem;
+        color: var(--dark);
+        opacity: 0.8;
+        word-break: break-word;
+        transition: all 0.2s ease-in-out;
+        transform: translateY(0);
+        margin-bottom: 1.5rem;
+      }
+      .prompt-preview.hidden {
+        transform: translateY(+10%);
+        opacity: 0 !important;
+        display: block;
+      }
+
+      .prompt-preview strong {
+        font-weight: 600;
+        color: var(--primary);
+      }
+
+      @media (max-width: 768px) {
+        .container {
+          padding: 1rem;
+        }
+
+        h1 {
+          font-size: 2rem;
+        }
+
+        .results {
+          grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+        }
+      }
+
+      .form-vertical-container > *:last-child {
+        height: calc(100% - 0rem);
+        margin-bottom: 0rem;
+      }
+
+      .form-group:first-child {
+        margin-bottom: 1rem;
+        margin-right: 1rem;
+      }
+
+      .magic-button {
+        aspect-ratio: 1 / 1;
+        width: 1rem;
+        display: flex;
+        align-content: center;
+        justify-content: center;
+        align-items: center;
+        flex-direction: row;
+        position: absolute;
+        right: 1rem;
+        bottom: 1rem;
+      }
+
+      .magic-button span {
+        filter: saturate(0) brightness(10);
+      }
+      button#generate-btn {
+        margin-top: 1.5rem;
+      }
+
+      .card > .form-group:last-of-type {
+        margin-top: 1.5rem;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <h1>AI Image Generator</h1>
+        <p class="subtitle">Create high quality icons with AI.</p>
+      </header>
+
+      <div class="card">
+        <div class="form-group">
+          <label for="template">Choose Template</label>
+          <select id="template" name="template">
+            <!-- Templates will be populated from JavaScript -->
+          </select>
+        </div>
+        <div class="form-vertical-container">
+          <div class="form-group">
+            <label for="prompt">Your Prompt</label>
+            <textarea
+              id="prompt"
+              name="prompt"
+              rows="3"
+              placeholder="Enter your prompt..."
+            ></textarea>
+            <button class="btn magic-button" title="Generate a random prompt">
+              <span>✨</span>
+            </button>
+          </div>
+          <div class="form-group">
+            <label for="prompt">Anything Else?</label>
+            <textarea
+              id="details-prompt"
+              name="details-prompt"
+              rows="3"
+              placeholder="Enter any other details...
+(eg. background color, instructions, etc)"
+            ></textarea>
+            <button
+              class="btn magic-button"
+              name="enhance-details-btn"
+              title="Let AI come up with some details for you"
+            >
+              <span>✨</span>
+            </button>
+          </div>
+          <div class="form-group">
+            <label for="json-input">Alternatively, you can provide JSON</label>
+            <textarea
+              id="json-input"
+              name="json"
+              rows="3"
+              placeholder="Paste JSON here..."
+            ></textarea>
+            <button
+              class="btn magic-button"
+              name="json-template-btn"
+              title="Get an Example."
+            >
+              <span>✨</span>
+            </button>
+          </div>
+        </div>
+
+        <div id="prompt-preview" class="prompt-preview hidden">
+          <strong>Final prompt:</strong>
+          <span id="preview-text"
+            >A high quality, professional, clean design, realistic 3d artwork
+            stylized, modern artwork for a game asset titled 'x'. The artwork
+            must seamlessly fill the entire square canvas with no empty space,
+            margins, or padding, while centering a striking focal element or
+            group as part of an integrated, continuous composition. The
+            background is a single solid color that unifies the design. The main
+            element must be centralized around one specific topic and object.
+            This main element must also take up at least 2/3 of the horizontal
+            and vertical space. Under no circumstances should any text,
+            captions, logos, or symbols be visible. If any text is inadvertently
+            generated, it must be rendered completely invisible or blend
+            entirely into the background.</span
+          >
+        </div>
+
+        <div class="form-group">
+          <label for="count">Number of Images</label>
+          <select id="count" name="count">
+            <option value="1">1 image</option>
+            <option value="2">2 images</option>
+            <option value="4">4 images</option>
+            <option value="6">6 images</option>
+            <option value="8" selected>8 images</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="quality">Image Quality</label>
+          <select id="quality" name="quality">
+            <option value="standard">Standard</option>
+            <option value="hd">HD (2048px)</option>
+            <option value="ultra-hd" selected>Ultra HD (4096px)</option>
+          </select>
+        </div>
+
+        <button id="generate-btn" class="btn btn-block">Generate Images</button>
+      </div>
+
+      <div id="status" class="status hidden"></div>
+
+      <div id="loading" class="loading hidden">
+        <div class="spinner"></div>
+      </div>
+
+      <div id="results-container">
+        <div id="empty-state" class="empty-state">
+          <i>✨</i>
+          <p>Your generated images will appear here</p>
+        </div>
+        <div id="results" class="results"></div>
+      </div>
+    </div>
+
+    <script>
+      // Configuration for templates
+      const CONFIG = {
+        templates: [
+          {
+            id: "game-icon",
+            name: "Game Icon",
+            prompt:
+              "A high quality, professional, clean design, realistic 3d artwork stylized, modern artwork for a game asset titled '${prompt}'. The background must seamlessly fill the entire square canvas with no empty space, margins, or padding, while centering a striking focal element or group as part of an integrated, continuous composition. The background is a single solid color that unifies the design. The main element must be centralized around one specific topic and object. The subject should be clear and distinct; there shouldn't be a lot of smaller elements. This main element must also take up at least 2/3 of the horizontal and vertical space. Under no circumstances should any text, captions, logos, or symbols be visible. If any text is inadvertently generated, it must be rendered completely invisible or blend entirely into the background.",
+          },
+          {
+            id: "landscape",
+            name: "Fantasy Landscape",
+            prompt:
+              "fantasy landscape of ${prompt}, epic scale, dramatic lighting, 8k, detailed, cinematic, professional photography",
+          },
+          {
+            id: "character",
+            name: "Character Portrait",
+            prompt:
+              "portrait of ${prompt}, highly detailed, fantasy art, digital painting, artstation, concept art, smooth, sharp focus, illustration",
+          },
+          {
+            id: "product",
+            name: "Product Mockup",
+            prompt:
+              "professional product mockup of ${prompt}, studio lighting, minimalist background, advertising photography, 8k, ultra detailed",
+          },
+          {
+            id: "logo",
+            name: "Logo Design",
+            prompt:
+              "minimalist logo for ${prompt}, clean lines, professional, vector graphic, branding, iconic, memorable design",
+          },
+          {
+            id: "abstract",
+            name: "Abstract Art",
+            prompt:
+              "abstract art representing ${prompt}, vibrant colors, modern art style, digital art, flowing forms, artistic expression",
+          },
+          {
+            id: "sci-fi",
+            name: "Sci-Fi Scene",
+            prompt:
+              "sci-fi scene of ${prompt}, futuristic, cyberpunk aesthetic, neon lights, hyper detailed, 8k render, cinematic",
+          },
+          {
+            id: "custom",
+            name: "Custom (No Template)",
+            prompt: "${prompt}",
+          },
+        ],
+
+        qualitySettings: {
+          standard: "1024x1024",
+          hd: "2048x2048",
+          "ultra-hd": "4096x4096",
+        },
+      };
+
+      // DOM elements
+      const templateSelect = document.getElementById("template");
+      const promptInput = document.getElementById("prompt");
+      const promptPreview = document.getElementById("prompt-preview");
+      const previewText = document.getElementById("preview-text");
+      const countSelect = document.getElementById("count");
+      const qualitySelect = document.getElementById("quality");
+      const generateBtn = document.getElementById("generate-btn");
+      const resultsContainer = document.getElementById("results-container");
+      const resultsDiv = document.getElementById("results");
+      const emptyState = document.getElementById("empty-state");
+      const loadingDiv = document.getElementById("loading");
+      const statusDiv = document.getElementById("status");
+
+      // Store the current user prompt to use in filenames
+      let currentPrompt = "";
+
+      // Populate template select
+      function populateTemplates() {
+        CONFIG.templates.forEach((template) => {
+          const option = document.createElement("option");
+          option.value = template.id;
+          option.textContent = template.name;
+          templateSelect.appendChild(option);
+        });
+      }
+
+      // Format the prompt with the selected template
+      function formatPrompt(templateId, prompt) {
+        const template = CONFIG.templates.find((t) => t.id === templateId);
+        const userPrompt = prompt.trim();
+        const detailsValue = document
+          .getElementById("details-prompt")
+          .value.trim();
+
+        const details = detailsValue
+          ? " Make sure to adhere to the following guidelines: " + detailsValue
+          : "";
+
+        if (!template) return userPrompt + details;
+
+        return template.prompt.replace("${prompt}", userPrompt) + details;
+      }
+
+      // Update the prompt preview
+      function updatePromptPreview() {
+        const userPrompt = promptInput.value.trim();
+        if (!userPrompt) {
+          promptPreview.classList.add("hidden");
+          return;
+        }
+
+        const templateId = templateSelect.value;
+        const formattedPrompt = formatPrompt(templateId, userPrompt);
+
+        previewText.textContent = formattedPrompt;
+        promptPreview.classList.remove("hidden");
+      }
+
+      async function enhanceDetails() {
+        const response = await fetch("https://text.pollinations.ai/", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            messages: [
+              {
+                role: "user",
+                content: `Give instructions for an ai to enhance the following prompt (no more than 2 sentences): "${promptInput.value}". Feel free to add details like the lighting, art style, etc. For example, "It should have diffuse lighting, with vibrant warm colors. It is in a 3D Style, but looks realistic as well." Do not completely recreate the prompt, just make a list of details that can be appended onto the prompt.`,
+              },
+            ],
+            model: "openai",
+            private: true, // Response won't appear in public feed
+          }),
+        });
+        const data = await response.text();
+        return data;
+      }
+
+      // Generate a pollinations.ai URL
+      function generatePollinationsUrl(prompt, quality, seed) {
+        const dimensions = CONFIG.qualitySettings[quality];
+        const width = dimensions.split("x")[0];
+        const height = dimensions.split("x")[1];
+        const encodedPrompt = encodeURIComponent(prompt);
+
+        // This constructs a URL that should work with pollinations.ai
+        // Adjust parameters based on pollinations.ai API documentation
+        return `https://image.pollinations.ai/prompt/${encodedPrompt}?width=${width}&height=${height}&noCache=${Date.now()}&steps=60&nologo=true&model=openai-large&seed=${seed}`;
+      }
+      function copyToClipboard(text) {
+        navigator.clipboard
+          .writeText(text.toString())
+          .then(() => {
+            console.log("Text successfully copied to clipboard");
+          })
+          .catch((err) => {
+            console.error("Failed to copy text: ", err);
+          });
+      }
+
+      // Show loading state
+      function showLoading() {
+        loadingDiv.classList.remove("hidden");
+        generateBtn.disabled = true;
+        generateBtn.textContent = "Generating...";
+      }
+
+      // Hide loading state
+      function hideLoading() {
+        loadingDiv.classList.add("hidden");
+        generateBtn.disabled = false;
+        generateBtn.textContent = "Generate Images";
+      }
+
+      // Show status message
+      function showStatus(message, type) {
+        statusDiv.textContent = message;
+        statusDiv.className = `status ${type}`;
+        statusDiv.classList.remove("hidden");
+
+        // Auto-hide after 5 seconds
+        setTimeout(() => {
+          statusDiv.classList.add("hidden");
+        }, 5000);
+      }
+
+      // Helper function to create a safe filename from the prompt
+      function createSafeFilename(prompt, seed) {
+        // Replace any characters that are invalid in filenames
+        const safePrompt = prompt
+          .trim()
+          .substring(0, 30) // Limit length
+          .replace(/[^a-zA-Z0-9-_]/g, "-") // Replace invalid chars with dash
+          .replace(/-+/g, "-") // Replace multiple dashes with single dash
+          .replace(/^-|-$/g, ""); // Remove leading/trailing dashes
+
+        return `${safePrompt}-${seed}.png`;
+      }
+
+      // Function to download image
+      function downloadImage(url, prompt, seed) {
+        // Create a safe filename with prompt and seed
+        const filename = createSafeFilename(prompt, seed);
+
+        // Create a function to convert the image to a blob
+        const toBlob = async (url) => {
+          const response = await fetch(url);
+          const blob = await response.blob();
+          return blob;
+        };
+
+        // Process the download
+        toBlob(url)
+          .then((blob) => {
+            // Create a temporary download link
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = filename;
+            link.style.display = "none";
+
+            // Add to document, click it, then remove it
+            document.body.appendChild(link);
+            link.click();
+
+            // Clean up
+            setTimeout(() => {
+              URL.revokeObjectURL(link.href);
+              document.body.removeChild(link);
+            }, 100);
+          })
+          .catch((error) => {
+            console.error("Download failed:", error);
+            showStatus("Failed to download the image", "error");
+          });
+      }
+
+      // Extract seed from URL
+      function extractSeed(url) {
+        const seedMatch = url.match(/&seed=([^&]*)/);
+        return seedMatch ? seedMatch[1] : "unknown";
+      }
+
+      // Load image with loading state
+      function loadImageWithState(url, card, index) {
+        const imageContainer = card.querySelector(".image-container");
+        const imageLoading = document.createElement("div");
+        const seed = extractSeed(url);
+
+        imageLoading.className = "image-loading";
+        imageLoading.innerHTML = `
+              <div class="spinner"></div>
+              <p>Generating image...</p>
+            `;
+        imageContainer.appendChild(imageLoading);
+
+        const img = new Image();
+        img.onload = function () {
+          imageLoading.remove();
+
+          // Configure download button
+          const downloadBtn = card.querySelector(".download-btn");
+          downloadBtn.classList.remove("hidden");
+
+          // Store the seed in a data attribute for reference
+          downloadBtn.dataset.seed = seed;
+
+          downloadBtn.addEventListener("click", function (e) {
+            e.preventDefault();
+            downloadImage(url, currentPrompt, seed);
+          });
+
+          card.querySelector(".retry-btn").classList.add("hidden");
+        };
+
+        img.onerror = function () {
+          imageLoading.remove();
+          const imageError = document.createElement("div");
+          imageError.className = "image-error";
+          imageError.innerHTML = `
+                <p>Failed to generate image</p>
+                <button class="btn retry-btn">Retry</button>
+              `;
+          imageContainer.appendChild(imageError);
+
+          card.querySelector(".download-btn").classList.add("hidden");
+          card.querySelector(".retry-btn").classList.remove("hidden");
+
+          // Add retry functionality
+          imageError
+            .querySelector(".retry-btn")
+            .addEventListener("click", function () {
+              imageError.remove();
+              loadImageWithState(url + "&retry=" + Date.now(), card, index);
+            });
+        };
+
+        img.src = url;
+        imageContainer.appendChild(img);
+      }
+
+      // Generate images
+      function generateImages() {
+        let templateId = templateSelect.value;
+        console.log(templateId);
+        let userPrompt = promptInput.value.trim();
+        let count = parseInt(countSelect.value);
+        let quality = qualitySelect.value;
+        let seed = "dummy";
+        const jsonInputValue =
+          document.getElementsByTagName("textarea").json.value;
+        const useJSON = jsonInputValue != "";
+        if (useJSON) {
+          let jsonConfig;
+          try {
+            jsonConfig = JSON.parse(jsonInputValue);
+          } catch (error) {
+            showStatus(
+              `${"`" + jsonInputValue + "`"} is not valid JSON.`,
+              "error",
+            );
+          }
+          if (!jsonConfig.seed) {
+            showStatus("Your JSON template must include the seed", "error");
+            return;
+          } else if (typeof jsonConfig.seed !== "number") {
+            showStatus(
+              "The seed in your JSON template must be a number",
+              "error",
+            );
+            return;
+          }
+          templateId = jsonConfig.template || templateId;
+          userPrompt = jsonConfig.prompt || userPrompt;
+          count = 1;
+          seed = jsonConfig.seed || 0;
+          quality = jsonConfig.quality || quality;
+        }
+        if (!userPrompt) {
+          showStatus("Please enter a prompt", "error");
+          return;
+        }
+
+        // Store the current prompt for use in filenames
+        currentPrompt = userPrompt;
+
+        // Show loading state
+        showLoading();
+
+        // Format the prompt using the selected template
+        const formattedPrompt = formatPrompt(templateId, userPrompt);
+
+        // Clear previous results
+        resultsDiv.innerHTML = "";
+        emptyState.classList.add("hidden");
+
+        // Generate the specified number of images
+        for (let i = 0; i < count; i++) {
+          if (seed == "dummy") {
+            seed = Math.floor(Math.random() * 9e5 + 1e5);
+          }
+          const pollinationsUrl = generatePollinationsUrl(
+            formattedPrompt,
+            quality,
+            seed,
+          );
+
+          // Create image card
+          const card = document.createElement("div");
+          card.className = "image-card";
+
+          //const seed = extractSeed(pollinationsUrl);
+          console.log(formattedPrompt);
+          const exportJSON = {
+            template: templateId,
+            prompt: formattedPrompt,
+            quality: quality,
+            seed: seed,
+          };
+          const exportJSONString = JSON.stringify(exportJSON, null, 2);
+          console.log(exportJSONString);
+          card.innerHTML = `
+                <div class="image-container">
+                  <!-- Image will be loaded here -->
+                </div>
+                <div class="image-info">
+                  <h3>Image ${i + 1}</h3>
+                  <button class="btn download-btn hidden">Download</button>
+                <button class="btn copy-json-btn">Copy JSON</button>
+                  <div class="seed">Seed: ${seed}</div>
+                </div>
+                  <button class="btn retry-btn hidden">Retry</button>
+                </div>
+              `;
+          const copyButton = card.getElementsByClassName("copy-json-btn")[0]; // Access the first copy-json-btn
+
+          copyButton.addEventListener("click", function () {
+            copyToClipboard(exportJSONString);
+            showStatus("JSON copied to clipboard", "success");
+          });
+          resultsDiv.appendChild(card);
+
+          // Load the image with loading state
+          loadImageWithState(pollinationsUrl, card, i);
+          seed = "dummy";
+        }
+
+        // Hide main loading state
+        hideLoading();
+
+        // Show success message
+        showStatus(`Generating ${count} images...`, "success");
+
+        // Scroll to results
+        resultsContainer.scrollIntoView({ behavior: "smooth" });
+      }
+
+      // Initialize the app
+      function init() {
+        populateTemplates();
+
+        // Add event listeners
+        generateBtn.addEventListener("click", generateImages);
+
+        // Update preview when prompt or template changes
+        promptInput.addEventListener("input", updatePromptPreview);
+        document
+          .getElementById("details-prompt")
+          .addEventListener("input", updatePromptPreview);
+        templateSelect.addEventListener("change", updatePromptPreview);
+
+        // Add event listener for enter key in prompt input
+        promptInput.addEventListener("keydown", (e) => {
+          if (e.key === "Enter" && !e.shiftKey) {
+            e.preventDefault();
+            generateImages();
+          }
+        });
+      }
+
+      // Run initialization on page load
+      document.addEventListener("DOMContentLoaded", init);
+
+      document
+        .getElementsByClassName("magic-button")
+        ["json-template-btn"].addEventListener("click", function (e) {
+          e.preventDefault();
+          const jsonInput = document.getElementById("json-input");
+          jsonInput.value = `{
+  "template": "game-icon",
+  "prompt": "My Game",
+  "seed": 1234,
+  "quality": "hd"
+}`;
+          jsonInput.select();
+          document.execCommand("copy");
+          showStatus("JSON copied to clipboard", "success");
+        });
+      document
+        .getElementsByClassName("magic-button")
+        ["enhance-details-btn"].addEventListener("click", function (e) {
+          enhanceDetails().then((data) => {
+            document.getElementById("details-prompt").value = data;
+            updatePromptPreview();
+          });
+        });
+    </script>
+  </body>
+</html>
