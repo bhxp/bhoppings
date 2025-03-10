@@ -31,7 +31,8 @@ body {
     flex-wrap: wrap;
 }
 
-html, body {
+html,
+body {
     height: 100vh;
     width: 100vw;
     margin: 0px !important;
@@ -161,31 +162,46 @@ body.bg-fadein {
     left: -38px;
     padding: 0.4rem;
     border-radius: 12px;
-    background-color: #000;
+    background-color: rgba(0, 0, 0, 0.5);
+    /* Semi-transparent to allow blur effect */
     opacity: 1;
     border: solid 1px #333;
     width: max-content;
     min-width: 120px;
     z-index: 2;
     transform-origin: top;
+    /* Apply blur to content behind the element */
 }
+
 
 .dropdown::before {
     content: "";
     position: absolute;
-    top: -16.1px; /* Position the notch above the dropdown */
-    left: 52px; /* Center the notch horizontally */
-    transform: translateX(-50%) perspective(17px) rotateX(31deg); /* Ensure perfect centering */
-    width: 31px; /* Width of the notch */
-    height: 16px; /* Height of the notch */
-    background-color: #000;); /* Match dropdown background */
-    border-left: 1px solid #333; /* Match border color */
-    border-top: 2px solid #333; /* Match border color */
-    border-right: 1px solid #333; /* Match border color */
+    top: -16.1px;
+    /* Position the notch above the dropdown */
+    left: 52px;
+    /* Center the notch horizontally */
+    transform: translateX(-50%) perspective(17px) rotateX(31deg);
+    /* Ensure perfect centering */
+    width: 31px;
+    /* Width of the notch */
+    height: 16px;
+    /* Height of the notch */
+    background-color: #000;
+    );
+    /* Match dropdown background */
+    border-left: 1px solid #333;
+    /* Match border color */
+    border-top: 2px solid #333;
+    /* Match border color */
+    border-right: 1px solid #333;
+    /* Match border color */
     box-sizing: border-box;
     border-bottom: solid 2px black;
-    border-radius: 8px 8px 0 0; /* Round the top corners */
-    z-index: 1; /* Place below dropdown content */
+    border-radius: 8px 8px 0 0;
+    /* Round the top corners */
+    z-index: 1;
+    /* Place below dropdown content */
 }
 
 .navbar-item {
@@ -235,22 +251,28 @@ body.bg-fadein {
     transform: TranslateX(+0px);
 }
 
+#center:has(.title-preload) {
+    display: none !important;
+}
+
 #center .gradient-text {
     font-size: 72px;
     font-weight: 700;
     margin-bottom: 12px;
     transform: translateX(+0%);
     transition: transform 1s ease;
-    overflow:hidden;
+    overflow: hidden;
 }
 
 @keyframes shine {
     0% {
         background-position: 123% 50%;
     }
+
     50% {
         background-position: -53% 50%;
     }
+
     100% {
         background-position: -53% 50%;
     }
@@ -273,7 +295,8 @@ body.bg-fadein {
     background-position: 123% 50%;
     background-size: 200%;
     opacity: 0.7;
-    animation: shine 7s ease-in-out 1s infinite; /* Shorthand with delay */
+    animation: shine 7s ease-in-out 1s infinite;
+    /* Shorthand with delay */
     z-index: 1;
 }
 
@@ -305,7 +328,8 @@ body.bg-fadein {
 .dropdown .notch {
     position: absolute;
     display: none;
-    width: 102%; /* Adjust the size as needed */
+    width: 102%;
+    /* Adjust the size as needed */
     left: -1px;
     top: -46px;
     aspect-ratio: 950 / 269;
@@ -344,6 +368,7 @@ body.bg-fadein {
     display: block;
     width: 0px;
 }
+
 .navbar-item-top:has(.dropdown) hr {
     left: calc(50% - 12px);
 }
@@ -556,8 +581,8 @@ body.bg-fadein {
 
     body::after {
         box-shadow: 0px 0px 15px 10px rgba(50, 50, 50, 1),
-                /* Top white shadow */
-                0px 0px 48px 0px rgba(0, 0, 0, 1);
+            /* Top white shadow */
+            0px 0px 48px 0px rgba(0, 0, 0, 1);
         background-color: rgba(50, 50, 50, 1);
         width: 0px;
         height: 48px;
@@ -578,17 +603,26 @@ body.bg-fadein {
         display: none;
         transform: none !important;
     }
+
     #center {
         width: 85vw;
+        margin-top: 24px;
     }
 
     div#home-container {
         align-items: flex-start;
     }
+
     html *:not(head) {
         cursor: auto !important;
     }
-    html, body {
+
+    div#carousel {
+        margin-bottom: 24px;
+    }
+
+    html,
+    body {
         padding-top: env(safe-area-inset-top);
     }
 }

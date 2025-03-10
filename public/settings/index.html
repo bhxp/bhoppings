@@ -9,6 +9,7 @@
     <link rel="stylesheet" href="settings.css" />
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
     <preload name="navbar" src="/config/home_navbar.json"></preload>
+    <script type="text/javascript" src="/settings/settings.js"></script>
   </head>
 
   <body>
@@ -106,73 +107,40 @@
       <div class="settings-container-row" id="gradient-text-row"></div>
 
       <div class="settings-container-row">
-        <div class="option">
-          <img src="/images/placeholder.png" />
-          <button>Test #1</button>
-        </div>
-        <div class="option">
-          <img src="/images/placeholder.png" />
-          <button>Test #2</button>
-        </div>
-        <div class="option">
-          <img src="/images/placeholder.png" />
-          <button>Test #3</button>
-        </div>
-        <div class="option">
-          <img src="/images/placeholder.png" />
-          <button>Test #4</button>
-        </div>
-        <div class="option">
-          <img src="/images/placeholder.png" />
-          <button>Test #5</button>
-        </div>
-        <div class="option">
-          <img src="/images/placeholder.png" />
-          <button>Test #6</button>
-        </div>
-        <div class="option">
-          <img src="/images/placeholder.png" />
-          <button>Test #7</button>
-        </div>
-        <div class="option">
-          <img src="/images/placeholder.png" />
-          <button>Test #8</button>
-        </div>
-        <div class="option">
-          <img src="/images/placeholder.png" />
-          <button>Test #9</button>
-        </div>
-        <div class="option">
-          <img src="/images/placeholder.png" />
-          <button>Test #10</button>
-        </div>
-      </div>
+        <script>
+          function setEffect(effect) {
+            localStorage.setItem("effect", effectsSettings.indexOf(effect));
+            const effects = {
+              waves: WavePointsEffect,
+              particle_field: ParticleFieldEffect,
+              flowing_lines: FlowingLinesEffect,
+              shooting_stars: ShootingStarsEffect,
+              starfield: StarFieldEffect,
+            };
 
-      <div class="settings-container-row">
-        <div class="option">
-          <img src="/images/placeholder5.png" />
-          <button>Test #1</button>
-        </div>
-        <div class="option">
-          <img src="/images/placeholder5.png" />
-          <button>Test #2</button>
-        </div>
-        <div class="option">
-          <img src="/images/placeholder5.png" />
-          <button>Test #3</button>
-        </div>
-        <div class="option">
-          <img src="/images/placeholder5.png" />
-          <button>Test #4</button>
-        </div>
-        <div class="option">
-          <img src="/images/placeholder5.png" />
-          <button>Test #5</button>
-        </div>
-        <div class="option">
-          <img src="/images/placeholder5.png" />
-          <button>Test #6</button>
-        </div>
+            const effectInstance = new effects[effect]();
+
+            // Use the framework to run the effect
+            animationFramework.setEffect(effectInstance);
+          }
+          const effectsSettings = [
+            "waves",
+            "particle_field",
+            "flowing_lines",
+            "shooting_stars",
+            "starfield",
+          ];
+          effectsSettings.forEach((effect) => {
+            document.write(
+              `<div class="option">
+                <img style="transform: translate(-50%, -50%) scale(0.5)" src="/images/lightning.svg" />
+                <button onclick="
+                setEffect('${effect}');
+                ">${idToName(effect)}</button>
+              </div>`,
+            );
+          });
+        </script>
       </div>
     </div>
   </body>
@@ -180,6 +148,5 @@
   <script type="text/javascript" src="/cursor.js"></script>
   <script type="text/javascript" src="/home/home.js"></script>
   <script type="text/javascript" src="/home/home-waves.js"></script>
-  <script type="text/javascript" src="/settings/settings.js"></script>
   <script type="text/javascript" src="/user-theme.js"></script>
 </html>

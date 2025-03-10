@@ -4,6 +4,8 @@ const fs = require("fs");
 
 const app = express();
 
+app.use('/favicon.ico', express.static(path.join(__dirname, 'public', '/images/favicon.ico')));
+
 const fixRelativePaths = (req, res, next) => {
   if (req.path.endsWith("/") || req.path.endsWith(".html")) {
     return next(); // Skip directories and HTML files
