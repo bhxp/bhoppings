@@ -37,7 +37,6 @@ body {
     width: 100vw;
     margin: 0px !important;
     background: #000;
-    cursor: none !important;
     overflow-y: hidden;
     overflow-x: hidden;
     display: flex;

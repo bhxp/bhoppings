@@ -153,11 +153,14 @@ const devMenu = $(`
 </button>
 </div>
 `);
+
 devMenu.appendTo("body");
 
 $(document).on("keydown", function (e) {
-    if (e.ctrlKey && e.key === ".") {
-        devMenu.toggleClass("open");
+    if (localStorage.getItem("debug") === "true") {
+        if (e.ctrlKey && e.key === ".") {
+            devMenu.toggleClass("open");
+        }
     }
 });
 

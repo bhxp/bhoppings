@@ -27,12 +27,12 @@ async function cursorMain() {
         );
       }
 
-      // Append the SVG to the body while preserving existing content
-      document.body.insertAdjacentHTML("beforeend", cursorSvg);
-
       // Create and append the style element
       const styleElem = document.createElement("style");
       styleElem.innerHTML = `
+      body, html {
+      cursor: none !important;
+      }
       * {
         cursor: none !important;
       }
@@ -52,7 +52,12 @@ async function cursorMain() {
         }
       }
     `;
-      document.head.appendChild(styleElem);
+      if (window.localStorage.getItem("disableCursor") !== "true") {
+        // Append the SVG to the body while preserving existing content
+        document.body.insertAdjacentHTML("beforeend", cursorSvg);
+
+        document.head.appendChild(styleElem);
+      }
 
       // Select the cursor after it's added to the DOM
       const cursor = document.querySelector(".custom-cursor");

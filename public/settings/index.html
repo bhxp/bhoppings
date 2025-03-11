@@ -31,6 +31,9 @@
       <button>
         <img src="images/science.svg" />
       </button>
+      <button>
+        <img src="images/danger.svg" />
+      </button>
     </div>
     <div id="settings-container">
       <div class="settings-container-row">
@@ -157,6 +160,112 @@
             );
           });
         </script>
+      </div>
+
+      <div class="settings-container-row">
+        <table>
+          <tr>
+            <td>
+              Debug Mode<span class="small"
+                >Press Ctrl + . to access the debug menu.</span
+              >
+            </td>
+            <td>
+              <label class="switch">
+                <input type="checkbox" id="debug-menu-checkbox" />
+                <span class="slider"></span>
+              </label>
+            </td>
+          </tr>
+
+          <tr>
+            <td>
+              Disable Cursor<span class="small"
+                >Use the default cursor. Only enable this if you are having
+                problems.</span
+              >
+            </td>
+            <td>
+              <label class="switch">
+                <input type="checkbox" id="disable-cursor-checkbox" />
+                <span class="slider"></span>
+              </label>
+            </td>
+          </tr>
+
+          <tr>
+            <td>
+              Skip Bio<span class="small"
+                >Skip straight to the home page.<br />
+                (the bio can still be accessed through the navbar)</span
+              >
+            </td>
+            <td>
+              <label class="switch">
+                <input type="checkbox" id="skip-bio-checkbox" />
+                <span class="slider"></span>
+              </label>
+            </td>
+          </tr>
+        </table>
+        <script>
+          $("#debug-menu-checkbox")
+            .prop("checked", localStorage.getItem("debug") === "true")
+            .change(function (e) {
+              if (e.target.checked) {
+                localStorage.setItem("debug", "true");
+              } else {
+                localStorage.removeItem("debug");
+              }
+            });
+          $("#disable-cursor-checkbox")
+            .prop("checked", localStorage.getItem("disableCursor") === "true")
+            .change(function (e) {
+              if (e.target.checked) {
+                localStorage.setItem("disableCursor", "true");
+              } else {
+                localStorage.removeItem("disableCursor");
+              }
+            });
+          $("#skip-bio-checkbox")
+            .prop("checked", localStorage.getItem("skipBio") === "true")
+            .change(function (e) {
+              if (e.target.checked) {
+                localStorage.setItem("skipBio", "true");
+              } else {
+                localStorage.removeItem("skipBio");
+              }
+            });
+        </script>
+      </div>
+
+      <div class="settings-container-row">
+        <h1>
+          <img src="/images/danger.svg" alt="⚠️" />
+          Danger Zone
+          <span class="small"
+            >Do not proceed if you are unsure, as options here can cause
+            permenant damage.</span
+          >
+        </h1>
+        <table>
+          <tr>
+            <td>
+              Erase All Local Data<span class="small"
+                >Will delete all locally saved data, like theme preferences and
+                reset to a clean slate.</span
+              >
+            </td>
+            <td>
+              <button
+                style="float: right"
+                onclick="window.localStorage.clear();"
+              >
+                <img src="/images/trash-red.svg" />
+              </button>
+            </td>
+          </tr>
+        </table>
       </div>
     </div>
   </body>
