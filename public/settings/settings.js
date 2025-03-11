@@ -13,34 +13,19 @@ function cursorSettings() {
   updateCursorSettings();
 }
 
-function idToName(input) {
-  return (
-    input
-      // Replace the first letter and any letter after "_" with the uppercase equivalent
-      .replace(
-        /(?:^|\_)([a-z])/g,
-        (match, letter) => `_${letter.toUpperCase()}`,
-      )
-
-      // Replace underscores with spaces
-      .replace(/_/g, " ")
-
-      // Replace groups of digits with "#<digits>"
-      .replace(/\d+/g, (match) => ` #${match}`)
-  );
-}
-
 cursorSettings();
 
 function getClosestElementIndex($container) {
   let closestIndex = -1;
   let minDistance = Infinity;
 
+  let containerRect = $container[0].getBoundingClientRect();
+  let containerMiddle = containerRect.top + containerRect.height / 2;
+
   $container.children().each(function (index) {
-    let $child = $(this);
-    let middle = $child.offset().top + $child.height() / 2; // Middle of the element
-    let containerMiddle = $container.offset().top + $container.height() / 2; // Middle of the container
-    let distance = Math.abs(middle - containerMiddle); // Distance between element middle and container middle
+    let childRect = this.getBoundingClientRect();
+    let middle = childRect.top + childRect.height / 2;
+    let distance = Math.abs(middle - containerMiddle);
 
     if (distance < minDistance) {
       minDistance = distance;
@@ -51,7 +36,6 @@ function getClosestElementIndex($container) {
   return closestIndex;
 }
 
-// Usage
 let $scrollContainer = $("#settings-container");
 
 let activeIndex = 0;
@@ -67,10 +51,31 @@ $scrollContainer.on("scroll", function () {
 });
 
 $("#sidebar button").on("click", function (e) {
-  scrollToElement(
-    $("#settings-container"),
-    $("#settings-container>.settings-container-row").eq($(this).index()),
+  // Prevent default behavior and stop propagation
+  e.preventDefault();
+  e.stopPropagation();
+
+  // Get the index of the clicked button
+  const buttonIndex = $(this).index();
+
+  // Log to verify correct index
+  console.log("Button index:", buttonIndex);
+
+  // Get the corresponding element to scroll to
+  const targetElement = $("#settings-container>.settings-container-row").eq(
+    buttonIndex,
   );
+
+  // Log to verify element exists
+  console.log("Target element:", targetElement.length ? "found" : "not found");
+
+  // Scroll to the element
+  scrollToElement($("#settings-container"), targetElement);
+
+  // Update active button UI without waiting for scroll event
+  $("#sidebar button").removeClass("active-sidebar-button");
+  $(this).addClass("active-sidebar-button");
+  activeIndex = buttonIndex;
 });
 
 var cursorSvgDoc;

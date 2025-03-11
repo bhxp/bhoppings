@@ -127,9 +127,23 @@ if (window.opener) {
 }
 $("body").fadeIn(fadeTime / 2);
 
-const scrollToElement = ($parent, $target) => {
-    $parent.animate({ scrollTop: $target.offset().top }, 500);
-};
+function scrollToElement($container, $element) {
+    if ($container.length === 0 || $element.length === 0) {
+        console.error("Invalid container or element");
+        return;
+    }
+
+    const containerTop = $container.offset().top;
+    const elementTop = $element.offset().top;
+    const relativeTop = elementTop - containerTop + $container.scrollTop();
+
+    $container.animate(
+        {
+            scrollTop: relativeTop,
+        },
+        300,
+    );
+}
 localStorage.setItem("skipBio", localStorage.getItem("skipBio") || false);
 const devMenu = $(`
 <div id="dev-menu">

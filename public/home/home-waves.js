@@ -386,113 +386,6 @@ class ParticleFieldEffect {
     }
 }
 
-// Example of another effect: Flowing Lines
-class FlowingLinesEffect {
-    constructor(options = {}) {
-        this.options = Object.assign(
-            {
-                lineCount: 100,
-                lineLength: 50,
-                lineWidth: 2,
-                flowSpeed: 0.002,
-                noiseScale: 0.003,
-            },
-            options,
-        );
-
-        this.lines = [];
-        this.time = 0;
-    }
-
-    init(width, height) {
-        this.width = width;
-        this.height = height;
-
-        // Create flowing lines
-        this.lines = [];
-        for (let i = 0; i < this.options.lineCount; i++) {
-            this.lines.push({
-                x: Math.random() * width,
-                y: Math.random() * height,
-                angle: Math.random() * Math.PI * 2,
-                length: Math.random() * this.options.lineLength + 20,
-                width: Math.random() * this.options.lineWidth + 0.5,
-                speed: Math.random() * 0.5 + 0.5, // Speed multiplier
-            });
-        }
-    }
-
-    onResize(width, height) {
-        this.width = width;
-        this.height = height;
-
-        // Adjust lines to new canvas size
-        this.lines.forEach((line) => {
-            if (line.x > width) line.x = width;
-            if (line.y > height) line.y = height;
-        });
-    }
-
-    onRefreshRateUpdate() {
-        // No specific action needed
-    }
-
-    onFpsUpdate(fps, compensation) {
-        this.fpsCompensation = compensation;
-    }
-
-    // Simplified noise function (you might want to use a proper Perlin noise implementation)
-    noise(x, y) {
-        const X = Math.floor(x) & 255;
-        const Y = Math.floor(y) & 255;
-        return (Math.sin(X * 12.9898 + Y * 78.233) * 43758.5453) % 1;
-    }
-
-    update(fpsCompensation) {
-        this.time += this.options.flowSpeed * fpsCompensation;
-
-        // Update lines
-        this.lines.forEach((line) => {
-            // Use noise to adjust angle
-            const noiseX = this.noise(
-                line.x * this.options.noiseScale,
-                line.y * this.options.noiseScale + this.time,
-            );
-            const noiseY = this.noise(
-                line.x * this.options.noiseScale + 100,
-                line.y * this.options.noiseScale + this.time + 100,
-            );
-
-            line.angle = (noiseX + noiseY) * Math.PI * 2;
-
-            // Move in the direction of the angle
-            line.x += Math.cos(line.angle) * line.speed * fpsCompensation;
-            line.y += Math.sin(line.angle) * line.speed * fpsCompensation;
-
-            // Wrap around edges
-            if (line.x < 0) line.x = this.width;
-            if (line.x > this.width) line.x = 0;
-            if (line.y < 0) line.y = this.height;
-            if (line.y > this.height) line.y = 0;
-        });
-    }
-
-    draw(ctx) {
-        ctx.strokeStyle = "rgba(255, 255, 255, 0.3)";
-
-        this.lines.forEach((line) => {
-            ctx.lineWidth = line.width;
-            ctx.beginPath();
-            ctx.moveTo(line.x, line.y);
-            ctx.lineTo(
-                line.x + Math.cos(line.angle) * line.length,
-                line.y + Math.sin(line.angle) * line.length,
-            );
-            ctx.stroke();
-        });
-    }
-}
-
 // Shooting Stars Effect
 class ShootingStarsEffect {
     constructor(options = {}) {
@@ -533,12 +426,11 @@ class ShootingStarsEffect {
         // Calculate direction vector based on angle
         const dirX = Math.sin(this.options.angle);
         const dirY = Math.cos(this.options.angle);
+        const canvas = document.getElementById("waveCanvas");
 
         // Randomize starting position
         // For stars to come from top, we position them above the canvas
-        let x =
-            Math.random() * (this.width + 2 * this.options.respawnBuffer) -
-            this.options.respawnBuffer;
+        let x;
         let y;
 
         if (randomizeY) {
@@ -546,12 +438,30 @@ class ShootingStarsEffect {
             y =
                 Math.random() * (this.height + this.options.respawnBuffer) -
                 this.options.respawnBuffer;
+            x =
+                Math.random() * (this.width + 2 * this.options.respawnBuffer) -
+                this.options.respawnBuffer;
         } else {
-            // For new stars, start them above the canvas
-            y = -this.options.respawnBuffer;
-
-            // Adjust x position based on star direction to create even distribution
-            x += dirX * this.options.respawnBuffer;
+            const random = Math.random() * (canvas.width + canvas.height * 2);
+            if (random <= canvas.height) {
+                x = 0;
+                y = random;
+            } else if (
+                random >= canvas.height &&
+                random <= canvas.width + canvas.height
+            ) {
+                x = random - canvas.height;
+                y = 0;
+            } else if (random >= canvas.width + canvas.height) {
+                x = canvas.width;
+                y = random - canvas.width - canvas.height;
+            } else {
+                x = 0;
+                y = 0;
+                console.warn(
+                    "Conditions for snow particle reset failed; Defaulting to top left (0, 0).",
+                );
+            }
         }
 
         return {
@@ -895,6 +805,488 @@ class StarFieldEffect {
         document.removeEventListener("mouseleave", this.onMouseLeave);
     }
 }
+class NeuralEffect {
+    constructor(color = { r: 1.0, g: 1.0, b: 1.0 }, opacity = 0.1) {
+        // Add color and opacity parameters
+        // Internal state
+        this.pointer = {
+            x: 0,
+            y: 0,
+            tX: 0,
+            tY: 0,
+        };
+        this.gl = null;
+        this.uniforms = null;
+        this.canvas = null;
+        this.ctx2d = null; // 2D context for fallback
+        this.shaderProgram = null;
+        this.vertexBuffer = null;
+        this.devicePixelRatio = Math.min(window.devicePixelRatio, 2);
+        this.initialized = false;
+        this.usingWebGL = true;
+        this.color = color; // Store the color
+        this.opacity = opacity; // Store the opacity
+
+        // Bind event handlers
+        this.updateMousePosition = this.updateMousePosition.bind(this);
+    }
+
+    // Method to update the color
+    setColor(color) {
+        this.color = color;
+    }
+
+    // Method to update the opacity
+    setOpacity(opacity) {
+        this.opacity = opacity;
+    }
+
+    init(width, height, ctx, canvas) {
+        // Store reference to the canvas and 2D context
+        this.canvas = canvas || ctx.canvas;
+        this.ctx2d = ctx;
+        ctx.globalAlpha = 0.2;
+
+        try {
+            // Create an offscreen canvas for WebGL
+            // We'll use this for rendering and then copy to the main canvas
+            this.offscreenCanvas = document.createElement("canvas");
+            this.offscreenCanvas.width = width * this.devicePixelRatio;
+            this.offscreenCanvas.height = height * this.devicePixelRatio;
+
+            // Try to get WebGL context from the offscreen canvas
+            const contextAttributes = {
+                alpha: true,
+                antialias: true,
+                depth: false,
+                premultipliedAlpha: true,
+                preserveDrawingBuffer: true,
+            };
+
+            this.gl =
+                this.offscreenCanvas.getContext("webgl", contextAttributes) ||
+                this.offscreenCanvas.getContext(
+                    "experimental-webgl",
+                    contextAttributes,
+                );
+
+            if (!this.gl) {
+                console.error(
+                    "WebGL is not supported by your browser or failed to initialize.",
+                );
+                this.usingWebGL = false;
+                return false;
+            }
+
+            // Set up shader program
+            if (this.initShader()) {
+                this.initialized = true;
+
+                // Set up event listeners
+                this.setupEvents();
+
+                // Initialize canvas size
+                this.resize(width, height);
+
+                return true;
+            }
+        } catch (e) {
+            console.error("Error initializing WebGL:", e);
+            this.usingWebGL = false;
+            return false;
+        }
+    }
+
+    initShader() {
+        // Get shader sources
+        const vsSource = `precision mediump float;
+
+    varying vec2 vUv;
+    attribute vec2 a_position;
+
+    void main() {
+        vUv = .5 * (a_position + 1.);
+        gl_Position = vec4(a_position, 0.0, 1.0);
+    }`;
+        const fsSource = `precision mediump float;
+
+    varying vec2 vUv;
+    uniform float u_time;
+    uniform float u_ratio;
+    uniform vec2 u_pointer_position;
+    uniform float u_scroll_progress;
+    uniform vec3 u_color; // Added uniform for color
+    uniform float u_opacity; // Added uniform for opacity
+
+    vec2 rotate(vec2 uv, float th) {
+        return mat2(cos(th), sin(th), -sin(th), cos(th)) * uv;
+    }
+
+    float neuro_shape(vec2 uv, float t, float p) {
+        vec2 sine_acc = vec2(0.);
+        vec2 res = vec2(0.);
+        float scale = 8.;
+
+        for (int j = 0; j < 15; j++) {
+            uv = rotate(uv, 1.);
+            sine_acc = rotate(sine_acc, 1.);
+            vec2 layer = uv * scale + float(j) + sine_acc - t;
+            sine_acc += sin(layer) + 2.4 * p;
+            res += (.5 + .5 * cos(layer)) / scale;
+            scale *= (1.2);
+        }
+        return res.x + res.y;
+    }
+
+    void main() {
+        vec2 uv = .5 * vUv;
+        uv.x *= u_ratio;
+
+        vec2 pointer = vUv - u_pointer_position;
+        pointer.x *= u_ratio;
+        float p = clamp(length(pointer), 0., 1.);
+        p = .5 * pow(1. - p, 2.);
+
+        float t = .001 * u_time;
+        vec3 color = vec3(0.);
+
+        float noise = neuro_shape(uv, t, p);
+
+        noise = 1.2 * pow(noise, 3.);
+        noise += pow(noise, 10.);
+        noise = max(.0, noise - .5);
+        noise *= (1. - length(vUv - .5));
+
+        // Use the user-defined color from uniform instead of the calculated color
+        color = u_color;
+
+        color = color * noise;
+
+        // Apply the opacity uniform to the alpha channel
+        gl_FragColor = vec4(color, noise * u_opacity);
+    }`;
+
+        try {
+            // Enable alpha blending
+            this.gl.enable(this.gl.BLEND);
+            this.gl.blendFunc(this.gl.SRC_ALPHA, this.gl.ONE_MINUS_SRC_ALPHA);
+
+            // Clear color with transparency
+            this.gl.clearColor(0, 0, 0, 0);
+
+            // Create shaders
+            const vertexShader = this.createShader(
+                this.gl,
+                vsSource,
+                this.gl.VERTEX_SHADER,
+            );
+            const fragmentShader = this.createShader(
+                this.gl,
+                fsSource,
+                this.gl.FRAGMENT_SHADER,
+            );
+
+            if (!vertexShader || !fragmentShader) {
+                console.error("Failed to compile shaders");
+                return false;
+            }
+
+            // Create shader program
+            this.shaderProgram = this.createShaderProgram(
+                this.gl,
+                vertexShader,
+                fragmentShader,
+            );
+
+            if (!this.shaderProgram) {
+                console.error("Failed to create shader program");
+                return false;
+            }
+
+            // Get uniform locations
+            this.uniforms = this.getUniforms(this.shaderProgram);
+
+            // Create vertex buffer
+            const vertices = new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]);
+            this.vertexBuffer = this.gl.createBuffer();
+            this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.vertexBuffer);
+            this.gl.bufferData(
+                this.gl.ARRAY_BUFFER,
+                vertices,
+                this.gl.STATIC_DRAW,
+            );
+
+            // Use the shader program
+            this.gl.useProgram(this.shaderProgram);
+
+            // Set up position attribute
+            const positionLocation = this.gl.getAttribLocation(
+                this.shaderProgram,
+                "a_position",
+            );
+            this.gl.enableVertexAttribArray(positionLocation);
+            this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.vertexBuffer);
+            this.gl.vertexAttribPointer(
+                positionLocation,
+                2,
+                this.gl.FLOAT,
+                false,
+                0,
+                0,
+            );
+
+            return true;
+        } catch (e) {
+            console.error("Error during shader initialization:", e);
+            return false;
+        }
+    }
+
+    createShader(gl, sourceCode, type) {
+        try {
+            const shader = gl.createShader(type);
+            gl.shaderSource(shader, sourceCode);
+            gl.compileShader(shader);
+
+            if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+                console.error(
+                    "An error occurred compiling the shaders: " +
+                        gl.getShaderInfoLog(shader),
+                );
+                gl.deleteShader(shader);
+                return null;
+            }
+
+            return shader;
+        } catch (e) {
+            console.error("Error creating shader:", e);
+            return null;
+        }
+    }
+
+    createShaderProgram(gl, vertexShader, fragmentShader) {
+        try {
+            const program = gl.createProgram();
+            gl.attachShader(program, vertexShader);
+            gl.attachShader(program, fragmentShader);
+            gl.linkProgram(program);
+
+            if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+                console.error(
+                    "Unable to initialize the shader program: " +
+                        gl.getProgramInfoLog(program),
+                );
+                return null;
+            }
+
+            return program;
+        } catch (e) {
+            console.error("Error creating shader program:", e);
+            return null;
+        }
+    }
+
+    getUniforms(program) {
+        let uniforms = [];
+        try {
+            let uniformCount = this.gl.getProgramParameter(
+                program,
+                this.gl.ACTIVE_UNIFORMS,
+            );
+            for (let i = 0; i < uniformCount; i++) {
+                let uniformInfo = this.gl.getActiveUniform(program, i);
+                if (uniformInfo) {
+                    let uniformName = uniformInfo.name;
+                    uniforms[uniformName] = this.gl.getUniformLocation(
+                        program,
+                        uniformName,
+                    );
+                }
+            }
+        } catch (e) {
+            console.error("Error getting uniforms:", e);
+        }
+        return uniforms;
+    }
+
+    setupEvents() {
+        window.addEventListener("pointermove", this.updateMousePosition);
+        window.addEventListener("touchmove", (e) => {
+            this.updateMousePosition({
+                clientX: e.targetTouches[0].clientX,
+                clientY: e.targetTouches[0].clientY,
+            });
+        });
+        window.addEventListener("click", this.updateMousePosition);
+    }
+
+    updateMousePosition(e) {
+        this.pointer.tX = e.clientX;
+        this.pointer.tY = e.clientY;
+    }
+
+    // CanvasAnimationFramework interface methods
+    update(deltaTime) {
+        if (!this.initialized) return;
+
+        // Smoothly update pointer position
+        this.pointer.x += (this.pointer.tX - this.pointer.x) * 0.2;
+        this.pointer.y += (this.pointer.tY - this.pointer.y) * 0.2;
+    }
+
+    draw(ctx) {
+        if (!this.initialized) return;
+
+        if (!this.usingWebGL || !this.gl) {
+            // Fallback to a simple drawing if WebGL failed
+            this.drawFallback(ctx);
+            return;
+        }
+
+        try {
+            // Clear the offscreen canvas with transparency
+            this.gl.clear(this.gl.COLOR_BUFFER_BIT);
+
+            const currentTime = performance.now();
+
+            // Update uniforms
+            this.gl.uniform1f(this.uniforms.u_time, currentTime);
+            this.gl.uniform2f(
+                this.uniforms.u_pointer_position,
+                this.pointer.x / window.innerWidth,
+                1 - this.pointer.y / window.innerHeight,
+            );
+            this.gl.uniform1f(
+                this.uniforms.u_scroll_progress,
+                window.pageYOffset / (2 * window.innerHeight),
+            );
+
+            // Set the color uniform
+            this.gl.uniform3f(
+                this.uniforms.u_color,
+                this.color.r,
+                this.color.g,
+                this.color.b,
+            );
+
+            // Set the opacity uniform
+            this.gl.uniform1f(this.uniforms.u_opacity, this.opacity);
+
+            // Draw the scene
+            this.gl.drawArrays(this.gl.TRIANGLE_STRIP, 0, 4);
+
+            // Copy the offscreen canvas to the main canvas
+            ctx.save();
+            ctx.globalAlpha = this.opacity;
+            ctx.drawImage(
+                this.offscreenCanvas,
+                0,
+                0,
+                this.canvas.width,
+                this.canvas.height,
+            );
+            ctx.restore();
+        } catch (e) {
+            console.error("Error during draw:", e);
+            this.usingWebGL = false;
+        }
+    }
+
+    drawFallback(ctx) {
+        // A simple fallback drawing if WebGL isn't available
+        const width = this.canvas.width;
+        const height = this.canvas.height;
+        const time = performance.now() * 0.001;
+
+        ctx.save();
+
+        // Create a simple pulsing gradient
+        const gradient = ctx.createRadialGradient(
+            this.pointer.x,
+            this.pointer.y,
+            0,
+            this.pointer.x,
+            this.pointer.y,
+            height * 0.5,
+        );
+
+        // Use the user-defined color
+        const r = this.color.r * 255;
+        const g = this.color.g * 255;
+        const b = this.color.b * 255;
+
+        gradient.addColorStop(
+            0,
+            `rgba(${r}, ${g}, ${b}, ${0.6 * this.opacity})`, // Multiply by opacity
+        );
+        gradient.addColorStop(1, `rgba(${r}, ${g}, ${b}, 0)`);
+
+        ctx.globalAlpha = this.opacity; // Multiply by opacity
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, width, height);
+
+        ctx.restore();
+    }
+
+    onResize(width, height) {
+        this.resize(width, height);
+    }
+
+    resize(width, height) {
+        if (!this.initialized) return;
+
+        try {
+            const dpr = this.devicePixelRatio;
+
+            // Resize the offscreen canvas
+            if (this.offscreenCanvas) {
+                this.offscreenCanvas.width = width * dpr;
+                this.offscreenCanvas.height = height * dpr;
+            }
+
+            // Update WebGL if available
+            if (this.usingWebGL && this.gl) {
+                // Update uniform for aspect ratio
+                this.gl.uniform1f(this.uniforms.u_ratio, width / height);
+
+                // Update viewport to match canvas size
+                this.gl.viewport(0, 0, width * dpr, height * dpr);
+            }
+        } catch (e) {
+            console.error("Error during resize:", e);
+            this.usingWebGL = false;
+        }
+    }
+
+    dispose() {
+        this.canvas.getContext("2d").globalAlpha = 1;
+        // Clean up event listeners
+        window.removeEventListener("pointermove", this.updateMousePosition);
+        window.removeEventListener("touchmove", this.updateMousePosition);
+        window.removeEventListener("click", this.updateMousePosition);
+
+        // Clean up WebGL resources
+        if (this.gl && this.initialized && this.usingWebGL) {
+            try {
+                this.gl.deleteBuffer(this.vertexBuffer);
+                this.gl.deleteProgram(this.shaderProgram);
+            } catch (e) {
+                console.error("Error during dispose:", e);
+            }
+        }
+
+        // Clean up offscreen canvas
+        if (this.offscreenCanvas) {
+            this.offscreenCanvas = null;
+        }
+
+        this.initialized = false;
+    }
+
+    onFpsUpdate(fps) {
+        // Optional: do something with the FPS information
+    }
+}
 
 const animationFramework = new CanvasAnimationFramework("waveCanvas");
 document.addEventListener("DOMContentLoaded", () => {
@@ -902,13 +1294,12 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!localStorage.getItem("effect")) {
         localStorage.setItem("effect", JSON.stringify(effect));
     }
-    //WavePointsEffect ParticleFieldEffect FlowingLinesEffect ShootingStarsEffect StarFieldEffect
     const effects = {
         waves: WavePointsEffect,
         particle_field: ParticleFieldEffect,
-        flowing_lines: FlowingLinesEffect,
         shooting_stars: ShootingStarsEffect,
         starfield: StarFieldEffect,
+        neural: NeuralEffect,
     };
 
     const effectInstance = new effects[Object.keys(effects)[effect]]();

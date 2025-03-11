@@ -9,7 +9,6 @@
     <link rel="stylesheet" href="settings.css" />
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
     <preload name="navbar" src="/config/home_navbar.json"></preload>
-    <script type="text/javascript" src="/settings/settings.js"></script>
   </head>
 
   <body>
@@ -37,6 +36,22 @@
       <div class="settings-container-row">
         <!-- Generate options dynamically -->
         <script>
+          function idToName(input) {
+            return (
+              input
+                // Replace the first letter and any letter after "_" with the uppercase equivalent
+                .replace(
+                  /(?:^|\_)([a-z])/g,
+                  (match, letter) => `_${letter.toUpperCase()}`,
+                )
+
+                // Replace underscores with spaces
+                .replace(/_/g, " ")
+
+                // Replace groups of digits with "#<digits>"
+                .replace(/\d+/g, (match) => ` #${match}`)
+            );
+          }
           const cursorContainer = $(".settings-container-row").eq(0);
           const themes = JSON.parse(localStorage.getItem("themes"));
 
@@ -113,12 +128,13 @@
             const effects = {
               waves: WavePointsEffect,
               particle_field: ParticleFieldEffect,
-              flowing_lines: FlowingLinesEffect,
               shooting_stars: ShootingStarsEffect,
               starfield: StarFieldEffect,
+              neural: NeuralEffect,
             };
 
             const effectInstance = new effects[effect]();
+            console.log(effect);
 
             // Use the framework to run the effect
             animationFramework.setEffect(effectInstance);
@@ -126,14 +142,14 @@
           const effectsSettings = [
             "waves",
             "particle_field",
-            "flowing_lines",
             "shooting_stars",
             "starfield",
+            "neural",
           ];
           effectsSettings.forEach((effect) => {
             document.write(
               `<div class="option">
-                <img style="transform: translate(-50%, -50%) scale(0.5)" src="/images/lightning.svg" />
+                <img style="transform: translate(-50%, -50%) scale(1.5) " src="/images/effect_icons/${effect}.svg" />
                 <button onclick="
                 setEffect('${effect}');
                 ">${idToName(effect)}</button>
@@ -149,4 +165,5 @@
   <script type="text/javascript" src="/home/home.js"></script>
   <script type="text/javascript" src="/home/home-waves.js"></script>
   <script type="text/javascript" src="/user-theme.js"></script>
+  <script type="text/javascript" src="/settings/settings.js"></script>
 </html>

@@ -2,13 +2,16 @@
   ::-webkit-scrollbar {
     width: 0px;
   }
+
   body {
     overflow-y: hidden;
     overflow-x: hidden;
   }
+
   #sidebar {
     display: none;
   }
+
   #settings-container {
     width: 100vw !important;
     right: -36px;
@@ -16,14 +19,16 @@
     height: 100vh !important;
   }
 
-  #settings-container >  :first-child {
+  #settings-container> :first-child {
     margin-top: 96px;
   }
+
   .option {
-      flex: 0 0 40vw !important;
-      height: auto !important;
+    flex: 0 0 40vw !important;
+    height: auto !important;
     border-radius: 4vw !important;
   }
+
   .option button {
     border-radius: 4vw !important;
     font-size: 0.7em !important;
@@ -59,12 +64,12 @@
 }
 
 #sidebar button img {
-    height: 42%;
-    aspect-ratio: 1 / 1;
-    position: absolute;
-    left: 50%;
-    top: 50%;
-    transform: translate(-50%, -50%);
+  height: 42%;
+  aspect-ratio: 1 / 1;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
 }
 
 #sidebar button#cursor-sidebar-button img {
@@ -138,7 +143,7 @@
   aspect-ratio: 1;
   height: 15.5vw;
   margin: 1vw;
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: rgba(0, 0, 0, 0.8);
   display: flex;
   position: relative;
   border-radius: 2vw;
@@ -156,12 +161,12 @@
 }
 
 .option .cursor-img {
-    position: absolute;
-    left: 50%;
-    transform: translate(-33%, -43%);
-    top: 50%;
-    height: 80%;
-    aspect-ratio: 1;
+  position: absolute;
+  left: 50%;
+  transform: translate(-33%, -43%);
+  top: 50%;
+  height: 80%;
+  aspect-ratio: 1;
 }
 
 .option button {
@@ -212,15 +217,15 @@ img:not([data-ia-status="ignore:small"]) {
 }
 
 #sidebar #sidebar-b {
-    mask: url("/images/bhoppings-b.svg") no-repeat center / contain;
-    background: linear-gradient(to right, var(--color1), var(--color2));
-    position: absolute;
-    left: 50%;
-    top: 50%;
-    width: 76%;
-    aspect-ratio: 1 / 1;
-    transform: translate(-50%, -50%);
-    content: "";
+  mask: url("/images/bhoppings-b.svg") no-repeat center / contain;
+  background: linear-gradient(to right, var(--color1), var(--color2));
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 76%;
+  aspect-ratio: 1 / 1;
+  transform: translate(-50%, -50%);
+  content: "";
 }
 
 .option.active-option::after {
@@ -265,7 +270,7 @@ body #sidebar .bucket {
   top: 50%;
 }
 
-.option > img {
+.option>img {
   width: 50%;
   top: 40%;
 }
