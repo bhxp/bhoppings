@@ -4,7 +4,56 @@ const fs = require("fs");
 
 const app = express();
 
-app.use('/favicon.ico', express.static(path.join(__dirname, 'public', '/images/favicon.ico')));
+app.use(
+  "/favicon.ico",
+  express.static(path.join(__dirname, "public", "/images/favicon.ico")),
+);
+
+// Import the auth module
+const auth = require("./auth");
+
+// Initialize auth middleware
+app.use(express.json()); // For parsing application/json
+app.use(express.urlencoded({ extended: true })); // For parsing application/x-www-form-urlencoded
+
+// Add auth routes and middleware
+auth.setup(app);
+
+// Protect routes that require authentication
+// Place this after your public routes like "/" but before protected routes
+app.use((req, res, next) => {
+  // Skip authentication for public routes
+  if (
+    req.path === "/" ||
+    req.path.startsWith("/login") ||
+    req.path === "/login_process" ||
+    req.path === "/signup_process"
+  ) {
+    return next();
+  }
+
+  // Check if user is authenticated
+  if (!req.session || !req.session.user) {
+    return res.redirect("/login");
+  }
+
+  next();
+});
+
+// Example of using the auth API in your routes
+app.get("/profile", (req, res) => {
+  // Get user data
+  auth
+    .getUserData(req.session.user.username)
+    .then((userData) => {
+      const responseData = JSON.stringify(userData);
+      res.send(responseData);
+    })
+    .catch((err) => {
+      console.error("Error fetching user data:", err);
+      res.status(500).send("Server error");
+    });
+});
 
 const fixRelativePaths = (req, res, next) => {
   if (req.path.endsWith("/") || req.path.endsWith(".html")) {
@@ -104,6 +153,41 @@ const processPreloadTags = (req, res, next) => {
 };
 
 app.use(processPreloadTags);
+
+const appendAccountLib = (req, res, next) => {
+  let filePath = path.join(process.cwd(), "public", req.path);
+
+  if (fs.existsSync(filePath) && fs.statSync(filePath).isDirectory()) {
+    filePath = path.join(filePath, "index.html");
+  }
+
+  if (fs.existsSync(filePath) && path.extname(filePath) === ".html") {
+    fs.readFile(filePath, "utf8", (err, data) => {
+      if (err) {
+        return next(err);
+      }
+      // <preload src="$URL"></preload>
+      const preloadTagRegex =
+        /<preload\s+name="([^"]+)"\s+src="([^"]+)"(?:\s*\/>|>\s*<\/preload>)/g;
+      const baseDir = path.dirname(req.path).substring(1);
+      let modifiedData = data;
+      // Use the regex's test method on the string `data`
+      modifiedData = data.replace(
+        `</body>`,
+        `<!-- account library injected by server, ignore -->
+        <script type="text/javascript" src="/account-data.js"></script>
+        </body>`,
+      );
+
+      res.set("Content-Type", "text/html");
+      res.send(modifiedData);
+    });
+  } else {
+    next();
+  }
+};
+
+app.use(appendAccountLib);
 
 app.get("/app-icon", (req, res, next) => {
   const filePath = path.join(__dirname, "public", "ai/app-icon/index.html"); // Adjust path as needed

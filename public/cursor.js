@@ -57,26 +57,26 @@ async function cursorMain() {
         document.body.insertAdjacentHTML("beforeend", cursorSvg);
 
         document.head.appendChild(styleElem);
+
+        // Select the cursor after it's added to the DOM
+        const cursor = document.querySelector(".custom-cursor");
+
+        // Add mousemove event listener to update cursor position
+        document.addEventListener("mousemove", (e) => {
+          cursor.style.left = `${e.pageX}px`;
+          cursor.style.top = `${e.pageY}px`;
+        });
+
+        // Hide cursor when leaving document
+        $(document).mouseleave(function () {
+          $(".custom-cursor").css("display", "none");
+        });
+
+        // Show cursor when entering document
+        $(document).mouseenter(function () {
+          $(".custom-cursor").css("display", "block");
+        });
       }
-
-      // Select the cursor after it's added to the DOM
-      const cursor = document.querySelector(".custom-cursor");
-
-      // Add mousemove event listener to update cursor position
-      document.addEventListener("mousemove", (e) => {
-        cursor.style.left = `${e.pageX}px`;
-        cursor.style.top = `${e.pageY}px`;
-      });
-
-      // Hide cursor when leaving document
-      $(document).mouseleave(function () {
-        $(".custom-cursor").css("display", "none");
-      });
-
-      // Show cursor when entering document
-      $(document).mouseenter(function () {
-        $(".custom-cursor").css("display", "block");
-      });
     })
     .catch((error) => console.error("Error fetching SVG:", error));
 }
