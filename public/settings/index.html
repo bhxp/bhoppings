@@ -242,6 +242,8 @@
       <div class="settings-container-row">
         <h1>
           <img src="/images/danger.svg" alt="⚠️" />
+        </h1>
+        <h1>
           Danger Zone
           <span class="small"
             >Do not proceed if you are unsure, as options here can cause
@@ -252,14 +254,14 @@
           <tr>
             <td>
               Erase All Local Data<span class="small"
-                >Will delete all locally saved data, like theme preferences and
-                reset to a clean slate.</span
+                >Will delete all locally saved data, like theme and preferences,
+                and reset to a clean state.</span
               >
             </td>
             <td>
               <button
                 style="float: right"
-                onclick="window.localStorage.clear();"
+                onclick="window.localStorage.clear();window.location.reload();"
               >
                 <img src="/images/trash-red.svg" />
               </button>

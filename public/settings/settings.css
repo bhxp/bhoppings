@@ -356,7 +356,8 @@ input:checked+.slider:before {
 }
 
 h1 img {
-  height: 0.8em;
+  height: 2em;
+  margin-right: 1em;
 }
 
 td button {
