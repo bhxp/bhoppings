@@ -2,6 +2,11 @@
 const axios = require("axios");
 const crypto = require("crypto");
 const session = require("express-session");
+const connectRedis = require("connect-redis");
+const { createClient } = require("redis");
+
+// Get the RedisStore class from connectRedis
+const RedisStore = connectRedis.RedisStore;
 
 // Configuration (you should set these as environment variables in production)
 const JSONBIN_API_KEY =
@@ -9,11 +14,17 @@ const JSONBIN_API_KEY =
   "$2a$10$PdE8DlpdPuENmEfETNioOOROSZ8bMS7wVMiNa7YN415QGW907Fwwm";
 const JSONBIN_BIN_ID = process.env.JSONBIN_BIN_ID || "67d102208561e97a50ea4bb9";
 const SESSION_SECRET = process.env.SESSION_SECRET || "1";
+const REDIS_URL =
+  process.env.REDIS_URL ||
+  "rediss://default:Ae_bAAIjcDE3NTNkYTk0MjA5ZjE0NTk0YmRjODgwZjRiNzZmOWRhYnAxMA@amazed-emu-61403.upstash.io:6379";
 
 // In-memory cache of users (in production, consider using Redis)
 let usersCache = null;
 let lastFetchTime = 0;
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
+// Redis client
+let redisClient;
 
 // Hash password for secure storage
 function hashPassword(password) {
@@ -82,25 +93,60 @@ async function initializeUsersBin() {
   }
 }
 
+// Initialize Redis client
+async function initializeRedisClient() {
+  try {
+    redisClient = createClient({
+      url: REDIS_URL,
+    });
+
+    redisClient.on("error", (error) => {
+      console.error("Redis client error:", error);
+    });
+
+    await redisClient.connect();
+    console.log("Connected to Redis successfully");
+    return true;
+  } catch (error) {
+    console.error("Failed to connect to Redis:", error);
+    return false;
+  }
+}
+
 // Auth module API
 const auth = {
   // Setup auth routes and middleware
-  setup: function (app) {
-    // Initialize session middleware
+  setup: async function (app) {
+    // Initialize Redis
+    redisClient = createClient({
+      url: REDIS_URL,
+    });
+
+    redisClient.on("error", (error) => {
+      console.error("Redis client error:", error);
+    });
+
+    await redisClient.connect();
+    console.log("Connected to Redis successfully");
+
+    // Initialize session middleware with Redis store
     app.use(
       session({
+        store: new RedisStore({ client: redisClient }),
         secret: SESSION_SECRET,
         resave: false,
         saveUninitialized: false,
         cookie: {
           secure: process.env.NODE_ENV === "production",
+          httpOnly: true,
+          sameSite: "lax",
           maxAge: 24 * 60 * 60 * 1000, // 24 hours
         },
       }),
     );
 
     // Initialize users bin
-    initializeUsersBin();
+    await initializeUsersBin();
 
     // Login processing route
     app.post("/login_process", async (req, res) => {
@@ -201,8 +247,12 @@ const auth = {
 
     // Logout route
     app.get("/logout", (req, res) => {
-      req.session.destroy();
-      res.redirect("/login");
+      req.session.destroy((err) => {
+        if (err) {
+          console.error("Error destroying session:", err);
+        }
+        res.redirect("/login");
+      });
     });
 
     // Return current user info
