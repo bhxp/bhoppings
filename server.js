@@ -17,7 +17,7 @@ app.use(express.json()); // For parsing application/json
 app.use(express.urlencoded({ extended: true })); // For parsing application/x-www-form-urlencoded
 
 // Initialize auth middleware asynchronously
-(async function() {
+(async function () {
   try {
     // Initialize auth - this will set up Redis and sessions
     await auth.setup(app);
@@ -42,8 +42,8 @@ function setupServer() {
       req.path === "/login_process" ||
       req.path === "/signup_process"
     ) {
-      return next();
     }
+    return next();
 
     // Check if user is authenticated
     if (!req.session || !req.session.user) {
@@ -80,7 +80,7 @@ function setupServer() {
         req.session.user = {
           id: result.user.id,
           username: result.user.username,
-          role: result.user.role
+          role: result.user.role,
         };
 
         return res.redirect("/dashboard");
@@ -105,12 +105,14 @@ function setupServer() {
         req.session.user = {
           id: result.user.id,
           username: result.user.username,
-          role: result.user.role
+          role: result.user.role,
         };
 
         return res.redirect("/dashboard");
       } else {
-        return res.redirect("/login?error=" + encodeURIComponent(result.message));
+        return res.redirect(
+          "/login?error=" + encodeURIComponent(result.message),
+        );
       }
     } catch (error) {
       console.error("Registration error:", error);
@@ -169,7 +171,12 @@ function setupServer() {
   const getFile = (baseDir, url, name) => {
     try {
       const normalizedUrl = url.startsWith("/") ? url.slice(1) : url;
-      const filePath = path.join(process.cwd(), "public", baseDir, normalizedUrl);
+      const filePath = path.join(
+        process.cwd(),
+        "public",
+        baseDir,
+        normalizedUrl,
+      );
 
       console.log("Attempting to read file:", filePath);
 
