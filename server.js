@@ -20,10 +20,8 @@ app.use(
       secure: process.env.NODE_ENV === "production",
       maxAge: 24 * 60 * 60 * 1000,
     },
-    store: MongoStore.create({
-      mongoUrl:
-        "mongodb+srv://cheesewhizshanahan:Milla1234$@cluster0.otg4i.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0",
-      ttl: 14 * 24 * 60 * 60, // 14 days
+    store: new (require("memorystore")(session))({
+      checkPeriod: 86400000, // prune expired entries every 24h
     }),
   }),
 );
