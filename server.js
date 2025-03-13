@@ -99,16 +99,30 @@ const requireAuth = (req, res, next) => {
 };
 
 // User session middleware - Make sure user data is stored in session
-app.use((req, res, next) => {
+app.use(async (req, res, next) => {
   if (req.oidc && req.oidc.isAuthenticated() && req.oidc.user) {
     // Store user info in session if not already there
-    if (!req.session.user) {
-      req.session.user = {
-        id: req.oidc.user.sub,
-        name: req.oidc.user.name,
-        email: req.oidc.user.email,
-        picture: req.oidc.user.picture,
-      };
+    const userData = {
+      id: req.oidc.user.sub,
+      name: req.oidc.user.name,
+      email: req.oidc.user.email,
+      picture: req.oidc.user.picture,
+    };
+
+    // Always update basic user info in session
+    req.session.user = userData;
+
+    try {
+      // Check if the user exists in JSONbin
+      const { user } = await getUserFromJsonbin(userData.id);
+
+      // If user doesn't exist in JSONbin (either new user or deleted), create/recreate them
+      if (!user) {
+        await createOrUpdateUserData(userData);
+      }
+    } catch (error) {
+      console.error("Error checking/initializing user data:", error);
+      // Continue anyway to not block the user experience
     }
   }
   next();
