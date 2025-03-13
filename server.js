@@ -7,9 +7,10 @@ const axios = require("axios");
 const MongoStore = require("connect-mongo");
 const app = express();
 
-// Set up session before auth middleware
-// Example with MongoDB session store
+// Parse JSON requests
+app.use(express.json());
 
+// Set up session before auth middleware
 app.use(
   session({
     secret: "another-long-random-string-for-testing-only",
@@ -55,6 +56,7 @@ app.use((req, res, next) => {
   next();
 });
 
+// Set up Auth0 BEFORE defining protected routes
 app.use((req, res, next) => {
   const config = {
     authRequired: false,
@@ -72,14 +74,49 @@ app.use((req, res, next) => {
     authorizationParams: {
       prompt: "login", // Force login screen to show
       response_type: "code",
-      scope: "openid profile email",
+      scope: "openid profile email read:users update:users",
     },
   };
 
   auth(config)(req, res, next);
 });
 
-// Add this BEFORE the Auth0 middleware
+// Initialize the Auth0 Management API client
+// You should add these as environment variables in production
+const { ManagementClient } = require("auth0");
+const auth0Management = new ManagementClient({
+  domain: "dev-cnsg5vep82aj6nfp.us.auth0.com",
+  clientId: "DPG9wJiWT1KtMiIAKQD3vg2sRXym2hx5",
+  clientSecret:
+    "a-l_TGZp9jOoGudNvgqgcm1q5cQvLRZIOQQomWZIeDEB-3NBn6Q-iVAl8gCKpxIp",
+  scope: "read:users update:users",
+});
+
+// Protected routes middleware - AFTER Auth0 middleware is set up
+const requireAuth = (req, res, next) => {
+  if (!req.oidc || !req.oidc.isAuthenticated()) {
+    return res.redirect("/login");
+  }
+  next();
+};
+
+// User session middleware - Make sure user data is stored in session
+app.use((req, res, next) => {
+  if (req.oidc && req.oidc.isAuthenticated() && req.oidc.user) {
+    // Store user info in session if not already there
+    if (!req.session.user) {
+      req.session.user = {
+        id: req.oidc.user.sub,
+        name: req.oidc.user.name,
+        email: req.oidc.user.email,
+        picture: req.oidc.user.picture,
+      };
+    }
+  }
+  next();
+});
+
+// Logout route - BEFORE protected routes
 app.get("/logout", (req, res) => {
   // Get the return URL before clearing session
   const returnTo = encodeURIComponent(`https://${req.headers.host}/home`);
@@ -93,56 +130,15 @@ app.get("/logout", (req, res) => {
   );
 });
 
-// JSONbin configuration - Hardcoded for testing
+// JSONbin configuration - Hardcoded for testing (consider using environment variables in production)
 const jsonbinConfig = {
   accessKey: "$2a$10$PdE8DlpdPuENmEfETNioOOROSZ8bMS7wVMiNa7YN415QGW907Fwwm",
   binId: "67d102208561e97a50ea4bb9",
   baseUrl: "https://api.jsonbin.io/v3",
 };
 
-// Add user data middleware
-app.use(async (req, res, next) => {
-  if (req.oidc.isAuthenticated()) {
-    // Store user info in session if not already present
-    if (!req.session.user) {
-      const user = {
-        id: req.oidc.user.sub,
-        email: req.oidc.user.email,
-        name: req.oidc.user.name,
-        picture: req.oidc.user.picture,
-      };
-
-      // Check if user exists in JSONbin storage
-      try {
-        const userData = await getUserData(user.id);
-        if (userData) {
-          // User exists, update session with JSONbin data
-          req.session.user = { ...user, ...userData };
-        } else {
-          // New user, create record in JSONbin
-          await createUserData(user);
-          req.session.user = user;
-        }
-      } catch (error) {
-        console.error("Error syncing user data with JSONbin:", error);
-        req.session.user = user;
-      }
-    }
-
-    // Make user data available to templates
-    res.locals.user = req.session.user;
-    res.locals.isAuthenticated = true;
-  } else {
-    res.locals.isAuthenticated = false;
-  }
-  next();
-});
-
-// Parse JSON requests
-app.use(express.json());
-
-// Helper functions for JSONbin integration
-async function getUserData(userId) {
+// Update the getUserFromJsonbin function to handle missing data
+async function getUserFromJsonbin(userId) {
   try {
     const response = await axios.get(
       `${jsonbinConfig.baseUrl}/b/${jsonbinConfig.binId}/latest`,
@@ -153,40 +149,33 @@ async function getUserData(userId) {
       },
     );
 
-    const users = response.data.record.users || [];
-    return users.find((user) => user.id === userId);
+    // Get the data from response, or initialize with empty users array if missing
+    const data = response.data.record || { users: [] };
+
+    // Make sure users array exists
+    if (!data.users) {
+      data.users = [];
+    }
+
+    return {
+      data,
+      user: data.users.find((user) => user.id === userId),
+      userIndex: data.users.findIndex((user) => user.id === userId),
+    };
   } catch (error) {
-    console.error("Error fetching user data from JSONbin:", error);
-    return null;
+    console.error("Error fetching data from JSONbin:", error);
+    // Return a default structure instead of throwing
+    return {
+      data: { users: [] },
+      user: null,
+      userIndex: -1,
+    };
   }
 }
 
-async function createUserData(user) {
+// Helper function to update user data in JSONbin
+async function updateJsonbin(data) {
   try {
-    // First get current data
-    const response = await axios.get(
-      `${jsonbinConfig.baseUrl}/b/${jsonbinConfig.binId}/latest`,
-      {
-        headers: {
-          "X-Master-Key": jsonbinConfig.accessKey,
-        },
-      },
-    );
-
-    const data = response.data.record || { users: [] };
-
-    // Add new user
-    if (!data.users) data.users = [];
-    data.users.push({
-      id: user.id,
-      email: user.email,
-      name: user.name,
-      createdAt: new Date().toISOString(),
-      settings: {},
-      data: {},
-    });
-
-    // Update JSONbin
     await axios.put(`${jsonbinConfig.baseUrl}/b/${jsonbinConfig.binId}`, data, {
       headers: {
         "X-Master-Key": jsonbinConfig.accessKey,
@@ -194,24 +183,336 @@ async function createUserData(user) {
       },
     });
   } catch (error) {
-    console.error("Error creating user data in JSONbin:", error);
+    console.error("Error updating data in JSONbin:", error);
+    throw new Error("Failed to update user data");
   }
 }
 
-// User data API endpoints
-app.get("/api/user", (req, res) => {
-  if (!req.oidc.isAuthenticated()) {
-    return res.status(401).json({ error: "Not authenticated" });
-  }
+// Create or update user in JSONbin (called during auth process)
+async function createOrUpdateUserData(user) {
+  try {
+    // Get current data
+    let { data, userIndex } = await getUserFromJsonbin(user.id);
 
+    // If data doesn't exist yet, initialize it
+    if (!data) {
+      data = { users: [] };
+    }
+
+    // If users array doesn't exist, initialize it
+    if (!data.users) {
+      data.users = [];
+      userIndex = -1;
+    }
+
+    if (userIndex !== -1) {
+      // Update existing user
+      data.users[userIndex] = {
+        ...data.users[userIndex],
+        email: user.email,
+        name: user.name,
+        lastLogin: new Date().toISOString(),
+      };
+    } else {
+      // Add new user
+      data.users.push({
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        createdAt: new Date().toISOString(),
+        lastLogin: new Date().toISOString(),
+        settings: {},
+        metadata: {},
+        data: {},
+      });
+    }
+
+    // Update JSONbin
+    await updateJsonbin(data);
+    return userIndex !== -1
+      ? data.users[userIndex]
+      : data.users[data.users.length - 1];
+  } catch (error) {
+    console.error("Error creating/updating user data in JSONbin:", error);
+    throw new Error("Failed to create/update user");
+  }
+}
+
+// Get all user metadata
+app.get("/api/user/metadata", requireAuth, async (req, res) => {
+  try {
+    const userId = req.session.user.id;
+    const { user } = await getUserFromJsonbin(userId);
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    res.json({
+      success: true,
+      metadata: user.metadata || {},
+    });
+  } catch (error) {
+    console.error("Error fetching user metadata:", error);
+    res.status(500).json({ error: "Failed to fetch user metadata" });
+  }
+});
+
+// Update a single metadata key
+app.post("/api/user/metadata/:key", requireAuth, async (req, res) => {
+  try {
+    const userId = req.session.user.id;
+    const key = req.params.key;
+    const value = req.body.value;
+
+    const { data, userIndex } = await getUserFromJsonbin(userId);
+
+    if (userIndex === -1) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    // Ensure metadata object exists
+    if (!data.users[userIndex].metadata) {
+      data.users[userIndex].metadata = {};
+    }
+
+    // Update the metadata
+    data.users[userIndex].metadata[key] = value;
+
+    // Update JSONbin
+    await updateJsonbin(data);
+
+    res.json({
+      success: true,
+      key,
+      value,
+      metadata: data.users[userIndex].metadata,
+    });
+  } catch (error) {
+    console.error("Error updating user metadata:", error);
+    res.status(500).json({ error: "Failed to update metadata" });
+  }
+});
+
+// Delete a single metadata key
+app.delete("/api/user/metadata/:key", requireAuth, async (req, res) => {
+  try {
+    const userId = req.session.user.id;
+    const key = req.params.key;
+
+    const { data, userIndex } = await getUserFromJsonbin(userId);
+
+    if (
+      userIndex === -1 ||
+      !data.users[userIndex].metadata ||
+      data.users[userIndex].metadata[key] === undefined
+    ) {
+      return res.status(404).json({ error: "User or metadata key not found" });
+    }
+
+    // Delete the key
+    delete data.users[userIndex].metadata[key];
+
+    // Update JSONbin
+    await updateJsonbin(data);
+
+    res.json({
+      success: true,
+      metadata: data.users[userIndex].metadata,
+    });
+  } catch (error) {
+    console.error("Error deleting metadata key:", error);
+    res.status(500).json({ error: "Failed to delete metadata key" });
+  }
+});
+
+// Reset all user metadata
+app.delete("/api/user/metadata", requireAuth, async (req, res) => {
+  try {
+    const userId = req.session.user.id;
+
+    const { data, userIndex } = await getUserFromJsonbin(userId);
+
+    if (userIndex === -1) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    // Reset metadata to empty object
+    data.users[userIndex].metadata = {};
+
+    // Update JSONbin
+    await updateJsonbin(data);
+
+    res.json({
+      success: true,
+      metadata: {},
+    });
+  } catch (error) {
+    console.error("Error resetting user metadata:", error);
+    res.status(500).json({ error: "Failed to reset metadata" });
+  }
+});
+// User data API endpoints
+app.get("/api/user", requireAuth, (req, res) => {
   res.json(req.session.user);
 });
 
-app.post("/api/user/settings", async (req, res) => {
-  if (!req.oidc.isAuthenticated()) {
-    return res.status(401).json({ error: "Not authenticated" });
-  }
+// Get all user data
+app.get("/api/user/data", requireAuth, async (req, res) => {
+  try {
+    const userId = req.session.user.id;
+    const { user } = await getUserFromJsonbin(userId);
 
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    res.json({
+      success: true,
+      data: user.data || {},
+    });
+  } catch (error) {
+    console.error("Error fetching user data:", error);
+    res.status(500).json({ error: "Failed to fetch user data" });
+  }
+});
+
+// Update a single data key
+app.post("/api/user/data/:key", requireAuth, async (req, res) => {
+  try {
+    const userId = req.session.user.id;
+    const key = req.params.key;
+    const value = req.body.value;
+
+    const { data, userIndex } = await getUserFromJsonbin(userId);
+
+    if (userIndex === -1) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    // Ensure data object exists
+    if (!data.users[userIndex].data) {
+      data.users[userIndex].data = {};
+    }
+
+    // Update the data
+    data.users[userIndex].data[key] = value;
+
+    // Update JSONbin
+    await updateJsonbin(data);
+
+    res.json({
+      success: true,
+      key,
+      value,
+      data: data.users[userIndex].data,
+    });
+  } catch (error) {
+    console.error("Error updating user data:", error);
+    res.status(500).json({ error: "Failed to update data" });
+  }
+});
+
+// Update multiple data keys at once
+app.put("/api/user/data", requireAuth, async (req, res) => {
+  try {
+    const userId = req.session.user.id;
+    const updates = req.body; // This should be an object with key-value pairs
+
+    if (!updates || typeof updates !== "object") {
+      return res.status(400).json({ error: "Invalid data format" });
+    }
+
+    const { data, userIndex } = await getUserFromJsonbin(userId);
+
+    if (userIndex === -1) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    // Ensure data object exists
+    if (!data.users[userIndex].data) {
+      data.users[userIndex].data = {};
+    }
+
+    // Update multiple keys
+    data.users[userIndex].data = {
+      ...data.users[userIndex].data,
+      ...updates,
+    };
+
+    // Update JSONbin
+    await updateJsonbin(data);
+
+    res.json({
+      success: true,
+      data: data.users[userIndex].data,
+    });
+  } catch (error) {
+    console.error("Error updating user data:", error);
+    res.status(500).json({ error: "Failed to update data" });
+  }
+});
+
+// Delete a single data key
+app.delete("/api/user/data/:key", requireAuth, async (req, res) => {
+  try {
+    const userId = req.session.user.id;
+    const key = req.params.key;
+
+    const { data, userIndex } = await getUserFromJsonbin(userId);
+
+    if (
+      userIndex === -1 ||
+      !data.users[userIndex].data ||
+      data.users[userIndex].data[key] === undefined
+    ) {
+      return res.status(404).json({ error: "User or data key not found" });
+    }
+
+    // Delete the key
+    delete data.users[userIndex].data[key];
+
+    // Update JSONbin
+    await updateJsonbin(data);
+
+    res.json({
+      success: true,
+      data: data.users[userIndex].data,
+    });
+  } catch (error) {
+    console.error("Error deleting data key:", error);
+    res.status(500).json({ error: "Failed to delete data key" });
+  }
+});
+
+// Reset all user data
+app.delete("/api/user/data", requireAuth, async (req, res) => {
+  try {
+    const userId = req.session.user.id;
+
+    const { data, userIndex } = await getUserFromJsonbin(userId);
+
+    if (userIndex === -1) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    // Reset data to empty object
+    data.users[userIndex].data = {};
+
+    // Update JSONbin
+    await updateJsonbin(data);
+
+    res.json({
+      success: true,
+      data: {},
+    });
+  } catch (error) {
+    console.error("Error resetting user data:", error);
+    res.status(500).json({ error: "Failed to reset data" });
+  }
+});
+
+app.post("/api/user/settings", requireAuth, async (req, res) => {
   try {
     // Get current data from JSONbin
     const response = await axios.get(
@@ -260,15 +561,7 @@ app.post("/api/user/settings", async (req, res) => {
   }
 });
 
-// Protected routes middleware
-const requireAuth = (req, res, next) => {
-  if (!req.oidc.isAuthenticated()) {
-    return res.redirect("/login");
-  }
-  next();
-};
-
-// Example of a protected route
+// Profile route - Protected
 app.get("/profile", requireAuth, (req, res) => {
   const filePath = path.join(process.cwd(), "public/profile/index.html");
 
@@ -291,7 +584,7 @@ app.get("/profile", requireAuth, (req, res) => {
   }
 });
 
-// Existing code below this line
+// Static file handling
 app.use(
   "/favicon.ico",
   express.static(path.join(__dirname, "public", "/images/favicon.ico")),
@@ -371,7 +664,11 @@ const processPreloadTags = (req, res, next) => {
       const baseDir = path.dirname(req.path).substring(1);
       let modifiedData = data;
       // Use the regex's test method on the string `data`
-      if (preloadTagRegex.test(data)) {
+      const hasPreloadTags = preloadTagRegex.test(data);
+      // Reset the RegExp lastIndex to start from the beginning again
+      preloadTagRegex.lastIndex = 0;
+
+      if (hasPreloadTags) {
         modifiedData = data.replace(
           `</body>`,
           `<!-- preload script injected by server software, ignore -->
@@ -386,7 +683,7 @@ const processPreloadTags = (req, res, next) => {
       }
 
       // Add user data to the HTML if authenticated
-      if (req.oidc.isAuthenticated()) {
+      if (req.oidc && req.oidc.isAuthenticated()) {
         modifiedData = modifiedData.replace(
           "</head>",
           `<script>
@@ -445,6 +742,12 @@ app.use((req, res) => {
     );
     res.status(404).send(modifiedData);
   });
+});
+
+// Global error handler
+app.use((err, req, res, next) => {
+  console.error("Application error:", err);
+  res.status(500).send("Something went wrong");
 });
 
 // Export for Vercel
