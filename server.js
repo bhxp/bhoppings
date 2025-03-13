@@ -131,6 +131,30 @@ app.use((req, res, next) => {
   next();
 });
 
+// NEW: Global middleware to inject user data into all HTML responses
+// Place this early in the middleware chain
+app.use((req, res, next) => {
+  if (req.headers["accept"] && req.headers["accept"].includes("text/html")) {
+    const originalSend = res.send;
+    res.send = function (body) {
+      if (typeof body === "string" && body.includes("</head>")) {
+        // Inject user data into all HTML responses
+        const userData =
+          req.oidc && req.oidc.isAuthenticated()
+            ? `<script>
+              window.currentUser = ${JSON.stringify(req.session.user)};
+              window.isAuthenticated = true;
+            </script>`
+            : `<script>window.isAuthenticated = false;</script>`;
+
+        body = body.replace("</head>", `${userData}\n</head>`);
+      }
+      return originalSend.call(this, body);
+    };
+  }
+  next();
+});
+
 // Logout route - BEFORE protected routes
 app.get("/logout", (req, res) => {
   // Get the return URL before clearing session
@@ -493,21 +517,43 @@ app.post("/api/user/settings", requireAuth, async (req, res) => {
   }
 });
 
-// Profile route - Protected
+// UPDATED: Profile route - Protected - Now with direct user data injection
 app.get("/profile", requireAuth, async (req, res) => {
   try {
     const filePath = path.join(process.cwd(), "public/profile/index.html");
 
     if (fsSync.existsSync(filePath)) {
-      const data = await fs.readFile(filePath, "utf8");
+      let data = await fs.readFile(filePath, "utf8");
+
+      // Inject the user data directly into the HTML
+      data = data.replace(
+        "</head>",
+        `<script>
+          window.currentUser = ${JSON.stringify(req.session.user)};
+          window.isAuthenticated = true;
+        </script>
+        </head>`,
+      );
+
       res.send(data);
     } else {
+      // For the dynamically generated HTML, include the script tag directly
       res.send(`
-        <h1>Profile</h1>
-        <p>Welcome ${req.session.user.name}</p>
-        <img src="${req.session.user.picture}" alt="Profile" style="width: 100px; border-radius: 50%;">
-        <p>Email: ${req.session.user.email}</p>
-        <a href="/logout">Logout</a>
+        <html>
+        <head>
+          <script>
+            window.currentUser = ${JSON.stringify(req.session.user)};
+            window.isAuthenticated = true;
+          </script>
+        </head>
+        <body>
+          <h1>Profile</h1>
+          <p>Welcome ${req.session.user.name}</p>
+          <img src="${req.session.user.picture}" alt="Profile" style="width: 100px; border-radius: 50%;">
+          <p>Email: ${req.session.user.email}</p>
+          <a href="/logout">Logout</a>
+        </body>
+        </html>
       `);
     }
   } catch (err) {
@@ -659,24 +705,31 @@ const processPreloadTags = async (req, res, next) => {
       }
     }
 
-    // Add user data to the HTML if authenticated
+    // Add user data to the HTML if authenticated - THIS CODE IS KEPT FOR BACKWARDS COMPATIBILITY
+    // The global middleware should handle this now, but keeping this as a fallback
     if (req.oidc && req.oidc.isAuthenticated()) {
-      modifiedData = modifiedData.replace(
-        "</head>",
-        `<script>
-          window.currentUser = ${JSON.stringify(req.session.user)};
-          window.isAuthenticated = true;
-        </script>
-        </head>`,
-      );
+      if (!modifiedData.includes("window.currentUser")) {
+        // Only inject if not already injected
+        modifiedData = modifiedData.replace(
+          "</head>",
+          `<script>
+            window.currentUser = ${JSON.stringify(req.session.user)};
+            window.isAuthenticated = true;
+          </script>
+          </head>`,
+        );
+      }
     } else {
-      modifiedData = modifiedData.replace(
-        "</head>",
-        `<script>
-          window.isAuthenticated = false;
-        </script>
-        </head>`,
-      );
+      if (!modifiedData.includes("window.isAuthenticated")) {
+        // Only inject if not already injected
+        modifiedData = modifiedData.replace(
+          "</head>",
+          `<script>
+            window.isAuthenticated = false;
+          </script>
+          </head>`,
+        );
+      }
     }
 
     res.set("Content-Type", "text/html");
@@ -686,15 +739,45 @@ const processPreloadTags = async (req, res, next) => {
     next(err);
   }
 };
+
+// UPDATED: This middleware was moved from a separate lower position to HERE
+// to make it take precedence for all HTML responses
 app.use((req, res, next) => {
   if (req.headers["accept"] && req.headers["accept"].includes("text/html")) {
     const originalSend = res.send;
     res.send = (body) => {
       if (typeof body === "string" && body.includes("</head>")) {
-        body = body.replace(
-          "</head>",
-          '<!-- Account Data Management Library injected by the server -->\n<script src="/user-data.js"></script>\n</head>',
-        );
+        // Add user-data.js script before </head>
+        if (!body.includes("/user-data.js")) {
+          body = body.replace(
+            "</head>",
+            '<!-- Account Data Management Library injected by the server -->\n<script src="/user-data.js"></script>\n</head>',
+          );
+        }
+
+        // Ensure user data is injected if not already present
+        if (
+          req.oidc &&
+          req.oidc.isAuthenticated() &&
+          !body.includes("window.currentUser")
+        ) {
+          body = body.replace(
+            "</head>",
+            `<script>
+              window.currentUser = ${JSON.stringify(req.session.user)};
+              window.isAuthenticated = true;
+            </script>
+            </head>`,
+          );
+        } else if (!body.includes("window.isAuthenticated")) {
+          body = body.replace(
+            "</head>",
+            `<script>
+              window.isAuthenticated = false;
+            </script>
+            </head>`,
+          );
+        }
       }
       originalSend.call(res, body);
     };
