@@ -158,5 +158,7 @@ $(document).ready(function () {
 if (!window.opener) {
   if (localStorage.getItem("skipBio") == "true") {
     window.open("/home", "_self");
+  } else if (localStorage.getItem("fromLogout") == "true") {
+    localStorage.removeItem("fromLogout");
   }
 }
