@@ -5,6 +5,8 @@ const fsSync = require("fs");
 const session = require("express-session");
 const { auth } = require("express-openid-connect");
 const { ManagementClient } = require("auth0");
+const createRedirects = require("./redirects.js");
+
 const app = express();
 
 // Parse JSON requests
@@ -835,14 +837,21 @@ app.get("/app-icon", (req, res, next) => {
     }
   });
 });
+// Define your key-value pairs
+const redirects = {
+  tango: "/tangini",
+};
+
+// Get middleware functions
+const redirectMiddlewares = createRedirects(redirects);
+
+// Set up each redirect route
+Object.keys(redirectMiddlewares).forEach((key) => {
+  app.use(`/${key}`, redirectMiddlewares[key]);
+});
 
 // Serve static files after processing
 app.use(express.static(path.join(process.cwd(), "public")));
-
-// Handle custom redirects
-app.get("/tango", (req, res) => {
-  res.redirect("/tangini");
-});
 
 // Handle 404 errors (relative paths still apply here)
 app.use(async (req, res) => {
