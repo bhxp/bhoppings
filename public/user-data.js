@@ -25,6 +25,152 @@ class UserAccount {
 
         // Initialize data immediately
         this._initializeData();
+
+        this.defaultData = {
+            settings: {
+                theme: {
+                    primary: "#fff",
+                    "dark-background": "#12151c",
+                    cursor1: "#3AC4FF",
+                    cursor2: "#3AC4FF",
+                    color1: "#D185FF",
+                    color2: "#0ff",
+                    bg1: "#669",
+                    bg2: "#669",
+                },
+                effect: 0,
+            },
+            myValue: true,
+        };
+        this.mergeWithDefaults();
+    }
+
+    /**
+     * Sets the entire user data object
+     * @param {Object} data - Complete data object to set
+     * @returns {Object} Updated data object
+     */
+    setData(data) {
+        // Update the local cache immediately
+        this.userData = data;
+
+        // If not authenticated, use localStorage immediately
+        if (!this.isAuthenticated || this.usingLocalStorage) {
+            this._warnUnauthenticated();
+            this._setInLocalStorage("userData", this.userData);
+        } else {
+            // For authenticated users, start a background save
+            this._apiRequest("/api/user/data", {
+                method: "PUT",
+                body: data,
+            }).catch((error) => {
+                // If authentication error, fallback to localStorage
+                if (error.code === "UNAUTHENTICATED") {
+                    this._warnUnauthenticated();
+                    this._setInLocalStorage("userData", this.userData);
+                }
+            });
+        }
+
+        return this;
+    }
+
+    /**
+     * Deletes all user data and resets to an empty object
+     * @returns {Object} Empty user data object
+     */
+    deleteData() {
+        // Reset to empty object
+        this.userData = {};
+
+        // If not authenticated, use localStorage immediately
+        if (!this.isAuthenticated || this.usingLocalStorage) {
+            this._warnUnauthenticated();
+            this._setInLocalStorage("userData", this.userData);
+        } else {
+            // For authenticated users, start a background delete
+            this._apiRequest("/api/user/data", {
+                method: "DELETE",
+            }).catch((error) => {
+                // If authentication error, fallback to localStorage
+                if (error.code === "UNAUTHENTICATED") {
+                    this._warnUnauthenticated();
+                    this._setInLocalStorage("userData", this.userData);
+                }
+            });
+        }
+
+        return this;
+    }
+
+    /**
+     * Resets user data to default values
+     * @returns {Object} Default user data object
+     */
+    reset() {
+        // Clone the default data to avoid modifying the original
+        const defaultData = JSON.parse(JSON.stringify(this.defaultData));
+
+        // Set the user data to the default data
+        this.setData(defaultData);
+
+        return this;
+    }
+
+    /**
+     * Merges default values into the current user data
+     * @returns {Object} Updated user data object
+     */
+    mergeWithDefaults() {
+        const currentData = this.getData();
+        let dataChanged = false;
+
+        /**
+         * Recursively merges default values into the current data object
+         * @param {Object} target - The target object to modify
+         * @param {Object} defaults - The default values to merge in
+         * @returns {boolean} Whether any changes were made
+         */
+        const deepMerge = (target, defaults) => {
+            let changed = false;
+
+            for (const key in defaults) {
+                if (!Object.prototype.hasOwnProperty.call(defaults, key))
+                    continue;
+
+                // If key doesn't exist in target, add it
+                if (!(key in target)) {
+                    target[key] = defaults[key];
+                    changed = true;
+                }
+                // If both are objects, recursively merge
+                else if (
+                    typeof defaults[key] === "object" &&
+                    defaults[key] !== null &&
+                    !Array.isArray(defaults[key]) &&
+                    typeof target[key] === "object" &&
+                    target[key] !== null &&
+                    !Array.isArray(target[key])
+                ) {
+                    // Recursively merge nested objects
+                    const nestedChanged = deepMerge(target[key], defaults[key]);
+                    if (nestedChanged) changed = true;
+                }
+                // Otherwise existing value takes precedence
+            }
+
+            return changed;
+        };
+
+        // Perform the deep merge
+        dataChanged = deepMerge(currentData, this.defaultData);
+
+        // Only update if something changed
+        if (dataChanged) {
+            this.setData(currentData);
+        }
+
+        return this;
     }
 
     /**
@@ -165,11 +311,9 @@ class UserAccount {
      * @private
      */
     _warnUnauthenticated() {
-        if (!this.usingLocalStorage) {
-            console.warn(
-                "User is not signed in. Using localStorage as fallback for data storage.",
-            );
-        }
+        console.warn(
+            "You are not signed in. If you are developing without an account, ignore this message. If this is unexpected, it may be a bug. If you are supposed to be making of an account, please sign in. Using localStorage as a fallback for data storage.",
+        );
     }
 
     /**
@@ -256,8 +400,14 @@ class UserAccount {
      */
     logout() {
         window.localStorage.clear();
-        window.localStorage.setItem("fromLogout", "true");
+        window.localStorage.setItem("bioReferer", window.location.pathname);
         window.open("/logout", "_self");
+    }
+
+    login() {
+        window.localStorage.clear();
+        window.localStorage.setItem("bioReferer", window.location.pathname);
+        window.open("/login", "_self");
     }
 
     /**
@@ -270,24 +420,39 @@ class UserAccount {
         return this.userData;
     }
 
-    /**
-     * Synchronously get a specific user data value
-     * @param {string} key - The data key to retrieve
-     * @returns {any} The value for the specified key (or undefined if not found)
-     */
-    getValue(key) {
-        return this.userData[key];
-    }
+    
 
     /**
-     * Synchronously set a single data value
-     * @param {string} key - The data key to update
+     * Synchronously set a single data value with support for paths
+     * @param {string|Array} path - The data path to update (e.g. 'settings.theme.primary' or ['settings', 'theme', 'primary'])
      * @param {any} value - The new value
      * @returns {Object} Updated data object
      */
-    setValue(key, value) {
-        // Update the local cache immediately
-        this.userData[key] = value;
+    setValue(path, value) {
+        // Convert string path to array (e.g., 'settings.theme.primary' => ['settings', 'theme', 'primary'])
+        const pathArray = Array.isArray(path) ? path : path.split(".");
+
+        // Simple case: top-level property
+        if (pathArray.length === 1) {
+            this.userData[pathArray[0]] = value;
+        } else {
+            // Complex case: nested property
+            let current = this.userData;
+
+            // Navigate to the parent object of the property we want to set
+            for (let i = 0; i < pathArray.length - 1; i++) {
+                const key = pathArray[i];
+
+                // Create empty objects for missing parts of the path
+                if (current[key] === undefined || current[key] === null) {
+                    current[key] = {};
+                }
+                current = current[key];
+            }
+
+            // Set the value on the final property
+            current[pathArray[pathArray.length - 1]] = value;
+        }
 
         // If not authenticated, use localStorage immediately
         if (!this.isAuthenticated || this.usingLocalStorage) {
@@ -295,78 +460,122 @@ class UserAccount {
             this._setInLocalStorage("userData", this.userData);
         } else {
             // For authenticated users, start a background save
-            this._backgroundSaveValue(key, value);
+            this._backgroundSaveValue(path, value);
         }
 
-        return this.userData;
+        return this;
     }
 
     /**
      * Background save for setValue
      * @private
-     * @param {string} key - The data key to update
+     * @param {string|Array} path - The data path to update
      * @param {any} value - The new value
      */
-    _backgroundSaveValue(key, value) {
-        this._apiRequest(`/api/user/data/${key}`, {
-            method: "POST",
-            body: { value },
-        }).catch((error) => {
-            // If authentication error, fallback to localStorage
-            if (error.code === "UNAUTHENTICATED") {
-                this._warnUnauthenticated();
-                this._setInLocalStorage("userData", this.userData);
+    _backgroundSaveValue(path, value) {
+        // Convert path to array if it's a string
+        const pathArray = Array.isArray(path) ? path : path.split(".");
+
+        // If it's a simple top-level property, use the existing API endpoint
+        if (pathArray.length === 1) {
+            this._apiRequest(`/api/user/data/${pathArray[0]}`, {
+                method: "POST",
+                body: { value },
+            }).catch((error) => {
+                // If authentication error, fallback to localStorage
+                if (error.code === "UNAUTHENTICATED") {
+                    this._warnUnauthenticated();
+                    this._setInLocalStorage("userData", this.userData);
+                }
+            });
+        } else {
+            // For nested properties, we need to use the full data update endpoint
+            // Create the nested structure to update
+            let update = {};
+            let current = update;
+
+            // Build the nested object structure
+            for (let i = 0; i < pathArray.length - 1; i++) {
+                current[pathArray[i]] = {};
+                current = current[pathArray[i]];
             }
-        });
+
+            // Set the final value
+            current[pathArray[pathArray.length - 1]] = value;
+
+            // Send the update
+            this._apiRequest("/api/user/data", {
+                method: "PUT",
+                body: update,
+            }).catch((error) => {
+                // If authentication error, fallback to localStorage
+                if (error.code === "UNAUTHENTICATED") {
+                    this._warnUnauthenticated();
+                    this._setInLocalStorage("userData", this.userData);
+                }
+            });
+        }
     }
 
     /**
-     * Synchronously update multiple data values at once
-     * @param {Object} updates - Object containing key-value pairs to update
-     * @returns {Object} Updated data object
+     * Synchronously get a value using a path
+     * @param {string|Array} path - The data path to retrieve (e.g. 'settings.theme.primary' or ['settings', 'theme', 'primary'])
+     * @param {any} defaultValue - Optional default value if path doesn't exist
+     * @returns {any} The value at the specified path (or defaultValue if not found)
      */
-    updateData(updates) {
-        // Update the local cache immediately
-        this.userData = { ...this.userData, ...updates };
-
-        // If not authenticated, use localStorage immediately
-        if (!this.isAuthenticated || this.usingLocalStorage) {
-            this._warnUnauthenticated();
-            this._setInLocalStorage("userData", this.userData);
-        } else {
-            // For authenticated users, start a background save
-            this._backgroundSaveData(updates);
+    getValue(path, defaultValue = undefined) {
+        // Handle simple case where path is a direct key
+        if (!path || (typeof path === "string" && !path.includes("."))) {
+            return this.userData[path] !== undefined
+                ? this.userData[path]
+                : defaultValue;
         }
 
-        return this.userData;
-    }
+        // Convert string path to array
+        const pathArray = Array.isArray(path) ? path : path.split(".");
 
-    /**
-     * Background save for updateData
-     * @private
-     * @param {Object} updates - Object containing key-value pairs to update
-     */
-    _backgroundSaveData(updates) {
-        this._apiRequest("/api/user/data", {
-            method: "PUT",
-            body: updates,
-        }).catch((error) => {
-            // If authentication error, fallback to localStorage
-            if (error.code === "UNAUTHENTICATED") {
-                this._warnUnauthenticated();
-                this._setInLocalStorage("userData", this.userData);
+        // Traverse the object following the path
+        let current = this.userData;
+        for (let i = 0; i < pathArray.length; i++) {
+            if (current === undefined || current === null) {
+                return defaultValue;
             }
-        });
+            current = current[pathArray[i]];
+        }
+
+        return current !== undefined ? current : defaultValue;
     }
 
     /**
-     * Synchronously delete a specific data key
-     * @param {string} key - The data key to delete
+     * Synchronously delete a value using a path
+     * @param {string|Array} path - The data path to delete (e.g. 'settings.theme.primary' or ['settings', 'theme', 'primary'])
      * @returns {Object} Updated data object
      */
-    deleteValue(key) {
-        // Delete from local cache immediately
-        delete this.userData[key];
+    deleteValue(path) {
+        // Convert string path to array
+        const pathArray = Array.isArray(path) ? path : path.split(".");
+
+        // Simple case: top-level property
+        if (pathArray.length === 1) {
+            delete this.userData[pathArray[0]];
+        } else {
+            // Complex case: nested property
+            let current = this.userData;
+
+            // Navigate to the parent object of the property we want to delete
+            for (let i = 0; i < pathArray.length - 1; i++) {
+                const key = pathArray[i];
+
+                // If any part of the path doesn't exist, we're done
+                if (current[key] === undefined || current[key] === null) {
+                    return this;
+                }
+                current = current[key];
+            }
+
+            // Delete the final property
+            delete current[pathArray[pathArray.length - 1]];
+        }
 
         // If not authenticated, use localStorage immediately
         if (!this.isAuthenticated || this.usingLocalStorage) {
@@ -374,27 +583,59 @@ class UserAccount {
             this._setInLocalStorage("userData", this.userData);
         } else {
             // For authenticated users, start a background delete
-            this._backgroundDeleteValue(key);
+            this._backgroundDeleteValue(path);
         }
 
-        return this.userData;
+        return this;
     }
 
     /**
      * Background delete for deleteValue
      * @private
-     * @param {string} key - The data key to delete
+     * @param {string|Array} path - The data path to delete
      */
-    _backgroundDeleteValue(key) {
-        this._apiRequest(`/api/user/data/${key}`, {
-            method: "DELETE",
-        }).catch((error) => {
-            // If authentication error, fallback to localStorage
-            if (error.code === "UNAUTHENTICATED") {
-                this._warnUnauthenticated();
-                this._setInLocalStorage("userData", this.userData);
+    _backgroundDeleteValue(path) {
+        // Convert path to array if it's a string
+        const pathArray = Array.isArray(path) ? path : path.split(".");
+
+        // If it's a simple top-level property, use the existing API endpoint
+        if (pathArray.length === 1) {
+            this._apiRequest(`/api/user/data/${pathArray[0]}`, {
+                method: "DELETE",
+            }).catch((error) => {
+                // If authentication error, fallback to localStorage
+                if (error.code === "UNAUTHENTICATED") {
+                    this._warnUnauthenticated();
+                    this._setInLocalStorage("userData", this.userData);
+                }
+            });
+        } else {
+            // For nested properties, we need a different approach
+            // Create a deep copy of the data without the path we're deleting
+            const newData = JSON.parse(JSON.stringify(this.userData));
+            let current = newData;
+
+            // Navigate to the parent object
+            for (let i = 0; i < pathArray.length - 1; i++) {
+                if (!current[pathArray[i]]) break;
+                current = current[pathArray[i]];
             }
-        });
+
+            // Delete the property
+            delete current[pathArray[pathArray.length - 1]];
+
+            // Send the full update
+            this._apiRequest("/api/user/data", {
+                method: "PUT",
+                body: newData,
+            }).catch((error) => {
+                // If authentication error, fallback to localStorage
+                if (error.code === "UNAUTHENTICATED") {
+                    this._warnUnauthenticated();
+                    this._setInLocalStorage("userData", this.userData);
+                }
+            });
+        }
     }
 
     /**
@@ -414,7 +655,7 @@ class UserAccount {
             this._backgroundResetData();
         }
 
-        return this.userData;
+        return this;
     }
 
     /**
@@ -562,3 +803,5 @@ const Account = new UserAccount();
 
 // Export the singleton instance
 window.Account = Account;
+
+Account.mergeWithDefaults();

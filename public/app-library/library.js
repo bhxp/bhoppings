@@ -1,5 +1,3 @@
-var localStorage = window.localStorage;
-
 function levenshteinDistance(str1, str2) {
   // Create a matrix of dimensions (str1.length + 1) x (str2.length + 1)
   const matrix = Array(str1.length + 1)
@@ -46,12 +44,7 @@ function getUrlByName(objectsArray, targetName) {
     return null;
   }
 }
-var purchasedItems = [];
-if (localStorage.getItem("purchased-items")) {
-  purchasedItems = JSON.parse(localStorage.getItem("purchased-items"));
-} else {
-  localStorage.setItem("purchased-items", "[]");
-}
+
 var storeItems = [];
 $(document).ready(function () {
   console.log(getPreloadedValue("store"));
