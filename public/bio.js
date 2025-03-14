@@ -123,18 +123,18 @@ document.addEventListener("keydown", (e) => {
 });
 
 $(document).ready(function () {
+  if (localStorage.getItem("bioReferer")) {
+    $("body").css("filter", "brightness(-100%)");
+    const referer = localStorage.getItem("bioReferer");
+    localStorage.removeItem("bioReferer");
+    window.open(referer, "_self");
+  }
   if (!window.opener) {
     if (localStorage.getItem("skipBio") == "true") {
       window.open("/home", "_self");
     } else if (localStorage.getItem("fromLogout") == "true") {
       localStorage.removeItem("fromLogout");
     }
-  }
-
-  if (localStorage.getItem("bioReferer")) {
-    const referer = localStorage.getItem("bioReferer");
-    localStorage.removeItem("bioReferer");
-    window.open(referer, "_self");
   }
 
   const effectManager = new EffectManager(particleCanvas);

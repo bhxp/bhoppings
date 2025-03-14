@@ -11,7 +11,7 @@ async function cursorMain() {
         };
       }
       $(".custom-cursor").remove();
-      const theme = JSON.parse(localStorage.getItem("theme"));
+      const theme = Account.getValue("theme");
       console.log(theme);
       // Modify the SVG to add the class
       cursorSvgText = data;
@@ -52,7 +52,7 @@ async function cursorMain() {
         }
       }
     `;
-      if (window.localStorage.getItem("disableCursor") !== "true") {
+      if (Account.getValue("disableCursor") !== true) {
         // Append the SVG to the body while preserving existing content
         document.body.insertAdjacentHTML("beforeend", cursorSvg);
 

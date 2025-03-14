@@ -18,28 +18,30 @@ class UserAccount {
         this.userData = null;
         this.metadataCache = null;
         this.profileCache = null;
-        this.isAuthenticated = window.isAuthenticated === true;
+        this.isAuthenticated = window.isAuthenticated;
         this.authError = new Error("User is not authenticated");
         this.authError.code = "UNAUTHENTICATED";
-        this.usingLocalStorage = !this.isAuthenticated;
+        this.usingLocalStorage = !window.isAuthenticated;
+        this.clearData = this.resetData;
 
         // Initialize data immediately
         this._initializeData();
 
         this.defaultData = {
-            settings: {
-                theme: {
-                    primary: "#fff",
-                    "dark-background": "#12151c",
-                    cursor1: "#3AC4FF",
-                    cursor2: "#3AC4FF",
-                    color1: "#D185FF",
-                    color2: "#0ff",
-                    bg1: "#669",
-                    bg2: "#669",
-                },
-                effect: 0,
+            theme: {
+                primary: "#fff",
+                "dark-background": "#12151c",
+                cursor1: "#3AC4FF",
+                cursor2: "#3AC4FF",
+                color1: "#D185FF",
+                color2: "#0ff",
+                bg1: "#669",
+                bg2: "#669",
             },
+            debug: {
+                disableCursor: false,
+            },
+            effect: 0,
             myValue: true,
         };
         this.mergeWithDefaults();
@@ -55,7 +57,7 @@ class UserAccount {
         this.userData = data;
 
         // If not authenticated, use localStorage immediately
-        if (!this.isAuthenticated || this.usingLocalStorage) {
+        if (!window.isAuthenticated || this.usingLocalStorage) {
             this._warnUnauthenticated();
             this._setInLocalStorage("userData", this.userData);
         } else {
@@ -84,7 +86,7 @@ class UserAccount {
         this.userData = {};
 
         // If not authenticated, use localStorage immediately
-        if (!this.isAuthenticated || this.usingLocalStorage) {
+        if (!window.isAuthenticated || this.usingLocalStorage) {
             this._warnUnauthenticated();
             this._setInLocalStorage("userData", this.userData);
         } else {
@@ -179,7 +181,7 @@ class UserAccount {
      */
     _initializeData() {
         // For unauthenticated users, load from localStorage immediately
-        if (!this.isAuthenticated || this.usingLocalStorage) {
+        if (!window.isAuthenticated || this.usingLocalStorage) {
             this._warnUnauthenticated();
             this.userData = this._getFromLocalStorage("userData") || {};
             this.metadataCache = this._getFromLocalStorage("metadata") || {};
@@ -204,7 +206,7 @@ class UserAccount {
      * @private
      */
     _backgroundLoadData() {
-        if (this.isAuthenticated && !this.usingLocalStorage) {
+        if (window.isAuthenticated && !this.usingLocalStorage) {
             // Load all data in the background without waiting
             this._apiRequest("/api/user/data")
                 .then((response) => {
@@ -253,7 +255,7 @@ class UserAccount {
      */
     async _apiRequest(endpoint, options = {}, requireAuth = true) {
         // Check authentication if required
-        if (requireAuth && !this.isAuthenticated) {
+        if (requireAuth && !window.isAuthenticated) {
             this._warnUnauthenticated();
             // Instead of throwing error, we'll switch to localStorage mode
             this.usingLocalStorage = true;
@@ -287,7 +289,7 @@ class UserAccount {
 
                 // Handle authentication errors from server
                 if (response.status === 401) {
-                    this.isAuthenticated = false;
+                    window.isAuthenticated = false;
                     this.usingLocalStorage = true;
                     this._warnUnauthenticated();
                     throw this.authError;
@@ -392,7 +394,7 @@ class UserAccount {
      * @returns {boolean} Login status
      */
     isLoggedIn() {
-        return this.isAuthenticated;
+        return window.isAuthenticated;
     }
 
     /**
@@ -419,8 +421,6 @@ class UserAccount {
         // from the constructor to avoid returning null
         return this.userData;
     }
-
-    
 
     /**
      * Synchronously set a single data value with support for paths
@@ -455,7 +455,7 @@ class UserAccount {
         }
 
         // If not authenticated, use localStorage immediately
-        if (!this.isAuthenticated || this.usingLocalStorage) {
+        if (!window.isAuthenticated || this.usingLocalStorage) {
             this._warnUnauthenticated();
             this._setInLocalStorage("userData", this.userData);
         } else {
@@ -578,7 +578,7 @@ class UserAccount {
         }
 
         // If not authenticated, use localStorage immediately
-        if (!this.isAuthenticated || this.usingLocalStorage) {
+        if (!window.isAuthenticated || this.usingLocalStorage) {
             this._warnUnauthenticated();
             this._setInLocalStorage("userData", this.userData);
         } else {
@@ -647,7 +647,7 @@ class UserAccount {
         this.userData = {};
 
         // If not authenticated, use localStorage immediately
-        if (!this.isAuthenticated || this.usingLocalStorage) {
+        if (!window.isAuthenticated || this.usingLocalStorage) {
             this._warnUnauthenticated();
             this._setInLocalStorage("userData", this.userData);
         } else {
@@ -695,33 +695,51 @@ class UserAccount {
      * This can be called when you specifically want to refresh all data
      * @returns {Promise<boolean>} Authentication status
      */
+    /**
+     * Check authentication status and refresh data (remains async)
+     * This can be called when you specifically want to refresh all data
+     * @returns {Promise<boolean>} Authentication status
+     */
     async refreshAllData() {
-        try {
-            const isAuth = await this._apiRequest(
-                "/api/auth/status",
-                {},
-                false,
-            );
-            this.isAuthenticated = true;
-            this.usingLocalStorage = false;
+        // Use the server-injected authentication status instead of making an API call
+        this.usingLocalStorage = !window.isAuthenticated;
 
-            // Refresh all data
-            await Promise.allSettled([
-                this._apiRequest("/api/user/data").then((response) => {
-                    this.userData = response.data || {};
-                }),
-                this._apiRequest("/api/user").then((response) => {
-                    this.profileCache = response;
-                }),
-                this._apiRequest("/api/user/metadata").then((response) => {
-                    this.metadataCache = response.metadata || {};
-                }),
-            ]);
+        if (window.isAuthenticated) {
+            try {
+                // Refresh all data for authenticated users
+                await Promise.allSettled([
+                    this._apiRequest("/api/user/data").then((response) => {
+                        this.userData = response.data || {};
+                    }),
+                    this._apiRequest("/api/user").then((response) => {
+                        this.profileCache = response;
+                    }),
+                    this._apiRequest("/api/user/metadata").then((response) => {
+                        this.metadataCache = response.metadata || {};
+                    }),
+                ]);
 
-            return true;
-        } catch (error) {
-            this.isAuthenticated = false;
-            this.usingLocalStorage = true;
+                return true;
+            } catch (error) {
+                // If the API calls fail, fall back to localStorage
+                console.error("Failed to refresh data from server:", error);
+                this.usingLocalStorage = true;
+                this._warnUnauthenticated();
+
+                // Load from localStorage
+                this.userData = this._getFromLocalStorage("userData") || {};
+                this.profileCache = this._getFromLocalStorage("profile") || {
+                    username: "guest",
+                    displayName: "Guest User",
+                    isGuest: true,
+                };
+                this.metadataCache =
+                    this._getFromLocalStorage("metadata") || {};
+
+                return false;
+            }
+        } else {
+            // For unauthenticated users, use localStorage
             this._warnUnauthenticated();
 
             // Load from localStorage
@@ -754,7 +772,7 @@ class UserAccount {
                 false,
             );
 
-            this.isAuthenticated = true;
+            window.isAuthenticated = true;
             this.usingLocalStorage = false;
 
             // Reset all caches
@@ -770,7 +788,7 @@ class UserAccount {
 
             return response;
         } catch (error) {
-            this.isAuthenticated = false;
+            window.isAuthenticated = false;
             this.usingLocalStorage = true;
             throw error;
         }
@@ -800,8 +818,18 @@ class UserAccount {
 
 // Initialize with singleton pattern
 const Account = new UserAccount();
+(async function () {
+    try {
+        Account.mergeWithDefaults(); // Call the method inside a try-catch
+        await Account.refreshAllData();
+        console.log(
+            "%c Account successfully merged with default data!",
+            "color: rgb(0, 255, 119); background-color: rgba(0, 255, 119, 0.1); padding: 12px;",
+        );
+    } catch (error) {
+        console.error("Account failed to merge with default data:", error);
+    }
+})();
 
 // Export the singleton instance
 window.Account = Account;
-
-Account.mergeWithDefaults();

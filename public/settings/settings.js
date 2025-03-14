@@ -1,9 +1,6 @@
 function setCursor(number) {
-  window.localStorage.setItem("cursor", JSON.stringify(number));
-  cursor.setAttribute(
-    "src",
-    `/images/cursor/${window.localStorage.cursor}.svg`,
-  );
+  Account.setValue("cursor", number);
+  cursor.setAttribute("src", `/images/cursor/${number}.svg`);
   updateCursorSettings();
 }
 
@@ -89,7 +86,7 @@ cursorPromise.then(function (data) {
 });
 
 function settingsCursorUpdate() {
-  const theme = JSON.parse(localStorage.getItem("theme"));
+  const theme = Account.getValue("theme");
   console.log(theme);
 
   console.log(cursorSvg);

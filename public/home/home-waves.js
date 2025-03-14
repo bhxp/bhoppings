@@ -1290,10 +1290,9 @@ class NeuralEffect {
 
 const animationFramework = new CanvasAnimationFramework("waveCanvas");
 document.addEventListener("DOMContentLoaded", () => {
-    const effect = Account.getValue("settings").effect || 0;
-    if (!Account.getValue("settings").effect) {
-        localStorage.setItem("effect", JSON.stringify(effect));
-        Account.setValue("settings", { effect: effect });
+    const effect = Account.getValue("effect") || 0;
+    if (!Account.getValue("effect")) {
+        Account.setValue("effect", effect);
     }
     const effects = {
         waves: WavePointsEffect,

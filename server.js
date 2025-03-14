@@ -839,7 +839,8 @@ app.get("/app-icon", (req, res, next) => {
 });
 // Define your key-value pairs
 const redirects = {
-  tango: "/tangini",
+  tango: "/archived/tangini",
+  tangini: "/archived/tangini",
 };
 
 // Get middleware functions

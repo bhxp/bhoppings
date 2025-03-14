@@ -29,32 +29,33 @@ function userThemeStyleElement(theme) {
   return $(styleElement);
 }
 
-async function lsInit(reload = false) {
-  if (localStorage.getItem("theme")) {
-    userTheme = JSON.parse(localStorage.getItem("theme"));
+function setupTheme(reload = false) {
+  if (Account.getValue("theme")) {
+    userTheme = Account.getValue("theme");
   } else {
-    userTheme = defaultTheme();
-    localStorage.setItem("theme", JSON.stringify(userTheme));
+    Account.mergeWithDefaults();
+    userTheme = Account.getValue("theme");
   }
 
   userThemeStyleElement(userTheme).appendTo("head");
 }
 
 $(document).ready(async function () {
-  if (!window.localStorage.theme) {
-    await lsInit(); // Wait for the initialization to complete
+  if (!Account.getValue("theme")) {
+    setupTheme(); // Wait for the initialization to complete
     //window.location.reload();
     cursorMain();
   } else {
-    lsInit();
+    setupTheme();
   }
 });
 
 function setUserStyle(key, value) {
   // Get the theme and update the key
-  const theme = JSON.parse(localStorage.getItem("theme"));
+  const theme = Account.getValue("theme");
   theme[key] = value;
-  localStorage.setItem("theme", JSON.stringify(theme));
+  
+  Account.setValue(`theme.${key}`, value);
 
   // Now that the theme is updated, update the cursor if needed
   if (key === "cursor1" || key === "cursor2") {
@@ -62,6 +63,6 @@ function setUserStyle(key, value) {
     settingsCursorUpdate();
   }
 
-  lsInit();
+  setupTheme();
   userThemeStyleElement(userTheme).appendTo("head");
 }

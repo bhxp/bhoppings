@@ -56,7 +56,6 @@
             );
           }
           const cursorContainer = $(".settings-container-row").eq(0);
-          const themes = JSON.parse(localStorage.getItem("themes"));
 
           (async () => {
             const data = await $.getJSON("/config/theme-colors.json");
@@ -127,7 +126,7 @@
       <div class="settings-container-row">
         <script>
           function setEffect(effect) {
-            localStorage.setItem("effect", effectsSettings.indexOf(effect));
+            Account.setValue("effect", effectsSettings.indexOf(effect));
             const effects = {
               waves: WavePointsEffect,
               particle_field: ParticleFieldEffect,
@@ -164,6 +163,7 @@
 
       <div class="settings-container-row">
         <table>
+          <!--
           <tr>
             <td>
               Debug Mode<span class="small"
@@ -176,13 +176,13 @@
                 <span class="slider"></span>
               </label>
             </td>
-          </tr>
+          </tr>-->
 
           <tr>
             <td>
               Disable Cursor<span class="small"
                 >Use the default cursor. Only enable this if you are having
-                problems.</span
+                problems.<br />*Requires a reload.</span
               >
             </td>
             <td>
@@ -209,31 +209,22 @@
           </tr>
         </table>
         <script>
-          $("#debug-menu-checkbox")
-            .prop("checked", localStorage.getItem("debug") === "true")
-            .change(function (e) {
-              if (e.target.checked) {
-                localStorage.setItem("debug", "true");
-              } else {
-                localStorage.removeItem("debug");
-              }
-            });
           $("#disable-cursor-checkbox")
-            .prop("checked", localStorage.getItem("disableCursor") === "true")
+            .prop("checked", Account.getValue("disableCursor") === true)
             .change(function (e) {
               if (e.target.checked) {
-                localStorage.setItem("disableCursor", "true");
+                Account.setValue("disableCursor", true);
               } else {
-                localStorage.removeItem("disableCursor");
+                Account.setValue("disableCursor", false);
               }
             });
           $("#skip-bio-checkbox")
-            .prop("checked", localStorage.getItem("skipBio") === "true")
+            .prop("checked", Account.getValue("skipBio") === true)
             .change(function (e) {
               if (e.target.checked) {
-                localStorage.setItem("skipBio", "true");
+                Account.setValue("skipBio", false);
               } else {
-                localStorage.removeItem("skipBio");
+                Account.setValue("skipBio", true);
               }
             });
         </script>
@@ -246,22 +237,23 @@
         <h1>
           Danger Zone
           <span class="small"
-            >Do not proceed if you are unsure, as options here can cause
-            permenant damage.</span
+            >Do not proceed if you are unsure, as options here can have severe
+            consequences.</span
           >
         </h1>
         <table>
           <tr>
             <td>
-              Erase All Local Data<span class="small"
-                >Will delete all locally saved data, like theme and preferences,
-                and reset to a clean state.</span
-              >
+              Reset All Account Data<span class="small"
+                >This will delete all saved data, including settings, progress,
+                etc. This cannot be undone.<br />This will not affect data
+                stored by "Powered by Bhoppings" pages.
+              </span>
             </td>
             <td>
               <button
                 style="float: right"
-                onclick="window.localStorage.clear();window.location.reload();"
+                onclick="Account.resetData().mergeWithDefaults();"
               >
                 <img src="/images/trash-red.svg" />
               </button>
@@ -274,10 +266,7 @@
               >
             </td>
             <td>
-              <button
-                style="float: right"
-                onclick="window.localStorage.clear();"
-              >
+              <button style="float: right" onclick="">
                 <img src="/images/placeholder.png" />
               </button>
             </td>
@@ -289,10 +278,7 @@
               >
             </td>
             <td>
-              <button
-                style="float: right"
-                onclick="window.localStorage.clear();"
-              >
+              <button style="float: right" onclick="">
                 <img src="/images/placeholder4.png" />
               </button>
             </td>
@@ -304,10 +290,7 @@
               >
             </td>
             <td>
-              <button
-                style="float: right"
-                onclick="window.localStorage.clear();"
-              >
+              <button style="float: right" onclick="">
                 <img src="/images/placeholder2.png" />
               </button>
             </td>
@@ -319,10 +302,7 @@
               >
             </td>
             <td>
-              <button
-                style="float: right"
-                onclick="window.localStorage.clear();"
-              >
+              <button style="float: right" onclick="">
                 <img src="/images/placeholder3.png" />
               </button>
             </td>
