@@ -138,16 +138,36 @@ app.use((req, res, next) => {
     const originalSend = res.send;
     res.send = function (body) {
       if (typeof body === "string" && body.includes("</head>")) {
-        // Inject user data into all HTML responses
-        const userData =
-          req.oidc && req.oidc.isAuthenticated()
-            ? `<script>
-              window.currentUser = ${JSON.stringify(req.session.user)};
-              window.isAuthenticated = true;
-            </script>`
-            : `<script>window.isAuthenticated = false;</script>`;
+        let modifiedBody = body;
 
-        body = body.replace("</head>", `${userData}\n</head>`);
+        // Only inject user data if not already present
+        if (
+          !modifiedBody.includes("window.currentUser") &&
+          !modifiedBody.includes("window.isAuthenticated")
+        ) {
+          const userData =
+            req.oidc && req.oidc.isAuthenticated()
+              ? `<script>
+                window.currentUser = ${JSON.stringify(req.session.user)};
+                window.isAuthenticated = true;
+              </script>`
+              : `<script>window.isAuthenticated = false;</script>`;
+
+          modifiedBody = modifiedBody.replace(
+            "</head>",
+            `${userData}\n</head>`,
+          );
+        }
+
+        // Only inject user-data.js if not already present
+        if (!modifiedBody.includes("/user-data.js")) {
+          modifiedBody = modifiedBody.replace(
+            "</head>",
+            '<!-- Account Data Management Library injected by the server -->\n<script src="/user-data.js"></script>\n</head>',
+          );
+        }
+
+        return originalSend.call(this, modifiedBody);
       }
       return originalSend.call(this, body);
     };
@@ -167,6 +187,22 @@ app.get("/logout", (req, res) => {
   res.redirect(
     `https://dev-cnsg5vep82aj6nfp.us.auth0.com/v2/logout?client_id=DPG9wJiWT1KtMiIAKQD3vg2sRXym2hx5&returnTo=${returnTo}`,
   );
+});
+
+app.get("/signup", (req, res) => {
+  // Store the original URL or home page as the return destination
+  req.session.returnTo = req.session.returnTo || "/home";
+
+  // Use the oidc.login method from the express-openid-connect library
+  // This will handle proper state generation and validation
+  return res.oidc.login({
+    returnTo: req.session.returnTo,
+    authorizationParams: {
+      screen_hint: "signup",
+      // Include the same scopes as in your main configuration
+      scope: "openid profile email read:users update:users",
+    },
+  });
 });
 
 // Optimize: User data helpers with batching
@@ -748,12 +784,6 @@ app.use((req, res, next) => {
     res.send = (body) => {
       if (typeof body === "string" && body.includes("</head>")) {
         // Add user-data.js script before </head>
-        if (!body.includes("/user-data.js")) {
-          body = body.replace(
-            "</head>",
-            '<!-- Account Data Management Library injected by the server -->\n<script src="/user-data.js"></script>\n</head>',
-          );
-        }
 
         // Ensure user data is injected if not already present
         if (
@@ -778,7 +808,14 @@ app.use((req, res, next) => {
             </head>`,
           );
         }
+        if (!body.includes("/user-data.js")) {
+          body = body.replace(
+            "</head>",
+            '<!-- Account Data Management Library injected by the server -->\n<script src="/user-data.js"></script>\n</head>',
+          );
+        }
       }
+
       originalSend.call(res, body);
     };
   }

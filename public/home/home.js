@@ -108,6 +108,7 @@ $("#navbar").on("click", ".gradient-text", function () {
     window.open("/home", "_self");
 });
 
+// Replace your current window.open override with this version
 const oldOpen = window.open;
 const fadeTime = 600;
 
@@ -116,7 +117,15 @@ window.open = function (url, target, features) {
         oldOpen(url, target, features);
         return;
     }
+
+    // Add a class to the body to indicate fading out
+    $("body").addClass("fade-out");
     $("body").fadeOut(fadeTime / 2);
+
+    // Store navigation state in sessionStorage
+    // This can help when returning via back button
+    sessionStorage.setItem("navigatingAway", "true");
+
     setTimeout(() => {
         oldOpen(url, target, features);
     }, fadeTime / 2);
