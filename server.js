@@ -7,6 +7,14 @@ const { auth } = require("express-openid-connect");
 const { ManagementClient } = require("auth0");
 const createRedirects = require("./redirects.js");
 
+console.log('Starting server initialization...');
+console.log('Environment details:', {
+  NODE_ENV: process.env.NODE_ENV,
+  PORT: process.env.PORT,
+  FLY_APP_NAME: process.env.FLY_APP_NAME,
+  FLY_REGION: process.env.FLY_REGION
+});
+
 const app = express();
 
 // Parse JSON requests
@@ -892,10 +900,35 @@ app.use((err, req, res, next) => {
   res.status(500).send("Something went wrong");
 });
 
+// Add proper signal handling
+process.on('SIGINT', () => {
+  console.log('SIGINT received, shutting down gracefully');
+  process.exit(0);
+});
+
+process.on('SIGTERM', () => {
+  console.log('SIGTERM received, shutting down gracefully');
+  process.exit(0);
+});
+
+// Keep track of the server instance
+let server = null;
+
 // Export for Vercel
 module.exports = app;
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`Server running at http://0.0.0.0:${PORT}`);
-});
+// Only start the server if this file is directly executed (not imported)
+if (require.main === module) {
+  const PORT = process.env.PORT || 3000;
+  console.log(`Attempting to start server on port ${PORT}`);
+  
+  server = app.listen(PORT, '0.0.0.0', () => {
+    console.log(`Server successfully running at http://0.0.0.0:${PORT}`);
+  });
+  
+  // Add error handling for the server
+  server.on('error', (error) => {
+    console.error('Server failed to start:', error);
+    process.exit(1);
+  });
+}
