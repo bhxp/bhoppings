@@ -1,1 +1,0 @@
-Quill Windows Optimizer
